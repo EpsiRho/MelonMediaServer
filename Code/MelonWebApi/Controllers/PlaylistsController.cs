@@ -22,37 +22,88 @@ namespace MelonWebApi.Controllers
         }
 
         [HttpPost("createPlaylist")]
-        public string CreatePlaylist(List<string> _ids, string name)
+        public string CreatePlaylist(string name, string description = "", string artworkPath = "", List<string> trackIds = null)
         {
-            //var mongoClient = new MongoClient("mongodb://localhost:27017");
-            //
-            //var mongoDatabase = mongoClient.GetDatabase("Melon");
-            //
-            //var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
-            //var QCollection = mongoDatabase.GetCollection<PlayQueue>("PlayQueues");
-            //
-            //
-            //
-            //
-            //var queueDoc = new BsonDocument();
-            //PlayQueue queue = new PlayQueue();
-            //queue._id = new ObjectId();
-            //queue.Name = name;
-            //queue.Tracks = new List<Track>();
-            //QCollection.InsertOne(queue);
-            ////var str = queue._id.ToString();
-            //var qFilter = Builders<PlayQueue>.Filter.Eq("_id", queue._id);
-            //foreach(var id in _ids)
-            //{
-            //    var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
-            //    var trackDoc = TCollection.Find(trackFilter).ToList();
-            //    var arrayUpdateTracks = Builders<PlayQueue>.Update.Push("Tracks", trackDoc[0]);
-            //    QCollection.UpdateOne(qFilter, arrayUpdateTracks);
-            //
-            //}
-            //
-            //return $"{queue._id}";
-            return null;
+            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+            
+            
+            Playlist playlist = new Playlist();
+            playlist._id = new ObjectId();
+            playlist.Name = name;
+            playlist.Description = description;
+            playlist.ArtworkPath = artworkPath;
+            playlist.Tracks = new List<ShortTrack>();
+            PCollection.InsertOne(playlist);
+            //var str = queue._id.ToString();
+            var pFilter = Builders<Playlist>.Filter.Eq("_id", playlist._id);
+            if(trackIds == null)
+            {
+                return playlist._id.ToString();
+            }
+            foreach(var id in trackIds)
+            {
+                var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
+                var trackDoc = TCollection.Find(trackFilter).ToList();
+                var arrayUpdateTracks = Builders<Playlist>.Update.Push("Tracks", new ShortTrack(trackDoc[0]));
+                PCollection.UpdateOne(pFilter, arrayUpdateTracks);
+            
+            }
+            
+            return playlist._id.ToString();
+        }
+        [HttpPost("addToPlaylist")]
+        public string AddToPlaylist(string _id, List<string> trackIds)
+        {
+            var mongoClient = new MongoClient("mongodb://localhost:27017");
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+
+
+            //var str = queue._id.ToString();
+            var pFilter = Builders<Playlist>.Filter.Eq("_id", ObjectId.Parse(_id));
+            foreach (var id in trackIds)
+            {
+                var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
+                var trackDoc = TCollection.Find(trackFilter).ToList();
+                var arrayUpdateTracks = Builders<Playlist>.Update.Push("Tracks", new ShortTrack(trackDoc[0]));
+                var res = PCollection.UpdateOne(pFilter, arrayUpdateTracks);
+
+            }
+
+            return "200";
+        }
+        [HttpPost("removeFromPlaylist")]
+        public string RemoveFromPlaylist(string _id, List<string> trackIds)
+        {
+            var mongoClient = new MongoClient("mongodb://localhost:27017");
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+
+
+            //var str = queue._id.ToString();
+            var pFilter = Builders<Playlist>.Filter.Eq("_id", ObjectId.Parse(_id));
+            var playlist = PCollection.Find(pFilter).ToList()[0];
+            foreach (var id in trackIds)
+            {
+                var query = from track in playlist.Tracks
+                            where track._id == new ObjectId(id)
+                            select track;
+                playlist.Tracks.Remove(query.ToList()[0]);
+            }
+            PCollection.ReplaceOne(pFilter, playlist);
+
+            return "200";
         }
         [HttpGet("getPlaylists")]
         public List<Playlist> GetPlaylists()

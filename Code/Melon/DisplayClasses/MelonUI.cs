@@ -379,6 +379,7 @@ namespace Melon.Classes
                         Console.CursorLeft = conX;
                         Console.CursorTop = sTop;
                         Console.Write(controls.Pastel(MelonColor.BackgroundText));
+                        Console.SetCursorPosition(sLeft, sTop);
                     }
                     catch (Exception)
                     {
@@ -386,7 +387,6 @@ namespace Melon.Classes
                     }
                     //Console.CursorTop = sTop;
                     //Console.CursorLeft = sLeft;
-                    Console.SetCursorPosition(sLeft, sTop);
                     // Show Choices
                     for (int i = 0; i < Choices.Count(); i++)
                     {

@@ -8,7 +8,7 @@ namespace Melon.Models
         public string Name { get; set; }
         public string Description { get; set; }
         public string ArtworkPath { get; set; }
-        public List<ShortTrack> TrackPaths { get; set; }
+        public List<ShortTrack> Tracks { get; set; }
 
     }
 

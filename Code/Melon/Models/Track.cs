@@ -19,6 +19,7 @@ namespace Melon.Models
         public string TrackName { get; set; }
         public string Path { get; set; }
         public string Duration { get; set; }
+        public string TrackArt { get; set; }
         public List<string> TrackGenres { get; set; }
         public List<ShortArtist> TrackArtists { get; set; }
 
