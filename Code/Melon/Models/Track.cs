@@ -1,0 +1,26 @@
+﻿using MongoDB.Bson;
+
+namespace Melon.Models
+{
+    public class Track
+    {
+        public ObjectId _id { get; set; }
+        public string AlbumName { get; set; }
+        public uint Position { get; set; }
+        public uint Disc { get; set; }
+        public string Format { get; set; }
+        public string Bitrate { get; set; }
+        public string SampleRate { get; set; }
+        public string Channels { get; set; }
+        public string BitsPerSample { get; set; }
+        public string MusicBrianzID { get; set; }
+        public string ISRC { get; set; }
+        public string Year { get; set; }
+        public string TrackName { get; set; }
+        public string Path { get; set; }
+        public string Duration { get; set; }
+        public List<string> TrackGenres { get; set; }
+        public List<ShortArtist> TrackArtists { get; set; }
+
+    }
+}

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33627.172
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Melon", "Melon\Melon.csproj", "{4F6E2F86-CA4D-4176-92A8-D5805FB4C67A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MelonWebApi", "MelonWebApi\MelonWebApi.csproj", "{F8E2BD33-6FAF-477C-BEB5-28B877CFB619}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F6E2F86-CA4D-4176-92A8-D5805FB4C67A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F6E2F86-CA4D-4176-92A8-D5805FB4C67A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F6E2F86-CA4D-4176-92A8-D5805FB4C67A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F6E2F86-CA4D-4176-92A8-D5805FB4C67A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8E2BD33-6FAF-477C-BEB5-28B877CFB619}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8E2BD33-6FAF-477C-BEB5-28B877CFB619}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8E2BD33-6FAF-477C-BEB5-28B877CFB619}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8E2BD33-6FAF-477C-BEB5-28B877CFB619}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {571BEE4C-8BBC-45D6-94A1-1F989E3F6368}
+	EndGlobalSection
+EndGlobal
