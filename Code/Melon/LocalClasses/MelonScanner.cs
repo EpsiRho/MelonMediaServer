@@ -58,6 +58,7 @@ namespace Melon.LocalClasses
             CurrentFile = "N/A";
             CurrentStatus = "Scanning Complete";
             IndexCollections();
+            DisplayManager.UIExtensions.Clear();
             DisplayManager.MenuOptions.Remove("Scan Progress");
             DisplayManager.MenuOptions.Insert(0, "Library Scanner", MelonScanner.Scan);
         }
@@ -411,8 +412,6 @@ namespace Melon.LocalClasses
                             }
                             TracksCollection.InsertOne(track);
                         }
-
-                        ScannedFiles++;
                         if (!Indexed)
                         {
                             IndexCollections();
@@ -441,6 +440,7 @@ namespace Melon.LocalClasses
                         FailedCollection.UpdateOne(fileFilter, arrayUpdateFailed);
                     }
                 }
+                ScannedFiles++;
             }
             
         }
