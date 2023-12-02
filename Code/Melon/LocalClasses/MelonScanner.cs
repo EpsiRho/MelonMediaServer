@@ -556,7 +556,7 @@ namespace Melon.LocalClasses
                 }
             });
             DisplayThread.Start();
-            while (true)
+            while (endDisplay)
             {
                 // Get Input
                 var input = Console.ReadKey(intercept: true);
