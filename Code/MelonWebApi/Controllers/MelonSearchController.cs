@@ -12,11 +12,11 @@ namespace MelonWebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class MelonSearchController : ControllerBase
+    public class SearchController : ControllerBase
     {
-        private readonly ILogger<MelonSearchController> _logger;
+        private readonly ILogger<SearchController> _logger;
 
-        public MelonSearchController(ILogger<MelonSearchController> logger)
+        public SearchController(ILogger<SearchController> logger)
         {
             _logger = logger;
         }
