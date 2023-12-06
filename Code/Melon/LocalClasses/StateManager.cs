@@ -45,6 +45,11 @@ namespace Melon.LocalClasses
                 Directory.CreateDirectory(melonPath);
             }
 
+            if (!Directory.Exists($"{StateManager.melonPath}/AlbumArts"))
+            {
+                Directory.CreateDirectory($"{StateManager.melonPath}/AlbumArts");
+            }
+
             if (!File.Exists($"{melonPath}/Flags.json"))
             {
                 MelonFlags = new Flags()
@@ -68,8 +73,6 @@ namespace Melon.LocalClasses
                 MelonSettings = new Settings()
                 {
                     MongoDbConnectionString = "mongodb://localhost:27017",
-                    AdminUserName = "Admin",
-                    AdminPassword = "Psswrd",
                     LibraryPaths = new List<string>(),
                     Text = Color.FromArgb(204, 204, 204),
                     ShadedText = Color.FromArgb(100, 100, 100),

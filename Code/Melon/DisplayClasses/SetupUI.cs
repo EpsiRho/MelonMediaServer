@@ -1,5 +1,6 @@
 ﻿using Melon.Classes;
 using Melon.LocalClasses;
+using Melon.Models;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -19,6 +20,8 @@ namespace Melon.DisplayClasses
     public static class SetupUI
     {
         private static List<Action> SetupSteps { get; set; }
+        private static string tempUsername;
+        private static string tempPassword;
         public static void Display()
         {
             SetupSteps = new List<Action>()
@@ -64,7 +67,7 @@ namespace Melon.DisplayClasses
                 string choice = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
                 if(choice == "Yes")
                 {
-                    StateManager.MelonSettings.AdminUserName = nameInput;
+                    tempUsername = nameInput;
                     break;
                 }
             }
@@ -75,7 +78,7 @@ namespace Melon.DisplayClasses
             do
             {
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
-                Console.WriteLine($"Alright {StateManager.MelonSettings.AdminUserName.Pastel(MelonColor.Highlight)}, let's set up a password.".Pastel(MelonColor.Text));
+                Console.WriteLine($"Alright {tempUsername.Pastel(MelonColor.Highlight)}, let's set up a password.".Pastel(MelonColor.Text));
                 Console.WriteLine("This will be used to log you in to apps. When you want to add other users, they'll have their own passwords.".Pastel(MelonColor.Text));
                 if (!passInput[0].IsNullOrEmpty())
                 {
@@ -92,7 +95,7 @@ namespace Melon.DisplayClasses
                 passInput[1] = MelonUI.HiddenInput();
 
             } while (passInput[0] != passInput[1]);
-            StateManager.MelonSettings.AdminPassword = passInput[0];
+            tempPassword = passInput[0];
         }
         private static void MongoDbSetup()
         {
@@ -224,14 +227,14 @@ namespace Melon.DisplayClasses
             // We'll also save all the settings set during the OOBE
             var databaseNames = StateManager.DbClient.ListDatabaseNames().ToList();
             var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
-            var collection = NewMelonDB.GetCollection<BsonDocument>("Users");
+            var collection = NewMelonDB.GetCollection<User>("Users");
 
-            var document = new BsonDocument
+            var document = new User
             {
-                { "Username", StateManager.MelonSettings.AdminUserName },
-                { "Password", StateManager.MelonSettings.AdminPassword }, // This should not be stored in plaintext DO NOT let this stay into release lmao
-                { "LastLogin", DateTime.Now },
-                { "UserType", "Admin" }
+                Username = tempUsername,
+                Password = tempPassword, // TODO: This should not be stored in plaintext DO NOT let this stay into release lmao
+                LastLogin = DateTime.Now,
+                Type = "Admin"
             };
 
             collection.InsertOne(document);

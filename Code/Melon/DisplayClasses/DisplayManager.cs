@@ -39,8 +39,16 @@ namespace Melon.Classes
                 {
                     choices.Add($"{item}");
                 }
-                string choice = MelonUI.OptionPicker(choices);
-                ((Action)MenuOptions[choice])();
+                var choice = MelonUI.OptionPicker(choices);
+
+                try
+                {
+                    ((Action)MenuOptions[choice])();
+                }
+                catch (Exception)
+                {
+
+                }
                 Thread.Sleep(100);
             }
         }

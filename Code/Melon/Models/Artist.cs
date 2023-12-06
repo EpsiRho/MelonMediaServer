@@ -8,6 +8,8 @@ namespace Melon.Models
         public string ArtistPfp { get; set; }
         public string ArtistName { get; set; }
         public string Bio { get; set; }
+        public List<string> ArtistArtPaths { get; set; }
+        public List<string> ArtistBannerPaths { get; set; }
         public List<string> Genres { get; set; }
         public List<ShortAlbum> Releases { get; set; }
         public List<ShortAlbum> SeenOn { get; set; }

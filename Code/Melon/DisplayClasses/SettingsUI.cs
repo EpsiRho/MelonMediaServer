@@ -1,5 +1,7 @@
 ﻿using Melon.Classes;
 using Melon.LocalClasses;
+using Melon.Models;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Pastel;
@@ -39,8 +41,6 @@ namespace Melon.DisplayClasses
                     MelonSettings = new Settings()
                     {
                         MongoDbConnectionString = "mongodb://localhost:27017",
-                        AdminUserName = "Admin",
-                        AdminPassword = "Psswrd",
                         LibraryPaths = new List<string>()
                     };
                     SaveSettings();
@@ -81,15 +81,15 @@ namespace Melon.DisplayClasses
                 // Get Users from MelonDb
                 var databaseNames = DbClient.ListDatabaseNames().ToList();
                 var NewMelonDB = DbClient.GetDatabase("Melon");
-                var collection = NewMelonDB.GetCollection<BsonDocument>("Users");
-                var documents = collection.Find(new BsonDocument()).ToList();
+                var collection = NewMelonDB.GetCollection<User>("Users");
+                var documents = collection.Find<User>(new BsonDocument()).ToList();
 
                 List<string> users = new List<string>();
                 users.Add("Back");
                 users.Add("Add New User");
                 foreach (var doc in documents)
                 {
-                    users.Add($"[{doc.GetValue("UserType").ToString()[0]}] {doc.GetValue("Username").ToString()} ({DateTime.Parse(doc.GetValue("LastLogin").ToString()).ToString("MM/dd/yyyy hh:mm tt")})");
+                    users.Add($"[{doc.Type}] {doc.Username} ({DateTime.Parse(doc.LastLogin.ToString("MM/dd/yyyy hh:mm tt"))})");
                 }
 
                 // Add Extra Options
@@ -99,15 +99,38 @@ namespace Melon.DisplayClasses
                 if (input == "Add New User")
                 {
                     // Title
-                    MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Add User 1/2" });
+                    MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Add User 1/3" });
                     Console.WriteLine("Enter the new user's name:".Pastel(MelonColor.Text));
                     Console.Write($"> ".Pastel(MelonColor.Text));
 
                     // Get User Name
                     string username = Console.ReadLine();
 
-                    // Title
-                    MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Add User 2/2" });
+                    // Get Password
+                    string[] passInput = new string[2];
+                    do
+                    {
+                        MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
+                        MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Add User 2/3" });
+                        Console.WriteLine("Please enter a password for this user".Pastel(MelonColor.Text));
+                        if (!passInput[0].IsNullOrEmpty())
+                        {
+                            Console.SetCursorPosition(0, 3);
+                            Console.WriteLine("Passwords do not match, please try again.".Pastel(MelonColor.Error));
+                        }
+                        Console.WriteLine("Password: ".Pastel(MelonColor.Text));
+                        Console.Write("Confirm password: ".Pastel(MelonColor.BackgroundText));
+                        Console.SetCursorPosition(10, Console.CursorTop - 1);
+                        passInput[0] = MelonUI.HiddenInput();
+                        Console.SetCursorPosition(0, Console.CursorTop);
+                        Console.WriteLine("Password: ".Pastel(MelonColor.BackgroundText));
+                        Console.Write("Confirm password: ".Pastel(MelonColor.Text));
+                        passInput[1] = MelonUI.HiddenInput();
+
+                    } while (passInput[0] != passInput[1]);
+
+                    // Get User Type
+                    MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Add User 3/3" });
                     Console.WriteLine("Select the new user's type".Pastel(MelonColor.Text));
                     var type = MelonUI.OptionPicker(new List<string>()
                     {
@@ -116,11 +139,12 @@ namespace Melon.DisplayClasses
                         "Pass"
                     });
 
-                    var document = new BsonDocument
+                    var document = new User
                     {
-                        { "Username", username },
-                        { "LastLogin", DateTime.MinValue },
-                        { "UserType", type }
+                        _id = ObjectId.GenerateNewId(),
+                        Username=username,
+                        LastLogin = DateTime.MinValue,
+                        Type = type
                     };
                     collection.InsertOne(document);
                 }
@@ -133,9 +157,9 @@ namespace Melon.DisplayClasses
                 {
                     // Delete User
                     int idx = users.IndexOf(input);
-                    BsonDocument item = documents[idx];
-                    var username = item.GetValue("Username");
-                    var deleteFilter = Builders<BsonDocument>.Filter.Eq("Username", username);
+                    User item = documents[idx];
+                    var username = item.Username;
+                    var deleteFilter = Builders<User>.Filter.Eq("Username", username);
                     collection.DeleteOne(deleteFilter);
                 }
             }

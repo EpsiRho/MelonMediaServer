@@ -14,8 +14,6 @@ namespace Melon.LocalClasses
     public class Settings
     {
         public string? MongoDbConnectionString { get; set; }
-        public string? AdminUserName { get; set; }
-        public string? AdminPassword { get; set; }
         public List<string> LibraryPaths { get; set; }
         public Color Text { get; set; }
         public Color ShadedText { get; set; }

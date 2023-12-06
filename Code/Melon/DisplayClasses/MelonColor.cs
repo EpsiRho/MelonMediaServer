@@ -31,7 +31,7 @@ namespace Melon.DisplayClasses
             StateManager.MelonSettings.Text = Color.FromArgb(204, 204, 204);
             StateManager.MelonSettings.ShadedText = Color.FromArgb(100, 100, 100);
             StateManager.MelonSettings.BackgroundText = Color.FromArgb(66, 66, 66);
-            StateManager.MelonSettings.Highlight = Color.FromArgb(97, 214, 214);
+            StateManager.MelonSettings.Highlight = Color.FromArgb(140, 0, 233);
             StateManager.MelonSettings.Melon = Color.FromArgb(26, 225, 19);
             StateManager.MelonSettings.Error = Color.FromArgb(255, 0, 0);
         }

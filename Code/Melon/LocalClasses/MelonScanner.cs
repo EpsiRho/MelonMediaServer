@@ -35,6 +35,8 @@ namespace Melon.LocalClasses
         // Scanning Functions
         public static void StartScan()
         {
+            ScannedFiles = 0;
+            FoundFiles = 0;
             Indexed = false;
             MelonUI.ClearConsole();
             if(StateManager.MelonSettings.LibraryPaths.Count() == 0)
@@ -59,8 +61,6 @@ namespace Melon.LocalClasses
             CurrentStatus = "Scanning Complete";
             IndexCollections();
             DisplayManager.UIExtensions.Clear();
-            DisplayManager.MenuOptions.Remove("Scan Progress");
-            DisplayManager.MenuOptions.Insert(0, "Library Scanner", MelonScanner.Scan);
         }
         private static void ScanFolderCounter(string path)
         {
@@ -271,7 +271,16 @@ namespace Melon.LocalClasses
 
                         // Add Release
                         var albumFilter = Builders<Album>.Filter.Eq("AlbumName", fileMetadata.Tag.Album);
-                        albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", fileMetadata.Tag.FirstPerformer);
+                        albumFilter = albumFilter & Builders<Album>.Filter.Eq("TotalDiscs", fileMetadata.Tag.DiscCount);
+                        albumFilter = albumFilter & Builders<Album>.Filter.Eq("TotalTracks", fileMetadata.Tag.TrackCount);
+                        try
+                        {
+                            albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumArtists[0]);
+                        }
+                        catch(Exception)
+                        {
+                            //albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", fileMetadata.Tag.FirstPerformer);
+                        }
                         var albumDoc = AlbumCollection.Find(albumFilter).FirstOrDefault();
 
                         if (albumDoc == null)
@@ -286,10 +295,23 @@ namespace Melon.LocalClasses
                             try { album.Publisher = fileMetadata.Tag.Publisher; } catch (Exception) { }
                             try { album.ReleaseStatus = fileMetadata.Tag.MusicBrainzReleaseStatus; } catch (Exception) { }
                             try { album.ReleaseType = fileMetadata.Tag.MusicBrainzReleaseType; } catch (Exception) { }
+                            album.AlbumArtPaths = new List<string>();
                             album.Tracks = new List<ShortTrack>();
                             album.AlbumArtists = new List<ShortArtist>();
                             album.AlbumGenres = new List<string>();
                             albumDoc = album;
+
+                            
+                            for (int i = 0; i < fileMetadata.Tag.Pictures.Length; i++)
+                            {
+                                using (FileStream artFile = new FileStream($"{StateManager.melonPath}/AlbumArts/{album._id}-{i}.jpg", FileMode.Create, System.IO.FileAccess.Write))
+                                {
+
+                                    byte[] bytes = fileMetadata.Tag.Pictures[i].Data.Data;
+                                    artFile.Write(bytes, 0, bytes.Length);
+                                }
+                                album.AlbumArtPaths.Add($"{StateManager.melonPath}/AlbumArts/{album._id}-{i}.jpg");
+                            }
 
                             for(int i = 0; i < albumArtists.Count(); i++)
                             {
@@ -398,6 +420,7 @@ namespace Melon.LocalClasses
                             try { track.MusicBrianzID = fileMetadata.Tag.MusicBrainzTrackId; } catch (Exception) { }
                             try { track.ISRC = fileMetadata.Tag.ISRC; } catch (Exception) { }
                             try { track.Year = fileMetadata.Tag.Year.ToString(); } catch (Exception) { }
+                            try { track.TrackArtCount = fileMetadata.Tag.Pictures.Length; } catch (Exception) { }
                             try { track.Duration = fileMetadata.Properties.Duration.ToString(); } catch (Exception) { }
                             try { track.TrackArtists = new List<ShortArtist>(); } catch (Exception) { }
                             try { track.TrackGenres = new List<string>(); } catch (Exception) { }
@@ -476,9 +499,7 @@ namespace Melon.LocalClasses
 
             // Description
             Console.WriteLine($"This will start a scan of all saved paths and their subdirectories.");
-            Console.WriteLine($"It may {"take awhile".Pastel(MelonColor.Highlight)}, but this will run in the background (As long as this application stays open!)");
-            Console.WriteLine($"You can check progress of it anytime from the {"Main Menu".Pastel(MelonColor.Melon)}");
-            Console.WriteLine($"As items are scanned in, they will become available in the {"Library View".Pastel(MelonColor.Highlight)}");
+            Console.WriteLine($"It may {"take awhile".Pastel(MelonColor.Highlight)} depending on how many files you have.");
             Console.WriteLine($"Ready to Start?");
             var input = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
             switch (input)
@@ -487,8 +508,8 @@ namespace Melon.LocalClasses
                     Thread scanThread = new Thread(MelonScanner.StartScan);
                     scanThread.Start();
                     DisplayManager.UIExtensions.Add(() => { Console.WriteLine("Library scan started!".Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
-                    DisplayManager.MenuOptions.Remove("Library Scanner");
-                    DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
+                    //DisplayManager.MenuOptions.Remove("Library Scanner");
+                    //DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
                     ScanProgressView();
                     break;
                 case "No":
@@ -556,17 +577,12 @@ namespace Melon.LocalClasses
                 }
             });
             DisplayThread.Start();
-            while (endDisplay)
+
+            while (!endDisplay)
             {
-                // Get Input
-                var input = Console.ReadKey(intercept: true);
-                if (input.Key == ConsoleKey.Escape)
-                {
-                    endDisplay = true;
-                    Thread.Sleep(100);
-                    return;
-                }
+                    
             }
+
         }
     }
 }

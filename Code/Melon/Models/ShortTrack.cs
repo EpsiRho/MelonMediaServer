@@ -9,7 +9,7 @@ namespace Melon.Models
         public uint Position { get; set; }
         public string TrackName { get; set; }
         public string Duration { get; set; }
-        public string TrackArt { get; set; }
+        public int TrackArtCount { get; set; }
         public List<ShortArtist> TrackArtists { get; set; }
 
         public ShortTrack()
@@ -24,7 +24,7 @@ namespace Melon.Models
             TrackName = t.TrackName;
             Duration = t.Duration;
             TrackArtists = t.TrackArtists;
-            TrackArt = t.TrackArt;
+            TrackArtCount = t.TrackArtCount;
         }
     }
 }

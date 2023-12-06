@@ -12,6 +12,7 @@ namespace Melon.Models
         public string Publisher { get; set; }
         public string ReleaseStatus { get; set; }
         public string ReleaseType { get; set; }
+        public List<string> AlbumArtPaths { get; set; }
         public List<string> AlbumGenres { get; set; }
         public List<ShortArtist> AlbumArtists { get; set; }
         public List<ShortTrack> Tracks { get; set; }

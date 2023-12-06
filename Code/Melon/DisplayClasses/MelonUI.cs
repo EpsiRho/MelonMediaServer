@@ -412,7 +412,7 @@ namespace Melon.Classes
                 }
             });
             DisplayThread.Start();
-            while (true)
+            while (!endDisplay)
             {
                 // Get Input
                 var input = Console.ReadKey(intercept: true);
@@ -441,10 +441,8 @@ namespace Melon.Classes
 
                 }
 
-
-
-
             }
+            return "";
         }
         public static string StringInput(bool UsePred, bool AutoCorrect, bool FreeInput, bool ShowChoices, List<string> Choices = null)
         {
