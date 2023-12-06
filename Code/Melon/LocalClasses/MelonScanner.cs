@@ -46,10 +46,18 @@ namespace Melon.LocalClasses
                 Console.ReadKey(intercept: true);
                 return;
             }
+
+            if (!Directory.Exists($"{StateManager.melonPath}/AlbumArts"))
+            {
+                Directory.CreateDirectory($"{StateManager.melonPath}/AlbumArts");
+            }
+
             foreach (var path in StateManager.MelonSettings.LibraryPaths)
             {
                 ScanFolderCounter(path);
             }
+
+
 
             foreach (var path in StateManager.MelonSettings.LibraryPaths)
             {
@@ -149,6 +157,13 @@ namespace Melon.LocalClasses
 
                     // Add Artists
                     int count = 0;
+                    ShortAlbum sAlbum = new ShortAlbum()
+                    {
+                        _id = AlbumId,
+                        AlbumName = fileMetadata.Tag.Album,
+                        ReleaseType = fileMetadata.Tag.MusicBrainzReleaseType
+                    };
+                    try { sAlbum.ReleaseDate = DateTime.Parse(fileMetadata.Tag.Year.ToString()); } catch (Exception) { }
                     foreach (var artist in trackArtists)
                     {
                         var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", artist);
@@ -182,18 +197,17 @@ namespace Melon.LocalClasses
                             // Add the first release
                             if (albumArtists.Contains(artist))
                             {
-                                artistDoc.Releases.Add(new ShortAlbum() { _id = AlbumId, AlbumName = fileMetadata.Tag.Album });
+                                artistDoc.Releases.Add(sAlbum);
                             }
                             else
                             {
-                                artistDoc.SeenOn.Add(new ShortAlbum() { _id = AlbumId, AlbumName = fileMetadata.Tag.Album }) ;
+                                artistDoc.SeenOn.Add(sAlbum);
                             }
 
-                            // Add the first track
                             var sTrack = new ShortTrack()
                             {
                                 _id = TrackId,
-                                AlbumName = fileMetadata.Tag.Album,
+                                Album = sAlbum,
                                 Duration = fileMetadata.Properties.Duration.ToString(),
                                 Position = fileMetadata.Tag.Track,
                                 TrackName = fileMetadata.Tag.Title,
@@ -220,7 +234,7 @@ namespace Melon.LocalClasses
                                              select release;
                                 if (rQuery.Count() == 0)
                                 {
-                                    var arrayUpdateRelease = Builders<Artist>.Update.Push("Releases", new ShortAlbum() { _id = AlbumId, AlbumName = fileMetadata.Tag.Album });
+                                    var arrayUpdateRelease = Builders<Artist>.Update.Push("Releases", sAlbum);
                                     ArtistCollection.UpdateOne(artistFilter, arrayUpdateRelease);
                                 }
                             }
@@ -231,7 +245,7 @@ namespace Melon.LocalClasses
                                              select release;
                                 if (sQuery.Count() == 0)
                                 {
-                                    var arrayUpdateRelease = Builders<Artist>.Update.Push("SeenOn", new ShortAlbum() { _id = AlbumId, AlbumName = fileMetadata.Tag.Album });
+                                    var arrayUpdateRelease = Builders<Artist>.Update.Push("SeenOn", sAlbum);
                                     ArtistCollection.UpdateOne(artistFilter, arrayUpdateRelease);
                                 }
                             }
@@ -244,7 +258,7 @@ namespace Melon.LocalClasses
                                 var sTrack = new ShortTrack()
                                 {
                                     _id = TrackId,
-                                    AlbumName = fileMetadata.Tag.Album,
+                                    Album = sAlbum,
                                     Duration = fileMetadata.Properties.Duration.ToString(),
                                     Position = fileMetadata.Tag.Track,
                                     TrackName = fileMetadata.Tag.Title,
@@ -271,8 +285,6 @@ namespace Melon.LocalClasses
 
                         // Add Release
                         var albumFilter = Builders<Album>.Filter.Eq("AlbumName", fileMetadata.Tag.Album);
-                        albumFilter = albumFilter & Builders<Album>.Filter.Eq("TotalDiscs", fileMetadata.Tag.DiscCount);
-                        albumFilter = albumFilter & Builders<Album>.Filter.Eq("TotalTracks", fileMetadata.Tag.TrackCount);
                         try
                         {
                             albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumArtists[0]);
@@ -295,6 +307,7 @@ namespace Melon.LocalClasses
                             try { album.Publisher = fileMetadata.Tag.Publisher; } catch (Exception) { }
                             try { album.ReleaseStatus = fileMetadata.Tag.MusicBrainzReleaseStatus; } catch (Exception) { }
                             try { album.ReleaseType = fileMetadata.Tag.MusicBrainzReleaseType; } catch (Exception) { }
+                            try { album.ReleaseDate = DateTime.Parse(fileMetadata.Tag.Year.ToString()); } catch (Exception) { }
                             album.AlbumArtPaths = new List<string>();
                             album.Tracks = new List<ShortTrack>();
                             album.AlbumArtists = new List<ShortArtist>();
@@ -331,7 +344,7 @@ namespace Melon.LocalClasses
                             var sTrack = new ShortTrack()
                             {
                                 _id = TrackId,
-                                AlbumName = fileMetadata.Tag.Album,
+                                Album = sAlbum,
                                 Duration = fileMetadata.Properties.Duration.ToString(),
                                 Position = fileMetadata.Tag.Track,
                                 TrackName = fileMetadata.Tag.Title,
@@ -380,7 +393,7 @@ namespace Melon.LocalClasses
                                 var sTrack = new ShortTrack()
                                 {
                                     _id = AlbumId,
-                                    AlbumName = fileMetadata.Tag.Album,
+                                    Album = sAlbum,
                                     Duration = fileMetadata.Properties.Duration.ToString(),
                                     Position = fileMetadata.Tag.Track,
                                     TrackName = fileMetadata.Tag.Title,
@@ -408,7 +421,7 @@ namespace Melon.LocalClasses
                             Track track = new Track();
                             track._id = TrackId;
                             try { track.TrackName = fileMetadata.Tag.Title; } catch (Exception) { }
-                            try { track.AlbumName = fileMetadata.Tag.Album; } catch (Exception) { }
+                            try { track.Album = sAlbum; } catch (Exception) { }
                             try { track.Path = file; } catch (Exception) { }
                             try { track.Position = fileMetadata.Tag.Track; } catch (Exception) { }
                             try { track.Format = Path.GetExtension(file); } catch (Exception) { }
@@ -424,6 +437,7 @@ namespace Melon.LocalClasses
                             try { track.Duration = fileMetadata.Properties.Duration.ToString(); } catch (Exception) { }
                             try { track.TrackArtists = new List<ShortArtist>(); } catch (Exception) { }
                             try { track.TrackGenres = new List<string>(); } catch (Exception) { }
+                            try { track.ReleaseDate = DateTime.Parse(fileMetadata.Tag.Year.ToString()); } catch (Exception) { }
 
                             for(int i = 0; i < trackArtists.Count(); i++)
                             {

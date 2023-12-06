@@ -5,7 +5,7 @@ namespace Melon.Models
     public class ShortTrack
     {
         public ObjectId _id { get; set; }
-        public string AlbumName { get; set; }
+        public ShortAlbum Album { get; set; }
         public uint Position { get; set; }
         public string TrackName { get; set; }
         public string Duration { get; set; }
@@ -19,7 +19,7 @@ namespace Melon.Models
         public ShortTrack(Track t)
         {
             _id = t._id;
-            AlbumName = t.AlbumName;
+            Album = t.Album;
             Position = t.Position;
             TrackName = t.TrackName;
             Duration = t.Duration;

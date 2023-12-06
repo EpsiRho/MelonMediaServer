@@ -6,6 +6,7 @@ using MongoDB.Driver;
 using SharpCompress.Common;
 using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
+using Melon.LocalClasses;
 
 namespace MelonWebApi.Controllers
 {
@@ -23,7 +24,7 @@ namespace MelonWebApi.Controllers
         [HttpGet("track")]
         public async Task<IActionResult> DownloadTrack(string _id)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
@@ -44,7 +45,7 @@ namespace MelonWebApi.Controllers
         [HttpGet("trackArt")]
         public async Task<IActionResult> DownloadTrackArt(string _id, int index)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
@@ -89,7 +90,7 @@ namespace MelonWebApi.Controllers
         [HttpGet("albumArt")]
         public async Task<IActionResult> DownloadAlbumArt(string _id, int index)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 

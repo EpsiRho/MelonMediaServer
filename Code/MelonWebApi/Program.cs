@@ -24,7 +24,7 @@ namespace MelonWebApi
 
             builder.Logging.ClearProviders();
             Log.Logger = new LoggerConfiguration()
-                        .WriteTo.File(StateManager.melonPath)
+                        .WriteTo.File($"{StateManager.melonPath}/logs.txt")
                         .CreateLogger();
 
             builder.Host.UseSerilog();

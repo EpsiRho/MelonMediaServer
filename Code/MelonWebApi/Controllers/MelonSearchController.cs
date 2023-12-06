@@ -25,7 +25,7 @@ namespace MelonWebApi.Controllers
         [HttpGet("tracks")]
         public IEnumerable<Track> GetTracks(string query, int page, int count)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
@@ -51,7 +51,7 @@ namespace MelonWebApi.Controllers
         [HttpGet("albums")]
         public IEnumerable<Album> GetAlbums(string query, int page, int count)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
@@ -74,7 +74,7 @@ namespace MelonWebApi.Controllers
         [HttpGet("artists")]
         public IEnumerable<Artist> GetArtists(string query, int page, int count)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 

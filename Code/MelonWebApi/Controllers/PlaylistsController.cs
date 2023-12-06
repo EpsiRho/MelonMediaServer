@@ -24,7 +24,7 @@ namespace MelonWebApi.Controllers
         [HttpPost("createPlaylist")]
         public string CreatePlaylist(string name, string description = "", string artworkPath = "", List<string> trackIds = null)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             
@@ -59,7 +59,7 @@ namespace MelonWebApi.Controllers
         [HttpPost("addToPlaylist")]
         public string AddToPlaylist(string _id, List<string> trackIds)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
@@ -83,7 +83,7 @@ namespace MelonWebApi.Controllers
         [HttpPost("removeFromPlaylist")]
         public string RemoveFromPlaylist(string _id, List<string> trackIds)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
@@ -108,7 +108,7 @@ namespace MelonWebApi.Controllers
         [HttpGet("getPlaylists")]
         public List<Playlist> GetPlaylists()
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             
@@ -121,7 +121,7 @@ namespace MelonWebApi.Controllers
         [HttpGet("getPlaylistById")]
         public Playlist GetPlaylistById(string _id)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 

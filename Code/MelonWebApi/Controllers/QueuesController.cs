@@ -24,7 +24,7 @@ namespace MelonWebApi.Controllers
         [HttpPost("createQueueFromIDs")]
         public string CreateQueueFromIDs(List<string> _ids, string name)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
@@ -56,7 +56,7 @@ namespace MelonWebApi.Controllers
         [HttpGet("getQueue")]
         public PlayQueue CreateQueueFromIDs(string _id)
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             
@@ -65,7 +65,14 @@ namespace MelonWebApi.Controllers
             var qFilter = Builders<PlayQueue>.Filter.Eq("_id", new ObjectId(_id));
             var qDoc = QCollection.Find(qFilter).ToList();
 
-            return qDoc[0];
+            try
+            {
+                return qDoc[0];
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }

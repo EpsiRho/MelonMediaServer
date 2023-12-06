@@ -64,7 +64,7 @@ namespace Melon.LocalClasses
                         var count = tracks.Count();
                         for (int i = 0; i < tracks.Count - 1; i++)
                         {
-                            if (tracks[i].TrackArtists.Contains(tracks[i + 1].TrackArtists[0]) || tracks[i].AlbumName == tracks[i + 1].AlbumName)
+                            if (tracks[i].TrackArtists.Contains(tracks[i + 1].TrackArtists[0]) || tracks[i].Album.AlbumName == tracks[i + 1].Album.AlbumName)
                             {
                                 var temp = tracks[i];
                                 tracks.RemoveAt(i);
@@ -81,25 +81,25 @@ namespace Melon.LocalClasses
 
                     foreach (var track in tracks)
                     {
-                        if (albumDic.ContainsKey(track.AlbumName))
+                        if (albumDic.ContainsKey(track.Album.AlbumName))
                         {
-                            for(int i = 0; i < albumDic[track.AlbumName].Count ; i++)
+                            for(int i = 0; i < albumDic[track.Album.AlbumName].Count ; i++)
                             {
-                                if (albumDic[track.AlbumName][i].Disc > track.Disc)
+                                if (albumDic[track.Album.AlbumName][i].Disc > track.Disc)
                                 {
-                                    albumDic[track.AlbumName].Insert(i, track);
+                                    albumDic[track.Album.AlbumName].Insert(i, track);
                                     break;
                                 }
-                                else if (albumDic[track.AlbumName][i].Disc == track.Disc && albumDic[track.AlbumName][i].Position > track.Position)
+                                else if (albumDic[track.Album.AlbumName][i].Disc == track.Disc && albumDic[track.Album.AlbumName][i].Position > track.Position)
                                 {
-                                    albumDic[track.AlbumName].Insert(i, track);
+                                    albumDic[track.Album.AlbumName].Insert(i, track);
                                     break;
                                 }
                             }
                         }
                         else
                         {
-                            albumDic.Add(track.AlbumName, new List<Track>() { track });
+                            albumDic.Add(track.Album.AlbumName, new List<Track>() { track });
                         }
                     }
 
