@@ -1,4 +1,5 @@
-﻿using Melon.Classes;
+﻿using Amazon.Auth.AccessControlPolicy;
+using Melon.Classes;
 using Melon.DisplayClasses;
 using Melon.Models;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -10,6 +11,7 @@ using Pastel;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,14 +31,17 @@ namespace Melon.LocalClasses
         public static string CurrentStatus { get; set; }
         public static double ScannedFiles { get; set; }
         public static double FoundFiles { get; set; }
+        public static long averageMilliseconds { get; set; }
         public static bool Indexed { get; set; }
         public static bool endDisplay { get; set; }
+        private static List<string> FoundPaths { get; set; }
 
         // Scanning Functions
         public static void StartScan()
         {
             ScannedFiles = 0;
             FoundFiles = 0;
+            averageMilliseconds = 0;
             Indexed = false;
             MelonUI.ClearConsole();
             if(StateManager.MelonSettings.LibraryPaths.Count() == 0)
@@ -52,17 +57,39 @@ namespace Melon.LocalClasses
                 Directory.CreateDirectory($"{StateManager.melonPath}/AlbumArts");
             }
 
+            FoundPaths = new List<string>();
             foreach (var path in StateManager.MelonSettings.LibraryPaths)
             {
+                FoundPaths.AddRange(Directory.GetDirectories(path));
                 ScanFolderCounter(path);
             }
 
+            var pathGroups = FoundPaths.Select((x, i) => new { Index = i, Value = x })
+                      .GroupBy(x => x.Index / (FoundPaths.Count()/4))
+                      .Select(x => x.Select(v => v.Value).ToList())
+                      .ToList();
 
-
-            foreach (var path in StateManager.MelonSettings.LibraryPaths)
+            //List<Thread> threads = new List<Thread>();
+            int count = 0;
+            var res = Parallel.ForEach(pathGroups, paths =>
             {
-                ScanFolder(path);
+                Thread t = new Thread(() =>
+                {
+                    count++;
+                    foreach (var path in paths)
+                    {
+                        ScanFolder(path);
+                    }
+                    count--;
+                });
+                t.Start();
+            });
+
+            while (count != 0)
+            {
+                
             }
+
             endDisplay = true;
             CurrentFolder = "N/A";
             CurrentFile = "N/A";
@@ -96,8 +123,10 @@ namespace Melon.LocalClasses
             var FailedCollection = NewMelonDB.GetCollection<FailedFiles>("FailedFiles");
 
             var files = Directory.GetFiles(path);
-            foreach(var file in files)
+            Stopwatch watch = new Stopwatch();
+            Parallel.ForEach(files, file =>
             {
+                watch.Restart();
                 try
                 {
                     CurrentFile = file;
@@ -106,7 +135,8 @@ namespace Melon.LocalClasses
                         !filename.EndsWith(".wav") && !filename.EndsWith(".mp3") && !filename.EndsWith(".m4a"))
                     {
                         ScannedFiles++;
-                        continue;
+                        //continue;
+                        return;
                     }
 
                     CurrentStatus = "Preparing Artist and Genre tags";
@@ -144,18 +174,17 @@ namespace Melon.LocalClasses
                     // Generate IDs
                     List<ObjectId> ArtistIds = new List<ObjectId>();
                     int num = trackArtists.Count();
-                    if(num < albumArtists.Count())
+                    if (num < albumArtists.Count())
                     {
                         num = albumArtists.Count();
                     }
-                    for(int i = 0; i < num; i++)
+                    for (int i = 0; i < num; i++)
                     {
                         ArtistIds.Add(ObjectId.GenerateNewId());
                     }
                     ObjectId AlbumId = ObjectId.GenerateNewId();
                     ObjectId TrackId = ObjectId.GenerateNewId();
 
-                    // Add Artists
                     int count = 0;
                     ShortAlbum sAlbum = new ShortAlbum()
                     {
@@ -164,6 +193,17 @@ namespace Melon.LocalClasses
                         ReleaseType = fileMetadata.Tag.MusicBrainzReleaseType
                     };
                     try { sAlbum.ReleaseDate = DateTime.Parse(fileMetadata.Tag.Year.ToString()); } catch (Exception) { }
+
+                    ShortTrack sTrack = new ShortTrack()
+                    {
+                        _id = TrackId,
+                        Album = sAlbum,
+                        Duration = fileMetadata.Properties.Duration.ToString(),
+                        Position = fileMetadata.Tag.Track,
+                        TrackName = fileMetadata.Tag.Title,
+                        TrackArtists = new List<ShortArtist>()
+                    };
+
                     foreach (var artist in trackArtists)
                     {
                         var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", artist);
@@ -185,14 +225,7 @@ namespace Melon.LocalClasses
                                 SeenOn = new List<ShortAlbum>(),
                                 Tracks = new List<ShortTrack>()
                             };
-                            
-                            // Check if 
-                            //var rQuery = from release in artistDoc.Releases
-                            //            where release.AlbumName == fileMetadata.Tag.Album
-                            //            select release;
-                            //var sQuery = from release in artistDoc.SeenOn
-                            //            where release.AlbumName == fileMetadata.Tag.Album
-                            //            select release;
+
 
                             // Add the first release
                             if (albumArtists.Contains(artist))
@@ -204,16 +237,8 @@ namespace Melon.LocalClasses
                                 artistDoc.SeenOn.Add(sAlbum);
                             }
 
-                            var sTrack = new ShortTrack()
-                            {
-                                _id = TrackId,
-                                Album = sAlbum,
-                                Duration = fileMetadata.Properties.Duration.ToString(),
-                                Position = fileMetadata.Tag.Track,
-                                TrackName = fileMetadata.Tag.Title,
-                                TrackArtists = new List<ShortArtist>()
-                            };
-                            for(int i = 0; i < trackArtists.Count(); i++)
+
+                            for (int i = 0; i < trackArtists.Count(); i++)
                             {
                                 sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistName = trackArtists[i] });
                             }
@@ -225,8 +250,8 @@ namespace Melon.LocalClasses
                         {
                             CurrentStatus = $"Updating {artist}";
                             ArtistIds[count] = artistDoc._id;
-                            
-                            
+
+
                             if (albumArtists.Contains(artist))
                             {
                                 var rQuery = from release in artistDoc.Releases
@@ -255,16 +280,7 @@ namespace Melon.LocalClasses
                                          select track;
                             if (tQuery.Count() == 0)
                             {
-                                var sTrack = new ShortTrack()
-                                {
-                                    _id = TrackId,
-                                    Album = sAlbum,
-                                    Duration = fileMetadata.Properties.Duration.ToString(),
-                                    Position = fileMetadata.Tag.Track,
-                                    TrackName = fileMetadata.Tag.Title,
-                                    TrackArtists = new List<ShortArtist>()
-                                };
-                                for(int i = 0; i < trackArtists.Count(); i++)
+                                for (int i = 0; i < trackArtists.Count(); i++)
                                 {
                                     sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistName = trackArtists[i] });
                                 }
@@ -289,7 +305,7 @@ namespace Melon.LocalClasses
                         {
                             albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumArtists[0]);
                         }
-                        catch(Exception)
+                        catch (Exception)
                         {
                             //albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", fileMetadata.Tag.FirstPerformer);
                         }
@@ -314,7 +330,7 @@ namespace Melon.LocalClasses
                             album.AlbumGenres = new List<string>();
                             albumDoc = album;
 
-                            
+
                             for (int i = 0; i < fileMetadata.Tag.Pictures.Length; i++)
                             {
                                 using (FileStream artFile = new FileStream($"{StateManager.melonPath}/AlbumArts/{album._id}-{i}.jpg", FileMode.Create, System.IO.FileAccess.Write))
@@ -326,13 +342,13 @@ namespace Melon.LocalClasses
                                 album.AlbumArtPaths.Add($"{StateManager.melonPath}/AlbumArts/{album._id}-{i}.jpg");
                             }
 
-                            for(int i = 0; i < albumArtists.Count(); i++)
+                            for (int i = 0; i < albumArtists.Count(); i++)
                             {
                                 try
                                 {
                                     albumDoc.AlbumArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], _id = ArtistIds[i] });
                                 }
-                                catch(Exception e)
+                                catch (Exception e)
                                 {
 
                                 }
@@ -341,16 +357,7 @@ namespace Melon.LocalClasses
                             {
                                 albumDoc.AlbumGenres.Add(genre);
                             }
-                            var sTrack = new ShortTrack()
-                            {
-                                _id = TrackId,
-                                Album = sAlbum,
-                                Duration = fileMetadata.Properties.Duration.ToString(),
-                                Position = fileMetadata.Tag.Track,
-                                TrackName = fileMetadata.Tag.Title,
-                                TrackArtists = new List<ShortArtist>()
-                            };
-                            for(int i = 0; i < trackArtists.Count(); i++)
+                            for (int i = 0; i < trackArtists.Count(); i++)
                             {
                                 sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistName = trackArtists[i] });
                             }
@@ -359,7 +366,7 @@ namespace Melon.LocalClasses
                             {
                                 AlbumCollection.InsertOne(albumDoc);
                             }
-                            catch(Exception e)
+                            catch (Exception e)
                             {
 
                             }
@@ -390,15 +397,6 @@ namespace Melon.LocalClasses
                                          select release;
                             if (tQuery.Count() == 0)
                             {
-                                var sTrack = new ShortTrack()
-                                {
-                                    _id = AlbumId,
-                                    Album = sAlbum,
-                                    Duration = fileMetadata.Properties.Duration.ToString(),
-                                    Position = fileMetadata.Tag.Track,
-                                    TrackName = fileMetadata.Tag.Title,
-                                    TrackArtists = new List<ShortArtist>()
-                                };
                                 for (int i = 0; i < trackArtists.Count(); i++)
                                 {
                                     sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistName = trackArtists[i] });
@@ -439,7 +437,7 @@ namespace Melon.LocalClasses
                             try { track.TrackGenres = new List<string>(); } catch (Exception) { }
                             try { track.ReleaseDate = DateTime.Parse(fileMetadata.Tag.Year.ToString()); } catch (Exception) { }
 
-                            for(int i = 0; i < trackArtists.Count(); i++)
+                            for (int i = 0; i < trackArtists.Count(); i++)
                             {
                                 track.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistName = trackArtists[i] });
                             }
@@ -449,10 +447,6 @@ namespace Melon.LocalClasses
                             }
                             TracksCollection.InsertOne(track);
                         }
-                        if (!Indexed)
-                        {
-                            IndexCollections();
-                        }
                         count++;
                     }
                 }
@@ -460,7 +454,7 @@ namespace Melon.LocalClasses
                 {
                     var fileFilter = Builders<FailedFiles>.Filter.Eq("Type", "Failed");
                     var fileDoc = FailedCollection.Find(fileFilter).FirstOrDefault();
-                    if(fileDoc == null)
+                    if (fileDoc == null)
                     {
                         FailedFiles failed = new FailedFiles();
                         failed.Type = "Failed";
@@ -477,8 +471,10 @@ namespace Melon.LocalClasses
                         FailedCollection.UpdateOne(fileFilter, arrayUpdateFailed);
                     }
                 }
+                watch.Stop();
+                averageMilliseconds += watch.ElapsedMilliseconds;
                 ScannedFiles++;
-            }
+            });
             
         }
         public static void IndexCollections()
@@ -564,21 +560,31 @@ namespace Melon.LocalClasses
                         Console.Write(controls.Pastel(MelonColor.BackgroundText));
                         Console.CursorTop = sTop;
                         Console.CursorLeft = sLeft;
-                        Console.WriteLine($"Scanned {MelonScanner.ScannedFiles.ToString().Pastel(MelonColor.Melon)} // {MelonScanner.FoundFiles.ToString().Pastel(MelonColor.Melon)} Found");
-                        MelonUI.DisplayProgressBar(MelonScanner.ScannedFiles, MelonScanner.FoundFiles, '#', '-');
+                        Console.WriteLine($"Scanned {ScannedFiles.ToString().Pastel(MelonColor.Melon)} // {FoundFiles.ToString().Pastel(MelonColor.Melon)} Found");
+                        MelonUI.DisplayProgressBar(ScannedFiles, FoundFiles, '#', '-');
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        string msg = $"Current Folder: {MelonScanner.CurrentFolder}";
+                        string msg = $"Time Left: {TimeSpan.FromMilliseconds((averageMilliseconds / ScannedFiles)*(FoundFiles - ScannedFiles)).ToString()}";
                         int max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"Current File: {MelonScanner.CurrentFile}";
+                        msg = $"Avg Time Per File: {TimeSpan.FromMilliseconds(averageMilliseconds / ScannedFiles)}";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"Status: {MelonScanner.CurrentStatus}";
+                        msg = $"Current Folder: {CurrentFolder}";
+                        max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
+                        Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
+                        Console.Write(new string(' ', Console.WindowWidth));
+                        Console.CursorLeft = 0;
+                        msg = $"Current File: {CurrentFile}";
+                        max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
+                        Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
+                        Console.Write(new string(' ', Console.WindowWidth));
+                        Console.CursorLeft = 0;
+                        msg = $"Status: {CurrentStatus}";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.WriteLine(new string(' ', Console.WindowWidth));

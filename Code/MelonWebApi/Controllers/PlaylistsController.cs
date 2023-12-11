@@ -105,6 +105,33 @@ namespace MelonWebApi.Controllers
 
             return "200";
         }
+        [HttpPost("updatePlaylist")]
+        public string updatePlaylist(string _id, List<string> trackIds)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+
+
+            //var str = queue._id.ToString();
+            var pFilter = Builders<Playlist>.Filter.Eq("_id", ObjectId.Parse(_id));
+            var playlist = PCollection.Find(pFilter).ToList()[0];
+            playlist.Tracks.Clear();
+            foreach (var id in trackIds)
+            {
+                var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
+                var trackDoc = TCollection.Find(trackFilter).ToList();
+                playlist.Tracks.Add(new ShortTrack(trackDoc[0]));
+
+            }
+            PCollection.ReplaceOne(pFilter, playlist);
+
+            return "200";
+        }
+
         [HttpGet("getPlaylists")]
         public List<Playlist> GetPlaylists()
         {
