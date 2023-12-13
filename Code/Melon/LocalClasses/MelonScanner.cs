@@ -57,8 +57,6 @@ namespace Melon.LocalClasses
                 Directory.CreateDirectory($"{StateManager.melonPath}/AlbumArts");
             }
 
-
-            //List<Thread> threads = new List<Thread>();
             int count = 0;
             foreach(var path in StateManager.MelonSettings.LibraryPaths)
             {
