@@ -71,19 +71,10 @@ namespace Melon.LocalClasses
 
             //List<Thread> threads = new List<Thread>();
             int count = 0;
-            var res = Parallel.ForEach(pathGroups, paths =>
+            foreach(var path in FoundPaths)
             {
-                Thread t = new Thread(() =>
-                {
-                    count++;
-                    foreach (var path in paths)
-                    {
-                        ScanFolder(path);
-                    }
-                    count--;
-                });
-                t.Start();
-            });
+                ScanFolder(path);
+            }
 
             while (count != 0)
             {
@@ -124,7 +115,7 @@ namespace Melon.LocalClasses
 
             var files = Directory.GetFiles(path);
             Stopwatch watch = new Stopwatch();
-            Parallel.ForEach(files, file =>
+            foreach(var file in files)
             {
                 watch.Restart();
                 try
@@ -474,7 +465,7 @@ namespace Melon.LocalClasses
                 watch.Stop();
                 averageMilliseconds += watch.ElapsedMilliseconds;
                 ScannedFiles++;
-            });
+            };
             
         }
         public static void IndexCollections()
