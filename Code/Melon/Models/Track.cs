@@ -22,6 +22,7 @@ namespace Melon.Models
         public string Duration { get; set; }
         public long PlayCount { get; set; }
         public int TrackArtCount { get; set; }
+        public DateTime LastModified { get; set; }
         public DateTime ReleaseDate { get; set; }
         public List<string> TrackGenres { get; set; }
         public List<ShortArtist> TrackArtists { get; set; }
