@@ -413,7 +413,7 @@ namespace Melon.LocalClasses
                             try { track.Channels = fileMetadata.Properties.AudioChannels.ToString(); } catch (Exception) { }
                             try { track.BitsPerSample = fileMetadata.Properties.BitsPerSample.ToString(); } catch (Exception) { }
                             try { track.Disc = fileMetadata.Tag.Disc; } catch (Exception) { }
-                            try { track.MusicBrianzID = fileMetadata.Tag.MusicBrainzTrackId; } catch (Exception) { }
+                            try { track.MusicBrainzID = fileMetadata.Tag.MusicBrainzTrackId; } catch (Exception) { }
                             try { track.ISRC = fileMetadata.Tag.ISRC; } catch (Exception) { }
                             try { track.Year = fileMetadata.Tag.Year.ToString(); } catch (Exception) { }
                             try { track.TrackArtCount = fileMetadata.Tag.Pictures.Length; } catch (Exception) { }

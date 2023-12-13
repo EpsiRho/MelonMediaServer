@@ -14,9 +14,9 @@ namespace MelonWebApi.Controllers
     [Route("api/[controller]")]
     public class DownloadController : ControllerBase
     {
-        private readonly ILogger<SearchController> _logger;
+        private readonly ILogger<DownloadController> _logger;
 
-        public DownloadController(ILogger<SearchController> logger)
+        public DownloadController(ILogger<DownloadController> logger)
         {
             _logger = logger;
         }

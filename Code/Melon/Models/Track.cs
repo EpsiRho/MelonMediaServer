@@ -14,12 +14,13 @@ namespace Melon.Models
         public string SampleRate { get; set; }
         public string Channels { get; set; }
         public string BitsPerSample { get; set; }
-        public string MusicBrianzID { get; set; }
+        public string MusicBrainzID { get; set; }
         public string ISRC { get; set; }
         public string Year { get; set; }
         public string TrackName { get; set; }
         public string Path { get; set; }
         public string Duration { get; set; }
+        public long PlayCount { get; set; }
         public int TrackArtCount { get; set; }
         public DateTime ReleaseDate { get; set; }
         public List<string> TrackGenres { get; set; }
