@@ -21,7 +21,54 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
-        //[Authorize(Roles = "Admin, User")]
+        [HttpGet("getTrack")]
+        public Track GetTrack(string _id)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+            var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(_id));
+
+            var trackDocs = TracksCollection.Find(trackFilter)
+                                            .ToList();
+
+            return trackDocs[0];
+        }
+        [HttpGet("getAlbum")]
+        public Album GetAlbum(string _id)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
+
+            var albumFilter = Builders<Album>.Filter.Eq("_id", new ObjectId(_id));
+
+            var albumDocs = AlbumsCollection.Find(albumFilter)
+                                            .ToList();
+
+            return albumDocs[0];
+        }
+        [HttpGet("getArtist")]
+        public Artist GetArtist(string _id)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
+
+            var artistFilter = Builders<Artist>.Filter.Eq("_id", new ObjectId(_id));
+
+            var ArtistDocs = ArtistCollection.Find(artistFilter)
+                                            .ToList();
+
+            return ArtistDocs[0];
+        }
         [HttpGet("searchTracks")]
         public IEnumerable<Track> SearchTracks(int page, int count, string trackName = "", string format = "", string bitrate = "", 
             string sampleRate = "", string channels = "", string bitsPerSample = "", string year = "", string[] genres = null)
