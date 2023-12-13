@@ -122,6 +122,7 @@ namespace Melon.LocalClasses
             // Setup Menu
             DisplayManager.MenuOptions.Add("Full Scan", MelonScanner.Scan);
             DisplayManager.MenuOptions.Add("Short Scan", MelonScanner.ScanShort);
+            DisplayManager.MenuOptions.Add("Reset DB", MelonScanner.ResetDB);
             //DisplayManager.MenuOptions.Add("Library View", () =>  { LibraryUI.LibrarySearch(); });
             DisplayManager.MenuOptions.Add("Settings", SettingsUI.Settings);
             DisplayManager.MenuOptions.Add("Exit", () => Environment.Exit(0));

@@ -613,10 +613,41 @@ namespace Melon.LocalClasses
         }
 
         // UI
+        public static void ResetDB()
+        {
+            // Title
+            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Full Scan" });
+
+            // Description
+            Console.WriteLine($"This will remove all of the db entries.");
+            Console.WriteLine($"It shouldn't take long but will require you to rescan your files.");
+            Console.WriteLine($"Would you still like to reset?");
+            var input = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
+            switch (input)
+            {
+                case "Yes":
+                    var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
+
+                    var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
+                    TracksCollection.DeleteMany(Builders<Track>.Filter.Empty);
+
+                    var ArtistCollection = NewMelonDB.GetCollection<Artist>("Artists");
+                    ArtistCollection.DeleteMany(Builders<Artist>.Filter.Empty);
+
+                    var AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");
+                    AlbumCollection.DeleteMany(Builders<Album>.Filter.Empty);
+
+                    var failedCollection = NewMelonDB.GetCollection<FailedFiles>("FailedFiles");
+                    failedCollection.DeleteMany(Builders<FailedFiles>.Filter.Empty);
+                    break;
+                case "No":
+                    return;
+            }
+        }
         public static void Scan()
         {
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Scan" });
+            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Full Scan" });
 
             // Description
             Console.WriteLine($"This will start a scan of all saved paths and their subdirectories.");
@@ -640,7 +671,7 @@ namespace Melon.LocalClasses
         public static void ScanShort()
         {
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Scan" });
+            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Short Scan" });
 
             // Description
             Console.WriteLine($"The short scan will only scan recently updated files or files not already in the db.");
