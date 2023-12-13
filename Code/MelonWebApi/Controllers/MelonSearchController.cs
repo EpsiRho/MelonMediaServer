@@ -101,48 +101,34 @@ namespace MelonWebApi.Controllers
                                             .Limit(count)
                                             .ToList();
 
-            var newlist = new List<Track>();
-            foreach (var doc in trackDocs.ToList())
-            {
-                //Track t = BsonSerializer.Deserialize<Track>(doc);
-                newlist.Add(doc);
-            }
-            return newlist;
+            return trackDocs;
         }
         [HttpGet("searchAlbums")]
-        public IEnumerable<Track> SearchAlbums (int page, int count, string albumName = "", string publisher = "", string releaseType = "", string[] genres = null)
+        public IEnumerable<Album> SearchAlbums (int page, int count, string albumName = "", string publisher = "", string releaseType = "", string[] genres = null)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
-            var TracksCollection = mongoDatabase.GetCollection<Track>("Albums");
+            var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
 
-            var albumFilter = Builders<Track>.Filter.Regex("AlbumName", new BsonRegularExpression(albumName, "i"));
-            albumFilter = albumFilter & Builders<Track>.Filter.Regex("Publisher", new BsonRegularExpression(publisher, "i"));
-            albumFilter = albumFilter & Builders<Track>.Filter.Regex("ReleaseType", new BsonRegularExpression(releaseType, "i"));
+            var albumFilter = Builders<Album>.Filter.Regex("AlbumName", new BsonRegularExpression(albumName, "i"));
+            
+            albumFilter = albumFilter & Builders<Album>.Filter.Regex("Publisher", new BsonRegularExpression(publisher, "i"));
+            albumFilter = albumFilter & Builders<Album>.Filter.Regex("ReleaseType", new BsonRegularExpression(releaseType, "i"));
             if (genres != null)
             {
                 foreach (var genre in genres)
                 {
-                    albumFilter = albumFilter & Builders<Track>.Filter.Regex("AlbumGenres", new BsonRegularExpression(genre, "i"));
+                    albumFilter = albumFilter & Builders<Album>.Filter.Regex("AlbumGenres", new BsonRegularExpression(genre, "i"));
                 }
             }
-            //trackFilter = trackFilter & Builders<BsonDocument>.Filter.Eq("AlbumName", fileMetadata.Tag.Album);
-            //trackFilter = trackFilter & Builders<BsonDocument>.Filter.Eq("TrackName", fileMetadata.Tag.Title);
 
-            var trackDocs = TracksCollection.Find(albumFilter)
+            var albumDocs = AlbumCollection.Find(albumFilter)
                                             .Skip(page * count)
                                             .Limit(count)
                                             .ToList();
-
-            var newlist = new List<Track>();
-            foreach (var doc in trackDocs.ToList())
-            {
-                //Track t = BsonSerializer.Deserialize<Track>(doc);
-                newlist.Add(doc);
-            }
-            return newlist;
+            return albumDocs;
         }
         [HttpGet("artists")]
         public IEnumerable<Artist> GetArtists(string ArtistName, int page, int count)
@@ -160,12 +146,7 @@ namespace MelonWebApi.Controllers
                                             .Limit(count)
                                             .ToList();
 
-            var newlist = new List<Artist>();
-            foreach (var doc in ArtistDocs.ToList())
-            {
-                newlist.Add(doc);
-            }
-            return newlist;
+            return ArtistDocs;
         }
 
     }

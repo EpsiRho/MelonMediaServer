@@ -343,11 +343,41 @@ namespace Melon.LocalClasses
                             album.AlbumId = AlbumId.ToString();
                             album.AlbumName = fileMetadata.Tag.Album;
                             try { album.Bio = ""; } catch (Exception) { }
-                            try { album.TotalDiscs = fileMetadata.Tag.DiscCount; } catch (Exception) { }
-                            try { album.TotalTracks = fileMetadata.Tag.TrackCount; } catch (Exception) { }
-                            try { album.Publisher = fileMetadata.Tag.Publisher; } catch (Exception) { }
-                            try { album.ReleaseStatus = fileMetadata.Tag.MusicBrainzReleaseStatus; } catch (Exception) { }
-                            try { album.ReleaseType = fileMetadata.Tag.MusicBrainzReleaseType; } catch (Exception) { }
+                            try { album.TotalDiscs = fileMetadata.Tag.DiscCount; } catch (Exception) { album.TotalDiscs = 1; }
+                            try { album.TotalTracks = fileMetadata.Tag.TrackCount; } catch (Exception) { album.TotalTracks = 0; }
+                            try 
+                            {
+                                if (fileMetadata.Tag.Publisher == null)
+                                {
+                                    album.Publisher = "";
+                                }
+                                else
+                                {
+                                    album.Publisher = fileMetadata.Tag.Publisher;
+                                }
+                            } catch (Exception) { album.Publisher = ""; }
+                            try 
+                            {
+                                if (fileMetadata.Tag.MusicBrainzReleaseStatus == null)
+                                {
+                                    album.ReleaseStatus = "";
+                                }
+                                else
+                                {
+                                    album.ReleaseStatus = fileMetadata.Tag.MusicBrainzReleaseStatus;
+                                }
+                            } catch (Exception) { album.ReleaseStatus = ""; }
+                            try 
+                            { 
+                                if (fileMetadata.Tag.MusicBrainzReleaseType == null)
+                                {
+                                    album.ReleaseType = "";
+                                }
+                                else
+                                {
+                                    album.ReleaseType = fileMetadata.Tag.MusicBrainzReleaseType;
+                                }
+                            } catch (Exception) { album.ReleaseType = ""; }
                             try { album.ReleaseDate = DateTime.Parse(fileMetadata.Tag.Year.ToString()); } catch (Exception) { }
                             album.AlbumArtPaths = new List<string>();
                             album.Tracks = new List<ShortTrack>();
@@ -449,21 +479,62 @@ namespace Melon.LocalClasses
                         track._id = TrackId;
                         track.TrackId = TrackId.ToString();
                         track.LastModified = System.IO.File.GetLastWriteTime(file).ToUniversalTime();
-                        try { track.TrackName = fileMetadata.Tag.Title; } catch (Exception) { }
+                        try 
+                        {
+                            if (fileMetadata.Tag.Title == null)
+                            {
+                                track.TrackName = fileMetadata.Tag.Title;
+                            }
+                            else
+                            {
+                                track.TrackName = "Ukknown";
+                            }
+                        } catch (Exception) { track.TrackName = "Uknown"; }
                         try { track.Album = sAlbum; } catch (Exception) { }
                         try { track.Path = file; } catch (Exception) { }
-                        try { track.Position = fileMetadata.Tag.Track; } catch (Exception) { }
-                        try { track.Format = Path.GetExtension(file); } catch (Exception) { }
-                        try { track.Bitrate = fileMetadata.Properties.AudioBitrate.ToString(); } catch (Exception) { }
-                        try { track.SampleRate = fileMetadata.Properties.AudioSampleRate.ToString(); } catch (Exception) { }
-                        try { track.Channels = fileMetadata.Properties.AudioChannels.ToString(); } catch (Exception) { }
-                        try { track.BitsPerSample = fileMetadata.Properties.BitsPerSample.ToString(); } catch (Exception) { }
-                        try { track.Disc = fileMetadata.Tag.Disc; } catch (Exception) { }
-                        try { track.MusicBrainzID = fileMetadata.Tag.MusicBrainzTrackId; } catch (Exception) { }
-                        try { track.ISRC = fileMetadata.Tag.ISRC; } catch (Exception) { }
-                        try { track.Year = fileMetadata.Tag.Year.ToString(); } catch (Exception) { }
-                        try { track.TrackArtCount = fileMetadata.Tag.Pictures.Length; } catch (Exception) { }
-                        try { track.Duration = fileMetadata.Properties.Duration.ToString(); } catch (Exception) { }
+                        try { track.Position = fileMetadata.Tag.Track; } catch (Exception) { track.Position = 0; }
+                        try { track.Format = Path.GetExtension(file); } catch (Exception) { track.Format = ""; }
+                        try { track.Bitrate = fileMetadata.Properties.AudioBitrate.ToString(); } catch (Exception) { track.Bitrate = ""; }
+                        try { track.SampleRate = fileMetadata.Properties.AudioSampleRate.ToString(); } catch (Exception) { track.SampleRate = ""; }
+                        try { track.Channels = fileMetadata.Properties.AudioChannels.ToString(); } catch (Exception) { track.Channels = ""; }
+                        try { track.BitsPerSample = fileMetadata.Properties.BitsPerSample.ToString(); } catch (Exception) { track.BitsPerSample = ""; }
+                        try { track.Disc = fileMetadata.Tag.Disc; } catch (Exception) { track.Disc = 1; }
+                        try 
+                        {
+                            if (fileMetadata.Tag.MusicBrainzTrackId == null)
+                            {
+                                track.MusicBrainzID = "";
+                            }
+                            else
+                            {
+                                track.MusicBrainzID = fileMetadata.Tag.MusicBrainzTrackId;
+                            }
+                            
+                        } catch (Exception) { track.MusicBrainzID = ""; }
+                        try 
+                        {
+                            if (fileMetadata.Tag.ISRC == null)
+                            {
+                                track.ISRC = "";
+                            }
+                            else
+                            {
+                                track.ISRC = fileMetadata.Tag.ISRC;
+                            }
+                        } catch (Exception) { track.ISRC = ""; }
+                        try 
+                        {
+                            if (fileMetadata.Tag.Year == null)
+                            {
+                                track.Year = "";
+                            }
+                            else
+                            {
+                                track.Year = fileMetadata.Tag.Year.ToString();
+                            }
+                        } catch (Exception) { track.Year = ""; }
+                        try { track.TrackArtCount = fileMetadata.Tag.Pictures.Length; } catch (Exception) { track.TrackArtCount = 0; }
+                        try { track.Duration = fileMetadata.Properties.Duration.ToString(); } catch (Exception) { track.Duration = ""; }
                         try { track.TrackArtists = new List<ShortArtist>(); } catch (Exception) { }
                         try { track.TrackGenres = new List<string>(); } catch (Exception) { }
                         try { track.ReleaseDate = DateTime.Parse(fileMetadata.Tag.Year.ToString()); } catch (Exception) { }
