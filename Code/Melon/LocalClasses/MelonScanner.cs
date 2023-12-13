@@ -57,21 +57,10 @@ namespace Melon.LocalClasses
                 Directory.CreateDirectory($"{StateManager.melonPath}/AlbumArts");
             }
 
-            FoundPaths = new List<string>();
-            foreach (var path in StateManager.MelonSettings.LibraryPaths)
-            {
-                FoundPaths.AddRange(Directory.GetDirectories(path));
-                ScanFolderCounter(path);
-            }
-
-            var pathGroups = FoundPaths.Select((x, i) => new { Index = i, Value = x })
-                      .GroupBy(x => x.Index / (FoundPaths.Count()/4))
-                      .Select(x => x.Select(v => v.Value).ToList())
-                      .ToList();
 
             //List<Thread> threads = new List<Thread>();
             int count = 0;
-            foreach(var path in FoundPaths)
+            foreach(var path in StateManager.MelonSettings.LibraryPaths)
             {
                 ScanFolder(path);
             }
