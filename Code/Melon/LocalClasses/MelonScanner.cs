@@ -171,6 +171,7 @@ namespace Melon.LocalClasses
                     ShortAlbum sAlbum = new ShortAlbum()
                     {
                         _id = AlbumId,
+                        AlbumId = AlbumId.ToString(),
                         AlbumName = fileMetadata.Tag.Album,
                         ReleaseType = fileMetadata.Tag.MusicBrainzReleaseType
                     };
@@ -179,6 +180,7 @@ namespace Melon.LocalClasses
                     ShortTrack sTrack = new ShortTrack()
                     {
                         _id = TrackId,
+                        TrackId = TrackId.ToString(),
                         Album = sAlbum,
                         Duration = fileMetadata.Properties.Duration.ToString(),
                         Position = fileMetadata.Tag.Track,
@@ -202,6 +204,7 @@ namespace Melon.LocalClasses
                                 Bio = "",
                                 ArtistPfp = "",
                                 _id = ArtistIds[count],
+                                ArtistId = ArtistIds[count].ToString(),
                                 Releases = new List<ShortAlbum>(),
                                 Genres = new List<string>(),
                                 SeenOn = new List<ShortAlbum>(),
@@ -222,7 +225,7 @@ namespace Melon.LocalClasses
 
                             for (int i = 0; i < trackArtists.Count(); i++)
                             {
-                                sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistName = trackArtists[i] });
+                                sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistId = ArtistIds[i].ToString(), ArtistName = trackArtists[i] });
                             }
                             artistDoc.Tracks.Add(sTrack);
 
@@ -298,6 +301,7 @@ namespace Melon.LocalClasses
                             CurrentStatus = $"Adding {fileMetadata.Tag.Album}";
                             Album album = new Album();
                             album._id = AlbumId;
+                            album.AlbumId = AlbumId.ToString();
                             album.AlbumName = fileMetadata.Tag.Album;
                             try { album.Bio = ""; } catch (Exception) { }
                             try { album.TotalDiscs = fileMetadata.Tag.DiscCount; } catch (Exception) { }
@@ -328,7 +332,7 @@ namespace Melon.LocalClasses
                             {
                                 try
                                 {
-                                    albumDoc.AlbumArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], _id = ArtistIds[i] });
+                                    albumDoc.AlbumArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], ArtistId = ArtistIds[i].ToString(), _id = ArtistIds[i] });
                                 }
                                 catch (Exception e)
                                 {
@@ -341,7 +345,7 @@ namespace Melon.LocalClasses
                             }
                             for (int i = 0; i < trackArtists.Count(); i++)
                             {
-                                sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistName = trackArtists[i] });
+                                sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistId = ArtistIds[i].ToString(), ArtistName = trackArtists[i] });
                             }
                             albumDoc.Tracks.Add(sTrack);
                             try
@@ -362,7 +366,7 @@ namespace Melon.LocalClasses
                                              select release;
                                 if (aQuery.Count() == 0)
                                 {
-                                    var arrayUpdateRelease = Builders<Album>.Update.Push("AlbumArtists", new ShortArtist() { _id = ArtistIds[i], ArtistName = trackArtists[i] });
+                                    var arrayUpdateRelease = Builders<Album>.Update.Push("AlbumArtists", new ShortArtist() { _id = ArtistIds[i], ArtistId = ArtistIds[i].ToString(), ArtistName = trackArtists[i] });
                                     AlbumCollection.UpdateOne(albumFilter, arrayUpdateRelease);
                                 }
                             }
@@ -381,7 +385,7 @@ namespace Melon.LocalClasses
                             {
                                 for (int i = 0; i < trackArtists.Count(); i++)
                                 {
-                                    sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistName = trackArtists[i] });
+                                    sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistId = ArtistIds[i].ToString(), ArtistName = trackArtists[i] });
                                 }
                                 var arrayUpdateTracks = Builders<Album>.Update.Push("Tracks", sTrack);
                                 AlbumCollection.UpdateOne(albumFilter, arrayUpdateTracks);
@@ -398,6 +402,7 @@ namespace Melon.LocalClasses
                         {
                             Track track = new Track();
                             track._id = TrackId;
+                            track.TrackId = TrackId.ToString();
                             try { track.TrackName = fileMetadata.Tag.Title; } catch (Exception) { }
                             try { track.Album = sAlbum; } catch (Exception) { }
                             try { track.Path = file; } catch (Exception) { }
@@ -419,7 +424,7 @@ namespace Melon.LocalClasses
 
                             for (int i = 0; i < trackArtists.Count(); i++)
                             {
-                                track.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistName = trackArtists[i] });
+                                track.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistId = ArtistIds[i].ToString(), ArtistName = trackArtists[i] });
                             }
                             foreach (var genre in trackGenres)
                             {
