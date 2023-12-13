@@ -118,8 +118,7 @@ namespace Melon.LocalClasses
                         !filename.EndsWith(".wav") && !filename.EndsWith(".mp3") && !filename.EndsWith(".m4a"))
                     {
                         ScannedFiles++;
-                        //continue;
-                        return;
+                        continue;
                     }
 
                     CurrentStatus = "Preparing Artist and Genre tags";
@@ -394,8 +393,6 @@ namespace Melon.LocalClasses
                         var trackFilter = Builders<Track>.Filter.Empty;
 
                         trackFilter = trackFilter & Builders<Track>.Filter.Eq("Path", file);
-                        trackFilter = trackFilter & Builders<Track>.Filter.Eq("AlbumName", fileMetadata.Tag.Album);
-                        trackFilter = trackFilter & Builders<Track>.Filter.Eq("TrackName", fileMetadata.Tag.Title);
                         var trackDoc = TracksCollection.Find(trackFilter).FirstOrDefault();
                         if (trackDoc == null)
                         {
