@@ -21,6 +21,8 @@ namespace Melon.Models
         public string Path { get; set; }
         public string Duration { get; set; }
         public long PlayCount { get; set; }
+        public long SkipCount { get; set; }
+        public double Rating { get; set; }
         public int TrackArtCount { get; set; }
         public DateTime LastModified { get; set; }
         public DateTime ReleaseDate { get; set; }

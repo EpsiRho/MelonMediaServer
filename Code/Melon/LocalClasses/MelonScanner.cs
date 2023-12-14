@@ -66,7 +66,7 @@ namespace Melon.LocalClasses
             int count = 0;
             foreach(var path in StateManager.MelonSettings.LibraryPaths)
             {
-                ScanFolder(path, true);
+                ScanFolder(path, skip);
             }
 
             while (count != 0)
@@ -229,6 +229,7 @@ namespace Melon.LocalClasses
                                 Bio = "",
                                 ArtistPfp = "",
                                 _id = ArtistIds[count],
+                                Rating = 0,
                                 ArtistId = ArtistIds[count].ToString(),
                                 Releases = new List<ShortAlbum>(),
                                 Genres = new List<string>(),
@@ -383,6 +384,11 @@ namespace Melon.LocalClasses
                             album.Tracks = new List<ShortTrack>();
                             album.AlbumArtists = new List<ShortArtist>();
                             album.AlbumGenres = new List<string>();
+                            try
+                            {
+                                album.Rating = 0;
+                            }
+                            catch (Exception) { }
                             albumDoc = album;
 
 
@@ -483,11 +489,11 @@ namespace Melon.LocalClasses
                         {
                             if (fileMetadata.Tag.Title == null)
                             {
-                                track.TrackName = fileMetadata.Tag.Title;
+                                track.TrackName = "Uknown";
                             }
                             else
                             {
-                                track.TrackName = "Ukknown";
+                                track.TrackName = fileMetadata.Tag.Title;
                             }
                         } catch (Exception) { track.TrackName = "Uknown"; }
                         try { track.Album = sAlbum; } catch (Exception) { }
@@ -533,6 +539,11 @@ namespace Melon.LocalClasses
                                 track.Year = fileMetadata.Tag.Year.ToString();
                             }
                         } catch (Exception) { track.Year = ""; }
+                        try
+                        {
+                            track.Rating = 0;
+                        }
+                        catch (Exception) {  }
                         try { track.TrackArtCount = fileMetadata.Tag.Pictures.Length; } catch (Exception) { track.TrackArtCount = 0; }
                         try { track.Duration = fileMetadata.Properties.Duration.ToString(); } catch (Exception) { track.Duration = ""; }
                         try { track.TrackArtists = new List<ShortArtist>(); } catch (Exception) { }
@@ -616,7 +627,7 @@ namespace Melon.LocalClasses
         public static void ResetDB()
         {
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Full Scan" });
+            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Database Reset" });
 
             // Description
             Console.WriteLine($"This will remove all of the db entries.");
