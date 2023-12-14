@@ -60,10 +60,10 @@ namespace MelonWebApi.Controllers
             //if (fileStream == null)
             //    return NotFound(); // returns a NotFoundResult with Status404NotFound response.
 
-            TagLib.File file = null;
+            ATL.Track file = null;
             try
             {
-                file = TagLib.File.Create(track.Path);
+                file = new ATL.Track(track.Path);
             }
             catch (Exception)
             {
@@ -72,11 +72,11 @@ namespace MelonWebApi.Controllers
             try 
             { 
                 // Load image data in MemoryStream
-                TagLib.IPicture pic = file.Tag.Pictures[index];
-                MemoryStream ms = new MemoryStream(pic.Data.Data);
+                var pic = file.EmbeddedPictures[index];
+                MemoryStream ms = new MemoryStream(pic.PictureData);
                 ms.Seek(0, SeekOrigin.Begin);
 
-                return File(ms, "image/jpeg");
+                return File(ms, $"image/{pic.MimeType}");
                 
 
             }

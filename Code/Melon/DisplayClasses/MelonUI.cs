@@ -15,7 +15,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
 using Microsoft.IdentityModel.Tokens;
-using TagLib.Ape;
 using static Melon.LocalClasses.StateManager;
 
 namespace Melon.Classes

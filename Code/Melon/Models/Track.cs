@@ -7,8 +7,8 @@ namespace Melon.Models
         public ObjectId _id { get; set; }
         public string TrackId { get; set; }
         public ShortAlbum Album { get; set; }
-        public uint Position { get; set; }
-        public uint Disc { get; set; }
+        public int Position { get; set; }
+        public int Disc { get; set; }
         public string Format { get; set; }
         public string Bitrate { get; set; }
         public string SampleRate { get; set; }
@@ -22,7 +22,7 @@ namespace Melon.Models
         public string Duration { get; set; }
         public long PlayCount { get; set; }
         public long SkipCount { get; set; }
-        public double Rating { get; set; }
+        public float Rating { get; set; }
         public int TrackArtCount { get; set; }
         public DateTime LastModified { get; set; }
         public DateTime ReleaseDate { get; set; }

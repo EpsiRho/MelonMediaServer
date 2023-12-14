@@ -7,7 +7,8 @@ namespace Melon.Models
         public ObjectId _id { get; set; }
         public string TrackId { get; set; }
         public ShortAlbum Album { get; set; }
-        public uint Position { get; set; }
+        public int Position { get; set; }
+        public int Disc { get; set; }
         public string TrackName { get; set; }
         public string Duration { get; set; }
         public int TrackArtCount { get; set; }

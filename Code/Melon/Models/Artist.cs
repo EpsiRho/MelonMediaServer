@@ -10,7 +10,7 @@ namespace Melon.Models
         public string ArtistName { get; set; }
         public string Bio { get; set; }
         public long PlayCount { get; set; }
-        public double Rating { get; set; }
+        public float Rating { get; set; }
         public List<string> ArtistArtPaths { get; set; }
         public List<string> ArtistBannerPaths { get; set; }
         public List<string> Genres { get; set; }
