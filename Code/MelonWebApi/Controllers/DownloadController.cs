@@ -76,7 +76,7 @@ namespace MelonWebApi.Controllers
                 MemoryStream ms = new MemoryStream(pic.PictureData);
                 ms.Seek(0, SeekOrigin.Begin);
 
-                return File(ms, $"image/{pic.MimeType}");
+                return File(ms, $"image/jpeg");
                 
 
             }

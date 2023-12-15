@@ -187,7 +187,7 @@ namespace Melon.LocalClasses
                         AlbumName = fileMetadata.Album,
                     };
                     try { sAlbum.ReleaseType = fileMetadata.AdditionalFields["RELEASETYPE"]; } catch (Exception) { sAlbum.ReleaseType = ""; }
-                    try { sAlbum.ReleaseDate = DateTime.Parse(fileMetadata.Year.ToString()); } catch (Exception) { } //TODO fix this
+                    try { sAlbum.ReleaseDate = fileMetadata.Date.Value; } catch (Exception) { }
 
                     ShortTrack sTrack = new ShortTrack()
                     {
@@ -373,7 +373,7 @@ namespace Melon.LocalClasses
                                     album.ReleaseType = fileMetadata.AdditionalFields["RELEASETYPE"];
                                 }
                             } catch (Exception) { album.ReleaseType = ""; }
-                            try { album.ReleaseDate = DateTime.Parse(fileMetadata.Year.Value.ToString()); } catch (Exception) { }
+                            try { album.ReleaseDate = fileMetadata.Date.Value; } catch (Exception) { }
                             album.AlbumArtPaths = new List<string>();
                             album.Tracks = new List<ShortTrack>();
                             album.AlbumArtists = new List<ShortArtist>();
@@ -553,7 +553,7 @@ namespace Melon.LocalClasses
                         try { track.Duration = fileMetadata.Duration.ToString(); } catch (Exception) { track.Duration = ""; }
                         try { track.TrackArtists = new List<ShortArtist>(); } catch (Exception) { }
                         try { track.TrackGenres = new List<string>(); } catch (Exception) { }
-                        try { track.ReleaseDate = DateTime.Parse(fileMetadata.Year.Value.ToString()); } catch (Exception) { }
+                        try { track.ReleaseDate = fileMetadata.Date.Value; } catch (Exception) { }
 
                         for (int i = 0; i < trackArtists.Count(); i++)
                         {
