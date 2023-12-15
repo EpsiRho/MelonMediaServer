@@ -11,7 +11,7 @@ using Melon.LocalClasses;
 namespace MelonWebApi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/download")]
     public class DownloadController : ControllerBase
     {
         private readonly ILogger<DownloadController> _logger;
@@ -42,7 +42,7 @@ namespace MelonWebApi.Controllers
             string filename = Path.GetFileName(track.Path);
             return File(fileStream, "application/octet-stream", $"{filename}"); 
         }
-        [HttpGet("trackArt")]
+        [HttpGet("track-art")]
         public async Task<IActionResult> DownloadTrackArt(string _id, int index)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -82,12 +82,12 @@ namespace MelonWebApi.Controllers
             }
             catch(Exception)
             {
-                // TODO: Handle tracks with no image
+                // TODO: Handle tracks with no image provide default image
                 return NotFound();
             }
             
         }
-        [HttpGet("albumArt")]
+        [HttpGet("album-art")]
         public async Task<IActionResult> DownloadAlbumArt(string _id, int index)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);

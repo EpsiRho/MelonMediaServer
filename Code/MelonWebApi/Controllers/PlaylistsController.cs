@@ -11,7 +11,7 @@ using Melon.Models;
 namespace MelonWebApi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/playlists")]
     public class PlaylistsController : ControllerBase
     {
         private readonly ILogger<PlaylistsController> _logger;
@@ -21,7 +21,7 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
-        [HttpPost("createPlaylist")]
+        [HttpPost("create")]
         public string CreatePlaylist(string name, string description = "", string artworkPath = "", List<string> trackIds = null)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -56,7 +56,7 @@ namespace MelonWebApi.Controllers
             
             return playlist._id.ToString();
         }
-        [HttpPost("addToPlaylist")]
+        [HttpPost("add-tracks")]
         public string AddToPlaylist(string _id, List<string> trackIds)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -80,7 +80,7 @@ namespace MelonWebApi.Controllers
 
             return "200";
         }
-        [HttpPost("removeFromPlaylist")]
+        [HttpPost("remove-tracks")]
         public string RemoveFromPlaylist(string _id, List<string> trackIds)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -105,8 +105,8 @@ namespace MelonWebApi.Controllers
 
             return "200";
         }
-        [HttpPost("updatePlaylist")]
-        public string updatePlaylist(string _id, List<string> trackIds)
+        [HttpPost("update")]
+        public string updatePlaylist(Playlist playlist)
         {
             try
             {
@@ -119,16 +119,7 @@ namespace MelonWebApi.Controllers
 
 
                 //var str = queue._id.ToString();
-                var pFilter = Builders<Playlist>.Filter.Eq("_id", ObjectId.Parse(_id));
-                var playlist = PCollection.Find(pFilter).ToList()[0];
-                playlist.Tracks.Clear();
-                foreach (var id in trackIds)
-                {
-                    var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
-                    var trackDoc = TCollection.Find(trackFilter).ToList();
-                    playlist.Tracks.Add(new ShortTrack(trackDoc[0]));
-
-                }
+                var pFilter = Builders<Playlist>.Filter.Eq("_id", playlist._id);
                 PCollection.ReplaceOne(pFilter, playlist);
             }
             catch (Exception)
@@ -140,7 +131,7 @@ namespace MelonWebApi.Controllers
             return "200";
         }
 
-        [HttpGet("getPlaylists")]
+        [HttpGet("search")]
         public List<Playlist> GetPlaylists()
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -153,7 +144,7 @@ namespace MelonWebApi.Controllers
 
             return pDoc;
         }
-        [HttpGet("getPlaylistById")]
+        [HttpGet("get")]
         public Playlist GetPlaylistById(string _id)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);

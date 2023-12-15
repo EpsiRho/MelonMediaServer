@@ -6,6 +6,7 @@ namespace Melon.Models
     {
         public ObjectId _id { get; set; }
         public string Name { get; set; }
+        public int CurPosition { get; set; }
         public List<Track> Tracks { get; set; }
     }
 }

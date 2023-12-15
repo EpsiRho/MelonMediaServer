@@ -11,7 +11,7 @@ using Melon.Models;
 namespace MelonWebApi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/queues")]
     public class QueuesController : ControllerBase
     {
         private readonly ILogger<QueuesController> _logger;
@@ -21,7 +21,7 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
-        [HttpPost("createQueueFromIDs")]
+        [HttpPost("create")]
         public string CreateQueueFromIDs(List<string> _ids, string name)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -53,7 +53,7 @@ namespace MelonWebApi.Controllers
 
             return $"{queue._id}";
         }
-        [HttpGet("getQueue")]
+        [HttpGet("get")]
         public PlayQueue CreateQueueFromIDs(string _id)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
