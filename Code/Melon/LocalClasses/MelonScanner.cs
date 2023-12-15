@@ -187,7 +187,7 @@ namespace Melon.LocalClasses
                         AlbumName = fileMetadata.Album,
                     };
                     try { sAlbum.ReleaseType = fileMetadata.AdditionalFields["RELEASETYPE"]; } catch (Exception) { sAlbum.ReleaseType = ""; }
-                    try { sAlbum.ReleaseDate = DateTime.Parse(fileMetadata.Year.ToString()); } catch (Exception) { }
+                    try { sAlbum.ReleaseDate = DateTime.Parse(fileMetadata.Year.ToString()); } catch (Exception) { } //TODO fix this
 
                     ShortTrack sTrack = new ShortTrack()
                     {
@@ -424,6 +424,10 @@ namespace Melon.LocalClasses
                         }
                         else
                         {
+                            sTrack.Album._id = albumDoc._id;
+                            sTrack.Album.AlbumId = albumDoc.AlbumId;
+                            sAlbum._id = albumDoc._id;
+                            sAlbum.AlbumId = albumDoc.AlbumId;
                             if (trackDoc != null)
                             {
                                 foreach (var art in trackDoc.TrackArtists)
@@ -456,7 +460,7 @@ namespace Melon.LocalClasses
                             if (tQuery.Count() == 0)
                             {
                                 var query = (from t in albumDoc.Tracks
-                                             where t.Path == path
+                                             where t.Path == file
                                              select t).FirstOrDefault();
                                 if (query != null)
                                 {

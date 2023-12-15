@@ -131,7 +131,7 @@ namespace MelonWebApi.Controllers
             return albumDocs;
         }
         [HttpGet("artists")]
-        public IEnumerable<Artist> GetArtists(string ArtistName, int page, int count)
+        public IEnumerable<Artist> SearchArtists(string ArtistName, int page, int count)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
