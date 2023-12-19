@@ -15,7 +15,7 @@
 
 ## api/stats/
 
-- [ ] log-play - Logs a play into the play count of a track, it's album, and it's artist
+- [x] log-play - Logs a play into the play count of a track, it's album, and it's artist
 - [ ] top-tracks - Get the top tracks
 - [ ] top-albums - Get the top albums
 - [ ] top-artists - Get the top artists
@@ -26,13 +26,9 @@
 
 ## api/search/
 
-- [ ] tracks - Search for tracks with parameters
-  - [ ] Search by play count > or <
-  - [ ] Sorting
-- [ ] albums - Search for albums with parameters
-  - [ ] Sorting
-- [ ] artists - Search for artists with parameters
-  - [ ] Sorting
+- [x] tracks - Search for tracks with parameters
+- [x] albums - Search for albums with parameters
+- [x] artists - Search for artists with parameters
 
 ## api/db/
 

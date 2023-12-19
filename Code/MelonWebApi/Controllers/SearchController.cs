@@ -23,7 +23,9 @@ namespace MelonWebApi.Controllers
 
         [HttpGet("tracks")]
         public IEnumerable<Track> SearchTracks(int page, int count, string trackName = "", string format = "", string bitrate = "", 
-            string sampleRate = "", string channels = "", string bitsPerSample = "", string year = "", string[] genres = null)
+                                               string sampleRate = "", string channels = "", string bitsPerSample = "", string year = "", 
+                                               long ltPlayCount = 0, long gtPlayCount = 0, long ltSkipCount = 0, long gtSkipCount = 0, int ltYear = 0, int ltMonth = 0, int ltDay = 0,
+                                               int gtYear = 0, int gtMonth = 0, int gtDay = 0, long ltRating = 0, long gtRating = 0, string[] genres = null)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -38,6 +40,53 @@ namespace MelonWebApi.Controllers
                 trackFilter = trackFilter & Builders<Track>.Filter.Regex("Channels", new BsonRegularExpression(channels, "i"));
                 trackFilter = trackFilter & Builders<Track>.Filter.Regex("BitsPerSample", new BsonRegularExpression(bitsPerSample, "i"));
                 trackFilter = trackFilter & Builders<Track>.Filter.Regex("Year", new BsonRegularExpression(year, "i"));
+
+            // Play Count
+            if (gtPlayCount != 0)
+            {
+                trackFilter = trackFilter & Builders<Track>.Filter.Gt("PlayCount", gtPlayCount);
+            }
+            
+            if (ltPlayCount != 0)
+            {
+                trackFilter = trackFilter & Builders<Track>.Filter.Lt("PlayCount", ltPlayCount);
+            }
+
+            // Skip Count
+            if (gtSkipCount != 0)
+            {
+                trackFilter = trackFilter & Builders<Track>.Filter.Gt("SkipCount", gtSkipCount);
+            }
+            
+            if (ltSkipCount != 0)
+            {
+                trackFilter = trackFilter & Builders<Track>.Filter.Lt("SkipCount", ltSkipCount);
+            }
+
+            // Ratings
+            if (gtRating != 0)
+            {
+                trackFilter = trackFilter & Builders<Track>.Filter.Gt("Rating", gtRating);
+            }
+
+            if (ltRating != 0)
+            {
+                trackFilter = trackFilter & Builders<Track>.Filter.Lt("Rating", ltRating);
+            }
+
+            // Date
+            if (ltYear != 0 && ltMonth != 0 && ltDay != 0)
+            {
+                DateTime ltDateTime = new DateTime(ltYear, ltMonth, ltDay);
+                trackFilter = trackFilter & Builders<Track>.Filter.Lt(x => x.ReleaseDate, ltDateTime);
+            }
+
+            if (gtYear != 0 && gtMonth != 0 && gtDay != 0)
+            {
+                DateTime gtDateTime = new DateTime(gtYear, gtMonth, gtDay);
+                trackFilter = trackFilter & Builders<Track>.Filter.Gt(x => x.ReleaseDate, gtDateTime);
+            }
+
             if (genres != null)
             {
                 foreach (var genre in genres)
@@ -45,8 +94,6 @@ namespace MelonWebApi.Controllers
                     trackFilter = trackFilter & Builders<Track>.Filter.Regex("TrackGenres", new BsonRegularExpression(genre, "i"));
                 }
             }
-            //trackFilter = trackFilter & Builders<BsonDocument>.Filter.Eq("AlbumName", fileMetadata.Tag.Album);
-            //trackFilter = trackFilter & Builders<BsonDocument>.Filter.Eq("TrackName", fileMetadata.Tag.Title);
 
             var trackDocs = TracksCollection.Find(trackFilter)
                                             .Skip(page * count)
@@ -56,7 +103,9 @@ namespace MelonWebApi.Controllers
             return trackDocs;
         }
         [HttpGet("albums")]
-        public IEnumerable<Album> SearchAlbums (int page, int count, string albumName = "", string publisher = "", string releaseType = "", string[] genres = null)
+        public IEnumerable<Album> SearchAlbums (int page, int count, string albumName = "", string publisher = "", string releaseType = "", string releaseStatus = "",
+                                                long ltPlayCount = 0, long gtPlayCount = 0, long ltRating = 0, long gtRating = 0, int ltYear = 0, int ltMonth = 0, int ltDay = 0,
+                                                int gtYear = 0, int gtMonth = 0, int gtDay = 0, string[] genres = null)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -68,6 +117,44 @@ namespace MelonWebApi.Controllers
             
             albumFilter = albumFilter & Builders<Album>.Filter.Regex("Publisher", new BsonRegularExpression(publisher, "i"));
             albumFilter = albumFilter & Builders<Album>.Filter.Regex("ReleaseType", new BsonRegularExpression(releaseType, "i"));
+            albumFilter = albumFilter & Builders<Album>.Filter.Regex("ReleaseStatus", new BsonRegularExpression(releaseStatus, "i"));
+            
+
+            // Play Count
+            if (gtPlayCount != 0)
+            {
+                albumFilter = albumFilter & Builders<Album>.Filter.Gt("PlayCount", gtPlayCount);
+            }
+
+            if (ltPlayCount != 0)
+            {
+                albumFilter = albumFilter & Builders<Album>.Filter.Lt("PlayCount", ltPlayCount);
+            }
+
+            // Ratings
+            if (gtRating != 0)
+            {
+                albumFilter = albumFilter & Builders<Album>.Filter.Gt("Rating", gtRating);
+            }
+
+            if (ltRating != 0)
+            {
+                albumFilter = albumFilter & Builders<Album>.Filter.Lt("Rating", ltRating);
+            }
+
+            // Date
+            if (ltYear != 0 && ltMonth != 0 && ltDay != 0)
+            {
+                DateTime ltDateTime = new DateTime(ltYear, ltMonth, ltDay);
+                albumFilter = albumFilter & Builders<Album>.Filter.Lt(x => x.ReleaseDate, ltDateTime);
+            }
+
+            if (gtYear != 0 && gtMonth != 0 && gtDay != 0)
+            {
+                DateTime gtDateTime = new DateTime(gtYear, gtMonth, gtDay);
+                albumFilter = albumFilter & Builders<Album>.Filter.Gt(x => x.ReleaseDate, gtDateTime);
+            }
+
             if (genres != null)
             {
                 foreach (var genre in genres)
@@ -83,7 +170,7 @@ namespace MelonWebApi.Controllers
             return albumDocs;
         }
         [HttpGet("artists")]
-        public IEnumerable<Artist> SearchArtists(string ArtistName, int page, int count)
+        public IEnumerable<Artist> SearchArtists(int page, int count, string ArtistName, long ltPlayCount = 0, long gtPlayCount = 0, long ltRating = 0, long gtRating = 0, string[] genres = null)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -92,6 +179,34 @@ namespace MelonWebApi.Controllers
             var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
 
             var ArtistFilter = Builders<Artist>.Filter.Regex("ArtistName", new BsonRegularExpression(ArtistName, "i"));
+
+            if (gtPlayCount != 0)
+            {
+                ArtistFilter = ArtistFilter & Builders<Artist>.Filter.Gt("PlayCount", gtPlayCount);
+            }
+
+            if (ltPlayCount != 0)
+            {
+                ArtistFilter = ArtistFilter & Builders<Artist>.Filter.Lt("PlayCount", ltPlayCount);
+            }
+
+            if (gtRating != 0)
+            {
+                ArtistFilter = ArtistFilter & Builders<Artist>.Filter.Gt("Rating", gtRating);
+            }
+
+            if (ltRating != 0)
+            {
+                ArtistFilter = ArtistFilter & Builders<Artist>.Filter.Lt("Rating", ltRating);
+            }
+
+            if (genres != null)
+            {
+                foreach (var genre in genres)
+                {
+                    ArtistFilter = ArtistFilter & Builders<Artist>.Filter.Regex("Genres", new BsonRegularExpression(genre, "i"));
+                }
+            }
 
             var ArtistDocs = ArtistCollection.Find(ArtistFilter)
                                             .Skip(page * count)
