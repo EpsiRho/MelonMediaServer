@@ -70,7 +70,8 @@
 - [ ] update - Update a queue's info and tracks
 - [ ] position - Change the currentPosition in the queue
 - [ ] create-from-albums - Create a queue from album IDs
-- [ ] create-from-artists - create a queue from artist IDs
+- [ ] create-from-artists - Create a queue from artist IDs
+- [ ] create-from-playlists - Create a queue from playlist IDs.
 - [ ] shuffle - shuffle a queue with a specific shuffle type
   - [ ] Random shuffle
   - [ ] Prioritize high play count and rating
