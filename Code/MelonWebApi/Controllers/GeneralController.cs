@@ -68,6 +68,33 @@ namespace MelonWebApi.Controllers
                 return "404";
             }
         }
+        [HttpGet("tracks")]
+        public List<Track> GetTracks(string[] _ids)
+        {
+            try
+            {
+                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+                var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+                var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+                List<Track> tracks = new List<Track>();
+                foreach(var id in _ids)
+                {
+                    var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
+                    var track = TracksCollection.Find(trackFilter).FirstOrDefault();
+                    tracks.Add(track);
+                }
+
+
+                return tracks;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
 
         // Albums
         [HttpGet("album")]
@@ -115,6 +142,33 @@ namespace MelonWebApi.Controllers
                 return "404";
             }
         }
+        [HttpGet("albums")]
+        public List<Album> GetAlbumss(string[] _ids)
+        {
+            try
+            {
+                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+                var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+                var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
+
+                List<Album> albums = new List<Album>();
+                foreach (var id in _ids)
+                {
+                    var albumFilter = Builders<Album>.Filter.Eq("_id", new ObjectId(id));
+                    var album = AlbumCollection.Find(albumFilter).FirstOrDefault();
+                    albums.Add(album);
+                }
+
+
+                return albums;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
 
         // Artists
         [HttpGet("artist")]
@@ -160,6 +214,33 @@ namespace MelonWebApi.Controllers
             catch (Exception)
             {
                 return "404";
+            }
+        }
+        [HttpGet("artists")]
+        public List<Artist> GetAlbumss(string[] _ids)
+        {
+            try
+            {
+                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+                var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+                var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
+
+                List<Artist> artists = new List<Artist>();
+                foreach (var id in _ids)
+                {
+                    var artistFilter = Builders<Artist>.Filter.Eq("_id", new ObjectId(id));
+                    var artist = ArtistCollection.Find(artistFilter).FirstOrDefault();
+                    artists.Add(artist);
+                }
+
+
+                return artists;
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
     }

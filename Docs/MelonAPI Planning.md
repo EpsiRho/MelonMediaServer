@@ -1,17 +1,29 @@
-## api/track
+##  api/track
 
 - [x] (http)get - Get a single track by it's ID
 - [x] (http)patch - Update a track's info
+
+## api/tracks
+
+- [x] get - get multiple tracks by id
 
 ## api/album
 
 - [x] (http)get - Get a single album by it's ID
 - [x] (http)patch - Update an album's info
 
+## api/albums
+
+- [x] get - get multiple albums by id
+
 ## api/artist
 
 - [x] (http)get - Get a single artist by it's ID
 - [x] (http)patch - Update an artist's info
+
+## api/artists
+
+- [x] get - get multiple artistsby id
 
 ## api/stats/
 
@@ -19,7 +31,7 @@
 - [x] top-tracks - Get the top tracks
 - [x] top-albums - Get the top albums
 - [x] top-artists - Get the top artists
-- [ ] top-genres - Get the top genres
+- [x] top-genres - Get the top genres
 
 ## api/recommendations/
 
