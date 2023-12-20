@@ -143,7 +143,7 @@ namespace MelonWebApi.Controllers
             }
         }
         [HttpGet("albums")]
-        public List<Album> GetAlbumss(string[] _ids)
+        public List<Album> GetAlbums(string[] _ids)
         {
             try
             {
@@ -217,7 +217,7 @@ namespace MelonWebApi.Controllers
             }
         }
         [HttpGet("artists")]
-        public List<Artist> GetAlbumss(string[] _ids)
+        public List<Artist> GetArtists(string[] _ids)
         {
             try
             {
