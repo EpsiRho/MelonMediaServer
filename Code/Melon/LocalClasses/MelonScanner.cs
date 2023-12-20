@@ -292,20 +292,13 @@ namespace Melon.LocalClasses
                             }
 
                             var tQuery = from t in artistDoc.Tracks
-                                         where t.TrackName == fileMetadata.Title
+                                         where t.Path == fileMetadata.Path
                                          select t;
-                            if (tQuery.Count() == 0)
+                            if (tQuery.Count() != 0)
                             {
-                                var query = (from t in artistDoc.Tracks
-                                             where t.Path == path
-                                             select t).FirstOrDefault();
-                                if (query != null)
-                                {
-                                    artistDoc.Tracks.Remove(query);
-                                }
-                                artistDoc.Tracks.Add(sTrack);
-
+                                artistDoc.Tracks.Remove(tQuery.FirstOrDefault());
                             }
+                            artistDoc.Tracks.Add(sTrack);
                             foreach (var genre in trackGenres)
                             {
                                 if (!artistDoc.Genres.Contains(genre))

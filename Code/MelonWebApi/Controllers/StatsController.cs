@@ -7,6 +7,7 @@ using SharpCompress.Common;
 using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
 using Melon.LocalClasses;
+using System.Security.Cryptography;
 
 namespace MelonWebApi.Controllers
 {
@@ -91,10 +92,156 @@ namespace MelonWebApi.Controllers
             {
                 stat.LogDate = DateTime.Now.ToUniversalTime();
             }
+            stat.Genres = new List<string>();
+            foreach (var genre in track.TrackGenres)
+            {
+                stat.Genres.Add(genre);
+            }
 
             StatsCollection.InsertOne(stat);
 
             return "200";
+        }
+
+        [HttpGet("top-tracks")]
+        public Dictionary<string, int> TopTracks(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device,"i"));
+            statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user,"i"));
+
+            if (ltDateTime != "")
+            {
+                DateTime ltdt = DateTime.Parse(ltDateTime);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Lte(x => x.LogDate, ltdt);
+            }
+
+            if (gtDateTime != "")
+            {
+                DateTime gtdt = DateTime.Parse(gtDateTime);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Gte(x => x.LogDate, gtdt);
+            }
+
+            var stats = StatsCollection.Find(statFilter).ToList();
+
+            var tracks = stats.GroupBy(stat => stat.TrackId)
+                              .Select(group => new { Name = group.Key, Count = group.Count() })
+                              .OrderByDescending(x => x.Count)
+                              .Take(new Range(page * count, (page * count) + count))
+                              .ToDictionary(g => g.Name, g => g.Count);
+
+            return tracks;
+        }
+        [HttpGet("top-albums")]
+        public Dictionary<string, int> TopAlbums(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+
+            if (ltDateTime != "")
+            {
+                DateTime ltdt = DateTime.Parse(ltDateTime);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Lte(x => x.LogDate, ltdt);
+            }
+
+            if (gtDateTime != "")
+            {
+                DateTime gtdt = DateTime.Parse(gtDateTime);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Gte(x => x.LogDate, gtdt);
+            }
+
+            var stats = StatsCollection.Find(statFilter).ToList();
+
+            var albums = stats.GroupBy(stat => stat.AlbumId)
+                              .Select(group => new { Name = group.Key, Count = group.Count() })
+                              .OrderByDescending(x => x.Count)
+                              .Take(new Range(page * count, (page * count) + count))
+                              .ToDictionary(g => g.Name, g => g.Count);
+
+            return albums;
+        }
+
+        [HttpGet("top-artists")]
+        public Dictionary<string, int> TopArtists(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+
+            if (ltDateTime != "")
+            {
+                DateTime ltdt = DateTime.Parse(ltDateTime);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Lte(x => x.LogDate, ltdt);
+            }
+
+            if (gtDateTime != "")
+            {
+                DateTime gtdt = DateTime.Parse(gtDateTime);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Gte(x => x.LogDate, gtdt);
+            }
+
+            var stats = StatsCollection.Find(statFilter).ToList();
+
+            var artists = stats.SelectMany(obj => obj.ArtistIds)
+                               .GroupBy(x => x)
+                               .Select(group => new { Name = group.Key, Count = group.Count() })
+                               .OrderByDescending(x => x.Count)
+                               .Take(new Range(page * count, (page * count) + count))
+                               .ToDictionary(g => g.Name, g => g.Count);
+
+            return artists;
+        }
+
+        [HttpGet("top-genres")]
+        public Dictionary<string, int> TopGenres(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+
+            if (ltDateTime != "")
+            {
+                DateTime ltdt = DateTime.Parse(ltDateTime);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Lte(x => x.LogDate, ltdt);
+            }
+
+            if (gtDateTime != "")
+            {
+                DateTime gtdt = DateTime.Parse(gtDateTime);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Gte(x => x.LogDate, gtdt);
+            }
+
+            var stats = StatsCollection.Find(statFilter).ToList();
+
+            var genres = stats.SelectMany(obj => obj.Genres)
+                               .GroupBy(x => x)
+                               .Select(group => new { Name = group.Key, Count = group.Count() })
+                               .OrderByDescending(x => x.Count)
+                               .Take(new Range(page * count, (page * count) + count))
+                               .ToDictionary(g => g.Name, g => g.Count);
+
+            return genres;
         }
     }
 }

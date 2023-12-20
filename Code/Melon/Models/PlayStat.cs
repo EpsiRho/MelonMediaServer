@@ -13,6 +13,7 @@ namespace Melon.Models
         public string TrackId { get; set; }
         public string AlbumId { get; set; }
         public List<string> ArtistIds { get; set; }
+        public List<string> Genres { get; set; }
         public string Device { get; set; }
         public string User { get; set; }
         public DateTime LogDate { get; set; }

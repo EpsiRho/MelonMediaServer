@@ -16,9 +16,10 @@
 ## api/stats/
 
 - [x] log-play - Logs a play into the play count of a track, it's album, and it's artist
-- [ ] top-tracks - Get the top tracks
-- [ ] top-albums - Get the top albums
-- [ ] top-artists - Get the top artists
+- [x] top-tracks - Get the top tracks
+- [x] top-albums - Get the top albums
+- [x] top-artists - Get the top artists
+- [ ] top-genres - Get the top genres
 
 ## api/recommendations/
 
