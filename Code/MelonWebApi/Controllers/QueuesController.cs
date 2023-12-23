@@ -508,8 +508,8 @@ namespace MelonWebApi.Controllers
             var track = tracks[0];
 
             int curIdx = queue.Tracks.IndexOf(track);
-            queue.Tracks.RemoveAt(curIdx);
             queue.Tracks.Insert(position, track);
+            queue.Tracks.RemoveAt(curIdx);
 
             QCollection.ReplaceOne(qFilter, queue);
 

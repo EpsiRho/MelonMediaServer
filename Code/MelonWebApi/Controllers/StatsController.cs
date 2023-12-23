@@ -25,7 +25,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("log-play")]
-        public string LogPlay(string _id, string device = "", string user = "", string dateTime = "")
+        public string LogPlay(string _id, string device = "", string dateTime = "")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -79,7 +79,7 @@ namespace MelonWebApi.Controllers
                    select a.ArtistId,
             ];
             stat.Device = device;
-            stat.User = user;
+            stat.User = User.Identity.Name;
             if(dateTime != "")
             {
                 try
