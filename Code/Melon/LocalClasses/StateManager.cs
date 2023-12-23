@@ -186,22 +186,28 @@ namespace Melon.LocalClasses
         }
         public static bool CheckMongoDB(string connectionString)
         {
-            try
+            int count = 0;
+            while (count < 10)
             {
-                DbClient = new MongoClient(connectionString);
-                if(DbClient.Cluster.Description.State == MongoDB.Driver.Core.Clusters.ClusterState.Connected)
+                try
                 {
-                    return true;
+                    DbClient = new MongoClient(connectionString);
+                    if (DbClient.Cluster.Description.State == MongoDB.Driver.Core.Clusters.ClusterState.Connected)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        count++;
+                        Thread.Sleep(100);
+                    }
                 }
-                else
+                catch (Exception)
                 {
-                    return false;
+
                 }
             }
-            catch (Exception)
-            {
-                return false;
-            }
+            return false;
         }
         public static void StartServer()
         {
