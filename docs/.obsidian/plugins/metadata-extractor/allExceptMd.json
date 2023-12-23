@@ -17,10 +17,6 @@
       "relativePath": "download"
     },
     {
-      "name": "general",
-      "relativePath": "general"
-    },
-    {
       "name": "models",
       "relativePath": "models"
     },
@@ -31,6 +27,18 @@
     {
       "name": "queues",
       "relativePath": "queues"
+    },
+    {
+      "name": "api",
+      "relativePath": "api"
+    },
+    {
+      "name": "search",
+      "relativePath": "search"
+    },
+    {
+      "name": "stats",
+      "relativePath": "stats"
     }
   ],
   "nonMdFiles": [

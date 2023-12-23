@@ -13,9 +13,9 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "MelonAPI Planning.md",
+                "file": "README.md",
                 "mode": "source",
-                "source": false
+                "source": true
               }
             }
           }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "MelonAPI Planning.md",
+                "file": "README.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "MelonAPI Planning.md",
+                "file": "README.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "MelonAPI Planning.md"
+                "file": "README.md"
               }
             }
           }
@@ -146,44 +146,44 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "306a24d8e54a0d77",
+  "active": "8b82fb671072fa31",
   "lastOpenFiles": [
-    "README.md",
-    "_sidebar.md",
-    "style.css",
-    "index.html",
-    "introduction.md",
-    "getting-started.md",
-    "toc.yml",
-    "queues/search.md",
-    "queues/get.md",
-    "queues/get-tracks.md",
-    "queues",
-    "playlists/get.md",
-    "playlists/search.md",
-    "playlists/get-tracks.md",
-    "playlists/create.md",
-    "playlists",
     "models/User.md",
     "models/Track.md",
     "models/ShortTrack.md",
     "models/ShortQueue.md",
     "models/ShortPlaylist.md",
     "models/ShortArtist.md",
-    "models/PlayStat.md",
     "models/ShortAlbum.md",
     "models/PlayQueue.md",
+    "models/PlayStat.md",
     "models/Playlist.md",
-    "models/Models Overview.md",
-    "models/Artist.md",
     "models/Album.md",
+    "models/Artist.md",
+    "models/modelsOverview.md",
+    "models/_sidebar.md",
+    "api/_sidebar.md",
+    "auth/_sidebar.md",
+    "download/_sidebar.md",
+    "_sidebar.md",
+    "queues/queuesOverview.md",
+    "queues/get-tracks.md",
+    "queues/get.md",
+    "playlists/playlistsOverview.md",
+    "download/track.md",
+    "download/track-art.md",
+    "download/album-art.md",
+    "download/downloadOverview.md",
+    "stats",
+    "search",
+    "style.css",
+    "index.html",
+    "toc.yml",
+    "queues",
+    "playlists",
     "models",
-    "MelonAPI Planning.md",
-    "general/tracks.md",
-    "general",
+    "api",
     "download",
-    "db",
-    "auth",
     "Untitled.canvas"
   ]
 }

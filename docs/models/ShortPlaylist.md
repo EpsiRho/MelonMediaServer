@@ -1,3 +1,6 @@
+# ShortPlaylist
+The info class of a playlist. Does not contain it's tracks, get those from [playlists/get-tracks](playlists/get-tracks).
+## Model
 |Type|Name|Notes|
 |----|----|-----|
 |ObjectId|\_id|MongoDb's BSOn ID|
@@ -12,7 +15,7 @@
 |bool|PublicEditing|Allow anyone to edit this playlist (false by default)|
 |string|ArtworkPath|Path of the playlist artwork (Unimplemented)|
 
-The info class of a playlist. Does not contain it's tracks, get those from [[../playlists/get-tracks]].
+
 ## Example
 ```
 {

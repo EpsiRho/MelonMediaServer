@@ -1,3 +1,14 @@
+# PlayQueue
+
+**This model will not be sent back to you!** Normally you'll be sent a [ShortQueue](models/ShortQueue). Since queues can hold a lot of tracks, you'll get those tracks through a different endpoint than you use to get the playlist info. 
+
+- Viewing queue info
+	- [queues/get](/queues/get)
+	- [queues/search](/queues/search)
+- Viewing queue tracks
+	- [queues/get-tracks](/queues/get-tracks)
+
+## Model
 |Type|Name|Notes|
 |----|----|-----|
 |ObjectId|\_id|MongoDb's BSOn ID|
@@ -9,11 +20,5 @@
 |List\<string\>|Viewers|Usernames of uses allowed to view and listen to this queue|
 |bool|PublicViewing|Allow anyone to see this queue (false by default)|
 |bool|PublicEditing|Allow anyone to edit this queue (false by default)|
-|List\<[[ShortTrack]]\>|Tracks|The tracks in this queue|
+|List\<[ShortTrack](models/ShortTrack)\>|Tracks|The tracks in this queue|
 
-**This model will not be sent back to you!** Normally you'll be sent a [[ShortQueue]]. Since queues can hold a lot of tracks, you'll get those tracks through a different endpoint than you use to get the playlist info. 
-- Viewing queue info
-	- [[../queues/get]]
-	- [[../queues/search]]
-- Viewing queue tracks
-	- [[../queues/get-tracks]]

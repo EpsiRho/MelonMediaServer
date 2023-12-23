@@ -1,3 +1,13 @@
+# Playlist
+
+**This model will not be sent back to you!** Normally you'll be sent a [[ShortPlaylist]]. Since playlists can hold a lot of tracks, you'll get those tracks through a different endpoint than you use to get the playlist info. 
+- Viewing playlist info
+	- [playlists/get](/playlists/get)
+	-  [playlists/search](/playlists/search)
+- Viewing playlist tracks
+	-  [playlists/get-tracks](/playlists/get-tracks)
+
+## Model
 |Type|Name|Notes|
 |----|----|-----|
 |ObjectId|\_id|MongoDb's BSOn ID|
@@ -11,11 +21,5 @@
 |bool|PublicViewing|Allow anyone to see this playlist (false by default)|
 |bool|PublicEditing|Allow anyone to edit this playlist (false by default)|
 |string|ArtworkPath|Path of the playlist artwork (Unimplemented)|
-|List\<[[ShortTrack]]\>|Tracks|The tracks in this playlist|
+|List\<[ShortTrack](model/ShortTrack)\>|Tracks|The tracks in this playlist|
 
-**This model will not be sent back to you!** Normally you'll be sent a [[ShortPlaylist]]. Since playlists can hold a lot of tracks, you'll get those tracks through a different endpoint than you use to get the playlist info. 
-- Viewing playlist info
-	- [[../playlists/get]]
-	- [[../playlists/search]]
-- Viewing playlist tracks
-	- [[../playlists/get-tracks]]

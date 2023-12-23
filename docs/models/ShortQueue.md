@@ -1,3 +1,7 @@
+# ShortQueue
+The info class of a playlist. Does not contain it's tracks, get those from [queues/get-tracks](queues/get-tracks)
+
+## Model 
 |Type|Name|Notes|
 |----|----|-----|
 |ObjectId|\_id|MongoDb's BSOn ID|
@@ -10,7 +14,6 @@
 |bool|PublicViewing|Allow anyone to see this queue (false by default)|
 |bool|PublicEditing|Allow anyone to edit this queue (false by default)|
 
-The info class of a playlist. Does not contain it's tracks, get those from [[../queues/get-tracks]].
 
 ## Example
 ```

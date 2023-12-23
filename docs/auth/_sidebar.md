@@ -1,5 +1,6 @@
 * [Home](/)
 * [auth](auth/authOverview)
+	*  [login](auth/login)
 * [api](api/apiOverview)
 * [db](db/dbOverview)
 * [download](download/downloadOverview)

@@ -1,3 +1,6 @@
+# User
+This is the user model for melon, more elements may be added later. Currently, there is no way to access these through endpoints, you can add or remove users through the console UI.
+# Model
 |Type|Name|Notes|
 |----|----|----|
 |ObjectId|\_id|MongoDb's BSON ID|

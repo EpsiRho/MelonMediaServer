@@ -1,3 +1,6 @@
+# Artist
+
+## Model
 |Type|Name|Notes|
 |-----|-------|------|
 |ObjectId|\_id|MongoDb's BSON ID|
@@ -10,9 +13,9 @@
 |List\<string\>|ArtistArtPaths|Fullscreen artwork paths(Unimplemented)|
 |List\<string\>|ArtistBannerPaths|Banner sized artwork paths(Unimplemented)|
 |List\<string\>|Genres|Genres found from tracks this artist has made|
-|List\<[[ShortAlbum]]\>|Releases|Info on releases this artist put out|
-|List\<[[ShortAlbum]]\>|SeenOn|Info on releases this artist was seen on(ex: compilation albums)|
-|List\<[[ShortTrack]]\>|Tracks|Info on the artist's tracks|
+|List\<[ShortAlbum](model/ShortAlbum)\>|Releases|Info on releases this artist put out|
+|List\<[ShortAlbum](model/ShortAlbum)\>|SeenOn|Info on releases this artist was seen on(ex: compilation albums)|
+|List\<[ShortTrack](model/ShortTrack)\>|Tracks|Info on the artist's tracks|
 
 ## Example
 ```

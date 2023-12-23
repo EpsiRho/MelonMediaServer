@@ -1,15 +1,18 @@
+#  ShortTrack
+
+## Model
 |Type|Name|Notes|
 |----|------|-----|
 |ObjectId|\_id|MongoDb's BSON ID|
 |string|TrackId|The ID of the track|
-|[[ShortAlbum]]|Album|Info about the album|
+|[ShortAlbum](models/ShortAlbum)|Album|Info about the album|
 |int|Position|The position of the track in it's album order|
 |int|Disc|The disc this track is on|
 |string|TrackName|The name of the track|
 |string|Duration|The length of the track in milliseconds|
 |int|TrackArtCount|The number of artworks this track contains|
 |string|Path|The track's path|
-|List\<[[ShortArtist]]\>|TrackArtists|A list of artist info|
+|List\<[ShortArtist](models/ShortArtist)\>|TrackArtists|A list of artist info|
 ## Example
 ```
 {

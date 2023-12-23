@@ -1,3 +1,6 @@
+# ShortAlbum
+
+## Model
 |Type|Name|Notes|
 |----|-----|------|
 |ObjectId|\_id|MongoDb's BSON ID|

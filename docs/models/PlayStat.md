@@ -1,3 +1,6 @@
+# PlayStat
+These objects are logged anytime a track is played, they allow melon to show you listening stats
+## Model
 |Type|Name|Notes|
 |----|------|-----|
 |ObjectId|\_id|MongoDb's BSON ID|

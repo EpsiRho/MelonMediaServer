@@ -1,3 +1,4 @@
+# login
 ##### Request
 ```
 GET /auth/login[?username&password]

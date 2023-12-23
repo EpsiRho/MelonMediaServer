@@ -1,3 +1,6 @@
+# Album
+
+## Model
 |Type|Name|Notes|
 |-----|-------|------|
 |ObjectId| \_id |MongoDb's BSON ID| 
@@ -14,8 +17,8 @@
 |DateTime| ReleaseDate|The release date of the album|
 |List\<string\>| AlbumArtPaths|Names of the art on disk|
 |List\<string\>| AlbumGenres|Genres found on tracks on the album|
-|List\<[[ShortArtist]]\>| AlbumArtists|Artists found on tracks on the album|
-|List\<[[ShortTrack]]\>| Tracks|All track in the album|
+|List\<[ShortArtist](models/ShortArtist)\>| AlbumArtists|Artists found on tracks on the album|
+|List\<[ShortTrack](models/ShortTrack)\>| Tracks|All track in the album|
 ## Example
 ```
 {

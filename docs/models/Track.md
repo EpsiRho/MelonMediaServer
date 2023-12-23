@@ -1,8 +1,11 @@
+# Track
+
+## Model
 |Type|Name|Notes|
 |----|----|----|
 |ObjectId|\_id|MongoDb's BSON ID|
 |string |TrackId|The hex string representation of the track's ID|
-|[[ShortAlbum]]|Album|Info about the track's album|
+|[ShortAlbum](models/ShortAlbum)|Album|Info about the track's album|
 |int|Position|The position of the track in the album's order|
 |int|Disc|The disc the track is on|
 |string|Format|The track's format (.flac, .mp3, etc)|
@@ -23,7 +26,7 @@
 |DateTime|LastModified|The last time the track's file was modified|
 |DateTime|ReleaseDate|The release date of the track|
 |List\<string\>|TrackGenres|The track's genres|
-|List\<[[ShortArtist]]\>|TrackArtists|Info on the track artists|
+|List\<[ShortArtist](models/ShortArtist)\>|TrackArtists|Info on the track artists|
 
 ## Example
 ```
