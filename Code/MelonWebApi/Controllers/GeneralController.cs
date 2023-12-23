@@ -86,7 +86,10 @@ namespace MelonWebApi.Controllers
                 {
                     var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
                     var track = TracksCollection.Find(trackFilter).FirstOrDefault();
-                    tracks.Add(track);
+                    if(track != null)
+                    {
+                        tracks.Add(track);
+                    }
                 }
 
 

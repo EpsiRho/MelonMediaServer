@@ -203,25 +203,48 @@ namespace Melon.DisplayClasses
         }
         private static void MongoDBSettings()
         {
-            // Title
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "MongoDB" });
-
-            // Description
-            Console.WriteLine($"Current MongoDB connection string: {StateManager.MelonSettings.MongoDbConnectionString.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
-            Console.WriteLine($"(Enter a new string or nothing to keep the current string)".Pastel(MelonColor.Text));
-
-            // Get New MongoDb Connection String
-            Console.Write("> ".Pastel(MelonColor.Text));
-            string input = Console.ReadLine();
-            if (input == "")
+            bool check = true;
+            while (true)
             {
-                return;
+                // Title
+                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "MongoDB" });
+
+                // Description
+                Console.WriteLine($"Current MongoDB connection string: {StateManager.MelonSettings.MongoDbConnectionString.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
+                Console.WriteLine($"(Enter a new string or nothing to keep the current string)".Pastel(MelonColor.Text));
+                if (!check)
+                {
+                    Console.WriteLine($"[Couldn't connect to server, try again]".Pastel(MelonColor.Error));
+                }
+                check = false;
+
+                // Get New MongoDb Connection String
+                Console.Write("> ".Pastel(MelonColor.Text));
+                string input = Console.ReadLine();
+                if (input == "")
+                {
+                    return;
+                }
+
+                check = StateManager.CheckMongoDB(input);
+                if (check)
+                {
+                    // Set and Save new conn string
+                    StateManager.MelonSettings.MongoDbConnectionString = input;
+                    StateManager.SaveSettings();
+                    if (DisplayManager.MenuOptions.Count < 5)
+                    {
+                        DisplayManager.MenuOptions.Clear();
+                        DisplayManager.MenuOptions.Add("Full Scan", MelonScanner.Scan);
+                        DisplayManager.MenuOptions.Add("Short Scan", MelonScanner.ScanShort);
+                        DisplayManager.MenuOptions.Add("Reset DB", MelonScanner.ResetDB);
+                        DisplayManager.MenuOptions.Add("Settings", SettingsUI.Settings);
+                        DisplayManager.MenuOptions.Add("Exit", () => Environment.Exit(0));
+                    }
+                    break;
+                }
+
             }
-
-            // Set and Save new conn string
-            StateManager.MelonSettings.MongoDbConnectionString = input;
-            StateManager.SaveSettings();
-
 
         }
         private static void LibraryPathSettings()

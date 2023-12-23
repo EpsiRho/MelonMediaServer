@@ -134,8 +134,11 @@ namespace Melon.LocalClasses
             try
             {
                 var connectionString = MelonSettings.MongoDbConnectionString;
-                DbClient = new MongoClient(connectionString);
-                var MelonDB = DbClient.GetDatabase("Melon");
+                var check = CheckMongoDB(connectionString);
+                if (!check)
+                {
+                    throw new Exception();
+                }
             }
             catch (Exception)
             {
@@ -154,7 +157,6 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions.Add("Full Scan", MelonScanner.Scan);
             DisplayManager.MenuOptions.Add("Short Scan", MelonScanner.ScanShort);
             DisplayManager.MenuOptions.Add("Reset DB", MelonScanner.ResetDB);
-            //DisplayManager.MenuOptions.Add("Library View", () =>  { LibraryUI.LibrarySearch(); });
             DisplayManager.MenuOptions.Add("Settings", SettingsUI.Settings);
             DisplayManager.MenuOptions.Add("Exit", () => Environment.Exit(0));
             ChecklistUI.UpdateChecklist(1, true);
