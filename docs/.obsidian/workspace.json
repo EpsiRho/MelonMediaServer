@@ -148,6 +148,7 @@
   },
   "active": "8b82fb671072fa31",
   "lastOpenFiles": [
+    "auth/login.md",
     "models/User.md",
     "models/Track.md",
     "models/ShortTrack.md",
@@ -173,7 +174,6 @@
     "download/track.md",
     "download/track-art.md",
     "download/album-art.md",
-    "download/downloadOverview.md",
     "stats",
     "search",
     "style.css",
