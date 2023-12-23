@@ -82,13 +82,15 @@ namespace Melon.DisplayClasses
                 var databaseNames = DbClient.ListDatabaseNames().ToList();
                 var NewMelonDB = DbClient.GetDatabase("Melon");
                 var collection = NewMelonDB.GetCollection<User>("Users");
-                var documents = collection.Find<User>(new BsonDocument()).ToList();
+                var documents = collection.Find<User>(Builders<User>.Filter.Empty).ToList();
 
                 List<string> users = new List<string>();
+                List<string> names = new List<string>();
                 users.Add("Back");
                 users.Add("Add New User");
                 foreach (var doc in documents)
                 {
+                    names.Add(doc.Username);
                     users.Add($"[{doc.Type}] {doc.Username} ({DateTime.Parse(doc.LastLogin.ToString("MM/dd/yyyy hh:mm tt"))})");
                 }
 
@@ -98,13 +100,22 @@ namespace Melon.DisplayClasses
                 string input = MelonUI.OptionPicker(users);
                 if (input == "Add New User")
                 {
-                    // Title
-                    MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Add User 1/3" });
-                    Console.WriteLine("Enter the new user's name:".Pastel(MelonColor.Text));
-                    Console.Write($"> ".Pastel(MelonColor.Text));
+                    string username = "";
+                    while (true)
+                    {
+                        // Title
+                        MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Add User 1/3" });
+                        Console.WriteLine("Enter the new user's name (Must be unique):".Pastel(MelonColor.Text));
+                        Console.Write($"> ".Pastel(MelonColor.Text));
 
-                    // Get User Name
-                    string username = Console.ReadLine();
+                        // Get User Name
+                        username = Console.ReadLine();
+                        if (!names.Contains(username))
+                        {
+                            break;
+                        }
+
+                    }
 
                     // Get Password
                     string[] passInput = new string[2];
@@ -139,12 +150,19 @@ namespace Melon.DisplayClasses
                         "Pass"
                     });
 
+                    byte[] tempSalt;
+                    var password = Security.HashPasword(passInput[0], out tempSalt);
+                    var id = ObjectId.GenerateNewId();
+
                     var document = new User
                     {
-                        _id = ObjectId.GenerateNewId(),
-                        Username=username,
-                        LastLogin = DateTime.MinValue,
-                        Type = type
+                        _id = id,
+                        UserId = id.ToString(),
+                        Username = username,
+                        Password = password,
+                        Salt = tempSalt,
+                        LastLogin = DateTime.Now,
+                        Type = "Admin"
                     };
                     collection.InsertOne(document);
                 }
@@ -156,11 +174,30 @@ namespace Melon.DisplayClasses
                 else
                 {
                     // Delete User
+                    //int idx = users.IndexOf(input);
+                    //User item = documents[idx];
+                    //var username = item.Username;
+                    //var deleteFilter = Builders<User>.Filter.Eq("Username", username);
+                    //collection.DeleteOne(deleteFilter);
+                    MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Password Check" });
+                    Console.WriteLine("Enter the user's password:".Pastel(MelonColor.Text));
+                    Console.Write($"> ".Pastel(MelonColor.Text));
+                    var pass = Console.ReadLine();
                     int idx = users.IndexOf(input);
-                    User item = documents[idx];
-                    var username = item.Username;
-                    var deleteFilter = Builders<User>.Filter.Eq("Username", username);
-                    collection.DeleteOne(deleteFilter);
+                    User user = documents[idx-2];
+                    bool Auth = Security.VerifyPassword(pass, user.Password, user.Salt);
+                    if(Auth)
+                    {
+                        MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Password Check" });
+                        Console.WriteLine("The password was correct!".Pastel(MelonColor.Text));
+                        Console.ReadLine();
+                    }
+                    else
+                    {
+                        MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Password Check" });
+                        Console.WriteLine("The password was incorrect!".Pastel(MelonColor.Text));
+                        Console.ReadLine();
+                    }
                 }
             }
         }

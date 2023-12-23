@@ -1,9 +1,12 @@
 using Melon.Classes;
 using Melon.LocalClasses;
+using MelonWebApi.Middleware.ApiKeyAuthentication.Middlewares;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
@@ -18,6 +21,10 @@ namespace MelonWebApi
         public static WebApplication app;
         public static void Main(string[] args)
         {
+            if (!started)
+            {
+                StateManager.Init();
+            }
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddControllers();
@@ -29,11 +36,30 @@ namespace MelonWebApi
 
             builder.Host.UseSerilog();
 
+            var key = Encoding.ASCII.GetBytes(StateManager.MelonSettings.JWTKey);
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(x =>
+                    {
+                        x.RequireHttpsMetadata = false; // Set to true in production
+                        x.SaveToken = true;
+                        x.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+                            ValidateIssuer = false,
+                            ValidateAudience = false
+                        };
+                    });
+
             app = builder.Build();
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
+
             app.UseAuthorization();
+
+            app.UseMiddleware<JwtMiddleware>();
 
             app.MapControllers();
 
@@ -46,7 +72,6 @@ namespace MelonWebApi
                 Console.OutputEncoding = Encoding.UTF8;
 
                 // Melon Startup
-                StateManager.Init();
 
                 // UI Startup
                 DisplayManager.DisplayHome();

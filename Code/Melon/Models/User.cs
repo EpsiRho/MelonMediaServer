@@ -8,6 +8,7 @@ namespace Melon.Models
         public string UserId { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
+        public byte[] Salt { get; set; }
         public string Type { get; set; }
         public DateTime LastLogin { get; set; }
 

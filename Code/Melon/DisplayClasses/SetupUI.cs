@@ -22,6 +22,7 @@ namespace Melon.DisplayClasses
         private static List<Action> SetupSteps { get; set; }
         private static string tempUsername;
         private static string tempPassword;
+        private static byte[] tempSalt;
         public static void Display()
         {
             SetupSteps = new List<Action>()
@@ -95,7 +96,8 @@ namespace Melon.DisplayClasses
                 passInput[1] = MelonUI.HiddenInput();
 
             } while (passInput[0] != passInput[1]);
-            tempPassword = passInput[0];
+            tempPassword = Security.HashPasword(passInput[0], out tempSalt);
+
         }
         private static void MongoDbSetup()
         {
@@ -229,10 +231,14 @@ namespace Melon.DisplayClasses
             var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
             var collection = NewMelonDB.GetCollection<User>("Users");
 
+            var id = ObjectId.GenerateNewId();
             var document = new User
             {
+                _id = id,
+                UserId = id.ToString(),
                 Username = tempUsername,
-                Password = tempPassword, // TODO: This should not be stored in plaintext DO NOT let this stay into release lmao
+                Password = tempPassword,
+                Salt = tempSalt,
                 LastLogin = DateTime.Now,
                 Type = "Admin"
             };

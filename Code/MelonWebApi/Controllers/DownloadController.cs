@@ -7,6 +7,7 @@ using SharpCompress.Common;
 using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
 using Melon.LocalClasses;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MelonWebApi.Controllers
 {
@@ -42,6 +43,7 @@ namespace MelonWebApi.Controllers
             string filename = Path.GetFileName(track.Path);
             return File(fileStream, "application/octet-stream", $"{filename}"); 
         }
+        [Authorize]
         [HttpGet("track-art")]
         public async Task<IActionResult> DownloadTrackArt(string _id, int index)
         {

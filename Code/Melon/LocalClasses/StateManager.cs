@@ -74,6 +74,7 @@ namespace Melon.LocalClasses
                 {
                     MongoDbConnectionString = "mongodb://localhost:27017",
                     LibraryPaths = new List<string>(),
+                    JWTKey = Security.GenerateSecretKey(),
                     Text = Color.FromArgb(204, 204, 204),
                     ShadedText = Color.FromArgb(100, 100, 100),
                     BackgroundText = Color.FromArgb(66, 66, 66),
@@ -82,20 +83,49 @@ namespace Melon.LocalClasses
                     Error = Color.FromArgb(255, 0, 0),
                     UseMenuColor = true,
                 };
-                //SaveSettings();
+                SaveSettings();
                 MelonColor.SetDefaults();
                 DisplayManager.UIExtensions.Add(SetupUI.Display);
             }
             else
             {
-                LoadSettings();
+                try
+                {
+                    LoadSettings();
 
-                MelonColor.Text = MelonSettings.Text;
-                MelonColor.ShadedText = MelonSettings.ShadedText;
-                MelonColor.BackgroundText = MelonSettings.BackgroundText;
-                MelonColor.Highlight = MelonSettings.Highlight;
-                MelonColor.Melon = MelonSettings.Melon;
-                MelonColor.Error = MelonSettings.Error;
+                    MelonColor.Text = MelonSettings.Text;
+                    MelonColor.ShadedText = MelonSettings.ShadedText;
+                    MelonColor.BackgroundText = MelonSettings.BackgroundText;
+                    MelonColor.Highlight = MelonSettings.Highlight;
+                    MelonColor.Melon = MelonSettings.Melon;
+                    MelonColor.Error = MelonSettings.Error;
+
+                    if(MelonSettings.JWTKey == null || MelonSettings.JWTKey == "")
+                    {
+                        MelonSettings.JWTKey = Security.GenerateSecretKey();
+                    }
+                    SaveSettings();
+                }
+                catch (Exception)
+                {
+                    MelonSettings = new Settings()
+                    {
+                        MongoDbConnectionString = "mongodb://localhost:27017",
+                        LibraryPaths = new List<string>(),
+                        JWTKey = Security.GenerateSecretKey(),
+                        Text = Color.FromArgb(204, 204, 204),
+                        ShadedText = Color.FromArgb(100, 100, 100),
+                        BackgroundText = Color.FromArgb(66, 66, 66),
+                        Highlight = Color.FromArgb(97, 214, 214),
+                        Melon = Color.FromArgb(26, 225, 19),
+                        Error = Color.FromArgb(255, 0, 0),
+                        UseMenuColor = true,
+                    };
+                    SaveSettings();
+                    MelonColor.SetDefaults();
+                    DisplayManager.UIExtensions.Add(SetupUI.Display);
+                }
+
             }
             ChecklistUI.UpdateChecklist(0, true);
 
