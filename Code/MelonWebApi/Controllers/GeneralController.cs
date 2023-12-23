@@ -8,6 +8,7 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
 using Melon.LocalClasses;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MelonWebApi.Controllers
 {
@@ -23,6 +24,7 @@ namespace MelonWebApi.Controllers
         }
 
         // Tracks
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("track")]
         public Track GetTrack(string _id)
         {
@@ -46,6 +48,7 @@ namespace MelonWebApi.Controllers
                 return null;
             }
         }
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpPatch("track")]
         public string UpdateTrack(Track t)
         {
@@ -68,6 +71,7 @@ namespace MelonWebApi.Controllers
                 return "404";
             }
         }
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("tracks")]
         public List<Track> GetTracks(string[] _ids)
         {
@@ -95,6 +99,7 @@ namespace MelonWebApi.Controllers
         }
 
         // Albums
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album")]
         public Album GetAlbum(string _id)
         {
@@ -118,6 +123,7 @@ namespace MelonWebApi.Controllers
                 return null;
             }
         }
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpPatch("album")]
         public string UpdateAlbum(Album a)
         {
@@ -140,6 +146,7 @@ namespace MelonWebApi.Controllers
                 return "404";
             }
         }
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("albums")]
         public List<Album> GetAlbums(string[] _ids)
         {
@@ -169,6 +176,7 @@ namespace MelonWebApi.Controllers
         }
 
         // Artists
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist")]
         public Artist GetArtist(string _id)
         {
@@ -192,6 +200,7 @@ namespace MelonWebApi.Controllers
                 return null;
             }
         }
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpPatch("artist")]
         public string UpdateArtist(Artist a)
         {
@@ -214,6 +223,7 @@ namespace MelonWebApi.Controllers
                 return "404";
             }
         }
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artists")]
         public List<Artist> GetArtists(string[] _ids)
         {

@@ -7,6 +7,7 @@ using SharpCompress.Common;
 using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
 using Melon.LocalClasses;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MelonWebApi.Controllers
 {
@@ -21,6 +22,7 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("formats")]
         public async Task<IActionResult> GetFormats(string _id)
         {

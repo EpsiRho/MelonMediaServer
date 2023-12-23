@@ -21,7 +21,7 @@ namespace MelonWebApi.Controllers
         {
             _logger = logger;
         }
-
+        [Authorize(Roles = "Admin,User")]
         [HttpGet("track")]
         public async Task<IActionResult> DownloadTrack(string _id)
         {
@@ -43,7 +43,7 @@ namespace MelonWebApi.Controllers
             string filename = Path.GetFileName(track.Path);
             return File(fileStream, "application/octet-stream", $"{filename}"); 
         }
-        [Authorize]
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("track-art")]
         public async Task<IActionResult> DownloadTrackArt(string _id, int index)
         {
@@ -89,6 +89,7 @@ namespace MelonWebApi.Controllers
             }
             
         }
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album-art")]
         public async Task<IActionResult> DownloadAlbumArt(string _id, int index)
         {

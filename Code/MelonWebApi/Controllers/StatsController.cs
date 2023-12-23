@@ -8,6 +8,7 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
 using Melon.LocalClasses;
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MelonWebApi.Controllers
 {
@@ -22,6 +23,7 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("log-play")]
         public string LogPlay(string _id, string device = "", string user = "", string dateTime = "")
         {
@@ -104,6 +106,7 @@ namespace MelonWebApi.Controllers
             return "200";
         }
 
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-tracks")]
         public Dictionary<string, int> TopTracks(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
         {
@@ -138,6 +141,8 @@ namespace MelonWebApi.Controllers
 
             return tracks;
         }
+
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-albums")]
         public Dictionary<string, int> TopAlbums(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
         {
@@ -173,6 +178,7 @@ namespace MelonWebApi.Controllers
             return albums;
         }
 
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-artists")]
         public Dictionary<string, int> TopArtists(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
         {
@@ -209,6 +215,7 @@ namespace MelonWebApi.Controllers
             return artists;
         }
 
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-genres")]
         public Dictionary<string, int> TopGenres(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
         {

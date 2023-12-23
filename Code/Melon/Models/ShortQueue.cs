@@ -2,7 +2,7 @@
 
 namespace Melon.Models
 {
-    public class PlayQueue
+    public class ShortQueue
     {
         public ObjectId _id { get; set; }
         public string QueueId { get; set; }
@@ -13,6 +13,17 @@ namespace Melon.Models
         public List<string> Viewers { get; set; }
         public bool PublicViewing { get; set; }
         public bool PublicEditing { get; set; }
-        public List<ShortTrack> Tracks { get; set; }
+        public ShortQueue(PlayQueue q)
+        {
+            _id = q._id;
+            QueueId = q.QueueId;
+            CurPosition = q.CurPosition;
+            Name = q.Name;
+            Owner = q.Owner;
+            Editors = q.Editors;
+            Viewers = q.Viewers;
+            PublicEditing = q.PublicEditing;
+            PublicViewing = q.PublicViewing;
+        }
     }
 }

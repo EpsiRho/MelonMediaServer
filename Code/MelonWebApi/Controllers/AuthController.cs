@@ -41,7 +41,7 @@ namespace MelonWebApi.Controllers
 
             if (check)
             {
-                return Security.GenerateJwtToken(username, 60);
+                return Security.GenerateJwtToken(username, user.Type, 60);
             }
             else
             {

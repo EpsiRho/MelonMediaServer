@@ -103,6 +103,7 @@ namespace Melon.LocalClasses
                     if(MelonSettings.JWTKey == null || MelonSettings.JWTKey == "")
                     {
                         MelonSettings.JWTKey = Security.GenerateSecretKey();
+                        DisplayManager.UIExtensions.Add(SetupUI.Display);
                     }
                     SaveSettings();
                 }
