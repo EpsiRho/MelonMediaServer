@@ -202,7 +202,7 @@ namespace Melon.LocalClasses
 
                     Random r = new Random();
 
-                    // Sort with a bias against PlayCount and Rating
+                    // Sort with a bias against PlayCount
                     fTracks = fTracks.OrderBy(x => x.PlayCount + r.NextDouble()).ToList();
 
                     //int num = fullTracks.Count;

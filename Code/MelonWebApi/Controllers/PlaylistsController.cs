@@ -33,7 +33,7 @@ namespace MelonWebApi.Controllers
             
             
             Playlist playlist = new Playlist();
-            playlist._id = new ObjectId();
+            playlist._id = ObjectId.GenerateNewId();
             playlist.PlaylistId = playlist._id.ToString();
             playlist.Name = name;
             playlist.Description = description;

@@ -31,7 +31,8 @@ namespace MelonWebApi.Controllers
 
             var queueDoc = new BsonDocument();
             PlayQueue queue = new PlayQueue();
-            queue._id = new ObjectId();
+            queue._id = ObjectId.GenerateNewId();
+            queue.QueueId = queue._id.ToString();
             queue.Name = name;
             queue.Tracks = new List<ShortTrack>();
 
@@ -86,7 +87,8 @@ namespace MelonWebApi.Controllers
 
             var queueDoc = new BsonDocument();
             PlayQueue queue = new PlayQueue();
-            queue._id = new ObjectId();
+            queue._id = ObjectId.GenerateNewId();
+            queue.QueueId = queue._id.ToString();
             queue.Name = name;
             queue.Tracks = new List<ShortTrack>();
 
@@ -149,7 +151,8 @@ namespace MelonWebApi.Controllers
 
             var queueDoc = new BsonDocument();
             PlayQueue queue = new PlayQueue();
-            queue._id = new ObjectId();
+            queue._id = ObjectId.GenerateNewId();
+            queue.QueueId = queue._id.ToString();
             queue.Name = name;
             queue.Tracks = new List<ShortTrack>();
 
@@ -212,7 +215,8 @@ namespace MelonWebApi.Controllers
 
             var queueDoc = new BsonDocument();
             PlayQueue queue = new PlayQueue();
-            queue._id = new ObjectId();
+            queue._id = ObjectId.GenerateNewId();
+            queue.QueueId = queue._id.ToString();
             queue.Name = name;
             queue.Tracks = new List<ShortTrack>();
 
