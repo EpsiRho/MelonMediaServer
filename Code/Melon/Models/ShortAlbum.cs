@@ -11,3 +11,4 @@ namespace Melon.Models
         public string ReleaseType { get; set; }
     }
 }
+

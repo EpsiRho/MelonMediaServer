@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Melon.Models;
+using MongoDB.Bson;
 
 namespace Melon.Models
 {
@@ -22,3 +23,6 @@ namespace Melon.Models
         public List<ShortTrack> Tracks { get; set; }
     }
 }
+
+
+

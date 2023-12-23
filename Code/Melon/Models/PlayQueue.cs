@@ -6,8 +6,8 @@ namespace Melon.Models
     {
         public ObjectId _id { get; set; }
         public string QueueId { get; set; }
-        public int CurPosition { get; set; }
         public string Name { get; set; }
+        public int CurPosition { get; set; }
         public string Owner { get; set; }
         public List<string> Editors { get; set; }
         public List<string> Viewers { get; set; }

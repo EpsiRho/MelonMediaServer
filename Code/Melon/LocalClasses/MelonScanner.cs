@@ -322,7 +322,7 @@ namespace Melon.LocalClasses
                         _id = TrackId,
                         TrackId = TrackId.ToString(),
                         Album = sAlbum,
-                        Duration = fileMetadata.Duration.ToString(),
+                        Duration = fileMetadata.DurationMs.ToString(),
                         Position = fileMetadata.TrackNumber.Value,
                         Disc = fileMetadata.DiscNumber.Value,
                         TrackArtCount = fileMetadata.EmbeddedPictures.Count(),
@@ -502,7 +502,7 @@ namespace Melon.LocalClasses
                                     byte[] bytes = fileMetadata.EmbeddedPictures[i].PictureData;
                                     artFile.Write(bytes, 0, bytes.Length);
                                 }
-                                album.AlbumArtPaths.Add($"{StateManager.melonPath}/AlbumArts/{album._id}-{i}.jpg");
+                                album.AlbumArtPaths.Add($"{album._id}-{i}.jpg");
                             }
 
                             for (int i = 0; i < albumArtists.Count(); i++)
@@ -654,7 +654,7 @@ namespace Melon.LocalClasses
                         }
                         catch (Exception) {  }
                         try { track.TrackArtCount = fileMetadata.EmbeddedPictures.Count(); } catch (Exception) { track.TrackArtCount = 0; }
-                        try { track.Duration = fileMetadata.Duration.ToString(); } catch (Exception) { track.Duration = ""; }
+                        try { track.Duration = fileMetadata.DurationMs.ToString(); } catch (Exception) { track.Duration = ""; }
                         try { track.TrackArtists = new List<ShortArtist>(); } catch (Exception) { }
                         try { track.TrackGenres = new List<string>(); } catch (Exception) { }
                         try { track.ReleaseDate = fileMetadata.Date.Value; } catch (Exception) { }

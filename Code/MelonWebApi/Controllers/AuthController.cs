@@ -41,6 +41,8 @@ namespace MelonWebApi.Controllers
 
             if (check)
             {
+                user.LastLogin = DateTime.Now;
+                UserCollection.ReplaceOne(userFilter, user);
                 return Security.GenerateJwtToken(username, user.Type, 60);
             }
             else

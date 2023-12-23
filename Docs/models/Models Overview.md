@@ -1,0 +1,13 @@
+These are the objects that Melon uses to organize it's database and send information.
+- [[Album]]
+- [[Artist]]
+- [[Playlist]]
+- [[PlayQueue]]
+- [[PlayStat]]
+- [[ShortAlbum]]
+- [[ShortArtist]]
+- [[ShortPlaylist]]
+- [[ShortQueue]]
+- [[ShortTrack]]
+- [[Track]]
+- [[User]]

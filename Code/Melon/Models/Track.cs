@@ -1,4 +1,6 @@
-﻿using MongoDB.Bson;
+﻿using DnsClient;
+using Melon.Models;
+using MongoDB.Bson;
 
 namespace Melon.Models
 {
@@ -30,3 +32,4 @@ namespace Melon.Models
         public List<ShortArtist> TrackArtists { get; set; }
     }
 }
+

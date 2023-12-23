@@ -1,0 +1,199 @@
+{
+  "main": {
+    "id": "9f93dbfd55dac182",
+    "type": "split",
+    "children": [
+      {
+        "id": "a9a3a79c50d5432c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d0b5fd9dc8ee61d4",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "getting-started.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "8b82fb671072fa31",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "general/General Overview.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "46846556d04c4537",
+    "type": "split",
+    "children": [
+      {
+        "id": "65022a087aaf17bf",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "306a24d8e54a0d77",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "1ababa637f0e9408",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "1c1516439a796878",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "0eae1e6184b73a6b",
+    "type": "split",
+    "children": [
+      {
+        "id": "a9528377b0aaf479",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2707530afefc9362",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "general/General Overview.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "ff7df77a720649ea",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "general/General Overview.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "cfa8a1fcbfbd266a",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "0181e5f211ab0ebf",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "general/General Overview.md"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "8b82fb671072fa31",
+  "lastOpenFiles": [
+    "models/Playlist.md",
+    "models/Artist.md",
+    "general/tracks.md",
+    "general/General Overview.md",
+    "general/track.md",
+    "models/Track.md",
+    "download/track.md",
+    "models/Models Overview.md",
+    "general",
+    "models/ShortTrack.md",
+    "models/Album.md",
+    "models/ShortAlbum.md",
+    "models/User.md",
+    "models/PlayStat.md",
+    "models/ShortQueue.md",
+    "models/PlayQueue.md",
+    "models/ShortArtist.md",
+    "models/ShortPlaylist.md",
+    "playlists/get-tracks.md",
+    "auth/Auth Overview.md",
+    "Untitled.canvas",
+    "download/Download Overview.md",
+    "queues/get.md",
+    "queues/search.md",
+    "playlists/search.md",
+    "auth/Login.md",
+    "queues/get-tracks.md",
+    "getting-started.md",
+    "queues",
+    "playlists",
+    "models",
+    "download",
+    "db",
+    "auth"
+  ]
+}

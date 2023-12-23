@@ -26,7 +26,7 @@ namespace MelonWebApi.Controllers
         // Tracks
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("track")]
-        public Track GetTrack(string _id)
+        public Track GetTrack(string id)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace MelonWebApi.Controllers
 
                 var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-                var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(_id));
+                var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
 
                 var trackDocs = TracksCollection.Find(trackFilter)
                                                 .ToList();
@@ -73,7 +73,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("tracks")]
-        public List<Track> GetTracks(string[] _ids)
+        public List<Track> GetTracks(string[] ids)
         {
             try
             {
@@ -82,7 +82,7 @@ namespace MelonWebApi.Controllers
                 var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
                 List<Track> tracks = new List<Track>();
-                foreach(var id in _ids)
+                foreach(var id in ids)
                 {
                     var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
                     var track = TracksCollection.Find(trackFilter).FirstOrDefault();
@@ -101,7 +101,7 @@ namespace MelonWebApi.Controllers
         // Albums
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album")]
-        public Album GetAlbum(string _id)
+        public Album GetAlbum(string id)
         {
             try
             {
@@ -111,7 +111,7 @@ namespace MelonWebApi.Controllers
 
                 var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
 
-                var albumFilter = Builders<Album>.Filter.Eq("_id", new ObjectId(_id));
+                var albumFilter = Builders<Album>.Filter.Eq("_id", new ObjectId(id));
 
                 var albumDocs = AlbumsCollection.Find(albumFilter)
                                                 .ToList();
@@ -148,7 +148,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("albums")]
-        public List<Album> GetAlbums(string[] _ids)
+        public List<Album> GetAlbums(string[] ids)
         {
             try
             {
@@ -159,7 +159,7 @@ namespace MelonWebApi.Controllers
                 var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
 
                 List<Album> albums = new List<Album>();
-                foreach (var id in _ids)
+                foreach (var id in ids)
                 {
                     var albumFilter = Builders<Album>.Filter.Eq("_id", new ObjectId(id));
                     var album = AlbumCollection.Find(albumFilter).FirstOrDefault();
@@ -178,7 +178,7 @@ namespace MelonWebApi.Controllers
         // Artists
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist")]
-        public Artist GetArtist(string _id)
+        public Artist GetArtist(string id)
         {
             try
             {
@@ -188,7 +188,7 @@ namespace MelonWebApi.Controllers
 
                 var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
 
-                var artistFilter = Builders<Artist>.Filter.Eq("_id", new ObjectId(_id));
+                var artistFilter = Builders<Artist>.Filter.Eq("_id", new ObjectId(id));
 
                 var ArtistDocs = ArtistCollection.Find(artistFilter)
                                                 .ToList();
@@ -225,7 +225,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artists")]
-        public List<Artist> GetArtists(string[] _ids)
+        public List<Artist> GetArtists(string[] ids)
         {
             try
             {
@@ -236,7 +236,7 @@ namespace MelonWebApi.Controllers
                 var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
 
                 List<Artist> artists = new List<Artist>();
-                foreach (var id in _ids)
+                foreach (var id in ids)
                 {
                     var artistFilter = Builders<Artist>.Filter.Eq("_id", new ObjectId(id));
                     var artist = ArtistCollection.Find(artistFilter).FirstOrDefault();

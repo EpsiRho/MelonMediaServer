@@ -1,0 +1,43 @@
+{
+  "folders": [
+    {
+      "name": "",
+      "relativePath": "/"
+    },
+    {
+      "name": "db",
+      "relativePath": "db"
+    },
+    {
+      "name": "download",
+      "relativePath": "download"
+    },
+    {
+      "name": "auth",
+      "relativePath": "auth"
+    },
+    {
+      "name": "models",
+      "relativePath": "models"
+    },
+    {
+      "name": "playlists",
+      "relativePath": "playlists"
+    },
+    {
+      "name": "queues",
+      "relativePath": "queues"
+    },
+    {
+      "name": "general",
+      "relativePath": "general"
+    }
+  ],
+  "nonMdFiles": [
+    {
+      "name": "toc.yml",
+      "basename": "toc",
+      "relativePath": "toc.yml"
+    }
+  ]
+}

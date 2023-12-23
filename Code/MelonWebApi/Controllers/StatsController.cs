@@ -25,7 +25,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("log-play")]
-        public string LogPlay(string _id, string device = "", string dateTime = "")
+        public string LogPlay(string id, string device = "", string dateTime = "")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -38,7 +38,7 @@ namespace MelonWebApi.Controllers
 
             // Get track, album, artists
             Track track = null;
-            var tFilter = Builders<Track>.Filter.Eq("_id", ObjectId.Parse(_id));
+            var tFilter = Builders<Track>.Filter.Eq("_id", ObjectId.Parse(id));
             try
             {
                 track = TCollection.Find(tFilter).ToList()[0];

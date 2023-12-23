@@ -11,7 +11,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Collections.Specialized;
+using System.Reflection;
 using System.Text;
 namespace MelonWebApi
 {
@@ -50,6 +52,15 @@ namespace MelonWebApi
                             ValidateAudience = false
                         };
                     });
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                // Use method name as operationId
+                c.CustomOperationIds(apiDesc =>
+                {
+                    return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo) ? methodInfo.Name : null;
+                });
+            });
 
             app = builder.Build();
 
@@ -60,6 +71,17 @@ namespace MelonWebApi
             app.UseAuthorization();
 
             app.UseMiddleware<JwtMiddleware>();
+
+            app.UseSwagger(options =>
+            {
+                options.SerializeAsV2 = true;
+            });
+
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+                options.RoutePrefix = string.Empty;
+            });
 
             app.MapControllers();
 
