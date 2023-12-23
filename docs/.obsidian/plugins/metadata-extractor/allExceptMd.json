@@ -38,6 +38,16 @@
       "name": "toc.yml",
       "basename": "toc",
       "relativePath": "toc.yml"
+    },
+    {
+      "name": "index.html",
+      "basename": "index",
+      "relativePath": "index.html"
+    },
+    {
+      "name": "style.css",
+      "basename": "style",
+      "relativePath": "style.css"
     }
   ]
 }

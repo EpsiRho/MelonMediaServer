@@ -11,8 +11,12 @@
             "id": "8b82fb671072fa31",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {}
+              "type": "markdown",
+              "state": {
+                "file": "MelonAPI Planning.md",
+                "mode": "source",
+                "source": false
+              }
             }
           }
         ]
@@ -81,6 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "MelonAPI Planning.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -97,6 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "MelonAPI Planning.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -118,7 +124,9 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {}
+              "state": {
+                "file": "MelonAPI Planning.md"
+              }
             }
           }
         ]
@@ -138,8 +146,13 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "8b82fb671072fa31",
+  "active": "306a24d8e54a0d77",
   "lastOpenFiles": [
+    "_sidebar.md",
+    "style.css",
+    "index.html",
+    "introduction.md",
+    "getting-started.md",
     "toc.yml",
     "queues/search.md",
     "queues/get.md",
@@ -165,8 +178,6 @@
     "models/Album.md",
     "models",
     "MelonAPI Planning.md",
-    "introduction.md",
-    "getting-started.md",
     "general/tracks.md",
     "general/track.md",
     "general",
