@@ -22,12 +22,15 @@ namespace Melon.Models
         public ShortTrack(Track t)
         {
             _id = t._id;
+            TrackId = t.TrackId;
             Album = t.Album;
             Position = t.Position;
+            Disc = t.Disc;
             TrackName = t.TrackName;
             Duration = t.Duration;
-            TrackArtists = t.TrackArtists;
             TrackArtCount = t.TrackArtCount;
+            Path = t.Path;
+            TrackArtists = t.TrackArtists;
         }
     }
 }

@@ -74,9 +74,7 @@ namespace MelonWebApi.Controllers
             try
             {
                 var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
                 var mongoDatabase = mongoClient.GetDatabase("Melon");
-
                 var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
                 List<Track> tracks = new List<Track>();

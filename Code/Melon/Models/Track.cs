@@ -28,6 +28,5 @@ namespace Melon.Models
         public DateTime ReleaseDate { get; set; }
         public List<string> TrackGenres { get; set; }
         public List<ShortArtist> TrackArtists { get; set; }
-
     }
 }

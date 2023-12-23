@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using Microsoft.Owin.Hosting;
 using Melon.Classes;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections;
 
 namespace Melon.LocalClasses
 {
@@ -23,24 +24,7 @@ namespace Melon.LocalClasses
     /// </summary>
     public static class MelonAPI
     {
-
-        public static async Task<List<Track>> SearchTracks(string query, int pageNumber, int pageSize)
-        {
-            var options = new RestClientOptions("https://localhost:7004/")
-            {
-                //Authenticator = new HttpBasicAuthenticator("username", "password")
-            };
-
-            var client = new RestClient(options);
-            var request = new RestRequest("api/MelonSearch/Tracks");
-            request.AddQueryParameter("query", query);
-            request.AddQueryParameter("page", pageNumber);
-            request.AddQueryParameter("count", pageSize);
-            var response = await client.GetAsync(request);
-
-            return JsonConvert.DeserializeObject<List<Track>>(response.Content);
-        }
-        public static List<Track> ShuffleTracks(List<Track> tracks, ShuffleType type, bool FullRandom = false)
+        public static List<ShortTrack> ShuffleTracks(List<ShortTrack> tracks, ShuffleType type, bool FullRandom = false)
         {
             Random rng = new Random();
             // Shuffle the list.
@@ -53,23 +37,26 @@ namespace Melon.LocalClasses
                     {
                         n--;
                         int k = rng.Next(n + 1);
-                        Track value = tracks[k];
+                        ShortTrack value = tracks[k];
                         tracks[k] = tracks[n];
                         tracks[n] = value;
                     }
 
                     // Remove any consecutive tracks from the same artist or album.
-                    for (int l = 0; l < 5; l++)
+                    if (!FullRandom)
                     {
-                        var count = tracks.Count();
-                        for (int i = 0; i < tracks.Count - 1; i++)
+                        for (int l = 0; l < 5; l++)
                         {
-                            if (tracks[i].TrackArtists.Contains(tracks[i + 1].TrackArtists[0]) || tracks[i].Album.AlbumName == tracks[i + 1].Album.AlbumName)
+                            var count = tracks.Count();
+                            for (int i = 0; i < tracks.Count - 1; i++)
                             {
-                                var temp = tracks[i];
-                                tracks.RemoveAt(i);
-                                var k = rng.Next(0, count);
-                                tracks.Insert(k, temp);
+                                if (tracks[i].TrackArtists.Contains(tracks[i + 1].TrackArtists[0]) || tracks[i].Album.AlbumName == tracks[i + 1].Album.AlbumName)
+                                {
+                                    var temp = tracks[i];
+                                    tracks.RemoveAt(i);
+                                    var k = rng.Next(0, count);
+                                    tracks.Insert(k, temp);
+                                }
                             }
                         }
                     }
@@ -77,46 +64,163 @@ namespace Melon.LocalClasses
 
                 // Shuffle By Album
                 case ShuffleType.ByAlbum:
-                    var albumDic = new Dictionary<string, List<Track>>();
+                    var albumDic = new Dictionary<string, List<ShortTrack>>();
 
                     foreach (var track in tracks)
                     {
-                        if (albumDic.ContainsKey(track.Album.AlbumName))
+                        if (albumDic.ContainsKey(track.Album.AlbumId))
                         {
-                            for(int i = 0; i < albumDic[track.Album.AlbumName].Count ; i++)
-                            {
-                                if (albumDic[track.Album.AlbumName][i].Disc > track.Disc)
-                                {
-                                    albumDic[track.Album.AlbumName].Insert(i, track);
-                                    break;
-                                }
-                                else if (albumDic[track.Album.AlbumName][i].Disc == track.Disc && albumDic[track.Album.AlbumName][i].Position > track.Position)
-                                {
-                                    albumDic[track.Album.AlbumName].Insert(i, track);
-                                    break;
-                                }
-                            }
+                            //for(int i = 0; i < albumDic[track.Album.AlbumId].Count ; i++)
+                            //{
+                            //    if (albumDic[track.Album.AlbumId][i].Disc > track.Disc)
+                            //    {
+                            //        albumDic[track.Album.AlbumId].Insert(i, track);
+                            //        break;
+                            //    }
+                            //    else if (albumDic[track.Album.AlbumId][i].Disc == track.Disc && albumDic[track.Album.AlbumId][i].Position > track.Position)
+                            //    {
+                            //        albumDic[track.Album.AlbumId].Insert(i, track);
+                            //        break;
+                            //    }
+                            //}
+                            albumDic[track.Album.AlbumId].Add(track);
                         }
                         else
                         {
-                            albumDic.Add(track.Album.AlbumName, new List<Track>() { track });
+                            albumDic.Add(track.Album.AlbumId, new List<ShortTrack>() { track });
                         }
                     }
 
                     albumDic = albumDic.OrderBy(x => rng.Next()).ToDictionary(item => item.Key, item => item.Value);
 
-                    var newTracks = new List<Track>();
+                    var newTracks = new List<ShortTrack>();
                     foreach(var album in albumDic)
                     {
-                        newTracks.AddRange(album.Value);
+                        var tks = album.Value;
+                        if (FullRandom)
+                        {
+                            int number = tks.Count;
+                            while (number > 1)
+                            {
+                                number--;
+                                int k = rng.Next(number + 1);
+                                ShortTrack value = tks[k];
+                                tks[k] = tks[number];
+                                tks[number] = value;
+                            }
+                        }
+                        else
+                        {
+                            tks = tks.OrderBy(x => x.Position + x.Disc).ToList();
+                        }
+                        newTracks.AddRange(tks);
                     }
 
                     return newTracks;
 
                 // Shuffle By Artist
                 case ShuffleType.ByArtistRandom:
-                    
-                    return tracks;
+                    var artistDic = new Dictionary<string, List<ShortTrack>>();
+
+                    foreach (var track in tracks)
+                    {
+                        if (artistDic.ContainsKey(track.TrackArtists[0].ArtistId))
+                        {
+                            artistDic[track.TrackArtists[0].ArtistId].Add(track);
+                        }
+                        else
+                        {
+                            artistDic.Add(track.TrackArtists[0].ArtistId, new List<ShortTrack>() { track });
+                        }
+                    }
+
+                    artistDic = artistDic.OrderBy(x => rng.Next()).ToDictionary(item => item.Key, item => item.Value);
+
+                    var nTracks = new List<ShortTrack>();
+                    foreach (var album in artistDic)
+                    {
+                        var tks = album.Value;
+                        int nm = tks.Count;
+                        while (nm > 1)
+                        {
+                            nm--;
+                            int k = rng.Next(nm + 1);
+                            ShortTrack value = tks[k];
+                            tks[k] = tks[nm];
+                            tks[nm] = value;
+                        }
+
+                        nTracks.AddRange(tks);
+                    }
+                    return nTracks;
+                case ShuffleType.ByTrackFavorites:
+                    var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+                    var mongoDatabase = mongoClient.GetDatabase("Melon");
+                    var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+                    List<Track> fullTracks = new List<Track>();
+                    foreach (var track in tracks)
+                    {
+                        var trackFilter = Builders<Track>.Filter.Eq("_id", track._id);
+                        var t = TracksCollection.Find(trackFilter).FirstOrDefault();
+                        fullTracks.Add(t);
+                    }
+
+                    Random rand = new Random();
+
+                    // Sort with a bias towards PlayCount and Rating
+                    fullTracks = fullTracks.OrderByDescending(x => x.PlayCount + x.Rating + rand.NextDouble()).ToList();
+
+                    //int num = fullTracks.Count;
+                    //for (int i = 0; i < num; i++)
+                    //{
+                    //    int r = i + rand.Next(num - i);
+                    //    var temp = fullTracks[i];
+                    //    fullTracks[i] = fullTracks[r];
+                    //    fullTracks[r] = temp;
+                    //}
+
+                    List<ShortTrack> finalTracks = new List<ShortTrack>();
+                    foreach(var track in fullTracks)
+                    {
+                        finalTracks.Add(new ShortTrack(track));
+                    }
+
+                    return finalTracks;
+                case ShuffleType.ByTrackDiscovery:
+                    var mc = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+                    var md = mc.GetDatabase("Melon");
+                    var TCollection = md.GetCollection<Track>("Tracks");
+
+                    List<Track> fTracks = new List<Track>();
+                    foreach (var track in tracks)
+                    {
+                        var trackFilter = Builders<Track>.Filter.Eq("_id", track._id);
+                        var t = TCollection.Find(trackFilter).FirstOrDefault();
+                        fTracks.Add(t);
+                    }
+
+                    Random r = new Random();
+
+                    // Sort with a bias against PlayCount and Rating
+                    fTracks = fTracks.OrderBy(x => x.PlayCount + x.Rating + r.NextDouble()).ToList();
+
+                    //int num = fullTracks.Count;
+                    //for (int i = 0; i < num; i++)
+                    //{
+                    //    int r = i + rand.Next(num - i);
+                    //    var temp = fullTracks[i];
+                    //    fullTracks[i] = fullTracks[r];
+                    //    fullTracks[r] = temp;
+                    //}
+
+                    List<ShortTrack> outTracks = new List<ShortTrack>();
+                    foreach (var track in fTracks)
+                    {
+                        outTracks.Add(new ShortTrack(track));
+                    }
+
+                    return outTracks;
             }
 
             return null;

@@ -9,9 +9,9 @@ namespace Melon.Types
     public enum ShuffleType
     {
         ByTrack,
+        ByTrackFavorites,
+        ByTrackDiscovery,
         ByAlbum,
-        ByArtistAsc,
-        ByArtistDesc,
         ByArtistRandom
     }
 }
