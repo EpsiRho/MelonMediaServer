@@ -108,16 +108,37 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-tracks")]
-        public Dictionary<string, int> TopTracks(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
+        public Dictionary<string, int> TopTracks(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 500)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user,"i"));
+            var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device,"i"));
-            statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user,"i"));
+            if (users.Count() != 0)
+            {
+                return null;
+            }
+
+            if(user != User.Identity.Name)
+            {
+                if (!users[0].PublicStats)
+                {
+                    return null;
+                }
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user,"i"));
+            }
+            else
+            {
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
+
 
             if (ltDateTime != "")
             {
@@ -144,16 +165,36 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-albums")]
-        public Dictionary<string, int> TopAlbums(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
+        public Dictionary<string, int> TopAlbums(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 500)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
-            statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            if (users.Count() != 0)
+            {
+                return null;
+            }
+
+            if (user != User.Identity.Name)
+            {
+                if (!users[0].PublicStats)
+                {
+                    return null;
+                }
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
+            else
+            {
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
 
             if (ltDateTime != "")
             {
@@ -180,16 +221,36 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-artists")]
-        public Dictionary<string, int> TopArtists(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
+        public Dictionary<string, int> TopArtists(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 500)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
-            statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            if (users.Count() != 0)
+            {
+                return null;
+            }
+
+            if (user != User.Identity.Name)
+            {
+                if (!users[0].PublicStats)
+                {
+                    return null;
+                }
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
+            else
+            {
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
 
             if (ltDateTime != "")
             {
@@ -217,16 +278,36 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-genres")]
-        public Dictionary<string, int> TopGenres(string ltDateTime = "", string gtDateTime = "", string device = "", string user = "", int page = 0, int count = 500)
+        public Dictionary<string, int> TopGenres(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 500)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
 
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
-            statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            if (users.Count() != 0)
+            {
+                return null;
+            }
+
+            if (user != User.Identity.Name)
+            {
+                if (!users[0].PublicStats)
+                {
+                    return null;
+                }
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
+            else
+            {
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
 
             if (ltDateTime != "")
             {

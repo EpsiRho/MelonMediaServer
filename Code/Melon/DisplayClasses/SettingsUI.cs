@@ -162,7 +162,9 @@ namespace Melon.DisplayClasses
                         Password = password,
                         Salt = tempSalt,
                         LastLogin = DateTime.Now,
-                        Type = "Admin"
+                        Type = "Admin",
+                        PublicStats = false,
+                        Bio = ""
                     };
                     collection.InsertOne(document);
                 }

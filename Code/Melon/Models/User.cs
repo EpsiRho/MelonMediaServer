@@ -11,6 +11,7 @@ namespace Melon.Models
         public string Bio { get; set; }
         public byte[] Salt { get; set; }
         public string Type { get; set; }
+        public bool PublicStats { get; set; }
         public DateTime LastLogin { get; set; }
 
     }
