@@ -31,4 +31,4 @@
 |genres|string[]|||
 
 #### Responses
-Returns List<Track> of queried tracks
+Returns List\<Track\> of queried tracks
