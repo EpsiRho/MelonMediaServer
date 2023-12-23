@@ -148,6 +148,7 @@
   },
   "active": "306a24d8e54a0d77",
   "lastOpenFiles": [
+    "README.md",
     "_sidebar.md",
     "style.css",
     "index.html",
@@ -179,7 +180,6 @@
     "models",
     "MelonAPI Planning.md",
     "general/tracks.md",
-    "general/track.md",
     "general",
     "download",
     "db",
