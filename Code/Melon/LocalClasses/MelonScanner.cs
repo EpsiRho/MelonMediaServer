@@ -655,8 +655,22 @@ namespace Melon.LocalClasses
                     var AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");
                     AlbumCollection.DeleteMany(Builders<Album>.Filter.Empty);
 
+                    var QueueCollection = NewMelonDB.GetCollection<PlayQueue>("Queues");
+                    QueueCollection.DeleteMany(Builders<PlayQueue>.Filter.Empty);
+
+                    var PlaylistCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
+                    PlaylistCollection.DeleteMany(Builders<Playlist>.Filter.Empty);
+
                     var failedCollection = NewMelonDB.GetCollection<FailedFiles>("FailedFiles");
                     failedCollection.DeleteMany(Builders<FailedFiles>.Filter.Empty);
+
+                    if (Directory.Exists($"{StateManager.melonPath}/AlbumArts/"))
+                    {
+                        foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/AlbumArts/"))
+                        {
+                            File.Delete(file);
+                        }
+                    }
                     break;
                 case "No":
                     return;
