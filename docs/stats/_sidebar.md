@@ -9,7 +9,7 @@
 * [stats](stats/statsOverview)
 	* [log-play](stats/logPlay)
 	* [top-albums](stats/top-albums)
-	* [top-artists][stats/top-artists]
-	* [top-genres][stats/top-genres]
-	* [top-tracks][stats/top-tracks]
+	* [top-artists](stats/top-artists)
+	* [top-genres](stats/top-genres)
+	* [top-tracks](stats/top-tracks)
 * [models](models/modelsOverview)
