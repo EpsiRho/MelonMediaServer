@@ -28,7 +28,7 @@
 |gtDay|int|0|Return tracks released after a certain day of month|
 |ltRating|int|0|Return tracks rated lower than value|
 |gtRating|int|0|Return tracks rated higher than value|
-|genres|string[]|||
+|genres|string[]||Return tracks in any of the requested genres|
 
 #### Responses
 Returns List\<Track\> of queried tracks
