@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "search/artists.md",
                 "mode": "source",
                 "source": true
               }
@@ -69,7 +69,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 200
   },
   "right": {
     "id": "0eae1e6184b73a6b",
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "README.md",
+                "file": "search/artists.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "README.md",
+                "file": "search/artists.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "README.md"
+                "file": "search/artists.md"
               }
             }
           }
@@ -148,6 +148,13 @@
   },
   "active": "8b82fb671072fa31",
   "lastOpenFiles": [
+    "search/tracks.md",
+    "search/artists.md",
+    "search/albums.md",
+    "search/_sidebar.md",
+    "search/searchOverview.md",
+    "_sidebar.md",
+    "README.md",
     "auth/login.md",
     "models/User.md",
     "models/Track.md",
@@ -166,14 +173,7 @@
     "api/_sidebar.md",
     "auth/_sidebar.md",
     "download/_sidebar.md",
-    "_sidebar.md",
     "queues/queuesOverview.md",
-    "queues/get-tracks.md",
-    "queues/get.md",
-    "playlists/playlistsOverview.md",
-    "download/track.md",
-    "download/track-art.md",
-    "download/album-art.md",
     "stats",
     "search",
     "style.css",
