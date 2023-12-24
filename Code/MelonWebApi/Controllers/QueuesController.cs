@@ -24,7 +24,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create")]
-        public string CreateQueueFromIDs(string name, List<string> _ids, string shuffle = "none")
+        public ObjectResult CreateQueueFromIDs(string name, List<string> _ids, string shuffle = "none")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -82,11 +82,11 @@ namespace MelonWebApi.Controllers
             queue.Tracks = tracks;
             QCollection.InsertOne(queue);
 
-            return $"{queue._id}";
+            return new ObjectResult($"{queue._id}") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-albums")]
-        public string CreateQueueAlbums(string name, List<string> ids, string shuffle = "none")
+        public ObjectResult CreateQueueAlbums(string name, List<string> ids, string shuffle = "none")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -153,11 +153,11 @@ namespace MelonWebApi.Controllers
             }
             QCollection.InsertOne(queue);
 
-            return $"{queue._id}";
+            return new ObjectResult($"{queue._id}") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-artists")]
-        public string CreateQueueArtists(string name, List<string> ids, string shuffle = "none")
+        public ObjectResult CreateQueueArtists(string name, List<string> ids, string shuffle = "none")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -224,11 +224,11 @@ namespace MelonWebApi.Controllers
             }
             QCollection.InsertOne(queue);
 
-            return $"{queue._id}";
+            return new ObjectResult($"{queue._id}") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-playlists")]
-        public string CreateQueuePlaylists(string name, List<string> ids, string shuffle = "none")
+        public ObjectResult CreateQueuePlaylists(string name, List<string> ids, string shuffle = "none")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -295,11 +295,11 @@ namespace MelonWebApi.Controllers
             }
             QCollection.InsertOne(queue);
 
-            return $"{queue._id}";
+            return new ObjectResult($"{queue._id}") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get")]
-        public ShortQueue GetQueueFromIDs(string id)
+        public ObjectResult GetQueueFromIDs(string id)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -317,18 +317,18 @@ namespace MelonWebApi.Controllers
                 {
                     if (queue.Owner != userName && !queue.Editors.Contains(userName) && !queue.Viewers.Contains(userName))
                     {
-                        return null;
+                        return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
                 }
 
-                return new ShortQueue(queue);
+                return new ObjectResult(new ShortQueue(queue)) { StatusCode = 200 };
             }
 
-            return null;
+            return new ObjectResult($"Queue not found") { StatusCode = 404 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("search")]
-        public IEnumerable<ShortQueue> SearchQueues(int page, int count, string name="")
+        public ObjectResult SearchQueues(int page, int count, string name="")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -346,11 +346,11 @@ namespace MelonWebApi.Controllers
                                     .ToList()
                                     .Select(x=>new ShortQueue(x));
 
-            return Queues;
+            return new ObjectResult(Queues) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get-tracks")]
-        public IEnumerable<ShortTrack> GetTracks(int page, int count, string id)
+        public ObjectResult GetTracks(int page, int count, string id)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -361,7 +361,7 @@ namespace MelonWebApi.Controllers
             var Queues = QCollection.Find(qFilter).ToList();
             if (Queues.Count() == 0)
             {
-                return null;
+                return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
             var queue = Queues[0];
 
@@ -370,17 +370,17 @@ namespace MelonWebApi.Controllers
             {
                 if (queue.Owner != userName && !queue.Editors.Contains(userName) && !queue.Viewers.Contains(userName))
                 {
-                    return null;
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
 
             var tracks = Queues[0].Tracks.Take(new Range(page * count, (page * count) + count));
 
-            return tracks;
+            return new ObjectResult(tracks) { StatusCode = 404 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("add-tracks")]
-        public string AddToQueue(string id, List<string> trackIds, string position = "end")
+        public ObjectResult AddToQueue(string id, List<string> trackIds, string position = "end")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -393,7 +393,7 @@ namespace MelonWebApi.Controllers
             var queues = QCollection.Find(qFilter).ToList();
             if(queues.Count() == 0)
             {
-                return "Queue Not Found";
+                return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
             var queue = queues[0];
 
@@ -401,7 +401,7 @@ namespace MelonWebApi.Controllers
             {
                 if (queue.Owner != userName && !queue.Editors.Contains(userName))
                 {
-                    return null;
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
 
@@ -430,11 +430,11 @@ namespace MelonWebApi.Controllers
             }
             QCollection.ReplaceOne(qFilter, queue);
 
-            return "200";
+            return new ObjectResult("Tracks added") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("remove-tracks")]
-        public string RemoveFromQueue(string id, List<string> trackIds)
+        public ObjectResult RemoveFromQueue(string id, List<string> trackIds)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -447,14 +447,14 @@ namespace MelonWebApi.Controllers
             var queues = QCollection.Find(qFilter).ToList();
             if (queues.Count() == 0)
             {
-                return "Queue Not Found";
+                return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
             var queue = queues[0];
             if (queue.PublicEditing == false)
             {
                 if (queue.Owner != userName && !queue.Editors.Contains(userName))
                 {
-                    return null;
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
 
@@ -470,11 +470,11 @@ namespace MelonWebApi.Controllers
             }
             QCollection.ReplaceOne(qFilter, queue);
 
-            return "200";
+            return new ObjectResult("Tracks removed") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("move-track")]
-        public string MoveTrack(string queueId, string trackId, int position)
+        public ObjectResult MoveTrack(string queueId, string trackId, int position)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -486,7 +486,7 @@ namespace MelonWebApi.Controllers
             var queues = QCollection.Find(qFilter).ToList();
             if (queues.Count() == 0)
             {
-                return "Queue Not Found";
+                return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
             var queue = queues[0];
 
@@ -494,7 +494,7 @@ namespace MelonWebApi.Controllers
             {
                 if (queue.Owner != userName && !queue.Editors.Contains(userName))
                 {
-                    return null;
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
 
@@ -503,7 +503,7 @@ namespace MelonWebApi.Controllers
                          select t).ToList();
             if(tracks.Count() == 0)
             {
-                return "Track Not Found";
+                return new ObjectResult("Track not found") { StatusCode = 404 };
             }
             var track = tracks[0];
 
@@ -513,11 +513,11 @@ namespace MelonWebApi.Controllers
 
             QCollection.ReplaceOne(qFilter, queue);
 
-            return "200";
+            return new ObjectResult("Track moved") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("update")]
-        public string UpdateQueueName(ShortQueue queue)
+        public ObjectResult UpdateQueueName(ShortQueue queue)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -529,7 +529,7 @@ namespace MelonWebApi.Controllers
             var queues = QCollection.Find(qFilter).ToList();
             if (queues.Count == 0)
             {
-                return "Queue Not Found";
+                return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
             var oq = queues[0];
 
@@ -537,7 +537,7 @@ namespace MelonWebApi.Controllers
             {
                 if (oq.Owner != userName && !oq.Editors.Contains(userName))
                 {
-                    return null;
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
 
@@ -554,11 +554,11 @@ namespace MelonWebApi.Controllers
 
             QCollection.ReplaceOne(qFilter, oq);
 
-            return "200";
+            return new ObjectResult("Queue updated") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("shuffle")]
-        public string ShuffleQueue(string id, string shuffle = "none")
+        public ObjectResult ShuffleQueue(string id, string shuffle = "none")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -570,7 +570,7 @@ namespace MelonWebApi.Controllers
             var queues = QCollection.Find(qFilter).ToList();
             if(queues.Count() == 0)
             {
-                return "Not Found";
+                return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
             var queue = queues[0];
 
@@ -578,7 +578,7 @@ namespace MelonWebApi.Controllers
             {
                 if (queue.Owner != userName && !queue.Editors.Contains(userName))
                 {
-                    return null;
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
 
@@ -618,7 +618,7 @@ namespace MelonWebApi.Controllers
             }
             QCollection.ReplaceOne(qFilter, queue);
 
-            return $"200";
+            return new ObjectResult("Tracks Shuffled") { StatusCode = 200 };
         }
     }
 }

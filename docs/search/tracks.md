@@ -3,7 +3,10 @@
 
 `GET /api/search/tracks`
 
-#### Parameters
+## Auth
+Accepts Users of type Admin, User, Pass.</br>
+
+## Parameters
 
 |Name|Type|Default|Notes|
 |---|---|---|---|
@@ -30,5 +33,5 @@
 |gtRating|int|0|Return tracks rated higher than value|
 |genres|string[]||Return tracks in any of the requested genres|
 
-#### Responses
-Returns List\<Track\> of queried tracks
+## Responses
+Returns a list of [Track](models/Track)

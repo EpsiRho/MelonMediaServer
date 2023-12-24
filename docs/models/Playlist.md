@@ -1,6 +1,6 @@
 # Playlist
 
-**This model will not be sent back to you!** Normally you'll be sent a [[ShortPlaylist]]. Since playlists can hold a lot of tracks, you'll get those tracks through a different endpoint than you use to get the playlist info. 
+**This model will not be sent back to you!** Normally you'll be sent a [ShortPlaylist](models/ShortPlaylist). Since playlists can hold a lot of tracks, you'll get those tracks through a different endpoint than you use to get the playlist info. 
 - Viewing playlist info
 	- [playlists/get](/playlists/get)
 	-  [playlists/search](/playlists/search)

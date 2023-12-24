@@ -3,7 +3,10 @@
 
 `GET /api/search/artists`
 
-#### Parameters
+## Auth
+Accepts Users of type Admin, User, Pass.</br>
+
+## Parameters
 
 |Name|Type|Default|Notes|
 |---|---|---|---|
@@ -16,5 +19,5 @@
 |gtRating|int|0|Return artists rated higher than value|
 |genres|string[]||Return artists in any of the requested genres|
 
-#### Responses
-Returns List\<Artist\> of queried artists
+## Responses
+Returns a list of [Artist](models/Artist)

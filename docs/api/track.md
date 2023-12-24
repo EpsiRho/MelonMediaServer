@@ -3,13 +3,16 @@
 
 `GET /api/track[?id]`
 
-#### Parameters
+## Auth
+Accepts Users of type Admin, User, Pass.</br>
+
+## Parameters
 
 |Name|Type|Default|Notes|
 |---|---|---|---|
 |id|string||The ID of the track to get|
 
-#### Responses
+## Responses
 Returns a [Track](models/track) object with info about the track.
 
 ---
@@ -19,11 +22,14 @@ Returns a [Track](models/track) object with info about the track.
 
 `PATCH /api/track`
 
-#### Parameters
+## Auth
+Accepts Users of type Admin.</br>
+
+## Parameters
 
 |Name|Type|Default|Notes|
 |---|---|---|---|
 |request body|[Track](models/track)||A track object that will override one with the same ID |
 
-#### Responses
+## Responses
 Returns 200 on success, 404 on track not found.

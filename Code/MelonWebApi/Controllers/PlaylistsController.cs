@@ -25,7 +25,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create")]
-        public string CreatePlaylist(string name, string description = "", string artworkPath = "", List<string> trackIds = null)
+        public ObjectResult CreatePlaylist(string name, string description = "", List<string> trackIds = null)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             
@@ -47,13 +47,13 @@ namespace MelonWebApi.Controllers
             playlist.PublicEditing = false;
             playlist.PublicViewing = false;
             playlist.Description = description;
-            playlist.ArtworkPath = artworkPath;
+            playlist.ArtworkPath = "";
             playlist.Tracks = new List<ShortTrack>();
             //var str = queue._id.ToString();
             var pFilter = Builders<Playlist>.Filter.Eq("_id", playlist._id);
             if(trackIds == null)
             {
-                return playlist._id.ToString();
+                return new ObjectResult(playlist._id.ToString()) { StatusCode = 200 };
             }
             foreach(var id in trackIds)
             {
@@ -68,13 +68,13 @@ namespace MelonWebApi.Controllers
             }
             PCollection.InsertOne(playlist);
 
-            
-            return playlist._id.ToString();
+
+            return new ObjectResult(playlist._id.ToString()) { StatusCode = 200 };
         }
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("add-tracks")]
-        public string AddToPlaylist(string id, List<string> trackIds)
+        public ObjectResult AddToPlaylist(string id, List<string> trackIds)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -90,7 +90,7 @@ namespace MelonWebApi.Controllers
             var playlists = PCollection.Find(pFilter).ToList();
             if(playlists.Count == 0)
             {
-                return "Playlist Not Found";
+                return new ObjectResult("Playlist Not Found") { StatusCode = 404 };
             }
             var playlist = playlists[0];
 
@@ -98,7 +98,7 @@ namespace MelonWebApi.Controllers
             {
                 if(playlist.Owner != userName && !playlist.Editors.Contains(userName))
                 {
-                    return "Invalid Auth";
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
 
@@ -114,12 +114,12 @@ namespace MelonWebApi.Controllers
             }
             PCollection.ReplaceOne(pFilter, playlist);
 
-            return "200";
+            return new ObjectResult("Tracks added") { StatusCode = 200 };
         }
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("remove-tracks")]
-        public string RemoveFromPlaylist(string id, List<string> trackIds)
+        public ObjectResult RemoveFromPlaylist(string id, List<string> trackIds)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -135,7 +135,7 @@ namespace MelonWebApi.Controllers
             var playlists = PCollection.Find(pFilter).ToList();
             if (playlists.Count == 0)
             {
-                return "Playlist Not Found";
+                return new ObjectResult("Playlist Not Found") { StatusCode = 404 };
             }
             var playlist = playlists[0];
 
@@ -143,7 +143,7 @@ namespace MelonWebApi.Controllers
             {
                 if (playlist.Owner != userName && !playlist.Editors.Contains(userName))
                 {
-                    return "Invalid Auth";
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
 
@@ -160,12 +160,12 @@ namespace MelonWebApi.Controllers
             }
             PCollection.ReplaceOne(pFilter, playlist);
 
-            return "200";
+            return new ObjectResult("Tracks removed") { StatusCode = 200 };
         }
 
         [Authorize(Roles = "Admin, User")]
         [HttpPost("update")]
-        public string updatePlaylist(ShortPlaylist playlist)
+        public ObjectResult updatePlaylist(ShortPlaylist playlist)
         {
             try
             {
@@ -183,7 +183,7 @@ namespace MelonWebApi.Controllers
                 var playlists = PCollection.Find(pFilter).ToList();
                 if (playlists.Count == 0)
                 {
-                    return "Playlist Not Found";
+                    return new ObjectResult("Playlist not found") { StatusCode = 404 };
                 }
                 var plst = playlists[0];
 
@@ -191,7 +191,7 @@ namespace MelonWebApi.Controllers
                 {
                     if (plst.Owner != userName && !plst.Editors.Contains(userName))
                     {
-                        return "Invalid Auth";
+                        return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
                 }
 
@@ -208,18 +208,18 @@ namespace MelonWebApi.Controllers
 
                 PCollection.ReplaceOne(pFilter, plst);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return "500";
+                return new ObjectResult(e.Message) { StatusCode = 500 };
             }
 
 
-            return "200";
+            return new ObjectResult("Playlist updated") { StatusCode = 404 };
         }
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("get")]
-        public ShortPlaylist GetPlaylistById(string id)
+        public ObjectResult GetPlaylistById(string id)
         {
             var userName = User.Identity.Name;
 
@@ -239,19 +239,18 @@ namespace MelonWebApi.Controllers
                 {
                     if (plst.Owner != userName && !plst.Editors.Contains(userName) && !plst.Viewers.Contains(userName))
                     {
-                        return null;
+                        return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
                 }
-
-                return new ShortPlaylist(plst);
+                return new ObjectResult(new ShortPlaylist(plst)) { StatusCode = 200 };
             }
 
-            return null;
+            return new ObjectResult("Playlist not found") { StatusCode = 404 };
         }
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("move-track")]
-        public string MoveTrack(string queueId, string trackId, int position)
+        public ObjectResult MoveTrack(string playlistId, string trackId, int position)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -259,11 +258,11 @@ namespace MelonWebApi.Controllers
 
             var userName = User.Identity.Name;
 
-            var pFilter = Builders<Playlist>.Filter.Eq("_id", ObjectId.Parse(queueId));
+            var pFilter = Builders<Playlist>.Filter.Eq("_id", ObjectId.Parse(playlistId));
             var playlists = PCollection.Find(pFilter).ToList();
             if (playlists.Count() == 0)
             {
-                return "Queue Not Found";
+                return new ObjectResult("Playlist not found") { StatusCode = 404 };
             }
             var playlist = playlists[0];
 
@@ -271,7 +270,7 @@ namespace MelonWebApi.Controllers
             {
                 if (playlist.Owner != userName && !playlist.Editors.Contains(userName))
                 {
-                    return null;
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
 
@@ -280,7 +279,7 @@ namespace MelonWebApi.Controllers
                           select t).ToList();
             if (tracks.Count() == 0)
             {
-                return "Track Not Found";
+                return new ObjectResult("Track not found") { StatusCode = 404 };
             }
             var track = tracks[0];
 
@@ -290,12 +289,12 @@ namespace MelonWebApi.Controllers
 
             PCollection.ReplaceOne(pFilter, playlist);
 
-            return "200";
+            return new ObjectResult("Track moved") { StatusCode = 200 };
         }
 
-        [Authorize(Roles = "Admin,User")]
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("search")]
-        public IEnumerable<ShortPlaylist> SearchPlaylists(int page, int count, string name = "")
+        public ObjectResult SearchPlaylists(int page, int count, string name = "")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -313,11 +312,11 @@ namespace MelonWebApi.Controllers
                                     .ToList()
                                     .Select(x => new ShortPlaylist(x));
 
-            return playlists;
+            return new ObjectResult(playlists) { StatusCode = 200 };
         }
-        [Authorize(Roles = "Admin,User")]
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("get-tracks")]
-        public IEnumerable<ShortTrack> GetTracks(int page, int count, string id)
+        public ObjectResult GetTracks(int page, int count, string id)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -328,7 +327,7 @@ namespace MelonWebApi.Controllers
             var Playlists = PCollection.Find(pFilter).ToList();
             if (Playlists.Count() == 0)
             {
-                return null;
+                return new ObjectResult("Playlist not found") { StatusCode = 404 };
             }
             var playlist = Playlists[0];
 
@@ -337,13 +336,13 @@ namespace MelonWebApi.Controllers
             {
                 if (playlist.Owner != userName && !playlist.Editors.Contains(userName) && !playlist.Viewers.Contains(userName))
                 {
-                    return null;
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
 
             var tracks = Playlists[0].Tracks.Take(new Range(page * count, (page * count) + count));
 
-            return tracks;
+            return new ObjectResult(tracks) { StatusCode = 200 };
         }
     }
 }

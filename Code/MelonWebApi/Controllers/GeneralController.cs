@@ -26,7 +26,7 @@ namespace MelonWebApi.Controllers
         // Tracks
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("track")]
-        public Track GetTrack(string id)
+        public ObjectResult GetTrack(string id)
         {
             try
             {
@@ -41,39 +41,41 @@ namespace MelonWebApi.Controllers
                 var trackDocs = TracksCollection.Find(trackFilter)
                                                 .ToList();
 
-                return trackDocs[0];
+
+                return new ObjectResult(trackDocs[0]) { StatusCode = 200 };
             }
             catch (Exception)
             {
-                return null;
+                return new ObjectResult("Track not found") { StatusCode = 404 };
             }
         }
-        [Authorize(Roles = "Admin,User,Pass")]
+        [Authorize(Roles = "Admin")]
         [HttpPatch("track")]
-        public string UpdateTrack(Track t)
+        public ObjectResult UpdateTrack(Track t)
         {
-            try
-            {
-                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
-                var mongoDatabase = mongoClient.GetDatabase("Melon");
-
-                var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
-
-                var trackFilter = Builders<Track>.Filter.Eq("_id", t._id);
-
-                TracksCollection.ReplaceOne(trackFilter, t);
-
-                return "200";
-            }
-            catch (Exception)
-            {
-                return "404";
-            }
+            return new ObjectResult("Not Implemented") { StatusCode = 501 };
+            //try
+            //{
+            //    var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            //
+            //    var mongoDatabase = mongoClient.GetDatabase("Melon");
+            //
+            //    var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            //
+            //    var trackFilter = Builders<Track>.Filter.Eq("_id", t._id);
+            //
+            //    TracksCollection.ReplaceOne(trackFilter, t);
+            //
+            //    return new ObjectResult("Track updated") { StatusCode = 200 };
+            //}
+            //catch (Exception)
+            //{
+            //    return new ObjectResult("Track not found") { StatusCode = 404 };
+            //}
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("tracks")]
-        public List<Track> GetTracks(string[] ids)
+        public ObjectResult GetTracks(string[] ids)
         {
             try
             {
@@ -93,18 +95,18 @@ namespace MelonWebApi.Controllers
                 }
 
 
-                return tracks;
+                return new ObjectResult(tracks) { StatusCode = 200 };
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return null;
+                return new ObjectResult(e.Message) { StatusCode = 500 };
             }
         }
 
         // Albums
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album")]
-        public Album GetAlbum(string id)
+        public ObjectResult GetAlbum(string id)
         {
             try
             {
@@ -119,39 +121,41 @@ namespace MelonWebApi.Controllers
                 var albumDocs = AlbumsCollection.Find(albumFilter)
                                                 .ToList();
 
-                return albumDocs[0];
+                return new ObjectResult(albumDocs[0]) { StatusCode = 200 };
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return null;
+                return new ObjectResult("Album not found") { StatusCode = 404 };
             }
         }
-        [Authorize(Roles = "Admin,User,Pass")]
+        [Authorize(Roles = "Admin")]
         [HttpPatch("album")]
-        public string UpdateAlbum(Album a)
+        public ObjectResult UpdateAlbum(Album a)
         {
-            try
-            {
-                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
-                var mongoDatabase = mongoClient.GetDatabase("Melon");
-
-                var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
-
-                var albumFilter = Builders<Album>.Filter.Eq("_id", a._id);
-
-                AlbumsCollection.ReplaceOne(albumFilter, a);
-
-                return "200";
-            }
-            catch (Exception)
-            {
-                return "404";
-            }
+            return new ObjectResult("Not implemented") { StatusCode = 501 };
+            //try
+            //{
+            //
+            //    var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            //
+            //    var mongoDatabase = mongoClient.GetDatabase("Melon");
+            //
+            //    var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
+            //
+            //    var albumFilter = Builders<Album>.Filter.Eq("_id", a._id);
+            //
+            //    AlbumsCollection.ReplaceOne(albumFilter, a);
+            //
+            //    return new ObjectResult("Album updated") { StatusCode = 200 };
+            //}
+            //catch (Exception e)
+            //{
+            //    return new ObjectResult("Album Not Found") { StatusCode = 500 };
+            //}
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("albums")]
-        public List<Album> GetAlbums(string[] ids)
+        public ObjectResult GetAlbums(string[] ids)
         {
             try
             {
@@ -170,18 +174,18 @@ namespace MelonWebApi.Controllers
                 }
 
 
-                return albums;
+                return new ObjectResult(albums) { StatusCode = 200 };
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return null;
+                return new ObjectResult(e.Message) { StatusCode = 500 };
             }
         }
 
         // Artists
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist")]
-        public Artist GetArtist(string id)
+        public ObjectResult GetArtist(string id)
         {
             try
             {
@@ -196,39 +200,40 @@ namespace MelonWebApi.Controllers
                 var ArtistDocs = ArtistCollection.Find(artistFilter)
                                                 .ToList();
 
-                return ArtistDocs[0];
+                return new ObjectResult(ArtistDocs[0]) { StatusCode = 200 };
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return null;
+                return new ObjectResult("Artist not found") { StatusCode = 500 };
             }
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpPatch("artist")]
-        public string UpdateArtist(Artist a)
+        public ObjectResult UpdateArtist(Artist a)
         {
-            try
-            {
-                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
-                var mongoDatabase = mongoClient.GetDatabase("Melon");
-
-                var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
-
-                var artistFilter = Builders<Artist>.Filter.Eq("_id", a._id);
-
-                ArtistCollection.ReplaceOne(artistFilter, a);
-
-                return "200";
-            }
-            catch (Exception)
-            {
-                return "404";
-            }
+            return new ObjectResult("Not Implemented") { StatusCode = 501 };
+            //try
+            //{
+            //    var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            //
+            //    var mongoDatabase = mongoClient.GetDatabase("Melon");
+            //
+            //    var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
+            //
+            //    var artistFilter = Builders<Artist>.Filter.Eq("_id", a._id);
+            //
+            //    ArtistCollection.ReplaceOne(artistFilter, a);
+            //
+            //    return new ObjectResult(") { StatusCode = 200 };
+            //}
+            //catch (Exception e)
+            //{
+            //    return new ObjectResult("Artist not found") { StatusCode = 500 };
+            //}
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artists")]
-        public List<Artist> GetArtists(string[] ids)
+        public ObjectResult GetArtists(string[] ids)
         {
             try
             {
@@ -247,11 +252,11 @@ namespace MelonWebApi.Controllers
                 }
 
 
-                return artists;
+                return new ObjectResult(artists) { StatusCode = 200 };
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return null;
+                return new ObjectResult(e.Message) { StatusCode = 500 };
             }
         }
     }

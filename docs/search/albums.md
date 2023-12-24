@@ -3,7 +3,10 @@
 
 `GET /api/search/albums`
 
-#### Parameters
+## Auth
+Accepts Users of type Admin, User, Pass.</br>
+
+## Parameters
 
 |Name|Type|Default|Notes|
 |---|---|---|---|
@@ -25,5 +28,5 @@
 |gtRating|int|0|Return albums rated higher than value|
 |genres|string[]||Return albums in any of the requested genres|
 
-#### Responses
-Returns List\<Albums\> of queried albums
+## Responses
+Returns a list of [Albums](models/Album)

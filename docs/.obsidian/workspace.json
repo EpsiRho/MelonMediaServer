@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "search/_sidebar.md",
+                "file": "download/track.md",
                 "mode": "source",
                 "source": true
               }
@@ -69,7 +69,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 300
   },
   "right": {
     "id": "0eae1e6184b73a6b",
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "search/_sidebar.md",
+                "file": "download/track.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "search/_sidebar.md",
+                "file": "download/track.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "search/_sidebar.md"
+                "file": "download/track.md"
               }
             }
           }
@@ -148,32 +148,32 @@
   },
   "active": "8b82fb671072fa31",
   "lastOpenFiles": [
-    "search/artists.md",
+    "download/downloadOverview.md",
+    "download/album-art.md",
+    "playlists/playlistsOverview.md",
+    "playlists/create.md",
+    "playlists/update.md",
+    "playlists/search.md",
+    "playlists/remove-tracks.md",
+    "playlists/move-track.md",
+    "playlists/get-tracks.md",
+    "playlists/get.md",
+    "playlists/add-tracks.md",
+    "api/album.md",
     "search/tracks.md",
+    "search/searchOverview.md",
+    "stats/statsOverview.md",
+    "search/artists.md",
     "search/albums.md",
     "search/_sidebar.md",
-    "search/searchOverview.md",
-    "_sidebar.md",
-    "README.md",
-    "auth/login.md",
-    "models/User.md",
-    "models/Track.md",
-    "models/ShortTrack.md",
-    "models/ShortQueue.md",
-    "models/ShortPlaylist.md",
-    "models/ShortArtist.md",
-    "models/ShortAlbum.md",
-    "models/PlayQueue.md",
-    "models/PlayStat.md",
-    "models/Playlist.md",
-    "models/Album.md",
-    "models/Artist.md",
-    "models/modelsOverview.md",
-    "models/_sidebar.md",
-    "api/_sidebar.md",
-    "auth/_sidebar.md",
-    "download/_sidebar.md",
+    "queues/search.md",
     "queues/queuesOverview.md",
+    "queues/get-tracks.md",
+    "playlists/_sidebar.md",
+    "models/Album.md",
+    "models/_sidebar.md",
+    "download/track-art.md",
+    "download/track.md",
     "stats",
     "search",
     "style.css",
