@@ -22,7 +22,7 @@ namespace MelonWebApi.Controllers
         }
 
         [HttpGet("login")]
-        public string Login(string username, string password)
+        public ObjectResult Login(string username, string password)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -33,7 +33,7 @@ namespace MelonWebApi.Controllers
             
             if(users.Count == 0) 
             {
-                return "Invalid username or password";
+                return new ObjectResult("Invalid username or password") { StatusCode = 401 };
             }
             var user = users[0];
 
@@ -43,11 +43,11 @@ namespace MelonWebApi.Controllers
             {
                 user.LastLogin = DateTime.Now;
                 UserCollection.ReplaceOne(userFilter, user);
-                return Security.GenerateJwtToken(username, user.Type, 60);
+                return new ObjectResult(Security.GenerateJwtToken(username, user.Type, 60)) { StatusCode = 200 };
             }
             else
             {
-                return "Invalid username or password";
+                return new ObjectResult("Invalid username or password") { StatusCode = 401 };
             }
         }
 
