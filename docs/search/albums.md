@@ -23,7 +23,7 @@
 |gtDay|int|0|Return albums released after a certain day of month|
 |ltRating|int|0|Return albums rated lower than value|
 |gtRating|int|0|Return albums rated higher than value|
-|genres|string[]|||
+|genres|string[]||Return albums in any of the requested genres|
 
 #### Responses
 Returns List\<Albums\> of queried albums
