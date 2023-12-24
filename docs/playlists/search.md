@@ -16,4 +16,4 @@ Authenticated user must be playlist owner or viewer, or the playlist must allow 
 |name|string|""|The search query for the name of the playlist|
 
 ## Responses
-Returns a list of [ShortPlaylist](models/ShortPlaylist)
+200 - Returns a list of [ShortPlaylist](models/ShortPlaylist)

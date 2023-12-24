@@ -5,6 +5,10 @@
       "relativePath": "/"
     },
     {
+      "name": "api",
+      "relativePath": "api"
+    },
+    {
       "name": "auth",
       "relativePath": "auth"
     },
@@ -29,10 +33,6 @@
       "relativePath": "queues"
     },
     {
-      "name": "api",
-      "relativePath": "api"
-    },
-    {
       "name": "search",
       "relativePath": "search"
     },
@@ -43,11 +43,6 @@
   ],
   "nonMdFiles": [
     {
-      "name": "toc.yml",
-      "basename": "toc",
-      "relativePath": "toc.yml"
-    },
-    {
       "name": "index.html",
       "basename": "index",
       "relativePath": "index.html"
@@ -56,6 +51,11 @@
       "name": "style.css",
       "basename": "style",
       "relativePath": "style.css"
+    },
+    {
+      "name": "toc.yml",
+      "basename": "toc",
+      "relativePath": "toc.yml"
     }
   ]
 }

@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "download/track.md",
+                "file": "queues/move-track.md",
                 "mode": "source",
                 "source": true
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "download/track.md",
+                "file": "queues/move-track.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "download/track.md",
+                "file": "queues/move-track.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "download/track.md"
+                "file": "queues/move-track.md"
               }
             }
           }
@@ -148,32 +148,32 @@
   },
   "active": "8b82fb671072fa31",
   "lastOpenFiles": [
-    "download/downloadOverview.md",
-    "download/album-art.md",
-    "playlists/playlistsOverview.md",
-    "playlists/create.md",
-    "playlists/update.md",
-    "playlists/search.md",
-    "playlists/remove-tracks.md",
-    "playlists/move-track.md",
-    "playlists/get-tracks.md",
-    "playlists/get.md",
+    "2023-12-24.md",
+    "queues/shuffle.md",
+    "queues/move-track.md",
+    "queues/add-tracks.md",
     "playlists/add-tracks.md",
-    "api/album.md",
-    "search/tracks.md",
-    "search/searchOverview.md",
-    "stats/statsOverview.md",
-    "search/artists.md",
-    "search/albums.md",
-    "search/_sidebar.md",
+    "queues/update.md",
+    "models/ShortPlaylist.md",
+    "playlists/update.md",
     "queues/search.md",
+    "queues/remove-tracks.md",
     "queues/queuesOverview.md",
     "queues/get-tracks.md",
-    "playlists/_sidebar.md",
-    "models/Album.md",
-    "models/_sidebar.md",
-    "download/track-art.md",
+    "queues/get.md",
+    "playlists/search.md",
+    "playlists/move-track.md",
+    "queues/create.md",
+    "playlists/remove-tracks.md",
+    "search/albums.md",
+    "playlists/get-tracks.md",
+    "playlists/playlistsOverview.md",
+    "playlists/create.md",
     "download/track.md",
+    "download/downloadOverview.md",
+    "download/album-art.md",
+    "playlists/get.md",
+    "api/album.md",
     "stats",
     "search",
     "style.css",
