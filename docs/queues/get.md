@@ -16,6 +16,6 @@ Authenticated user must be queue owner.
 
 ## Responses
 Returns
-- Queue object
+- 200 with a [Queue](models/queue) object as json
 - 401 Invalid auth
 - 404 Playlist not found
