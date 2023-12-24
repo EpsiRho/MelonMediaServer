@@ -14,7 +14,7 @@
 |gtPlayCount|int|0|Return artists played more times than value|
 |ltRating|int|0|Return artists rated lower than value|
 |gtRating|int|0|Return artists rated higher than value|
-|genres|string[]|||
+|genres|string[]||Return artists in any of the requested genres|
 
 #### Responses
 Returns List\<Artist\> of queried artists
