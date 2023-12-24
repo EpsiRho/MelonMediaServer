@@ -13,8 +13,6 @@
 |publisher|string|""|Search albums by publisher|
 |releaseType|string|""|Filter albums by releaseType, as classified [by MusicBrainz](https://musicbrainz.org/doc/Release_Group/Type)|
 |releaseStatus|string|""|Filter albums by releases status (official, pseudo-release, promotion, etc)|
-|channels|string|""|Query for audio channels|
-|bitsPerSample|string|""|Audio bits per sample|
 |ltPlayCount|int|0|Return albums played fewer times than value|
 |gtPlayCount|int|0|Return albums played more times than value|
 |ltYear|int|0|Return albums released before a certain year|
