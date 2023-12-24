@@ -16,6 +16,6 @@
 
 ## Responses
 
-- 200 Success
+- 200 Returns list of key, value pairs with artist ids and number of plays
 - 401 Invalid auth
 - 404 User not found
