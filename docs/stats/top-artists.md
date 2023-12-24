@@ -13,3 +13,9 @@
 |gtDateTime|string||Include only logs after a certain date|
 |page|int||Used for pagination, the page you are on|
 |count|int||Used for pagination, how many artists per page|
+
+## Responses
+
+- 200 Success
+- 401 Invalid auth
+- 404 User not found
