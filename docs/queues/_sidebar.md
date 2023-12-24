@@ -12,7 +12,7 @@
 	* [move-track](queues/move-track)
 	* [remove-tracks](queues/remove-tracks)
 	* [search](queues/search)
-  * [shuffle](queues/shuffle)
+ 	* [shuffle](queues/shuffle)
 	* [update](queues/update)
 * [search](search/searchOverview)
 * [stats](stats/statsOverview)
