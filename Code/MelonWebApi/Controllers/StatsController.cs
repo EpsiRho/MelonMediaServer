@@ -273,7 +273,7 @@ namespace MelonWebApi.Controllers
                                .Take(new Range(page * count, (page * count) + count))
                                .ToDictionary(g => g.Name, g => g.Count);
 
-            return new ObjectResult(artists) { StatusCode = 404 };
+            return new ObjectResult(artists) { StatusCode = 200 };
         }
 
         [Authorize(Roles = "Admin,User,Pass")]
