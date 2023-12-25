@@ -75,7 +75,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("tracks")]
-        public ObjectResult GetTracks(string[] ids)
+        public ObjectResult GetTracks([FromQuery] string[] ids)
         {
             try
             {
@@ -155,7 +155,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("albums")]
-        public ObjectResult GetAlbums(string[] ids)
+        public ObjectResult GetAlbums([FromQuery] string[] ids)
         {
             try
             {
@@ -233,7 +233,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artists")]
-        public ObjectResult GetArtists(string[] ids)
+        public ObjectResult GetArtists([FromQuery] string[] ids)
         {
             try
             {
