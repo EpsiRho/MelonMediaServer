@@ -291,7 +291,7 @@ namespace MelonWebApi.Controllers
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
-            if (users.Count() != 0)
+            if (users.Count() == 0)
             {
                 return new ObjectResult("User not found") { StatusCode = 404 };
             }
