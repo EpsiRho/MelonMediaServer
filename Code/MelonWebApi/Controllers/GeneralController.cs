@@ -75,7 +75,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("tracks")]
-        public ObjectResult GetTracks(string[] ids)
+        public ObjectResult GetTracks([FromQuery] string[] ids)
         {
             try
             {
