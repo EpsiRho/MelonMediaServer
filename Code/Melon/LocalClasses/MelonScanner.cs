@@ -283,7 +283,15 @@ namespace Melon.LocalClasses
                     }
                     for (int i = 0; i < num; i++)
                     {
-                        var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", trackArtists[i]);
+                        var artistFilter = Builders<Artist>.Filter.Empty;
+                        if (trackArtists.Count() < num)
+                        {
+                            artistFilter = Builders<Artist>.Filter.Eq("ArtistName", albumArtists[i]);
+                        }
+                        else
+                        {
+                            artistFilter = Builders<Artist>.Filter.Eq("ArtistName", trackArtists[i]);
+                        }
                         var artistDoc = ArtistCollection.Find(artistFilter).FirstOrDefault();
 
 
