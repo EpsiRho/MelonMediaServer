@@ -21,7 +21,7 @@ namespace Melon.LocalClasses
     /// </summary>
     public static class StateManager
     {
-        public static string melonPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/Melon";
+        public static string melonPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.Personal)}/Melon";
         public static MongoClient DbClient;
         public static Settings MelonSettings { get; set; }
         public static Flags MelonFlags { get; set; }
