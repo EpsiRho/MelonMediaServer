@@ -83,7 +83,6 @@ namespace Melon.LocalClasses
                     Error = Color.FromArgb(255, 0, 0),
                     UseMenuColor = true,
                 };
-                SaveSettings();
                 MelonColor.SetDefaults();
                 DisplayManager.UIExtensions.Add(SetupUI.Display);
             }
@@ -122,7 +121,6 @@ namespace Melon.LocalClasses
                         Error = Color.FromArgb(255, 0, 0),
                         UseMenuColor = true,
                     };
-                    SaveSettings();
                     MelonColor.SetDefaults();
                     DisplayManager.UIExtensions.Add(SetupUI.Display);
                 }
