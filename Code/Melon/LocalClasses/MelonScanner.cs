@@ -1,22 +1,10 @@
-﻿using Amazon.Auth.AccessControlPolicy;
-using Azure;
-using Melon.Classes;
+﻿using Melon.Classes;
 using Melon.DisplayClasses;
 using Melon.Models;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using Pastel;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Melon.LocalClasses
 {
@@ -34,19 +22,27 @@ namespace Melon.LocalClasses
         public static long averageMilliseconds { get; set; }
         public static bool Indexed { get; set; }
         public static bool endDisplay { get; set; }
+        public static bool Scanning { get; set; }
         private static List<string> FoundPaths { get; set; }
 
         // Scanning Functions
         public static void StartScan(object skipBool)
         {
+            if (Scanning)
+            {
+                return;
+            }
+
+            Scanning = true;
+
             bool skip = (bool)skipBool;
             ScannedFiles = 0;
             FoundFiles = 0;
             averageMilliseconds = 0;
             Indexed = false;
-            MelonUI.ClearConsole();
             if(StateManager.MelonSettings.LibraryPaths.Count() == 0)
             {
+                MelonUI.ClearConsole();
                 Console.WriteLine("No library paths to search!".Pastel(MelonColor.Error));
                 Console.WriteLine("Press any key to continue...".Pastel(MelonColor.BackgroundText));
                 Console.ReadKey(intercept: true);
@@ -83,6 +79,7 @@ namespace Melon.LocalClasses
             CurrentStatus = "Complete!";
             IndexCollections();
             DisplayManager.UIExtensions.Clear();
+            Scanning = false;
         }
         private static void DeletePass()
         {
@@ -821,6 +818,21 @@ namespace Melon.LocalClasses
         }
         public static void Scan()
         {
+            if (Scanning)
+            {
+                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Full Scan" });
+
+                Console.WriteLine($"The scanner is already running, view progress?");
+                var opt = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
+                switch (opt)
+                {
+                    case "Yes":
+                        ScanProgressView();
+                        break;
+                    case "No":
+                        return;
+                }
+            }
             // Title
             MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Full Scan" });
 
@@ -845,6 +857,21 @@ namespace Melon.LocalClasses
         }
         public static void ScanShort()
         {
+            if (Scanning)
+            {
+                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Short Scan" });
+
+                Console.WriteLine($"The scanner is already running, view progress?");
+                var opt = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
+                switch (opt)
+                {
+                    case "Yes":
+                        ScanProgressView();
+                        break;
+                    case "No":
+                        return;
+                }
+            }
             // Title
             MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Short Scan" });
 
