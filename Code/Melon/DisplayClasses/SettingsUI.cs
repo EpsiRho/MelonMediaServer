@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static Melon.LocalClasses.StateManager;
 
@@ -64,12 +65,61 @@ namespace Melon.DisplayClasses
                     { "Back" , () => { LockUI = false; } },
                     { "Edit Users", UserSettings },
                     { "Edit MongoDB Connection", MongoDBSettings },
+                    { "Edit Listening URL", ChangeListeningURL },
                     { "Edit Library Paths" , LibraryPathSettings },
                     { "Edit Colors " , ChangeMelonColors }
                 };
                 var choice = MelonUI.OptionPicker(MenuOptions.Keys.ToList());
                 MenuOptions[choice]();
             }
+        }
+        private static void ChangeListeningURL()
+        {
+            bool result = true;
+            while (true)
+            {
+                // Title
+                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Listening URL" });
+
+                // Description
+                Console.WriteLine($"Changing this setting will require a server restart!".Pastel(MelonColor.Text));
+                Console.WriteLine($"Current URL: {StateManager.MelonSettings.ListeningURL.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
+                Console.WriteLine($"(Enter new urls separated by \";\" or nothing to keep the current string)".Pastel(MelonColor.Text));
+                if (!result)
+                {
+                    Console.WriteLine($"[Invalid URL]".Pastel(MelonColor.Error));
+                }
+                result = false;
+
+                // Get New URL
+                Console.Write("> ".Pastel(MelonColor.Text));
+                string input = Console.ReadLine();
+                if (input == "")
+                {
+                    return;
+                }
+
+                foreach(var url in input.Split(";"))
+                {
+                    Regex UrlWithWildcardRegex = new Regex(@"^(https?:\/\/)([\w*]+\.)*[\w*]+(:\d+)?(\/[\w\/]*)*(\?.*)?(#.*)?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                    result = UrlWithWildcardRegex.IsMatch(url);
+
+                    if (result == false)
+                    {
+                        break;
+                    }
+                }
+
+                if (result)
+                {
+                    // Set and Save new conn string
+                    StateManager.MelonSettings.ListeningURL = input;
+                    StateManager.SaveSettings();
+                    break;
+                }
+
+            }
+
         }
         private static void UserSettings()
         {

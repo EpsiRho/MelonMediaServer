@@ -44,7 +44,10 @@ namespace MelonWebApi
             builder.Services.AddControllers();
 
             builder.Logging.ClearProviders();
-            
+
+            builder.WebHost.UseUrls(StateManager.MelonSettings.ListeningURL);
+
+
             if (args.Contains("--headless") || args.Contains("-h"))
             {
                 Log.Logger = new LoggerConfiguration()

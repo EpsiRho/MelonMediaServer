@@ -123,7 +123,7 @@ namespace MelonWebApi.Controllers
 
                 foreach(var album in albumDocs)
                 {
-                    album.Tracks.OrderBy(x => x.Disc * x.Position);
+                    album.Tracks = album.Tracks.OrderBy(x => x.Disc).ThenBy(x=>x.Position).ToList();
                 }
 
                 return new ObjectResult(albumDocs[0]) { StatusCode = 200 };
@@ -175,7 +175,7 @@ namespace MelonWebApi.Controllers
                 {
                     var albumFilter = Builders<Album>.Filter.Eq("_id", new ObjectId(id));
                     var album = AlbumCollection.Find(albumFilter).FirstOrDefault();
-                    album.Tracks.OrderBy(x => x.Disc * x.Position);
+                    album.Tracks = album.Tracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).ToList();
                     albums.Add(album);
                 }
 
@@ -208,9 +208,9 @@ namespace MelonWebApi.Controllers
 
                 foreach (var artist in ArtistDocs)
                 {
-                    try { artist.Tracks.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
-                    try { artist.Releases.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
-                    try { artist.SeenOn.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
+                    try { artist.Tracks = artist.Tracks.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+                    try { artist.Releases = artist.Releases.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+                    try { artist.SeenOn = artist.SeenOn.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
                 }
 
                 return new ObjectResult(ArtistDocs[0]) { StatusCode = 200 };
@@ -261,9 +261,9 @@ namespace MelonWebApi.Controllers
                 {
                     var artistFilter = Builders<Artist>.Filter.Eq("_id", new ObjectId(id));
                     var artist = ArtistCollection.Find(artistFilter).FirstOrDefault();
-                    try{artist.Tracks.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
-                    try{artist.Releases.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
-                    try{artist.SeenOn.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
+                    try{artist.Tracks = artist.Tracks.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+                    try{artist.Releases = artist.Releases.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+                    try{artist.SeenOn = artist.SeenOn.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
                     artists.Add(artist);
                 }
 

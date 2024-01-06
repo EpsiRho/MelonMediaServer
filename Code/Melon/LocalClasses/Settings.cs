@@ -16,6 +16,7 @@ namespace Melon.LocalClasses
         public string? MongoDbConnectionString { get; set; }
         public string? JWTKey { get; set; }
         public List<string> LibraryPaths { get; set; }
+        public string ListeningURL { get; set; }
         public Color Text { get; set; }
         public Color ShadedText { get; set; }
         public Color BackgroundText { get; set; }

@@ -172,7 +172,7 @@ namespace MelonWebApi.Controllers
 
             foreach(var albumDoc in albumDocs)
             {
-                albumDoc.Tracks.OrderBy(x => x.Disc * x.Position);
+                albumDoc.Tracks.OrderBy(x => x.Disc).ThenBy(x => x.Position);
             }
 
             return albumDocs;
@@ -219,6 +219,13 @@ namespace MelonWebApi.Controllers
                                             .Skip(page * count)
                                             .Limit(count)
                                             .ToList();
+
+            foreach (var artist in ArtistDocs)
+            {
+                try { artist.Tracks = artist.Tracks.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+                try { artist.Releases = artist.Releases.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+                try { artist.SeenOn = artist.SeenOn.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+            }
 
             return ArtistDocs;
         }

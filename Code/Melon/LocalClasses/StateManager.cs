@@ -81,6 +81,7 @@ namespace Melon.LocalClasses
                     Highlight = Color.FromArgb(97, 214, 214),
                     Melon = Color.FromArgb(26, 225, 19),
                     Error = Color.FromArgb(255, 0, 0),
+                    ListeningURL = "https://*:14524",
                     UseMenuColor = true,
                 };
                 MelonColor.SetDefaults();
@@ -104,6 +105,12 @@ namespace Melon.LocalClasses
                         MelonSettings.JWTKey = Security.GenerateSecretKey();
                         DisplayManager.UIExtensions.Add(SetupUI.Display);
                     }
+
+                    if(MelonSettings.ListeningURL == null || MelonSettings.ListeningURL == "")
+                    {
+                        MelonSettings.ListeningURL = "https://*:14524";
+                        //DisplayManager.UIExtensions.Add(SetupUI.Display);
+                    }
                     SaveSettings();
                 }
                 catch (Exception)
@@ -119,6 +126,7 @@ namespace Melon.LocalClasses
                         Highlight = Color.FromArgb(97, 214, 214),
                         Melon = Color.FromArgb(26, 225, 19),
                         Error = Color.FromArgb(255, 0, 0),
+                        ListeningURL = "https://*:14524",
                         UseMenuColor = true,
                     };
                     MelonColor.SetDefaults();
