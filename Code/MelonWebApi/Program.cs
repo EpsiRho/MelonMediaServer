@@ -1,4 +1,5 @@
 using Melon.Classes;
+using Melon.DisplayClasses;
 using Melon.LocalClasses;
 using MelonWebApi.Middleware.ApiKeyAuthentication.Middlewares;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -21,11 +22,21 @@ namespace MelonWebApi
     {
         public static bool started = false;
         public static WebApplication app;
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.OutputEncoding = Encoding.UTF8;
+
             if (!started)
             {
                 StateManager.Init();
+            }
+
+            if (args.Contains("-headless") && DisplayManager.UIExtensions.Count() != 0)
+            {
+                Console.WriteLine("[!] Melon must go through setup first, which cannot show in headless mode.");
+                Console.WriteLine("[!] Please run melon without headless mode first to complete setup.");
+                return -1;
             }
 
             var builder = WebApplication.CreateBuilder();
@@ -102,8 +113,6 @@ namespace MelonWebApi
             if (!started && !args.Contains("-headless"))
             {
                 started = true;
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.OutputEncoding = Encoding.UTF8;
 
                 // Melon Startup
 
@@ -114,6 +123,8 @@ namespace MelonWebApi
             {
                 app.WaitForShutdown();
             }
+
+            return 0;
         }
     }
 }
