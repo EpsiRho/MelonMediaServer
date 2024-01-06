@@ -58,7 +58,7 @@ namespace Melon.Classes
             //Console.Clear();
             //Thread.Sleep(5);
             //Console.Write("\x1b[3J"); // required for linux because Microsoft doesn't clear the fucking buffer here
-            for(int i = 0; i < Console.WindowHeight; i++)
+            for(int i = 0; i < Console.WindowHeight*2; i++)
             {
                 Console.WriteLine();
             }

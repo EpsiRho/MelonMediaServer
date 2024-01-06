@@ -56,6 +56,7 @@ namespace Melon.DisplayClasses
             while (LockUI)
             {
                 // Title
+                MelonUI.ClearConsole();
                 MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings" });
 
                 // Input
