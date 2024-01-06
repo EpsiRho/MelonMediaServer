@@ -26,17 +26,20 @@ namespace Melon.LocalClasses
         public static Settings MelonSettings { get; set; }
         public static Flags MelonFlags { get; set; }
         private static Process serverProcess;
-        public static void Init()
+        public static void Init(bool headless)
         {
             // Title
             MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
-
-            // Setup checklist UI
-            ChecklistUI.CreateChecklist(new List<string>()
+            if (!headless)
+            {
+                // Setup checklist UI
+                ChecklistUI.CreateChecklist(new List<string>()
             {
                 "Load settings",
                 "Connect to mongodb"
             });
+            }
+            
             ChecklistUI.ShowChecklist();
 
             // Load Settings
