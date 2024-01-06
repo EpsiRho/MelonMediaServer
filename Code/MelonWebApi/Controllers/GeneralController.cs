@@ -208,9 +208,9 @@ namespace MelonWebApi.Controllers
 
                 foreach (var artist in ArtistDocs)
                 {
-                    artist.Tracks.OrderBy(x => x.ReleaseDate);
-                    artist.Releases.OrderBy(x => x.ReleaseDate);
-                    artist.SeenOn.OrderBy(x => x.ReleaseDate);
+                    try { artist.Tracks.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
+                    try { artist.Releases.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
+                    try { artist.SeenOn.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
                 }
 
                 return new ObjectResult(ArtistDocs[0]) { StatusCode = 200 };
@@ -261,9 +261,9 @@ namespace MelonWebApi.Controllers
                 {
                     var artistFilter = Builders<Artist>.Filter.Eq("_id", new ObjectId(id));
                     var artist = ArtistCollection.Find(artistFilter).FirstOrDefault();
-                    artist.Tracks.OrderBy(x => x.ReleaseDate);
-                    artist.Releases.OrderBy(x => x.ReleaseDate);
-                    artist.SeenOn.OrderBy(x => x.ReleaseDate);
+                    try{artist.Tracks.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
+                    try{artist.Releases.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
+                    try{artist.SeenOn.OrderBy(x => x.ReleaseDate); } catch (Exception) { }
                     artists.Add(artist);
                 }
 
