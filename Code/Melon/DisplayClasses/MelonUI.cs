@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
 using Microsoft.IdentityModel.Tokens;
 using static Melon.LocalClasses.StateManager;
+using System.Runtime.InteropServices;
 
 namespace Melon.Classes
 {
@@ -53,15 +54,28 @@ namespace Melon.Classes
             }
             Console.WriteLine("]".Pastel(MelonColor.Text));
         }
+        [DllImport("libc")]
+        public static extern int system(string exec);
         public static void ClearConsole()
         {
-            //Console.Clear();
-            //Thread.Sleep(5);
-            //Console.Write("\x1b[3J"); // required for linux because Microsoft doesn't clear the fucking buffer here
-            for(int i = 0; i < Console.WindowHeight*2; i++)
+            Console.Clear();
+            Console.Write("\x1b[3J"); // This should have been fixed in .net 8 but leaving it here just in case
+
+            // fuckin ssh and linux
+            try
             {
-                Console.WriteLine();
+                system("clear");
             }
+            catch (Exception)
+            {
+
+            }
+
+            //for (int i = 0; i < Console.WindowHeight*2; i++)
+            //{
+            //    Console.WriteLine();
+            //}
+
             Console.Out.Flush();
             Console.SetCursorPosition(0, 0);
         }
