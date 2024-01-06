@@ -58,23 +58,14 @@ namespace Melon.Classes
         public static extern int system(string exec);
         public static void ClearConsole()
         {
-            Console.Clear();
-            Console.Write("\x1b[3J"); // This should have been fixed in .net 8 but leaving it here just in case
-
-            // fuckin ssh and linux
             try
             {
                 system("clear");
             }
             catch (Exception)
             {
-
+                Console.Clear();
             }
-
-            //for (int i = 0; i < Console.WindowHeight*2; i++)
-            //{
-            //    Console.WriteLine();
-            //}
 
             Console.Out.Flush();
             Console.SetCursorPosition(0, 0);
