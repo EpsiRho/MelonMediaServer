@@ -804,6 +804,9 @@ namespace Melon.LocalClasses
                     var failedCollection = NewMelonDB.GetCollection<FailedFiles>("FailedFiles");
                     failedCollection.DeleteMany(Builders<FailedFiles>.Filter.Empty);
 
+                    var statsCollection = NewMelonDB.GetCollection<FailedFiles>("Stats");
+                    statsCollection.DeleteMany(Builders<FailedFiles>.Filter.Empty);
+
                     if (Directory.Exists($"{StateManager.melonPath}/AlbumArts/"))
                     {
                         foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/AlbumArts/"))
