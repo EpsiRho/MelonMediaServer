@@ -335,6 +335,7 @@ namespace Melon.LocalClasses
                         Path = fileMetadata.Path,
                         TrackArtists = new List<ShortArtist>()
                     };
+                    try { sTrack.ReleaseDate = fileMetadata.Date.Value; } catch (Exception) { }
                     for (int i = 0; i < trackArtists.Count(); i++)
                     {
                         sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistId = ArtistIds[i].ToString(), ArtistName = trackArtists[i] });

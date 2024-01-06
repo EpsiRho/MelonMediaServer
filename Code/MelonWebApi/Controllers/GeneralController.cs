@@ -121,6 +121,11 @@ namespace MelonWebApi.Controllers
                 var albumDocs = AlbumsCollection.Find(albumFilter)
                                                 .ToList();
 
+                foreach(var album in albumDocs)
+                {
+                    album.Tracks.OrderBy(x => x.Disc * x.Position);
+                }
+
                 return new ObjectResult(albumDocs[0]) { StatusCode = 200 };
             }
             catch (Exception e)
@@ -170,6 +175,7 @@ namespace MelonWebApi.Controllers
                 {
                     var albumFilter = Builders<Album>.Filter.Eq("_id", new ObjectId(id));
                     var album = AlbumCollection.Find(albumFilter).FirstOrDefault();
+                    album.Tracks.OrderBy(x => x.Disc * x.Position);
                     albums.Add(album);
                 }
 
@@ -199,6 +205,13 @@ namespace MelonWebApi.Controllers
 
                 var ArtistDocs = ArtistCollection.Find(artistFilter)
                                                 .ToList();
+
+                foreach (var artist in ArtistDocs)
+                {
+                    artist.Tracks.OrderBy(x => x.ReleaseDate);
+                    artist.Releases.OrderBy(x => x.ReleaseDate);
+                    artist.SeenOn.OrderBy(x => x.ReleaseDate);
+                }
 
                 return new ObjectResult(ArtistDocs[0]) { StatusCode = 200 };
             }
@@ -248,6 +261,9 @@ namespace MelonWebApi.Controllers
                 {
                     var artistFilter = Builders<Artist>.Filter.Eq("_id", new ObjectId(id));
                     var artist = ArtistCollection.Find(artistFilter).FirstOrDefault();
+                    artist.Tracks.OrderBy(x => x.ReleaseDate);
+                    artist.Releases.OrderBy(x => x.ReleaseDate);
+                    artist.SeenOn.OrderBy(x => x.ReleaseDate);
                     artists.Add(artist);
                 }
 

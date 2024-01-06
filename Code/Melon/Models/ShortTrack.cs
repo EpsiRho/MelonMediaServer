@@ -13,6 +13,7 @@ namespace Melon.Models
         public string Duration { get; set; }
         public int TrackArtCount { get; set; }
         public string Path { get; set; }
+        public DateTime ReleaseDate { get; set; }
         public List<ShortArtist> TrackArtists { get; set; }
 
         public ShortTrack()
@@ -30,6 +31,7 @@ namespace Melon.Models
             Duration = t.Duration;
             TrackArtCount = t.TrackArtCount;
             Path = t.Path;
+            ReleaseDate = t.ReleaseDate;
             TrackArtists = t.TrackArtists;
         }
     }

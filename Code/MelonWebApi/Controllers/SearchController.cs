@@ -169,6 +169,12 @@ namespace MelonWebApi.Controllers
                                             .Skip(page * count)
                                             .Limit(count)
                                             .ToList();
+
+            foreach(var albumDoc in albumDocs)
+            {
+                albumDoc.Tracks.OrderBy(x => x.Disc * x.Position);
+            }
+
             return albumDocs;
         }
         [Authorize(Roles = "Admin,User,Pass")]
