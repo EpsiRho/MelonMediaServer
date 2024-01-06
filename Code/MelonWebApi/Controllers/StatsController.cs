@@ -108,7 +108,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-tracks")]
-        public ObjectResult TopTracks(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 500)
+        public ObjectResult TopTracks(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 100)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -165,7 +165,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-albums")]
-        public ObjectResult TopAlbums(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 500)
+        public ObjectResult TopAlbums(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 100)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -221,7 +221,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-artists")]
-        public ObjectResult TopArtists(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 500)
+        public ObjectResult TopArtists(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 100)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -278,7 +278,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-genres")]
-        public ObjectResult TopGenres(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 500)
+        public ObjectResult TopGenres(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 100)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -331,6 +331,140 @@ namespace MelonWebApi.Controllers
                                .ToDictionary(g => g.Name, g => g.Count);
 
             return new ObjectResult(genres) { StatusCode = 404 };
+        }
+
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("recent-tracks")]
+        public ObjectResult RecentTracks(string user, int page = 0, int count = 25)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var users = UsersCollection.Find(uFilter).ToList();
+
+            var statFilter = Builders<PlayStat>.Filter.Empty;
+            if (users.Count() == 0)
+            {
+                return new ObjectResult("User not found") { StatusCode = 404 };
+            }
+
+            if (user != User.Identity.Name)
+            {
+                if (!users[0].PublicStats)
+                {
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
+            else
+            {
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
+
+            var recentStats = StatsCollection.Find(statFilter)
+                                             .Sort(Builders<PlayStat>.Sort.Descending(x=>x.LogDate))
+                                             .Skip(page*count)
+                                             .Limit(count)
+                                             .ToList();
+
+            var tracks = recentStats.Select(stat => new { stat.TrackId, stat.LogDate });
+
+            return new ObjectResult(tracks) { StatusCode = 200 };
+        }
+
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("recent-albums")]
+        public ObjectResult RecentAlbums(string user, int page = 0, int count = 25)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var users = UsersCollection.Find(uFilter).ToList();
+
+            var statFilter = Builders<PlayStat>.Filter.Empty;
+            if (users.Count() == 0)
+            {
+                return new ObjectResult("User not found") { StatusCode = 404 };
+            }
+
+            if (user != User.Identity.Name)
+            {
+                if (!users[0].PublicStats)
+                {
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
+            else
+            {
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
+
+            var recentStats = StatsCollection.Find(statFilter)
+                                             .Sort(Builders<PlayStat>.Sort.Descending(x => x.LogDate))
+                                             .Skip(page * count)
+                                             .Limit(count)
+                                             .ToList();
+
+            var albums = recentStats.Select(stat => new { stat.AlbumId, stat.LogDate });
+
+
+            return new ObjectResult(albums) { StatusCode = 200 };
+        }
+
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("recent-artists")]
+        public ObjectResult RecentArtists(string user, int page = 0, int count = 25)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var users = UsersCollection.Find(uFilter).ToList();
+
+            var statFilter = Builders<PlayStat>.Filter.Empty;
+            if (users.Count() == 0)
+            {
+                return new ObjectResult("User not found") { StatusCode = 404 };
+            }
+
+            if (user != User.Identity.Name)
+            {
+                if (!users[0].PublicStats)
+                {
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
+            else
+            {
+                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+            }
+
+            var recentStats = StatsCollection.Find(statFilter)
+                                             .Sort(Builders<PlayStat>.Sort.Descending(x => x.LogDate))
+                                             .Skip(page * count)
+                                             .Limit(count)
+                                             .ToList();
+
+            var albums = recentStats.Select(stat => new { stat.ArtistIds, stat.LogDate });
+
+
+            return new ObjectResult(albums) { StatusCode = 200 };
         }
     }
 }

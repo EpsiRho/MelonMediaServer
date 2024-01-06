@@ -62,6 +62,7 @@ namespace Melon.Classes
             {
                 Console.WriteLine();
             }
+            Console.Out.Flush();
             Console.SetCursorPosition(0, 0);
         }
         public static void ClearConsole(int left, int top, int width, int height)

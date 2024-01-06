@@ -921,7 +921,7 @@ namespace Melon.LocalClasses
                     }
                     try
                     {
-                        string controls = $"Ctrls: Esc";
+                        string controls = $"Ctrls: ";
                         int conX = Console.WindowWidth - controls.Length - 2;
                         Console.CursorLeft = conX;
                         Console.CursorTop = sTop;
@@ -966,9 +966,10 @@ namespace Melon.LocalClasses
             });
             DisplayThread.Start();
 
+
             while (!endDisplay)
             {
-                    
+
             }
 
         }
