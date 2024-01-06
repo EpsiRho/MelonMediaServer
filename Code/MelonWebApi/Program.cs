@@ -32,7 +32,7 @@ namespace MelonWebApi
                 StateManager.Init();
             }
 
-            if (args.Contains("-headless") && DisplayManager.UIExtensions.Count() != 0)
+            if (args.Contains("--headless") || args.Contains("-h") && DisplayManager.UIExtensions.Count() != 0)
             {
                 Console.WriteLine("[!] Melon must go through setup first, which cannot show in headless mode.");
                 Console.WriteLine("[!] Please run melon without headless mode first to complete setup.");
@@ -45,7 +45,7 @@ namespace MelonWebApi
 
             builder.Logging.ClearProviders();
             
-            if (args.Contains("-headless"))
+            if (args.Contains("--headless") || args.Contains("-h"))
             {
                 Log.Logger = new LoggerConfiguration()
                         .WriteTo.File($"{StateManager.melonPath}/logs.txt")
@@ -110,7 +110,7 @@ namespace MelonWebApi
 
             app.RunAsync();
 
-            if (!started && !args.Contains("-headless"))
+            if (!started && !args.Contains("--headless") && !args.Contains("-h"))
             {
                 started = true;
 
