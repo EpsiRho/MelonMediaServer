@@ -27,14 +27,26 @@ namespace MelonWebApi
             {
                 StateManager.Init();
             }
-            var builder = WebApplication.CreateBuilder(args);
+
+            var builder = WebApplication.CreateBuilder();
 
             builder.Services.AddControllers();
 
             builder.Logging.ClearProviders();
-            Log.Logger = new LoggerConfiguration()
+            
+            if (args.Contains("-headless"))
+            {
+                Log.Logger = new LoggerConfiguration()
+                        .WriteTo.File($"{StateManager.melonPath}/logs.txt")
+                        .WriteTo.Console()
+                        .CreateLogger();
+            }
+            else
+            {
+                Log.Logger = new LoggerConfiguration()
                         .WriteTo.File($"{StateManager.melonPath}/logs.txt")
                         .CreateLogger();
+            }
 
             builder.Host.UseSerilog();
 
@@ -87,7 +99,7 @@ namespace MelonWebApi
 
             app.RunAsync();
 
-            if (!started)
+            if (!started && !args.Contains("-headless"))
             {
                 started = true;
                 Console.ForegroundColor = ConsoleColor.White;
@@ -97,6 +109,10 @@ namespace MelonWebApi
 
                 // UI Startup
                 DisplayManager.DisplayHome();
+            }
+            else
+            {
+                app.WaitForShutdown();
             }
         }
     }
