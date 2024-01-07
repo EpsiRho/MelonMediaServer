@@ -85,6 +85,7 @@ namespace Melon.LocalClasses
                     Melon = Color.FromArgb(26, 225, 19),
                     Error = Color.FromArgb(255, 0, 0),
                     ListeningURL = "https://*:14524",
+                    JWTExpireInMinutes = 60,
                     UseMenuColor = true,
                 };
                 MelonColor.SetDefaults();
@@ -114,6 +115,12 @@ namespace Melon.LocalClasses
                         MelonSettings.ListeningURL = "https://*:14524";
                         //DisplayManager.UIExtensions.Add(SetupUI.Display);
                     }
+
+                    if(MelonSettings.JWTExpireInMinutes == null || MelonSettings.JWTExpireInMinutes == 0)
+                    {
+                        MelonSettings.JWTExpireInMinutes = 60;
+                        //DisplayManager.UIExtensions.Add(SetupUI.Display);
+                    }
                     SaveSettings();
                 }
                 catch (Exception)
@@ -130,6 +137,7 @@ namespace Melon.LocalClasses
                         Melon = Color.FromArgb(26, 225, 19),
                         Error = Color.FromArgb(255, 0, 0),
                         ListeningURL = "https://*:14524",
+                        JWTExpireInMinutes = 60,
                         UseMenuColor = true,
                     };
                     MelonColor.SetDefaults();

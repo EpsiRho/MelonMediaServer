@@ -43,7 +43,7 @@ namespace MelonWebApi.Controllers
             {
                 user.LastLogin = DateTime.Now;
                 UserCollection.ReplaceOne(userFilter, user);
-                return new ObjectResult(Security.GenerateJwtToken(username, user.Type, 60)) { StatusCode = 200 };
+                return new ObjectResult(Security.GenerateJwtToken(username, user.Type)) { StatusCode = 200 };
             }
             else
             {

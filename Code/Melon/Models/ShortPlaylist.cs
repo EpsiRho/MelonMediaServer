@@ -21,6 +21,7 @@ namespace Melon.Models
             PlaylistId = p.PlaylistId;
             Name = p.Name;
             Description = p.Description;
+            TrackCount = p.TrackCount;
             ArtworkPath = p.ArtworkPath;
             Owner = p.Owner;
             Editors = p.Editors;

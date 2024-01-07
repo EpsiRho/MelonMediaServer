@@ -52,7 +52,7 @@ namespace Melon.LocalClasses
                 return Convert.ToBase64String(randomBytes);
             }
         }
-        public static string GenerateJwtToken(string username, string role, int expiryDurationInMinutes)
+        public static string GenerateJwtToken(string username, string role)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(StateManager.MelonSettings.JWTKey);
@@ -64,7 +64,7 @@ namespace Melon.LocalClasses
                     new Claim(ClaimTypes.Name, username),
                     new Claim(ClaimTypes.Role, role)
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(expiryDurationInMinutes),
+                Expires = DateTime.UtcNow.AddMinutes(StateManager.MelonSettings.JWTExpireInMinutes),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
