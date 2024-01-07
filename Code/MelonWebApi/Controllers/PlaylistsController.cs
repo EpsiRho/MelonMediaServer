@@ -294,14 +294,14 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("search")]
-        public ObjectResult SearchPlaylists(int page, int count, string name = "")
+        public ObjectResult SearchPlaylists(int page, int count, string user = "")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
             var userName = User.Identity.Name;
-            var pFilter = Builders<Playlist>.Filter.Regex(x => x.Name, new BsonRegularExpression(name, "i"));
+            var pFilter = Builders<Playlist>.Filter.Regex(x => x.Name, new BsonRegularExpression(username, "i"));
             pFilter = pFilter & Builders<Playlist>.Filter.AnyEq(x => x.Editors, userName);
             pFilter = pFilter & Builders<Playlist>.Filter.AnyEq(x => x.Viewers, userName);
             pFilter = pFilter & Builders<Playlist>.Filter.Eq(x => x.PublicViewing, true);
