@@ -301,7 +301,7 @@ namespace MelonWebApi.Controllers
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
             var userName = User.Identity.Name;
-            var pFilter = Builders<Playlist>.Filter.Regex(x => x.Name, new BsonRegularExpression(username, "i"));
+            var pFilter = Builders<Playlist>.Filter.Regex(x => x.Name, new BsonRegularExpression(user, "i"));
             pFilter = pFilter & Builders<Playlist>.Filter.AnyEq(x => x.Editors, userName);
             pFilter = pFilter & Builders<Playlist>.Filter.AnyEq(x => x.Viewers, userName);
             pFilter = pFilter & Builders<Playlist>.Filter.Eq(x => x.PublicViewing, true);
