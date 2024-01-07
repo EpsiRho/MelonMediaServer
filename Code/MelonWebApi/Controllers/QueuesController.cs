@@ -328,19 +328,23 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("search")]
-        public ObjectResult SearchQueues(int page, int count, string name="")
+        public ObjectResult SearchQueues(int page, int count)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var userName = User.Identity.Name;
-            var qFilter = Builders<PlayQueue>.Filter.Regex(x => x.Name, new BsonRegularExpression(name, "i"));
-            qFilter = qFilter & Builders<PlayQueue>.Filter.AnyEq(x => x.Editors, userName);
-            qFilter = qFilter & Builders<PlayQueue>.Filter.AnyEq(x => x.Viewers, userName);
-            qFilter = qFilter & Builders<PlayQueue>.Filter.Eq(x => x.PublicViewing, true);
+            var user = User.Identity.Name;
 
-            var Queues = QCollection.Find(qFilter)
+            var ownerFilter = Builders<PlayQueue>.Filter.Eq(x => x.Owner, user);
+            var EditorsFilter = Builders<PlayQueue>.Filter.AnyEq(x => x.Editors, user);
+            var viewersFilter = Builders<PlayQueue>.Filter.AnyEq(x => x.Viewers, user);
+            var publicViewingFilter = Builders<PlayQueue>.Filter.Eq(x => x.PublicViewing, true);
+
+            // Combine filters with OR
+            var combinedFilter = Builders<PlayQueue>.Filter.Or(ownerFilter, viewersFilter, publicViewingFilter, EditorsFilter);
+
+            var Queues = QCollection.Find(combinedFilter)
                                     .Skip(page * count)
                                     .Limit(count)
                                     .ToList()

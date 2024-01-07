@@ -53,6 +53,7 @@ namespace MelonWebApi.Controllers
             var pFilter = Builders<Playlist>.Filter.Eq("_id", playlist._id);
             if(trackIds == null)
             {
+                PCollection.InsertOne(playlist);
                 return new ObjectResult(playlist._id.ToString()) { StatusCode = 200 };
             }
             foreach(var id in trackIds)
@@ -294,23 +295,31 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("search")]
-        public ObjectResult SearchPlaylists(int page, int count, string user = "")
+        public ObjectResult SearchPlaylists(int page, int count)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
-            var userName = User.Identity.Name;
-            var pFilter = Builders<Playlist>.Filter.Regex(x => x.Name, new BsonRegularExpression(user, "i"));
-            pFilter = pFilter & Builders<Playlist>.Filter.AnyEq(x => x.Editors, userName);
-            pFilter = pFilter & Builders<Playlist>.Filter.AnyEq(x => x.Viewers, userName);
-            pFilter = pFilter & Builders<Playlist>.Filter.Eq(x => x.PublicViewing, true);
+            List<ShortPlaylist> playlists = new List<ShortPlaylist>();
 
-            var playlists = PCollection.Find(pFilter)
+            var user = User.Identity.Name;
+
+            var ownerFilter = Builders<Playlist>.Filter.Eq(x => x.Owner, user);
+            var viewersFilter = Builders<Playlist>.Filter.AnyEq(x => x.Viewers, user);
+            var publicViewingFilter = Builders<Playlist>.Filter.Eq(x => x.PublicViewing, true);
+            var EditorsFilter = Builders<Playlist>.Filter.AnyEq(x => x.Editors, user);
+
+            // Combine filters with OR
+            var combinedFilter = Builders<Playlist>.Filter.Or(ownerFilter, viewersFilter, publicViewingFilter, EditorsFilter);
+
+            playlists.AddRange(PCollection.Find(combinedFilter)
                                     .Skip(page * count)
                                     .Limit(count)
                                     .ToList()
-                                    .Select(x => new ShortPlaylist(x));
+                                    .Select(x => new ShortPlaylist(x)));
+
+            
 
             return new ObjectResult(playlists) { StatusCode = 200 };
         }
