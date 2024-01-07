@@ -172,7 +172,7 @@ namespace MelonWebApi.Controllers
 
             foreach(var albumDoc in albumDocs)
             {
-                albumDoc.Tracks.OrderBy(x => x.Disc).ThenBy(x => x.Position);
+                albumDoc.Tracks = albumDoc.Tracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).ToList();
             }
 
             return albumDocs;
