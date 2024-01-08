@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.DataProtection;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -25,6 +27,34 @@ namespace Melon.LocalClasses
         public Color Melon { get; set; }
         public Color Error { get; set; }
         public bool UseMenuColor { get; set; }
+    }
+    /// <summary>
+    /// Configuration for SSL
+    /// </summary>
+    public class SSLConfig
+    {
+        public string? PathToCert { get; set; }
+        public string? Password { get; set; }
+
+        [JsonIgnore]
+        private IDataProtector _protector;
+
+        public SSLConfig()
+        {
+            
+        }
+        public SSLConfig(IDataProtectionProvider provider)
+        {
+            _protector = provider.CreateProtector("Melon.SSLConfig.v1");
+        }
+        public string Encrypt(string unprotectedPayload)
+        {
+            return _protector.Protect(unprotectedPayload);
+        }
+        public string Decrypt(string protectedPayload)
+        {
+            return _protector.Unprotect(protectedPayload);
+        }
     }
     /// <summary>
     /// Melon's debug flags. These are used to force enable/disable features for testing.
