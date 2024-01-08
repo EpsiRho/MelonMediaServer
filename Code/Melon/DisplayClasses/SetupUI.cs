@@ -37,7 +37,7 @@ namespace Melon.DisplayClasses
 
             for(int i = 0; i < SetupSteps.Count(); i++)
             {
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", $"Setup"});
+                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Setup"});
                 SetupSteps[i]();
 
             }

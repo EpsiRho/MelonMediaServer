@@ -145,6 +145,16 @@ namespace Melon.LocalClasses
                 }
 
             }
+
+            if (File.Exists($"{melonPath}/SSLConfig.json"))
+            {
+                Security.LoadSSLConfig();
+            }
+            else
+            {
+                Security.SetSSLConfig("", "");
+            }
+
             ChecklistUI.UpdateChecklist(0, true);
 
             // Connect to mongodb
