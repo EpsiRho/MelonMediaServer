@@ -354,7 +354,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            var tracks = Playlists[0].Tracks.Take(new Range(page * count, (page * count) + count));
+            var tracks = playlist.Tracks.Take(new Range(page * count, (page * count) + count));
 
             return new ObjectResult(tracks) { StatusCode = 200 };
         }

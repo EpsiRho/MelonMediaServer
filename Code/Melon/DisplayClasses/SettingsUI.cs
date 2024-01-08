@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -65,13 +66,93 @@ namespace Melon.DisplayClasses
                     { "Back" , () => { LockUI = false; } },
                     { "Edit Users", UserSettings },
                     { "Edit MongoDB Connection", MongoDBSettings },
-                    { "Edit Listening URL", ChangeListeningURL },
                     { "Edit Library Paths" , LibraryPathSettings },
+                    { "Edit Listening URL", ChangeListeningURL },
+                    { "Configure HTTPS", HTTPSSetup },
                     { "Edit Colors " , ChangeMelonColors }
                 };
                 var choice = MelonUI.OptionPicker(MenuOptions.Keys.ToList());
                 MenuOptions[choice]();
             }
+        }
+        private static void HTTPSSetup()
+        {
+            // Check if ssl is setup already
+            var config = Security.GetSSLConfig();
+            if(config.Key != "")
+            {
+                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Configure HTTPS" });
+                Console.WriteLine($"Changing this setting will require a server restart!".Pastel(MelonColor.Highlight));
+                Console.WriteLine($"SSL is already configured, would you like to disabled or edit it?".Pastel(MelonColor.Text));
+                var opt = MelonUI.OptionPicker(new List<string>() { "Back", "Disable SSL", "Edit SSL Config"});
+                switch (opt) 
+                {
+                    case "Back":
+                        return;
+                    case "Disable SSL":
+                        Security.SetSSLConfig("", "");
+                        Security.SaveSSLConfig();
+                        return;
+                    case "Edit SSL Config":
+                        break;
+                }
+
+            }
+
+            bool result = true;
+            while (true)
+            {
+                // Get the Path to the pfx
+                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Configure HTTPS" });
+                Console.WriteLine($"Changing this setting will require a server restart!".Pastel(MelonColor.Highlight));
+                Console.WriteLine($"Setting up HTTPS requires a valid SSL Certificate.".Pastel(MelonColor.Text));
+                Console.WriteLine($"Please enter the path to your {".pfx".Pastel(MelonColor.Highlight)} certificate (or enter nothing to cancel):".Pastel(MelonColor.Text));
+                if (!result)
+                {
+                    Console.WriteLine($"[Invalid Cert or Password]".Pastel(MelonColor.Error));
+                }
+                result = false;
+
+                Console.Write("> ".Pastel(MelonColor.Text));
+                string pathToCert = Console.ReadLine();
+                if (pathToCert == "")
+                {
+                    return;
+                }
+
+                // Get the password to the cert
+                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Configure HTTPS" });
+                Console.WriteLine($"Next, enter the password to your SSL Certificate (or enter nothing to cancel):".Pastel(MelonColor.Text));
+
+                Console.Write("> ".Pastel(MelonColor.Text));
+                string password = MelonUI.HiddenInput();
+                if (password == "")
+                {
+                    return;
+                }
+
+                // Check if cert and password are valid
+                try
+                {
+                    var certificate = new X509Certificate2(pathToCert, password);
+                    result = true;
+                }
+                catch (Exception)
+                {
+                    result = false;
+                }
+
+
+                if (result)
+                {
+                    // Set and Save new conn string
+                    Security.SetSSLConfig(pathToCert, password);
+                    Security.SaveSSLConfig();
+                    break;
+                }
+
+            }
+
         }
         private static void ChangeListeningURL()
         {
@@ -82,7 +163,7 @@ namespace Melon.DisplayClasses
                 MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Listening URL" });
 
                 // Description
-                Console.WriteLine($"Changing this setting will require a server restart!".Pastel(MelonColor.Text));
+                Console.WriteLine($"Changing this setting will require a server restart!".Pastel(MelonColor.Highlight));
                 Console.WriteLine($"Current URL: {StateManager.MelonSettings.ListeningURL.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
                 Console.WriteLine($"(Enter new urls separated by \";\" or nothing to keep the current string)".Pastel(MelonColor.Text));
                 if (!result)
