@@ -333,6 +333,11 @@ namespace MelonWebApi.Controllers
 
             var pFilter = Builders<Playlist>.Filter.Eq(x => x._id, ObjectId.Parse(id));
 
+            if(page == 0 || count == 0)
+            {
+                return new ObjectResult("Playlist not found") { StatusCode = 400 };
+            }
+
             var Playlists = PCollection.Find(pFilter).ToList();
             if (Playlists.Count() == 0)
             {
