@@ -15,6 +15,7 @@ using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Collections.Specialized;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 namespace MelonWebApi
 {
@@ -46,6 +47,26 @@ namespace MelonWebApi
             builder.Logging.ClearProviders();
 
             builder.WebHost.UseUrls(StateManager.MelonSettings.ListeningURL);
+
+            // Load SSL Certificate
+            //var certificatePath = @"C:\Users\jhset\Documents\Melon\certificate.pfx";
+            //var certificatePassword = "Mn516199!!";
+            var sslConfig = Security.GetSSLConfig();
+
+            if (sslConfig.Key != "")
+            {
+                var certificate = new X509Certificate2(sslConfig.Key, sslConfig.Value);
+
+                // Configure Kestrel to use SSL
+                builder.WebHost.ConfigureKestrel(serverOptions =>
+                {
+                    serverOptions.ConfigureHttpsDefaults(httpsOptions =>
+                    {
+                        httpsOptions.ServerCertificate = certificate;
+                    });
+                });
+            }
+
 
 
             if (args.Contains("--headless") || args.Contains("-h"))
