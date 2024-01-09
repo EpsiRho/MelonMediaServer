@@ -6,3 +6,4 @@ These are used to get and set info about tracks, albums, and artists.
 - [api/track](api/track)
 - [api/tracks](api/tracks)
 - [api/album](api/tracks)
+- [api/lyrics](api/lyrics)

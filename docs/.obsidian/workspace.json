@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "users/change-password.md",
+                "file": "api/lyrics.md",
                 "mode": "source",
                 "source": true
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "users/change-password.md",
+                "file": "api/lyrics.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "users/change-password.md",
+                "file": "api/lyrics.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "users/change-password.md"
+                "file": "api/lyrics.md"
               }
             }
           }
@@ -148,8 +148,13 @@
   },
   "active": "8b82fb671072fa31",
   "lastOpenFiles": [
-    "users/change-username.md",
+    "api/tracks.md",
+    "api/track.md",
+    "api/lyrics.md",
+    "api/apiOverview.md",
+    "api/_sidebar.md",
     "users/change-password.md",
+    "users/change-username.md",
     "users/create.md",
     "users/delete.md",
     "users/current.md",
@@ -169,12 +174,7 @@
     "models/PublicUser.md",
     "models/PlayStat.md",
     "db/channel.md",
-    "_sidebar.md",
-    "db/dbOverview.md",
-    "playlists/playlistsOverview.md",
-    "playlists/search.md",
     "users",
-    "playlists/get-tracks.md",
     "stats",
     "search",
     "style.css",

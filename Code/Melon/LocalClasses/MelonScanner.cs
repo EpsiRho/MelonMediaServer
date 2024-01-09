@@ -24,6 +24,7 @@ namespace Melon.LocalClasses
         public static bool endDisplay { get; set; }
         public static bool Scanning { get; set; }
         private static List<string> FoundPaths { get; set; }
+        private static List<string> LyricFiles { get; set; }
 
         // Scanning Functions
         public static void StartScan(object skipBool)
@@ -36,6 +37,7 @@ namespace Melon.LocalClasses
             Scanning = true;
 
             bool skip = (bool)skipBool;
+            LyricFiles = new List<string>();
             ScannedFiles = 0;
             FoundFiles = 0;
             averageMilliseconds = 0;
@@ -220,16 +222,37 @@ namespace Melon.LocalClasses
                 {
                     CurrentFile = file;
                     var filename = Path.GetFileName(file);
+
+                    if (filename.EndsWith(".lrc")) // Lyrics matcher
+                    {
+                        Track t = null;
+                        var tf = Builders<Track>.Filter.Where(x=> x.Path.StartsWith(file.Replace(".lrc", "")));
+                        t = TracksCollection.Find(tf).FirstOrDefault();
+
+                        if (t != null)
+                        {
+                            t.LyricsPath = file;
+                            TracksCollection.ReplaceOne(tf, t);
+                        }
+                        else
+                        {
+                            LyricFiles.Add(file);
+                        }
+
+                        ScannedFiles++;
+                        continue;
+                    }
+
                     if (!filename.EndsWith(".flac") && !filename.EndsWith(".aac") && !filename.EndsWith(".wma") &&
                         !filename.EndsWith(".wav") && !filename.EndsWith(".mp3") && !filename.EndsWith(".m4a"))
                     {
                         ScannedFiles++;
                         continue;
                     }
+                    
 
                     Track trackDoc = null;
-                    var trackfilter = Builders<Track>.Filter.Empty;
-                    trackfilter = trackfilter & Builders<Track>.Filter.Eq("Path", file);
+                    var trackfilter = Builders<Track>.Filter.Eq("Path", file);
                     trackDoc = TracksCollection.Find(trackfilter).FirstOrDefault();
                     if (skip)
                     {
@@ -664,6 +687,16 @@ namespace Melon.LocalClasses
                         try { track.TrackArtists = new List<ShortArtist>(); } catch (Exception) { }
                         try { track.TrackGenres = new List<string>(); } catch (Exception) { }
                         try { track.ReleaseDate = fileMetadata.Date.Value; } catch (Exception) { }
+
+                        for(int i = 0; i < LyricFiles.Count(); i++)
+                        {
+                            if (track.Path.StartsWith(LyricFiles[i].Replace(".lrc", "")))
+                            {
+                                track.LyricsPath = LyricFiles[i];
+                                LyricFiles.Remove(LyricFiles[i]);
+                                break;
+                            }
+                        }
 
                         for (int i = 0; i < trackArtists.Count(); i++)
                         {
