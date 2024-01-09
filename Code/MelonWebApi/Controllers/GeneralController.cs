@@ -275,5 +275,38 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult(e.Message) { StatusCode = 500 };
             }
         }
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet("lyrics")]
+        public ObjectResult GetLyrics(string id)
+        {
+            try
+            {
+                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+                var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+                var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+                var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
+                var track = TracksCollection.Find(trackFilter).FirstOrDefault();
+
+                if(track == null)
+                {
+                    return new ObjectResult("Track Not Found") { StatusCode = 404 };
+                }
+
+                if(track.LyricsPath == "")
+                {
+                    return new ObjectResult("Track Does Not Have Lyrics") { StatusCode = 404 };
+                }
+
+                string txt = System.IO.File.ReadAllText(track.LyricsPath);
+
+                return new ObjectResult(txt) { StatusCode = 200 };
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult(e.Message) { StatusCode = 500 };
+            }
+        }
     }
 }
