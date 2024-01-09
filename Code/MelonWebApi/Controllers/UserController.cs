@@ -127,6 +127,7 @@ namespace MelonWebApi.Controllers
             var id = ObjectId.GenerateNewId();
 
             var user = new User();
+            user._id = new MelonId(id);
             user.UserId = id.ToString();
             user.Username = username;
             user.Password = protectedPassword;
