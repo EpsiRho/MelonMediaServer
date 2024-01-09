@@ -72,6 +72,12 @@ namespace MelonWebApi.Controllers
             }
             return new ObjectResult(Security.GenerateJwtToken("ServerTemp", "Server", 10)) { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("check")]
+        public ObjectResult AuthTest()
+        {
+            return new ObjectResult("Logged In") { StatusCode = 200 };
+        }
 
     }
 }
