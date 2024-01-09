@@ -7,6 +7,7 @@ using SharpCompress.Common;
 using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
 using Melon.LocalClasses;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MelonWebApi.Controllers
 {
@@ -49,6 +50,28 @@ namespace MelonWebApi.Controllers
             {
                 return new ObjectResult("Invalid username or password") { StatusCode = 401 };
             }
+        }
+        [Authorize(Roles = "Admin")]
+        [HttpGet("invite")]
+        public ObjectResult ServerAuth()
+        {
+            var code = Security.CreateInviteCode();
+            if(code == "Timeout")
+            {
+                return new ObjectResult("Timeout, too many invite codes active") { StatusCode = 408 };
+            }
+            return new ObjectResult(code){ StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin")]
+        [HttpGet("code-authenticate")]
+        public ObjectResult CodeAuth(string code)
+        {
+            var check = Security.ValidateInviteCode(code);
+            if (!check)
+            {
+                return new ObjectResult("Invalid Invite code") { StatusCode = 401 };
+            }
+            return new ObjectResult(Security.GenerateJwtToken("ServerTemp", "Server", 10)) { StatusCode = 200 };
         }
 
     }
