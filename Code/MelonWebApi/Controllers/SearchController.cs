@@ -78,7 +78,12 @@ namespace MelonWebApi.Controllers
                         tracksRequest.AddBody(genres);
 
                         var tracksResponse = client.Execute(tracksRequest);
-                        tracks.AddRange(JsonConvert.DeserializeObject<List<Track>>(tracksResponse.Content));
+                        var tempTracks = JsonConvert.DeserializeObject<List<Track>>(tracksResponse.Content);
+                        foreach(var track in tempTracks)
+                        {
+                            track.ServerURL = con.URL;
+                        }
+                        tracks.AddRange(tempTracks);
                     }
                     catch (Exception)
                     {
