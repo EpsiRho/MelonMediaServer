@@ -295,7 +295,7 @@ namespace Melon.LocalClasses
                     //}
 
                     // Generate IDs
-                    List<ObjectId> ArtistIds = new List<ObjectId>();
+                    List<MelonId> ArtistIds = new List<MelonId>();
                     int num = trackArtists.Count();
                     if (num < albumArtists.Count())
                     {
@@ -317,7 +317,7 @@ namespace Melon.LocalClasses
 
                         if (artistDoc == null)
                         {
-                            ArtistIds.Add(ObjectId.GenerateNewId());
+                            ArtistIds.Add(new MelonId(ObjectId.GenerateNewId()));
                         }
                         else
                         {
@@ -328,12 +328,12 @@ namespace Melon.LocalClasses
                     albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumArtists[0]);
                     var albumDoc = AlbumCollection.Find(albumFilter).FirstOrDefault();
 
-                    ObjectId AlbumId = ObjectId.GenerateNewId();
+                    MelonId AlbumId = new MelonId(ObjectId.GenerateNewId());
                     if (albumDoc != null)
                     {
                         AlbumId = albumDoc._id;
                     }
-                    ObjectId TrackId = ObjectId.GenerateNewId();
+                    MelonId TrackId = new MelonId(ObjectId.GenerateNewId());
 
                     int count = 0;
                     ShortAlbum sAlbum = new ShortAlbum()

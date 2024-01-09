@@ -69,7 +69,7 @@ namespace MelonWebApi.Controllers
 
             // Add Play Stat
             PlayStat stat = new PlayStat();
-            stat._id = ObjectId.GenerateNewId();
+            stat._id = new MelonId(ObjectId.GenerateNewId());
             stat.StatId = stat._id.ToString();
             stat.TrackId = track.TrackId; 
             stat.AlbumId = album.AlbumId;

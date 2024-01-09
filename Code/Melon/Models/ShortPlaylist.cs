@@ -4,7 +4,7 @@ namespace Melon.Models
 {
     public class ShortPlaylist
     {
-        public ObjectId _id { get; set; }
+        public MelonId _id { get; set; }
         public string PlaylistId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }

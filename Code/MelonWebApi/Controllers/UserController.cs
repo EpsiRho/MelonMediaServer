@@ -13,6 +13,7 @@ using System.Data;
 using RestSharp;
 using Azure.Core;
 using RestSharp.Authenticators;
+using System.Text;
 
 namespace MelonWebApi.Controllers
 {
@@ -100,7 +101,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,Server")]
         [HttpPost("create")]
-        public ObjectResult CreateUser(string username, string password, string role)
+        public ObjectResult CreateUser(string username, string password, string role = "User")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -126,7 +127,6 @@ namespace MelonWebApi.Controllers
             var id = ObjectId.GenerateNewId();
 
             var user = new User();
-            user._id = id;
             user.UserId = id.ToString();
             user.Username = username;
             user.Password = protectedPassword;
@@ -144,36 +144,67 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,Server")]
         [HttpPost("create-connection")]
-        public ObjectResult CreateConnection(string url, string code, string username, string password)
+        public async Task<ObjectResult> CreateConnection(string url, string code, string username, string password)
         {
-            var client = new RestClient(url);
+            //var client = new RestClient(url);
 
-            var jwtRequest = new RestRequest("/auth/code-authenticate", Method.Get);
-            jwtRequest.AddQueryParameter("code",code);
-            jwtRequest.Timeout = 2000;
-            var jwtResponse = client.Execute(jwtRequest);
-            if(jwtResponse.StatusCode != System.Net.HttpStatusCode.OK)
+            string tempJWT = "";
+            //jwtRequest.AddQueryParameter("code",code);
+            //jwtRequest.Timeout = 10000;
+            //var jwtResponse = client.Execute(jwtRequest);
+
+            using (HttpClient client = new HttpClient())
             {
-                return new ObjectResult(jwtResponse.Content) { StatusCode = 500 };
+                // Set the base URI for HTTP requests
+                client.BaseAddress = new Uri(url);
+
+                try
+                {
+                    // Get JWT token
+                    HttpResponseMessage response = await client.GetAsync($"/auth/code-authenticate?code={code}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        tempJWT = await response.Content.ReadAsStringAsync();
+                    }
+                    else
+                    {
+                        return new ObjectResult("") { StatusCode = 400 };
+                    }
+
+                    // Create user
+                    
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tempJWT);
+                    HttpResponseMessage createResponse = await client.PostAsync($"/api/users/create?username={username}&password={password}", null);
+
+                    if (createResponse.IsSuccessStatusCode)
+                    {
+
+                    }
+                    else
+                    {
+                        return new ObjectResult("") { StatusCode = 401 };
+                    }
+
+                    // login to user
+                    HttpResponseMessage authResponse = await client.GetAsync($"/auth/login?username={username}&password={password}");
+
+                    if (createResponse.IsSuccessStatusCode)
+                    {
+                        tempJWT = await response.Content.ReadAsStringAsync();
+                    }
+                    else
+                    {
+                        return new ObjectResult("") { StatusCode = 402 };
+                    }
+                }
+                catch (HttpRequestException e)
+                {
+                    return new ObjectResult(e.Message) { StatusCode = 500 };
+                }
             }
 
-            var createRequest = new RestRequest("/api/users/create", Method.Post);
-            createRequest.AddQueryParameter("username", username);
-            createRequest.AddQueryParameter("password", password);
-            var authenticator = new JwtAuthenticator(jwtResponse.Content);
-            var options = new RestClientOptions(url)
-            {
-                Authenticator = authenticator
-            };
-            var authClient = new RestClient(options);
-            var createResponse = authClient.Execute(createRequest);
-
-            var authRequest = new RestRequest("/auth/login", Method.Get);
-            authRequest.AddQueryParameter("username", username);
-            authRequest.AddQueryParameter("password", password);
-            var authResponse = client.Execute(authRequest);
-
-            Security.Connections.Add(new Connection() { Username = username, Password = password, JWT = authResponse.Content, URL = url });
+            Security.Connections.Add(new Connection() { Username = username, Password = password, JWT = tempJWT, URL = url });
             Security.SaveConnections();
 
             return new ObjectResult("Connection Added") { StatusCode = 200 };

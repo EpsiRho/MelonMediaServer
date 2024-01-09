@@ -4,7 +4,7 @@ namespace Melon.Models
 {
     public class ShortQueue
     {
-        public ObjectId _id { get; set; }
+        public MelonId _id { get; set; }
         public string QueueId { get; set; }
         public int CurPosition { get; set; }
         public string Name { get; set; }

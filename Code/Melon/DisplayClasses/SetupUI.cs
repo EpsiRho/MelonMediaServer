@@ -234,7 +234,7 @@ namespace Melon.DisplayClasses
             var id = ObjectId.GenerateNewId();
             var document = new User
             {
-                _id = id,
+                _id = new MelonId(id),
                 UserId = id.ToString(),
                 Username = tempUsername,
                 Password = tempPassword,
