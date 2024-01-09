@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "queues/move-track.md",
+                "file": "playlists/search.md",
                 "mode": "source",
                 "source": true
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "queues/move-track.md",
+                "file": "playlists/search.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "queues/move-track.md",
+                "file": "playlists/search.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "queues/move-track.md"
+                "file": "playlists/search.md"
               }
             }
           }
@@ -148,32 +148,32 @@
   },
   "active": "8b82fb671072fa31",
   "lastOpenFiles": [
+    "playlists/get-tracks.md",
+    "models/Playlist.md",
+    "db/dbOverview.md",
+    "db/sample-rate.md",
+    "db/release-type.md",
+    "db/release-status.md",
+    "db/publisher.md",
+    "db/format.md",
+    "db/channel.md",
+    "db/bits-per-sample.md",
+    "db/bitrate.md",
+    "auth/authOverview.md",
+    "queues/queuesOverview.md",
+    "models/modelsOverview.md",
+    "download/downloadOverview.md",
+    "queues/add-tracks.md",
+    "queues/get.md",
+    "queues/move-track.md",
+    "playlists/remove-tracks.md",
+    "playlists/move-track.md",
+    "models/Track.md",
+    "models/ShortPlaylist.md",
     "2023-12-24.md",
     "queues/shuffle.md",
-    "queues/move-track.md",
-    "queues/add-tracks.md",
     "playlists/add-tracks.md",
     "queues/update.md",
-    "models/ShortPlaylist.md",
-    "playlists/update.md",
-    "queues/search.md",
-    "queues/remove-tracks.md",
-    "queues/queuesOverview.md",
-    "queues/get-tracks.md",
-    "queues/get.md",
-    "playlists/search.md",
-    "playlists/move-track.md",
-    "queues/create.md",
-    "playlists/remove-tracks.md",
-    "search/albums.md",
-    "playlists/get-tracks.md",
-    "playlists/playlistsOverview.md",
-    "playlists/create.md",
-    "download/track.md",
-    "download/downloadOverview.md",
-    "download/album-art.md",
-    "playlists/get.md",
-    "api/album.md",
     "stats",
     "search",
     "style.css",
