@@ -10,6 +10,8 @@ using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.Data;
+using RestSharp;
+using Azure.Core;
 
 namespace MelonWebApi.Controllers
 {
@@ -138,6 +140,27 @@ namespace MelonWebApi.Controllers
             UserCollection.InsertOne(user);
 
             return new ObjectResult(user.UserId) { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,Server")]
+        [HttpPost("create-connection")]
+        public ObjectResult CreateConnection(string url, string code, string username, string password)
+        {
+            var client = new RestClient(url);
+
+            var jwtRequest = new RestRequest("/auth/code-authenticate", Method.Get);
+            jwtRequest.AddQueryParameter("code",code);
+            var jwtResponse = client.Execute(jwtRequest);
+
+            var createRequest = new RestRequest("/api/users/create", Method.Post);
+            createRequest.AddQueryParameter("username", username);
+            createRequest.AddQueryParameter("password", password);
+            createRequest.AddHeader("Authorization", $"Bearer {jwtResponse.Content}");
+            var createResponse = client.Execute(createRequest);
+
+            Security.Connections.Add(new Connection() { Username = username, Password = password, JWT = jwtResponse.Content, URL = url });
+            Security.SaveConnections();
+
+            return new ObjectResult("Connection Added") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin")]
         [HttpPost("delete")]

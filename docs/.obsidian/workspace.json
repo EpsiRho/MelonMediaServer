@@ -18,8 +18,21 @@
                 "source": true
               }
             }
+          },
+          {
+            "id": "8854d3a1d957a7ed",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Untitled.md",
+                "mode": "source",
+                "source": false
+              }
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -85,7 +98,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "api/lyrics.md",
+                "file": "Untitled.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +115,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "api/lyrics.md",
+                "file": "Untitled.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +138,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "api/lyrics.md"
+                "file": "Untitled.md"
               }
             }
           }
@@ -146,11 +159,12 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "8b82fb671072fa31",
+  "active": "8854d3a1d957a7ed",
   "lastOpenFiles": [
+    "api/lyrics.md",
+    "Untitled.md",
     "api/tracks.md",
     "api/track.md",
-    "api/lyrics.md",
     "api/apiOverview.md",
     "api/_sidebar.md",
     "users/change-password.md",
@@ -173,7 +187,6 @@
     "models/modelsOverview.md",
     "models/PublicUser.md",
     "models/PlayStat.md",
-    "db/channel.md",
     "users",
     "stats",
     "search",
