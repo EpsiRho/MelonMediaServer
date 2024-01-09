@@ -26,7 +26,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("tracks")]
-        public IEnumerable<Track> SearchTracks(int page, int count, string trackName = "", string format = "", string bitrate = "", 
+        public IEnumerable<Track> SearchTracks(int page = 1, int count = 50, string trackName = "", string format = "", string bitrate = "", 
                                                string sampleRate = "", string channels = "", string bitsPerSample = "", string year = "", 
                                                long ltPlayCount = 0, long gtPlayCount = 0, long ltSkipCount = 0, long gtSkipCount = 0, int ltYear = 0, int ltMonth = 0, int ltDay = 0,
                                                int gtYear = 0, int gtMonth = 0, int gtDay = 0, long ltRating = 0, long gtRating = 0, string[] genres = null, bool externalResults = false)
