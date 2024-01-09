@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Data;
 using RestSharp;
 using Azure.Core;
+using RestSharp.Authenticators;
 
 namespace MelonWebApi.Controllers
 {
@@ -149,15 +150,30 @@ namespace MelonWebApi.Controllers
 
             var jwtRequest = new RestRequest("/auth/code-authenticate", Method.Get);
             jwtRequest.AddQueryParameter("code",code);
+            jwtRequest.Timeout = 2000;
             var jwtResponse = client.Execute(jwtRequest);
+            if(jwtResponse.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                return new ObjectResult(jwtResponse.Content) { StatusCode = 500 };
+            }
 
             var createRequest = new RestRequest("/api/users/create", Method.Post);
             createRequest.AddQueryParameter("username", username);
             createRequest.AddQueryParameter("password", password);
-            createRequest.AddHeader("Authorization", $"Bearer {jwtResponse.Content}");
-            var createResponse = client.Execute(createRequest);
+            var authenticator = new JwtAuthenticator(jwtResponse.Content);
+            var options = new RestClientOptions(url)
+            {
+                Authenticator = authenticator
+            };
+            var authClient = new RestClient(options);
+            var createResponse = authClient.Execute(createRequest);
 
-            Security.Connections.Add(new Connection() { Username = username, Password = password, JWT = jwtResponse.Content, URL = url });
+            var authRequest = new RestRequest("/auth/login", Method.Get);
+            authRequest.AddQueryParameter("username", username);
+            authRequest.AddQueryParameter("password", password);
+            var authResponse = client.Execute(authRequest);
+
+            Security.Connections.Add(new Connection() { Username = username, Password = password, JWT = authResponse.Content, URL = url });
             Security.SaveConnections();
 
             return new ObjectResult("Connection Added") { StatusCode = 200 };
