@@ -37,7 +37,7 @@ namespace MelonWebApi.Controllers
             var userName = User.Identity.Name;
 
             Playlist playlist = new Playlist();
-            playlist._id = ObjectId.GenerateNewId();
+            playlist._id = new MelonId(ObjectId.GenerateNewId());
             playlist.PlaylistId = playlist._id.ToString();
             playlist.Name = name;
             playlist.TrackCount = 0;
@@ -151,7 +151,7 @@ namespace MelonWebApi.Controllers
             foreach (var tid in trackIds)
             {
                 var query = from track in playlist.Tracks
-                            where track._id == new ObjectId(tid)
+                            where track.TrackId == tid
                             select track;
                 if (query.Count() != 0)
                 {
@@ -332,7 +332,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
-            var pFilter = Builders<Playlist>.Filter.Eq(x => x._id, ObjectId.Parse(id));
+            var pFilter = Builders<Playlist>.Filter.Eq(x => x.PlaylistId, id);
 
             if(page == 0 || count == 0)
             {

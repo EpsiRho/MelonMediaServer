@@ -9,7 +9,7 @@ namespace Melon.Models
 {
     public class PlayStat
     {
-        public ObjectId _id { get; set; }
+        public MelonId _id { get; set; }
         public string StatId { get; set; }
         public string TrackId { get; set; }
         public string AlbumId { get; set; }

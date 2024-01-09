@@ -34,7 +34,7 @@ namespace MelonWebApi.Controllers
             var queueDoc = new BsonDocument();
             PlayQueue queue = new PlayQueue();
             var userName = User.Identity.Name;
-            queue._id = ObjectId.GenerateNewId();
+            queue._id = new MelonId(ObjectId.GenerateNewId());
             queue.QueueId = queue._id.ToString();
             queue.Name = name;
             queue.Owner = userName;
@@ -97,7 +97,7 @@ namespace MelonWebApi.Controllers
             var queueDoc = new BsonDocument();
             PlayQueue queue = new PlayQueue();
             var userName = User.Identity.Name;
-            queue._id = ObjectId.GenerateNewId();
+            queue._id = new MelonId(ObjectId.GenerateNewId());
             queue.QueueId = queue._id.ToString();
             queue.Name = name;
             queue.Owner = userName;
@@ -168,7 +168,7 @@ namespace MelonWebApi.Controllers
             var queueDoc = new BsonDocument();
             PlayQueue queue = new PlayQueue();
             var userName = User.Identity.Name;
-            queue._id = ObjectId.GenerateNewId();
+            queue._id = new MelonId(ObjectId.GenerateNewId());
             queue.QueueId = queue._id.ToString();
             queue.Name = name;
             queue.Owner = userName;
@@ -239,7 +239,7 @@ namespace MelonWebApi.Controllers
             var queueDoc = new BsonDocument();
             PlayQueue queue = new PlayQueue();
             var userName = User.Identity.Name;
-            queue._id = ObjectId.GenerateNewId();
+            queue._id = new MelonId(ObjectId.GenerateNewId());
             queue.QueueId = queue._id.ToString();
             queue.Name = name;
             queue.Owner = userName;
@@ -360,7 +360,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, ObjectId.Parse(id));
+            var qFilter = Builders<PlayQueue>.Filter.Eq(x => x.QueueId, id);
 
             var Queues = QCollection.Find(qFilter).ToList();
             if (Queues.Count() == 0)
@@ -465,7 +465,7 @@ namespace MelonWebApi.Controllers
             foreach (var tid in trackIds)
             {
                 var query = from track in queue.Tracks
-                            where track._id == new ObjectId(tid)
+                            where track.TrackId == tid
                             select track;
                 if (query.Count() != 0)
                 {
