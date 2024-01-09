@@ -521,7 +521,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("update")]
-        public ObjectResult UpdateQueueName(ShortQueue queue)
+        public ObjectResult UpdateQueue(ShortQueue queue)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");

@@ -25,12 +25,12 @@
       "relativePath": "models"
     },
     {
-      "name": "playlists",
-      "relativePath": "playlists"
-    },
-    {
       "name": "queues",
       "relativePath": "queues"
+    },
+    {
+      "name": "playlists",
+      "relativePath": "playlists"
     },
     {
       "name": "search",
@@ -48,14 +48,14 @@
       "relativePath": "index.html"
     },
     {
-      "name": "style.css",
-      "basename": "style",
-      "relativePath": "style.css"
-    },
-    {
       "name": "toc.yml",
       "basename": "toc",
       "relativePath": "toc.yml"
+    },
+    {
+      "name": "style.css",
+      "basename": "style",
+      "relativePath": "style.css"
     }
   ]
 }

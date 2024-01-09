@@ -295,7 +295,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("search")]
-        public ObjectResult SearchPlaylists(int page, int count)
+        public ObjectResult SearchPlaylists(int page, int count, string name)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -312,6 +312,7 @@ namespace MelonWebApi.Controllers
 
             // Combine filters with OR
             var combinedFilter = Builders<Playlist>.Filter.Or(ownerFilter, viewersFilter, publicViewingFilter, EditorsFilter);
+            combinedFilter = combinedFilter & Builders<Playlist>.Filter.Regex(x=>x.Name, new BsonRegularExpression(name, "i"));
 
             playlists.AddRange(PCollection.Find(combinedFilter)
                                     .Skip(page * count)
