@@ -42,6 +42,7 @@ namespace Melon.LocalClasses
             
             ChecklistUI.ShowChecklist();
 
+
             // Load Settings
             if (!Directory.Exists(melonPath))
             {
@@ -52,6 +53,7 @@ namespace Melon.LocalClasses
             {
                 Directory.CreateDirectory($"{StateManager.melonPath}/AlbumArts");
             }
+            Security.LoadConnections();
 
             if (!File.Exists($"{melonPath}/Flags.json"))
             {

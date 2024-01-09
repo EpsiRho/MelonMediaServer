@@ -14,13 +14,63 @@ using Amazon.Util;
 
 namespace Melon.LocalClasses
 {
-    public static class Security
+    public class Security
     {
         private static int keySize = 64;
         private static int iterations = 350000;
         private static HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
         private static SSLConfig sslConfig;
         private static List<string> InviteCodes;
+        public static List<Connection> Connections;
+        private IDataProtector _protector;
+        public Security(IDataProtectionProvider provider)
+        {
+            _protector = provider.CreateProtector("Melon.SSLConfig.v1");
+        }
+        public static void LoadConnections()
+        {
+            Connections = new List<Connection>();
+            try
+            {
+                var serviceCollection = new ServiceCollection();
+                serviceCollection.AddDataProtection();
+                var services = serviceCollection.BuildServiceProvider();
+
+                var instance = ActivatorUtilities.CreateInstance<Security>(services);
+
+                string txt = File.ReadAllText($"{StateManager.melonPath}/Connections.json");
+                Connections = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Connection>>(txt);
+                foreach (var con in Connections)
+                {
+                    con.URL = instance._protector.Unprotect(con.URL);
+                    con.Username = instance._protector.Unprotect(con.Username);
+                    con.Password = instance._protector.Unprotect(con.Password);
+                    con.JWT = instance._protector.Unprotect(con.JWT);
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+        }
+        public static void SaveConnections()
+        {
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddDataProtection();
+            var services = serviceCollection.BuildServiceProvider();
+
+            var instance = ActivatorUtilities.CreateInstance<Security>(services);
+            foreach(var con in Connections)
+            {
+                con.URL = instance._protector.Protect(con.URL);
+                con.Username = instance._protector.Protect(con.Username);
+                con.Password = instance._protector.Protect(con.Password);
+                con.JWT = instance._protector.Protect(con.JWT);
+            }
+
+            string txt = Newtonsoft.Json.JsonConvert.SerializeObject(Connections);
+            File.WriteAllText($"{StateManager.melonPath}/Connections.json", txt);
+        }
         public static void LoadSSLConfig()
         {
             var serviceCollection = new ServiceCollection();
@@ -30,9 +80,9 @@ namespace Melon.LocalClasses
             string txt = File.ReadAllText($"{StateManager.melonPath}/SSLConfig.json");
             sslConfig = Newtonsoft.Json.JsonConvert.DeserializeObject<SSLConfig>(txt);
 
-            var instance = ActivatorUtilities.CreateInstance<SSLConfig>(services);
+            var instance = ActivatorUtilities.CreateInstance<Security>(services);
             sslConfig.PathToCert = sslConfig.PathToCert;
-            sslConfig.Password = instance.Decrypt(sslConfig.Password);
+            sslConfig.Password = instance._protector.Unprotect(sslConfig.Password);
         }
         public static void SaveSSLConfig()
         {
@@ -40,8 +90,8 @@ namespace Melon.LocalClasses
             serviceCollection.AddDataProtection();
             var services = serviceCollection.BuildServiceProvider();
 
-            var instance = ActivatorUtilities.CreateInstance<SSLConfig>(services);
-            sslConfig.Password = instance.Encrypt(sslConfig.Password);
+            var instance = ActivatorUtilities.CreateInstance<Security>(services);
+            sslConfig.Password = instance._protector.Protect(sslConfig.Password);
 
             string txt = Newtonsoft.Json.JsonConvert.SerializeObject(sslConfig);
             File.WriteAllText($"{StateManager.melonPath}/SSLConfig.json", txt);

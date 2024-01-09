@@ -62,7 +62,6 @@ namespace MelonWebApi.Controllers
             }
             return new ObjectResult(code){ StatusCode = 200 };
         }
-        [Authorize(Roles = "Admin")]
         [HttpGet("code-authenticate")]
         public ObjectResult CodeAuth(string code)
         {

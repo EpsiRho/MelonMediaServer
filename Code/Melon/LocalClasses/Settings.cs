@@ -35,26 +35,13 @@ namespace Melon.LocalClasses
     {
         public string? PathToCert { get; set; }
         public string? Password { get; set; }
-
-        [JsonIgnore]
-        private IDataProtector _protector;
-
-        public SSLConfig()
-        {
-            
-        }
-        public SSLConfig(IDataProtectionProvider provider)
-        {
-            _protector = provider.CreateProtector("Melon.SSLConfig.v1");
-        }
-        public string Encrypt(string unprotectedPayload)
-        {
-            return _protector.Protect(unprotectedPayload);
-        }
-        public string Decrypt(string protectedPayload)
-        {
-            return _protector.Unprotect(protectedPayload);
-        }
+    }
+    public class Connection
+    {
+        public string? Username { get; set; }
+        public string? Password { get; set; }
+        public string? URL { get; set; }
+        public string? JWT { get; set; }
     }
     /// <summary>
     /// Melon's debug flags. These are used to force enable/disable features for testing.

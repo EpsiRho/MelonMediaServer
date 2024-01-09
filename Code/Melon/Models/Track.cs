@@ -27,6 +27,7 @@ namespace Melon.Models
         public float Rating { get; set; }
         public int TrackArtCount { get; set; }
         public string LyricsPath { get; set; }
+        public string ServerURL { get; set; }
         public DateTime LastModified { get; set; }
         public DateTime ReleaseDate { get; set; }
         public List<string> TrackGenres { get; set; }
