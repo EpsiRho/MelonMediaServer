@@ -7,6 +7,9 @@ using MongoDB.Driver;
 using Melon.LocalClasses;
 using System.Diagnostics;
 using Melon.Models;
+using RestSharp;
+using Newtonsoft.Json;
+using ATL.Logging;
 
 namespace MelonWebApi.Controllers
 {
@@ -26,8 +29,64 @@ namespace MelonWebApi.Controllers
         public IEnumerable<Track> SearchTracks(int page, int count, string trackName = "", string format = "", string bitrate = "", 
                                                string sampleRate = "", string channels = "", string bitsPerSample = "", string year = "", 
                                                long ltPlayCount = 0, long gtPlayCount = 0, long ltSkipCount = 0, long gtSkipCount = 0, int ltYear = 0, int ltMonth = 0, int ltDay = 0,
-                                               int gtYear = 0, int gtMonth = 0, int gtDay = 0, long ltRating = 0, long gtRating = 0, string[] genres = null)
+                                               int gtYear = 0, int gtMonth = 0, int gtDay = 0, long ltRating = 0, long gtRating = 0, string[] genres = null, bool externalResults = false)
         {
+            List<Track> tracks = new List<Track>();
+            if (externalResults)
+            {
+                count = count / Security.Connections.Count() + 1;
+                foreach (var con in Security.Connections)
+                {
+                    try
+                    {
+                        var client = new RestClient(con.URL);
+                        var checkRequest = new RestRequest("/auth/check", Method.Get);
+                        checkRequest.AddHeader("Authorization", $"Bearer {con.JWT}");
+                        var checkResponse = client.Execute(checkRequest);
+
+                        if (checkResponse.StatusCode != System.Net.HttpStatusCode.OK)
+                        {
+                            var authRequest = new RestRequest("/auth/login", Method.Get);
+                            authRequest.AddQueryParameter("username", con.Username);
+                            authRequest.AddQueryParameter("Password", con.Password);
+                            var authResponse = client.Execute(authRequest);
+                            con.JWT = authResponse.Content;
+                        }
+
+
+                        var tracksRequest = new RestRequest("/api/search/tracks", Method.Get);
+                        tracksRequest.AddQueryParameter("page", page);
+                        tracksRequest.AddQueryParameter("count", count);
+                        tracksRequest.AddQueryParameter("trackName", trackName);
+                        tracksRequest.AddQueryParameter("format", format);
+                        tracksRequest.AddQueryParameter("bitrate", bitrate);
+                        tracksRequest.AddQueryParameter("sampleRate", channels);
+                        tracksRequest.AddQueryParameter("bitsPerSample", bitsPerSample);
+                        tracksRequest.AddQueryParameter("year", year);
+                        tracksRequest.AddQueryParameter("ltPlayCount", ltPlayCount);
+                        tracksRequest.AddQueryParameter("gtPlayCount", gtPlayCount);
+                        tracksRequest.AddQueryParameter("ltSkipCount", ltSkipCount);
+                        tracksRequest.AddQueryParameter("gtSkipCount", gtSkipCount);
+                        tracksRequest.AddQueryParameter("ltYear", ltYear);
+                        tracksRequest.AddQueryParameter("gtYear", gtYear);
+                        tracksRequest.AddQueryParameter("ltMonth", ltMonth);
+                        tracksRequest.AddQueryParameter("gtMonth", gtMonth);
+                        tracksRequest.AddQueryParameter("ltDay", ltDay);
+                        tracksRequest.AddQueryParameter("gtDay", gtDay);
+                        tracksRequest.AddQueryParameter("ltRating", ltRating);
+                        tracksRequest.AddQueryParameter("gtRating", gtRating);
+                        tracksRequest.AddBody(genres);
+
+                        var tracksResponse = client.Execute(tracksRequest);
+                        tracks.AddRange(JsonConvert.DeserializeObject<List<Track>>(tracksResponse.Content));
+                    }
+                    catch (Exception)
+                    {
+                        
+                    }
+                }
+            }
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -100,6 +159,8 @@ namespace MelonWebApi.Controllers
                                             .Skip(page * count)
                                             .Limit(count)
                                             .ToList();
+
+            
 
             return trackDocs;
         }
