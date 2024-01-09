@@ -20,6 +20,7 @@ namespace Melon.LocalClasses
         private static int iterations = 350000;
         private static HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
         private static SSLConfig sslConfig;
+        private static List<string> InviteCodes;
         public static void LoadSSLConfig()
         {
             var serviceCollection = new ServiceCollection();
@@ -91,8 +92,12 @@ namespace Melon.LocalClasses
                 return Convert.ToBase64String(randomBytes);
             }
         }
-        public static string GenerateJwtToken(string username, string role)
+        public static string GenerateJwtToken(string username, string role, int ExpireInMinutes = 0)
         {
+            if(ExpireInMinutes == 0)
+            {
+                ExpireInMinutes = StateManager.MelonSettings.JWTExpireInMinutes;
+            }
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(StateManager.MelonSettings.JWTKey);
 
@@ -103,13 +108,50 @@ namespace Melon.LocalClasses
                     new Claim(ClaimTypes.Name, username),
                     new Claim(ClaimTypes.Role, role)
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(StateManager.MelonSettings.JWTExpireInMinutes),
+                Expires = DateTime.UtcNow.AddMinutes(ExpireInMinutes),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+        public static string CreateInviteCode()
+        {
+            if(InviteCodes == null)
+            {
+                InviteCodes = new List<string>();
+            }
+            if(InviteCodes.Count() >= 25)
+            {
+                return "Timeout";
+            }
 
+            Random random = new Random();
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            char[] stringChars = new char[4];
+
+            for (int i = 0; i < 4; i++)
+            {
+                stringChars[i] = chars[random.Next(chars.Length)];
+            }
+
+            string code = new string(stringChars);
+            InviteCodes.Add(code);
+
+            Thread timer = new Thread(() =>
+            {
+                Thread.Sleep(new TimeSpan(0, 10, 0));
+                InviteCodes.Remove(code);
+            });
+
+            return new string(stringChars);
+        }
+        public static bool ValidateInviteCode(string code)
+        {
+            if (InviteCodes.Contains(code)){
+                return true;
+            }
+            return false;
+        }
     }
 }

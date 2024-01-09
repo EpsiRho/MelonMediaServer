@@ -110,6 +110,13 @@ namespace MelonWebApi.Controllers
             {
                 return new ObjectResult("Username is Taken") { StatusCode = 409 };
             }
+            var roles = ((ClaimsIdentity)User.Identity).Claims
+                        .Where(c => c.Type == ClaimTypes.Role)
+                        .Select(c => c.Value);
+            if (roles.Contains("Server"))
+            {
+                role = "User";
+            }
 
             byte[] tempSalt;
             var protectedPassword = Security.HashPasword(password, out tempSalt);
@@ -252,7 +259,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpPatch("change-password")]
-        public ObjectResult CreateUser(string id, string password)
+        public ObjectResult ChangePassword(string id, string password)
         {
             
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
