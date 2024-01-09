@@ -60,15 +60,18 @@ namespace Melon.LocalClasses
             var services = serviceCollection.BuildServiceProvider();
 
             var instance = ActivatorUtilities.CreateInstance<Security>(services);
+            List<Connection> conns = new List<Connection>();
             foreach(var con in Connections)
             {
-                con.URL = instance._protector.Protect(con.URL);
-                con.Username = instance._protector.Protect(con.Username);
-                con.Password = instance._protector.Protect(con.Password);
-                con.JWT = instance._protector.Protect(con.JWT);
+                var newCon = new Connection();
+                newCon.URL = instance._protector.Protect(con.URL);
+                newCon.Username = instance._protector.Protect(con.Username);
+                newCon.Password = instance._protector.Protect(con.Password);
+                newCon.JWT = instance._protector.Protect(con.JWT);
+                conns.Add(newCon);
             }
 
-            string txt = Newtonsoft.Json.JsonConvert.SerializeObject(Connections);
+            string txt = Newtonsoft.Json.JsonConvert.SerializeObject(conns);
             File.WriteAllText($"{StateManager.melonPath}/Connections.json", txt);
         }
         public static void LoadSSLConfig()
