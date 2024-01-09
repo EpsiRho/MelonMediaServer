@@ -64,7 +64,7 @@ namespace Melon.DisplayClasses
                 Dictionary<string, Action> MenuOptions = new Dictionary<string, Action>()
                 {
                     { "Back" , () => { LockUI = false; } },
-                    { "Edit Users", UserSettings },
+                    //{ "Edit Users", UserSettings },
                     { "Edit MongoDB Connection", MongoDBSettings },
                     { "Edit Library Paths" , LibraryPathSettings },
                     { "Edit Listening URL", ChangeListeningURL },
@@ -201,138 +201,6 @@ namespace Melon.DisplayClasses
 
             }
 
-        }
-        private static void UserSettings()
-        {
-            while (true)
-            {
-                // Title
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users" });
-
-                // Get Users from MelonDb
-                var databaseNames = DbClient.ListDatabaseNames().ToList();
-                var NewMelonDB = DbClient.GetDatabase("Melon");
-                var collection = NewMelonDB.GetCollection<User>("Users");
-                var documents = collection.Find<User>(Builders<User>.Filter.Empty).ToList();
-
-                List<string> users = new List<string>();
-                List<string> names = new List<string>();
-                users.Add("Back");
-                users.Add("Add New User");
-                foreach (var doc in documents)
-                {
-                    names.Add(doc.Username);
-                    users.Add($"[{doc.Type}] {doc.Username} ({DateTime.Parse(doc.LastLogin.ToString("MM/dd/yyyy hh:mm tt"))})");
-                }
-
-                // Add Extra Options
-
-                // Option Picker for selection
-                string input = MelonUI.OptionPicker(users);
-                if (input == "Add New User")
-                {
-                    string username = "";
-                    while (true)
-                    {
-                        // Title
-                        MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Add User 1/3" });
-                        Console.WriteLine("Enter the new user's name (Must be unique):".Pastel(MelonColor.Text));
-                        Console.Write($"> ".Pastel(MelonColor.Text));
-
-                        // Get User Name
-                        username = Console.ReadLine();
-                        if (!names.Contains(username))
-                        {
-                            break;
-                        }
-
-                    }
-
-                    // Get Password
-                    string[] passInput = new string[2];
-                    do
-                    {
-                        MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
-                        MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Add User 2/3" });
-                        Console.WriteLine("Please enter a password for this user".Pastel(MelonColor.Text));
-                        if (!passInput[0].IsNullOrEmpty())
-                        {
-                            Console.SetCursorPosition(0, 3);
-                            Console.WriteLine("Passwords do not match, please try again.".Pastel(MelonColor.Error));
-                        }
-                        Console.WriteLine("Password: ".Pastel(MelonColor.Text));
-                        Console.Write("Confirm password: ".Pastel(MelonColor.BackgroundText));
-                        Console.SetCursorPosition(10, Console.CursorTop - 1);
-                        passInput[0] = MelonUI.HiddenInput();
-                        Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.WriteLine("Password: ".Pastel(MelonColor.BackgroundText));
-                        Console.Write("Confirm password: ".Pastel(MelonColor.Text));
-                        passInput[1] = MelonUI.HiddenInput();
-
-                    } while (passInput[0] != passInput[1]);
-
-                    // Get User Type
-                    MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Add User 3/3" });
-                    Console.WriteLine("Select the new user's type".Pastel(MelonColor.Text));
-                    var type = MelonUI.OptionPicker(new List<string>()
-                    {
-                        "Admin",
-                        "User",
-                        "Pass"
-                    });
-
-                    byte[] tempSalt;
-                    var password = Security.HashPasword(passInput[0], out tempSalt);
-                    var id = ObjectId.GenerateNewId();
-
-                    var document = new User
-                    {
-                        _id = id,
-                        UserId = id.ToString(),
-                        Username = username,
-                        Password = password,
-                        Salt = tempSalt,
-                        LastLogin = DateTime.Now,
-                        Type = type,
-                        PublicStats = false,
-                        Bio = ""
-                    };
-                    collection.InsertOne(document);
-                }
-                else if (input == "Back")
-                {
-                    // Leave
-                    return;
-                }
-                else
-                {
-                    // Delete User
-                    //int idx = users.IndexOf(input);
-                    //User item = documents[idx];
-                    //var username = item.Username;
-                    //var deleteFilter = Builders<User>.Filter.Eq("Username", username);
-                    //collection.DeleteOne(deleteFilter);
-                    MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Password Check" });
-                    Console.WriteLine("Enter the user's password:".Pastel(MelonColor.Text));
-                    Console.Write($"> ".Pastel(MelonColor.Text));
-                    var pass = Console.ReadLine();
-                    int idx = users.IndexOf(input);
-                    User user = documents[idx-2];
-                    bool Auth = Security.VerifyPassword(pass, user.Password, user.Salt);
-                    if(Auth)
-                    {
-                        MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Password Check" });
-                        Console.WriteLine("The password was correct!".Pastel(MelonColor.Text));
-                        Console.ReadLine();
-                    }
-                    else
-                    {
-                        MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Users", "Password Check" });
-                        Console.WriteLine("The password was incorrect!".Pastel(MelonColor.Text));
-                        Console.ReadLine();
-                    }
-                }
-            }
         }
         private static void MongoDBSettings()
         {

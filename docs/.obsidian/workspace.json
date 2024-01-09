@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "playlists/search.md",
+                "file": "users/change-password.md",
                 "mode": "source",
                 "source": true
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "playlists/search.md",
+                "file": "users/change-password.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "playlists/search.md",
+                "file": "users/change-password.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "playlists/search.md"
+                "file": "users/change-password.md"
               }
             }
           }
@@ -148,32 +148,33 @@
   },
   "active": "8b82fb671072fa31",
   "lastOpenFiles": [
-    "playlists/get-tracks.md",
-    "models/Playlist.md",
-    "db/dbOverview.md",
-    "db/sample-rate.md",
-    "db/release-type.md",
-    "db/release-status.md",
-    "db/publisher.md",
-    "db/format.md",
-    "db/channel.md",
-    "db/bits-per-sample.md",
-    "db/bitrate.md",
-    "auth/authOverview.md",
+    "users/change-username.md",
+    "users/change-password.md",
+    "users/create.md",
+    "users/delete.md",
+    "users/current.md",
+    "users/search.md",
+    "users/get.md",
+    "users/update.md",
+    "users/usersOverview.md",
+    "models/User.md",
+    "stats/top-genres.md",
+    "stats/top-artists.md",
+    "stats/top-albums.md",
+    "stats/log-play.md",
+    "queues/remove-tracks.md",
     "queues/queuesOverview.md",
-    "models/modelsOverview.md",
-    "download/downloadOverview.md",
-    "queues/add-tracks.md",
-    "queues/get.md",
     "queues/move-track.md",
-    "playlists/remove-tracks.md",
-    "playlists/move-track.md",
-    "models/Track.md",
-    "models/ShortPlaylist.md",
-    "2023-12-24.md",
-    "queues/shuffle.md",
-    "playlists/add-tracks.md",
-    "queues/update.md",
+    "models/modelsOverview.md",
+    "models/PublicUser.md",
+    "models/PlayStat.md",
+    "db/channel.md",
+    "_sidebar.md",
+    "db/dbOverview.md",
+    "playlists/playlistsOverview.md",
+    "playlists/search.md",
+    "users",
+    "playlists/get-tracks.md",
     "stats",
     "search",
     "style.css",
@@ -183,7 +184,6 @@
     "playlists",
     "models",
     "api",
-    "download",
     "Untitled.canvas"
   ]
 }

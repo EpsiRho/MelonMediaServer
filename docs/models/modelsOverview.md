@@ -5,6 +5,7 @@ These are the objects that Melon uses to organize it's database and send informa
 * [Playlist](models/Playlist)
 * [PlayQueue](models/PlayQueue)
 * [PlayStat](models/PlayStat)
+* [PublicUser](models/PublicUser)
 * [ShortAlbum](models/ShortAlbum)
 * [ShortArtist](models/ShortArtist)
 * [ShortPlaylist](models/ShortPlaylist)

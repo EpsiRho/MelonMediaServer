@@ -39,6 +39,10 @@
     {
       "name": "stats",
       "relativePath": "stats"
+    },
+    {
+      "name": "users",
+      "relativePath": "users"
     }
   ],
   "nonMdFiles": [
