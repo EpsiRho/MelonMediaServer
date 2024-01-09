@@ -241,6 +241,9 @@ namespace Melon.DisplayClasses
                 Salt = tempSalt,
                 LastLogin = DateTime.Now,
                 Type = "Admin",
+                FavTrack = "",
+                FavAlbum = "",
+                FavArtist = "",
                 PublicStats = false,
                 Bio = ""
             };
