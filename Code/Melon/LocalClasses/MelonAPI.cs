@@ -161,7 +161,7 @@ namespace Melon.LocalClasses
                     List<Track> fullTracks = new List<Track>();
                     foreach (var track in tracks)
                     {
-                        var trackFilter = Builders<Track>.Filter.Eq("_id", track._id);
+                        var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, track.TrackId);
                         var t = TracksCollection.Find(trackFilter).FirstOrDefault();
                         fullTracks.Add(t);
                     }
@@ -195,7 +195,7 @@ namespace Melon.LocalClasses
                     List<Track> fTracks = new List<Track>();
                     foreach (var track in tracks)
                     {
-                        var trackFilter = Builders<Track>.Filter.Eq("_id", track._id);
+                        var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, track.TrackId);
                         var t = TCollection.Find(trackFilter).FirstOrDefault();
                         fTracks.Add(t);
                     }

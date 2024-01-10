@@ -36,7 +36,7 @@ namespace MelonWebApi.Controllers
 
                 var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-                var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
+                var trackFilter = Builders<Track>.Filter.Eq("TrackId", id);
 
                 var trackDocs = TracksCollection.Find(trackFilter)
                                                 .ToList();
@@ -86,7 +86,7 @@ namespace MelonWebApi.Controllers
                 List<Track> tracks = new List<Track>();
                 foreach(var id in ids)
                 {
-                    var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
+                    var trackFilter = Builders<Track>.Filter.Eq("TrackId", id);
                     var track = TracksCollection.Find(trackFilter).FirstOrDefault();
                     if(track != null)
                     {
@@ -116,7 +116,7 @@ namespace MelonWebApi.Controllers
 
                 var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
 
-                var albumFilter = Builders<Album>.Filter.Eq("_id", new ObjectId(id));
+                var albumFilter = Builders<Album>.Filter.Eq("AlbumId", id);
 
                 var albumDocs = AlbumsCollection.Find(albumFilter)
                                                 .ToList();
@@ -173,7 +173,7 @@ namespace MelonWebApi.Controllers
                 List<Album> albums = new List<Album>();
                 foreach (var id in ids)
                 {
-                    var albumFilter = Builders<Album>.Filter.Eq("_id", new ObjectId(id));
+                    var albumFilter = Builders<Album>.Filter.Eq("AlbumId", id);
                     var album = AlbumCollection.Find(albumFilter).FirstOrDefault();
                     album.Tracks = album.Tracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).ToList();
                     albums.Add(album);
@@ -201,7 +201,7 @@ namespace MelonWebApi.Controllers
 
                 var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
 
-                var artistFilter = Builders<Artist>.Filter.Eq("_id", new ObjectId(id));
+                var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", id);
 
                 var ArtistDocs = ArtistCollection.Find(artistFilter)
                                                 .ToList();
@@ -259,7 +259,7 @@ namespace MelonWebApi.Controllers
                 List<Artist> artists = new List<Artist>();
                 foreach (var id in ids)
                 {
-                    var artistFilter = Builders<Artist>.Filter.Eq("_id", new ObjectId(id));
+                    var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", id);
                     var artist = ArtistCollection.Find(artistFilter).FirstOrDefault();
                     try{artist.Tracks = artist.Tracks.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
                     try{artist.Releases = artist.Releases.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
@@ -286,7 +286,7 @@ namespace MelonWebApi.Controllers
                 var mongoDatabase = mongoClient.GetDatabase("Melon");
 
                 var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
-                var trackFilter = Builders<Track>.Filter.Eq("_id", new ObjectId(id));
+                var trackFilter = Builders<Track>.Filter.Eq("TrackId", id);
                 var track = TracksCollection.Find(trackFilter).FirstOrDefault();
 
                 if(track == null)

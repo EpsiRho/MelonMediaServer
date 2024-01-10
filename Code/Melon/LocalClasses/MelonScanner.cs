@@ -107,7 +107,7 @@ namespace Melon.LocalClasses
                     if (!File.Exists(track.Path))
                     {
                         // remove from albums
-                        var filter = Builders<Album>.Filter.Eq("_id", track.Album._id);
+                        var filter = Builders<Album>.Filter.Eq(x=>x.AlbumId, track.Album.AlbumId);
                         var albums = AlbumCollection.Find(filter).ToList();
 
                         List<string> zeroed = new List<string>();
@@ -115,8 +115,8 @@ namespace Melon.LocalClasses
                         {
                             var album = albums[0];
                             var query = (from t in album.Tracks
-                                     where t._id == track._id
-                                     select t).FirstOrDefault();
+                                         where t.TrackId == track.TrackId
+                                         select t).FirstOrDefault();
                             album.Tracks.Remove(query);
                             if (album.Tracks.Count == 0)
                             {
@@ -132,7 +132,7 @@ namespace Melon.LocalClasses
                         // remove from artists
                         foreach (var artist in track.TrackArtists)
                         {
-                            var aFilter = Builders<Artist>.Filter.Eq("_id", artist._id);
+                            var aFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, artist.ArtistId);
                             var artists = ArtistCollection.Find(aFilter).ToList();
                             Artist dbArtist = null;
 
@@ -140,7 +140,7 @@ namespace Melon.LocalClasses
                             {
                                 dbArtist = artists[0];
                                 var query = (from t in dbArtist.Tracks
-                                             where t._id == track._id
+                                             where t.TrackId == track.TrackId
                                              select t).FirstOrDefault();
                                 dbArtist.Tracks.Remove(query);
 
@@ -175,7 +175,7 @@ namespace Melon.LocalClasses
                             }
                         }
                         // Remove Track
-                        var tFilter = Builders<Track>.Filter.Eq("_id", track._id);
+                        var tFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, track.TrackId);
                         TracksCollection.DeleteOne(tFilter);
                     }
 
@@ -525,13 +525,13 @@ namespace Melon.LocalClasses
 
                             for (int i = 0; i < fileMetadata.EmbeddedPictures.Count(); i++)
                             {
-                                using (FileStream artFile = new FileStream($"{StateManager.melonPath}/AlbumArts/{album._id}-{i}.jpg", FileMode.Create, System.IO.FileAccess.Write))
+                                using (FileStream artFile = new FileStream($"{StateManager.melonPath}/AlbumArts/{album.AlbumId}-{i}.jpg", FileMode.Create, System.IO.FileAccess.Write))
                                 {
 
                                     byte[] bytes = fileMetadata.EmbeddedPictures[i].PictureData;
                                     artFile.Write(bytes, 0, bytes.Length);
                                 }
-                                album.AlbumArtPaths.Add($"{album._id}-{i}.jpg");
+                                album.AlbumArtPaths.Add($"{album.AlbumId}-{i}.jpg");
                             }
 
                             for (int i = 0; i < albumArtists.Count(); i++)
@@ -718,9 +718,9 @@ namespace Melon.LocalClasses
                             TracksCollection.ReplaceOne(trackfilter, track);
 
                             // remove old tracks from old albums
-                            if (trackDoc.Album._id != track.Album._id)
+                            if (trackDoc.Album.AlbumId != track.Album.AlbumId)
                             {
-                                var aFilter = Builders<Album>.Filter.Eq("_id", trackDoc.Album._id);
+                                var aFilter = Builders<Album>.Filter.Eq(x=>x.AlbumId, trackDoc.Album.AlbumId);
                                 var album = AlbumCollection.Find(aFilter).ToList();
                                 if (album.Count() != 0)
                                 {
@@ -733,7 +733,7 @@ namespace Melon.LocalClasses
                             {
                                 if (!track.TrackArtists.Contains(a))
                                 {
-                                    var aFilter = Builders<Artist>.Filter.Eq("_id", trackDoc.Album._id);
+                                    var aFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, a.ArtistId);
                                     var aritst = ArtistCollection.Find(aFilter).ToList();
                                     if (aritst.Count() != 0)
                                     {
