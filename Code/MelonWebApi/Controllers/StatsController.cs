@@ -38,7 +38,7 @@ namespace MelonWebApi.Controllers
 
             // Get track, album, artists
             Track track = null;
-            var tFilter = Builders<Track>.Filter.Eq("_id", ObjectId.Parse(id));
+            var tFilter = Builders<Track>.Filter.Eq("TrackId", id);
             try
             {
                 track = TCollection.Find(tFilter).ToList()[0];
@@ -48,13 +48,13 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Track not found") { StatusCode = 404 };
             }
 
-            var albumFilter = Builders<Album>.Filter.Eq("_id", track.Album._id);
+            var albumFilter = Builders<Album>.Filter.Eq("AlbumId", track.Album.AlbumId);
             var album = AlbumCollection.Find(albumFilter).ToList()[0];
 
             List<Artist> artists = new List<Artist>();
             foreach (var a in track.TrackArtists)
             {
-                var artistFilter = Builders<Artist>.Filter.Eq("_id", a._id);
+                var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", a.ArtistId);
                 var artist = ArtistCollection.Find(artistFilter).ToList()[0];
                 artist.PlayCount++;
                 artists.Add(artist);
