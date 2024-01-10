@@ -12,6 +12,7 @@ using ATL.Logging;
 using System.Text.Json;
 using Azure.Core;
 using Newtonsoft.Json;
+using System;
 
 namespace MelonWebApi.Controllers
 {
@@ -31,7 +32,8 @@ namespace MelonWebApi.Controllers
         public ObjectResult SearchTracks(int page = 1, int count = 50, string trackName = "", string format = "", string bitrate = "", 
                                                string sampleRate = "", string channels = "", string bitsPerSample = "", string year = "", 
                                                long ltPlayCount = 0, long gtPlayCount = 0, long ltSkipCount = 0, long gtSkipCount = 0, int ltYear = 0, int ltMonth = 0, int ltDay = 0,
-                                               int gtYear = 0, int gtMonth = 0, int gtDay = 0, long ltRating = 0, long gtRating = 0, [FromQuery] string[] genres = null, bool externalResults = false)
+                                               int gtYear = 0, int gtMonth = 0, int gtDay = 0, long ltRating = 0, long gtRating = 0, [FromQuery] string[] genres = null, 
+                                               bool externalResults = false, bool searchOr = false)
         {
             List<Track> tracks = new List<Track>();
             int shortCount = count;
@@ -121,71 +123,145 @@ namespace MelonWebApi.Controllers
 
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-            var trackFilter = Builders<Track>.Filter.Regex("TrackName", new BsonRegularExpression(trackName, "i"));
-                trackFilter = trackFilter & Builders<Track>.Filter.Regex("Format", new BsonRegularExpression(format, "i"));
-                trackFilter = trackFilter & Builders<Track>.Filter.Regex("Bitrate", new BsonRegularExpression(bitrate, "i"));
-                trackFilter = trackFilter & Builders<Track>.Filter.Regex("SampleRate", new BsonRegularExpression(sampleRate, "i"));
-                trackFilter = trackFilter & Builders<Track>.Filter.Regex("Channels", new BsonRegularExpression(channels, "i"));
-                trackFilter = trackFilter & Builders<Track>.Filter.Regex("BitsPerSample", new BsonRegularExpression(bitsPerSample, "i"));
-                trackFilter = trackFilter & Builders<Track>.Filter.Regex("Year", new BsonRegularExpression(year, "i"));
+            var nameFilter = Builders<Track>.Filter.Regex("TrackName", new BsonRegularExpression(trackName, "i"));
+            var formatFilter = Builders<Track>.Filter.Regex("Format", new BsonRegularExpression(format, "i"));
+            var bitrateFilter = Builders<Track>.Filter.Regex("Bitrate", new BsonRegularExpression(bitrate, "i"));
+            var sampleRateFilter = Builders<Track>.Filter.Regex("SampleRate", new BsonRegularExpression(sampleRate, "i"));
+            var channelsFilter = Builders<Track>.Filter.Regex("Channels", new BsonRegularExpression(channels, "i"));
+            var bpsFilter = Builders<Track>.Filter.Regex("BitsPerSample", new BsonRegularExpression(bitsPerSample, "i"));
+            var yearFilter = Builders<Track>.Filter.Regex("Year", new BsonRegularExpression(year, "i"));
+
+            var combinedFilter = Builders<Track>.Filter.Empty;
+
+            if (searchOr)
+            {
+                combinedFilter = Builders<Track>.Filter.Or(nameFilter, formatFilter, bitrateFilter, sampleRateFilter, channelsFilter, bpsFilter, yearFilter);
+            }
+            else
+            {
+                combinedFilter = Builders<Track>.Filter.And(nameFilter, formatFilter, bitrateFilter, sampleRateFilter, channelsFilter, bpsFilter, yearFilter);
+            }
 
             // Play Count
             if (gtPlayCount != 0)
             {
-                trackFilter = trackFilter & Builders<Track>.Filter.Gt("PlayCount", gtPlayCount);
+                if (searchOr)
+                {
+                    combinedFilter = Builders<Track>.Filter.Or(combinedFilter, Builders<Track>.Filter.Gt("PlayCount", gtPlayCount));
+                }
+                else
+                {
+                    combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.Gt("PlayCount", gtPlayCount));
+                }
             }
             
             if (ltPlayCount != 0)
             {
-                trackFilter = trackFilter & Builders<Track>.Filter.Lt("PlayCount", ltPlayCount);
+                if (searchOr)
+                {
+                    combinedFilter = Builders<Track>.Filter.Or(combinedFilter, Builders<Track>.Filter.Lt("PlayCount", ltPlayCount));
+                }
+                else
+                {
+                    combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.Lt("PlayCount", ltPlayCount));
+                }
             }
 
             // Skip Count
             if (gtSkipCount != 0)
             {
-                trackFilter = trackFilter & Builders<Track>.Filter.Gt("SkipCount", gtSkipCount);
+                if (searchOr)
+                {
+                    combinedFilter = Builders<Track>.Filter.Or(combinedFilter, Builders<Track>.Filter.Gt("SkipCount", gtSkipCount));
+                }
+                else
+                {
+                    combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.Gt("SkipCount", gtSkipCount));
+                }
             }
             
             if (ltSkipCount != 0)
             {
-                trackFilter = trackFilter & Builders<Track>.Filter.Lt("SkipCount", ltSkipCount);
+                if (searchOr)
+                {
+                    combinedFilter = Builders<Track>.Filter.Or(combinedFilter, Builders<Track>.Filter.Lt("SkipCount", ltSkipCount));
+                }
+                else
+                {
+                    combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.Lt("SkipCount", ltSkipCount));
+                }
             }
 
             // Ratings
             if (gtRating != 0)
             {
-                trackFilter = trackFilter & Builders<Track>.Filter.Gt("Rating", gtRating);
+                if (searchOr)
+                {
+                    combinedFilter = Builders<Track>.Filter.Or(combinedFilter, Builders<Track>.Filter.Gt("Rating", gtRating));
+                }
+                else
+                {
+                    combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.Gt("Rating", gtRating));
+                }
             }
 
             if (ltRating != 0)
             {
-                trackFilter = trackFilter & Builders<Track>.Filter.Lt("Rating", ltRating);
+                if (searchOr)
+                {
+                    combinedFilter = Builders<Track>.Filter.Or(combinedFilter, Builders<Track>.Filter.Lt("Rating", ltRating));
+                }
+                else
+                {
+                    combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.Lt("Rating", ltRating));
+                }
             }
 
             // Date
             if (ltYear != 0 && ltMonth != 0 && ltDay != 0)
             {
                 DateTime ltDateTime = new DateTime(ltYear, ltMonth, ltDay);
-                trackFilter = trackFilter & Builders<Track>.Filter.Lt(x => x.ReleaseDate, ltDateTime);
+                if (searchOr)
+                {
+                    combinedFilter = Builders<Track>.Filter.Or(combinedFilter, Builders<Track>.Filter.Lt(x => x.ReleaseDate, ltDateTime));
+                }
+                else
+                {
+                    combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.Lt(x => x.ReleaseDate, ltDateTime));
+                }
             }
 
             if (gtYear != 0 && gtMonth != 0 && gtDay != 0)
             {
                 DateTime gtDateTime = new DateTime(gtYear, gtMonth, gtDay);
-                trackFilter = trackFilter & Builders<Track>.Filter.Gt(x => x.ReleaseDate, gtDateTime);
+                if (searchOr)
+                {
+                    combinedFilter = Builders<Track>.Filter.Or(combinedFilter, Builders<Track>.Filter.Gt(x => x.ReleaseDate, gtDateTime));
+                }
+                else
+                {
+                    combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.Gt(x => x.ReleaseDate, gtDateTime));
+                }
             }
 
             if (genres != null)
             {
                 foreach (var genre in genres)
                 {
-                    trackFilter = trackFilter & Builders<Track>.Filter.Regex("TrackGenres", new BsonRegularExpression(genre, "i"));
+                    if (searchOr)
+                    {
+                        combinedFilter = Builders<Track>.Filter.Or(combinedFilter, Builders<Track>.Filter.Regex("TrackGenres", new BsonRegularExpression(genre, "i")));
+                    }
+                    else
+                    {
+                        combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.Regex("TrackGenres", new BsonRegularExpression(genre, "i")));
+                    }
                 }
             }
 
             var finalCount = count - ((Security.Connections.Count() + 1) * shortCount);
 
-            var trackDocs = TracksCollection.Find(trackFilter)
+            var trackDocs = TracksCollection.Find(combinedFilter)
                                             .Skip(page * count)
                                             .Limit(count)
                                             .ToList();
@@ -193,7 +269,7 @@ namespace MelonWebApi.Controllers
 
             if(finalCount > 0)
             {
-                tracks.AddRange(TracksCollection.Find(trackFilter)
+                tracks.AddRange(TracksCollection.Find(combinedFilter)
                                             .Skip(page * count)
                                             .Limit(finalCount)
                                             .ToList());
