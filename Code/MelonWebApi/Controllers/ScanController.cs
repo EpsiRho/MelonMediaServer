@@ -23,7 +23,7 @@ namespace MelonWebApi.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpGet("start")]
+        [HttpPost("start")]
         public ObjectResult StartScan(bool skip = false)
         {
             if(MelonScanner.Scanning) 
@@ -38,7 +38,7 @@ namespace MelonWebApi.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpPost("progress")]
+        [HttpGet("progress")]
         public ObjectResult GetScanProgress()
         {
             if (!MelonScanner.Scanning)
