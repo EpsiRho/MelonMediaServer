@@ -742,6 +742,16 @@ namespace Melon.LocalClasses
                                 }
                             }
                         }
+
+                        // Sort Everything Added
+                        albumDoc.Tracks = albumDoc.Tracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).ToList();
+                        try { artistDoc.Tracks = artistDoc.Tracks.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+                        try { artistDoc.Releases = artistDoc.Releases.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+                        try { artistDoc.SeenOn = artistDoc.SeenOn.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+
+                        AlbumCollection.ReplaceOne(albumFilter, albumDoc);
+                        ArtistCollection.ReplaceOne(artistFilter, artistDoc);
+
                         count++;
                     }
                 }
