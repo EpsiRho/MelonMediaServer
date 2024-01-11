@@ -45,7 +45,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("track-art")]
-        public async Task<IActionResult> DownloadTrackArt(string id, int index)
+        public async Task<IActionResult> DownloadTrackArt(string id, int index = 0)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -91,7 +91,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album-art")]
-        public async Task<IActionResult> DownloadAlbumArt(string id, int index)
+        public async Task<IActionResult> DownloadAlbumArt(string id, int index = 0)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -102,7 +102,7 @@ namespace MelonWebApi.Controllers
 
             try
             {
-                var aFilter = Builders<Album>.Filter.Eq("TrackId", id);
+                var aFilter = Builders<Album>.Filter.Eq("AlbumId", id);
                 var album = ACollection.Find(aFilter).ToList()[0];
 
                 // Load image data in MemoryStream
