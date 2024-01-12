@@ -295,7 +295,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("search")]
-        public ObjectResult SearchPlaylists(int page, int count, string name)
+        public ObjectResult SearchPlaylists(int page, int count, string name="")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
