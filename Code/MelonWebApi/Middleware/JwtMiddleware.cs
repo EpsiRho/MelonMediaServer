@@ -37,6 +37,7 @@ namespace MelonWebApi.Middleware
                     tokenHandler.ValidateToken(token, new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
+                        ValidAlgorithms = new List<string>() { SecurityAlgorithms.HmacSha256Signature },
                         IssuerSigningKey = new SymmetricSecurityKey(key),
                         ValidateIssuer = false,
                         ValidateAudience = false,

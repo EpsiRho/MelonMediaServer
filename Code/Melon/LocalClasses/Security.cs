@@ -142,7 +142,7 @@ namespace Melon.LocalClasses
             {
                 var randomBytes = new byte[32];
                 rng.GetBytes(randomBytes);
-                return Convert.ToBase64String(randomBytes);
+                return rng.ToString();
             }
         }
         public static string GenerateJwtToken(string username, string role, int ExpireInMinutes = 0)
