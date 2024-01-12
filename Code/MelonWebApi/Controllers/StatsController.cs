@@ -359,11 +359,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
             if (ltDateTime != "")
@@ -416,11 +416,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
             var recentStats = StatsCollection.Find(statFilter)
@@ -460,11 +460,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
             var recentStats = StatsCollection.Find(statFilter)
@@ -505,11 +505,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
             var recentStats = StatsCollection.Find(statFilter)
