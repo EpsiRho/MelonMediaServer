@@ -22,7 +22,7 @@ namespace Melon.LocalClasses
         private static SSLConfig sslConfig;
         private static List<string> InviteCodes;
         public static List<Connection> Connections;
-        private IDataProtector _protector;
+        public IDataProtector _protector;
         public Security(IDataProtectionProvider provider)
         {
             _protector = provider.CreateProtector("Melon.SSLConfig.v1");
@@ -136,13 +136,13 @@ namespace Melon.LocalClasses
             var hashToCompare = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, hashAlgorithm, keySize);
             return CryptographicOperations.FixedTimeEquals(hashToCompare, Convert.FromHexString(hash));
         }
-        public static string GenerateSecretKey()
+        public static byte[] GenerateSecretKey()
         {
             using (var rng = new RNGCryptoServiceProvider())
             {
                 var randomBytes = new byte[32];
                 rng.GetBytes(randomBytes);
-                return rng.ToString();
+                return randomBytes;
             }
         }
         public static string GenerateJwtToken(string username, string role, int ExpireInMinutes = 0)
@@ -152,7 +152,7 @@ namespace Melon.LocalClasses
                 ExpireInMinutes = StateManager.MelonSettings.JWTExpireInMinutes;
             }
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(StateManager.MelonSettings.JWTKey);
+            var key = StateManager.MelonSettings.JWTKey;
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {

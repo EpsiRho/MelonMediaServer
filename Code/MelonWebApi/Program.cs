@@ -88,7 +88,7 @@ namespace MelonWebApi
 
             builder.Host.UseSerilog();
 
-            var key = Encoding.ASCII.GetBytes(StateManager.MelonSettings.JWTKey);
+            var key = StateManager.MelonSettings.JWTKey;
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(x =>
                     {
