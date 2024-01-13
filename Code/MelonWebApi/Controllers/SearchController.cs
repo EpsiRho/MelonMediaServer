@@ -51,64 +51,56 @@ namespace MelonWebApi.Controllers
                             client.BaseAddress = new Uri(con.URL);
 
 
-                            try
+                            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", con.JWT);
+                            HttpResponseMessage checkResponse = client.GetAsync($"/auth/check").Result;
+
+                            if (checkResponse.StatusCode != System.Net.HttpStatusCode.OK)
                             {
+                                HttpResponseMessage authResponse = client.GetAsync($"/auth/login?username={con.Username}&password={con.Password}").Result;
+                                con.JWT = authResponse.Content.ReadAsStringAsync().Result;
                                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", con.JWT);
-                                HttpResponseMessage checkResponse = client.GetAsync($"/auth/check").Result;
-
-                                if (checkResponse.StatusCode != System.Net.HttpStatusCode.OK)
-                                {
-                                    HttpResponseMessage authResponse = client.GetAsync($"/auth/login?username={con.Username}&password={con.Password}").Result;
-                                    con.JWT = authResponse.Content.ReadAsStringAsync().Result;
-                                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", con.JWT);
-                                }
-
-                                // Get JWT token
-                                string sURL = $"/api/search/tracks?page={page}";
-                                sURL += $"&count={shortCount}";
-                                sURL += $"&trackName={trackName}";
-                                sURL += $"&format={format}";
-                                sURL += $"&bitrate={bitrate}";
-                                sURL += $"&sampleRate={sampleRate}";
-                                sURL += $"&bitsPerSample={bitsPerSample}";
-                                sURL += $"&year={year}";
-                                sURL += $"&ltPlayCount={ltPlayCount}";
-                                sURL += $"&gtPlayCount={gtPlayCount}";
-                                sURL += $"&ltSkipCount={ltSkipCount}";
-                                sURL += $"&gtSkipCount={gtSkipCount}";
-                                sURL += $"&ltYear={ltYear}";
-                                sURL += $"&gtYear={gtYear}";
-                                sURL += $"&ltMonth={ltMonth}";
-                                sURL += $"&gtMonth={gtMonth}";
-                                sURL += $"&ltDay={ltDay}";
-                                sURL += $"&gtDay={gtDay}";
-                                sURL += $"&ltRating={ltRating}";
-                                sURL += $"&gtRating={gtRating}";
-                                sURL += $"&searchOr={searchOr}";
-                                if (genres != null)
-                                {
-                                    foreach (var genre in genres)
-                                    {
-                                        sURL += $"&genres={genre}";
-
-                                    }
-                                }
-                                HttpResponseMessage response = client.GetAsync(sURL).Result;
-
-                                var tempTxt = response.Content.ReadAsStringAsync().Result;
-                                tempTxt = $"{tempTxt}";
-                                var tempTracks = JsonConvert.DeserializeObject<List<Track>>(tempTxt);
-                                foreach(var track in tempTracks)
-                                {
-                                    track.ServerURL = con.URL;
-                                }
-                                tracks.AddRange(tempTracks);
-
                             }
-                            catch (HttpRequestException e)
+
+                            // Get JWT token
+                            string sURL = $"/api/search/tracks?page={page}";
+                            sURL += $"&count={shortCount}";
+                            sURL += $"&trackName={trackName}";
+                            sURL += $"&format={format}";
+                            sURL += $"&bitrate={bitrate}";
+                            sURL += $"&sampleRate={sampleRate}";
+                            sURL += $"&bitsPerSample={bitsPerSample}";
+                            sURL += $"&year={year}";
+                            sURL += $"&ltPlayCount={ltPlayCount}";
+                            sURL += $"&gtPlayCount={gtPlayCount}";
+                            sURL += $"&ltSkipCount={ltSkipCount}";
+                            sURL += $"&gtSkipCount={gtSkipCount}";
+                            sURL += $"&ltYear={ltYear}";
+                            sURL += $"&gtYear={gtYear}";
+                            sURL += $"&ltMonth={ltMonth}";
+                            sURL += $"&gtMonth={gtMonth}";
+                            sURL += $"&ltDay={ltDay}";
+                            sURL += $"&gtDay={gtDay}";
+                            sURL += $"&ltRating={ltRating}";
+                            sURL += $"&gtRating={gtRating}";
+                            sURL += $"&searchOr={searchOr}";
+                            if (genres != null)
                             {
-                                return new ObjectResult(e.Message) { StatusCode = 500 };
+                                foreach (var genre in genres)
+                                {
+                                    sURL += $"&genres={genre}";
+
+                                }
                             }
+                            HttpResponseMessage response = client.GetAsync(sURL).Result;
+
+                            var tempTxt = response.Content.ReadAsStringAsync().Result;
+                            tempTxt = $"{tempTxt}";
+                            var tempTracks = JsonConvert.DeserializeObject<List<Track>>(tempTxt);
+                            foreach(var track in tempTracks)
+                            {
+                                track.ServerURL = con.URL;
+                            }
+                            tracks.AddRange(tempTracks);
                         }
 
                     }
