@@ -11,6 +11,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Melon.DisplayClasses
 {
@@ -59,28 +60,20 @@ namespace Melon.DisplayClasses
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
+            var filter = Builders<User>.Filter.Empty;
+            var users = UserCollection.Find(filter);
+            if (users.Count() != 0)
+            {
+                return;
+            }
 
-            bool found = false;
             while (true)
             {
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
                 Console.WriteLine("Let's get you setup, starting with your username.".Pastel(MelonColor.Text));
                 Console.WriteLine($"(This will be considered the {"Admin".Pastel(MelonColor.Highlight)} of this Melon instance, and can be changed anytime)".Pastel(MelonColor.Text));
-                if (found)
-                {
-                    found = false;
-                    Console.WriteLine("[That username is already taken]".Pastel(MelonColor.Error));
-                }
                 Console.Write("> ".Pastel(MelonColor.Text));
                 string nameInput = Console.ReadLine();
-
-                var filter = Builders<User>.Filter.Eq(x=>x.Username, nameInput);
-                var users = UserCollection.Find(filter);
-                if (users.Count() != 0)
-                {
-                    found = true;
-                    continue;
-                }
 
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
                 Console.WriteLine($"Your username is {nameInput.Pastel(MelonColor.Highlight)}, is that right?".Pastel(MelonColor.Text));
@@ -94,6 +87,16 @@ namespace Melon.DisplayClasses
         }
         private static void GetPassword()
         {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var UserCollection = mongoDatabase.GetCollection<User>("Users");
+            var filter = Builders<User>.Filter.Empty;
+            var users = UserCollection.Find(filter);
+            if (users.Count() != 0)
+            {
+                return;
+            }
+
             string[] passInput = new string[2];
             do
             {
