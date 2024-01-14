@@ -21,6 +21,7 @@ namespace MelonWebApi.Controllers
         {
             _logger = logger;
         }
+
         [Route("connect")]
         public async Task ConnectWebSocket()
         {
@@ -30,24 +31,32 @@ namespace MelonWebApi.Controllers
                 return;
             }
 
-            using (var webSocket = HttpContext.WebSockets.AcceptWebSocketAsync().Result)
+            var webSocket = HttpContext.WebSockets.AcceptWebSocketAsync().Result;
+            StreamManager.AddSocket(webSocket);
+
+            while (webSocket.State == System.Net.WebSockets.WebSocketState.Open)
             {
-                var buffer = new byte[1024];
-                var receiveResult = webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).Result;
 
-                while (!receiveResult.CloseStatus.HasValue)
-                {
-                    webSocket.SendAsync(new ArraySegment<byte>(buffer, 0, receiveResult.Count), receiveResult.MessageType,
-                                              receiveResult.EndOfMessage, CancellationToken.None).Wait();
-
-                    receiveResult = webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).Result;
-                }
-
-                webSocket.CloseAsync(receiveResult.CloseStatus.Value, receiveResult.CloseStatusDescription, CancellationToken.None).Wait();
             }
-
         }
-        
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet("get-external")]
+        public ObjectResult GetDevices()
+        {
+            return new ObjectResult(StreamManager.GetDevices()){ StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet("play-external")]
+        public ObjectResult PlayDevice(string deviceName, string queueId)
+        {
+            var wss = StreamManager.GetDevice(deviceName);
+            if (wss == null)
+            {
+                return new ObjectResult("Device Not Found") { StatusCode = 404 };
+            }
+            StreamManager.WriteToSocket(wss, $"PLAY QUEUE:{queueId}");
+            return new ObjectResult("Play Request Sent") { StatusCode = 200 };
+        }
 
     }
 }
