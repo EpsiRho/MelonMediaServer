@@ -410,10 +410,15 @@ namespace MelonWebApi.Controllers
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+            var statsFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user.Username);
+            var update = Builders<PlayStat>.Update.Set(x => x.User, username);
+            StatsCollection.UpdateMany(statsFilter, update);
 
             user.Username = username;
 
             UserCollection.ReplaceOne(userFilter, user);
+            
 
             return new ObjectResult("Username Changed") { StatusCode = 200 };
         }
