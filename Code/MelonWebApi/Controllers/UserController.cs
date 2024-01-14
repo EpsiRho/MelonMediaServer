@@ -206,6 +206,11 @@ namespace MelonWebApi.Controllers
                 role = "User";
             }
 
+            if(password == "")
+            {
+                return new ObjectResult("Password cannot be empty") { StatusCode = 400 };
+            }
+
             byte[] tempSalt;
             var protectedPassword = Security.HashPasword(password, out tempSalt);
             var id = ObjectId.GenerateNewId();
@@ -254,7 +259,7 @@ namespace MelonWebApi.Controllers
                     }
                     else
                     {
-                        return new ObjectResult("") { StatusCode = 400 };
+                        return new ObjectResult("Invalid Invite Code") { StatusCode = 400 };
                     }
 
                     // Create user
@@ -268,19 +273,19 @@ namespace MelonWebApi.Controllers
                     }
                     else
                     {
-                        return new ObjectResult("") { StatusCode = 401 };
+                        return new ObjectResult($"Couldn't Create user: {createResponse.Content}") { StatusCode = 400 };
                     }
 
                     // login to user
                     HttpResponseMessage authResponse = await client.GetAsync($"/auth/login?username={username}&password={password}");
 
-                    if (createResponse.IsSuccessStatusCode)
+                    if (authResponse.IsSuccessStatusCode)
                     {
-                        tempJWT = await response.Content.ReadAsStringAsync();
+                        tempJWT = await authResponse.Content.ReadAsStringAsync();
                     }
                     else
                     {
-                        return new ObjectResult("") { StatusCode = 402 };
+                        return new ObjectResult($"Failed to login to user: {authResponse.Content}") { StatusCode = 400 };
                     }
                 }
                 catch (HttpRequestException e)
