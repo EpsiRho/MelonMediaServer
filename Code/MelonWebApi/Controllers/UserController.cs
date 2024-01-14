@@ -265,13 +265,12 @@ namespace MelonWebApi.Controllers
             {
                 user.Bio = bio;
             }
-            if(role != null && roles.Contains("Admin"))
+            if(role != null)
             {
-                user.Type = role;
-            }
-            else
-            {
-                return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                if (roles.Contains("Admin"))
+                {
+                    user.Type = role;
+                }
             }
             if(publicStats != null)
             {
