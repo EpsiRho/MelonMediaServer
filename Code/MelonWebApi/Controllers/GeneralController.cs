@@ -121,8 +121,51 @@ namespace MelonWebApi.Controllers
                 var albumDocs = AlbumsCollection.Find(albumFilter)
                                                 .ToList();
 
+                var album = albumDocs[0];
+                album.Tracks = null;
 
-                return new ObjectResult(albumDocs[0]) { StatusCode = 200 };
+                return new ObjectResult(album) { StatusCode = 200 };
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult("Album not found") { StatusCode = 404 };
+            }
+        }
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("album/tracks")]
+        public ObjectResult GetAlbumTracks(string id, int page = 0, int count = 50)
+        {
+            try
+            {
+                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+                var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+                var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
+                var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+                var albumFilter = Builders<Album>.Filter.Eq("AlbumId", id);
+
+                var albumDocs = AlbumsCollection.Find(albumFilter)
+                                                .ToList();
+
+                var album = albumDocs[0];
+                List<Track> tracks = new List<Track>();
+                for(int i = (page * count); i < ((page * count) + count); i++)
+                {
+                    try
+                    {
+                        var filter = Builders<Track>.Filter.Eq(x => x.TrackId, album.Tracks[i].TrackId);
+                        var fullTrack = TracksCollection.Find(filter).FirstOrDefault();
+                        tracks.Add(fullTrack);
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
+
+                return new ObjectResult(tracks) { StatusCode = 200 };
             }
             catch (Exception e)
             {
@@ -201,12 +244,141 @@ namespace MelonWebApi.Controllers
                 var ArtistDocs = ArtistCollection.Find(artistFilter)
                                                 .ToList();
 
+                var artist = ArtistDocs.FirstOrDefault();
+                artist.Releases = null;
+                artist.SeenOn = null;
+                artist.Tracks = null;
 
-                return new ObjectResult(ArtistDocs[0]) { StatusCode = 200 };
+                return new ObjectResult(artist) { StatusCode = 200 };
             }
             catch (Exception e)
             {
                 return new ObjectResult("Artist not found") { StatusCode = 500 };
+            }
+        }
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("artist/tracks")]
+        public ObjectResult GetArtistTracks(string id, int page = 0, int count = 50)
+        {
+            try
+            {
+                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+                var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+                var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
+                var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+                var artistFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, id);
+
+                var artistDocs = ArtistsCollection.Find(artistFilter)
+                                                .ToList();
+
+                var artist = artistDocs[0];
+                List<Track> tracks = new List<Track>();
+                for (int i = (page * count); i < ((page * count) + count); i++)
+                {
+                    try
+                    {
+                        var filter = Builders<Track>.Filter.Eq(x => x.TrackId, artist.Tracks[i].TrackId);
+                        var fullTrack = TracksCollection.Find(filter).FirstOrDefault();
+                        tracks.Add(fullTrack);
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
+
+                return new ObjectResult(tracks) { StatusCode = 200 };
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult("Artist not found") { StatusCode = 404 };
+            }
+        }
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("artist/releases")]
+        public ObjectResult GetArtistReleases(string id, int page = 0, int count = 50)
+        {
+            try
+            {
+                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+                var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+                var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
+                var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
+
+                var artistFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, id);
+
+                var artistDocs = ArtistsCollection.Find(artistFilter)
+                                                .ToList();
+
+                var artist = artistDocs[0];
+                List<Album> albums = new List<Album>();
+                for (int i = (page * count); i < ((page * count) + count); i++)
+                {
+                    try
+                    {
+                        var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.Releases[i].AlbumId);
+                        var fullAlbum = AlbumCollection.Find(filter).FirstOrDefault();
+                        fullAlbum.Tracks = null;
+                        albums.Add(fullAlbum);
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
+
+                return new ObjectResult(albums) { StatusCode = 200 };
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult("Artist not found") { StatusCode = 404 };
+            }
+        }
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("artist/seen-on")]
+        public ObjectResult GetArtistSeenOn(string id, int page = 0, int count = 50)
+        {
+            try
+            {
+                var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+                var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+                var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
+                var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
+
+                var artistFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, id);
+
+                var artistDocs = ArtistsCollection.Find(artistFilter)
+                                                .ToList();
+
+                var artist = artistDocs[0];
+                List<Album> albums = new List<Album>();
+                for (int i = (page * count); i < ((page * count) + count); i++)
+                {
+                    try
+                    {
+                        var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.SeenOn[i].AlbumId);
+                        var fullAlbum = AlbumCollection.Find(filter).FirstOrDefault();
+                        fullAlbum.Tracks = null;
+                        albums.Add(fullAlbum);
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
+
+                return new ObjectResult(albums) { StatusCode = 200 };
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
         }
         [Authorize(Roles = "Admin,User,Pass")]
