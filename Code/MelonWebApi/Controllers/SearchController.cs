@@ -104,9 +104,13 @@ namespace MelonWebApi.Controllers
                         }
 
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
-
+                        var check = Request.Headers.TryAdd("FailedExternalConnections",$"{con.URL}");
+                        if (!check)
+                        {
+                            Request.Headers["FailedExternalConnections"].Append($";{con.URL}");
+                        }
                     }
                 }
             }
