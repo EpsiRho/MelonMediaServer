@@ -15,6 +15,7 @@ namespace Melon.Models
         public string FavAlbum { get; set; }
         public string FavArtist { get; set; }
         public bool PublicStats { get; set; }
+        public List<string> Friends { get; set; }
         public DateTime LastLogin { get; set; }
 
     }
