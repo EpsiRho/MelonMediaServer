@@ -118,6 +118,10 @@ namespace Melon.LocalClasses
         }
         public static void AlertQueueUpdate(string id)
         {
+            if(Sockets == null)
+            {
+                Sockets = new List<WSS>();
+            }
             foreach(var wss in Sockets)
             {
                 if(wss.CurrentQueue == id)

@@ -538,6 +538,40 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Track moved") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
+        [HttpPost("update-position")]
+        public ObjectResult UpdateQueuePosition(string id, int pos)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
+
+            var userName = User.Identity.Name;
+
+            var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x.QueueId, id);
+            var queues = QCollection.Find(qFilter).ToList();
+            if (queues.Count == 0)
+            {
+                return new ObjectResult("Queue not found") { StatusCode = 404 };
+            }
+            var oq = queues[0];
+
+            if (oq.PublicEditing == false)
+            {
+                if (oq.Owner != userName && !oq.Editors.Contains(userName))
+                {
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+            }
+
+            oq.CurPosition = pos;
+
+            QCollection.ReplaceOne(qFilter, oq);
+
+            StreamManager.AlertQueueUpdate(id);
+
+            return new ObjectResult("Queue updated") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("update")]
         public ObjectResult UpdateQueue(ShortQueue queue)
         {
