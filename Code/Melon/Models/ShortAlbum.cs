@@ -9,6 +9,8 @@ namespace Melon.Models
         public string AlbumName { get; set; }
         public DateTime ReleaseDate { get; set; }
         public string ReleaseType { get; set; }
+        public List<ShortArtist> AlbumArtists { get; set; }
+        public List<ShortArtist> ContributingArtists { get; set; }
     }
 }
 

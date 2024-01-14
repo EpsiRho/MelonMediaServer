@@ -20,6 +20,7 @@ namespace Melon.Models
         public List<string> AlbumArtPaths { get; set; }
         public List<string> AlbumGenres { get; set; }
         public List<ShortArtist> AlbumArtists { get; set; }
+        public List<ShortArtist> ContributingArtists { get; set; }
         public List<ShortTrack> Tracks { get; set; }
     }
 }
