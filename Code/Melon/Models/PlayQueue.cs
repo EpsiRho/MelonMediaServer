@@ -14,5 +14,6 @@ namespace Melon.Models
         public bool PublicViewing { get; set; }
         public bool PublicEditing { get; set; }
         public List<ShortTrack> Tracks { get; set; }
+        public List<string> OriginalTrackOrder { get; set; }
     }
 }

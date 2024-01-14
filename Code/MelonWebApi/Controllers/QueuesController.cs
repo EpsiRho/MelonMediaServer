@@ -24,7 +24,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create")]
-        public ObjectResult CreateQueueFromIDs(string name, List<string> _ids, string shuffle = "none")
+        public ObjectResult CreateQueueFromIDs(string name, [FromQuery] List<string> ids, string shuffle = "none")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -45,7 +45,7 @@ namespace MelonWebApi.Controllers
             queue.Tracks = new List<ShortTrack>();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x.QueueId, queue.QueueId);
-            foreach(var id in _ids)
+            foreach(var id in ids)
             {
                 var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, id);
                 var trackDoc = TCollection.Find(trackFilter).ToList()[0];
@@ -80,13 +80,15 @@ namespace MelonWebApi.Controllers
                     break;
             }
             queue.Tracks = tracks;
+            queue.OriginalTrackOrder = (from track in queue.Tracks
+                                        select track.TrackId).ToList();
             QCollection.InsertOne(queue);
 
             return new ObjectResult($"{queue.QueueId}") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-albums")]
-        public ObjectResult CreateQueueAlbums(string name, List<string> ids, string shuffle = "none")
+        public ObjectResult CreateQueueAlbums(string name, [FromQuery] List<string> ids, string shuffle = "none")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -151,13 +153,15 @@ namespace MelonWebApi.Controllers
             {
                 queue.Tracks.Add(track);
             }
+            queue.OriginalTrackOrder = (from track in queue.Tracks
+                                        select track.TrackId).ToList();
             QCollection.InsertOne(queue);
 
             return new ObjectResult($"{queue.QueueId}") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-artists")]
-        public ObjectResult CreateQueueArtists(string name, List<string> ids, string shuffle = "none")
+        public ObjectResult CreateQueueArtists(string name, [FromQuery] List<string> ids, string shuffle = "none")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -222,13 +226,15 @@ namespace MelonWebApi.Controllers
             {
                 queue.Tracks.Add(track);
             }
+            queue.OriginalTrackOrder = (from track in queue.Tracks
+                                        select track.TrackId).ToList();
             QCollection.InsertOne(queue);
 
             return new ObjectResult($"{queue.QueueId}") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-playlists")]
-        public ObjectResult CreateQueuePlaylists(string name, List<string> ids, string shuffle = "none")
+        public ObjectResult CreateQueuePlaylists(string name, [FromQuery] List<string> ids, string shuffle = "none")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -293,6 +299,8 @@ namespace MelonWebApi.Controllers
             {
                 queue.Tracks.Add(track);
             }
+            queue.OriginalTrackOrder = (from track in queue.Tracks
+                                        select track.TrackId).ToList();
             QCollection.InsertOne(queue);
 
             return new ObjectResult($"{queue.QueueId}") { StatusCode = 200 };
@@ -380,11 +388,11 @@ namespace MelonWebApi.Controllers
 
             var tracks = Queues[0].Tracks.Take(new Range(page * count, (page * count) + count));
 
-            return new ObjectResult(tracks) { StatusCode = 404 };
+            return new ObjectResult(tracks) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("add-tracks")]
-        public ObjectResult AddToQueue(string id, List<string> trackIds, string position = "end")
+        public ObjectResult AddToQueue(string id, [FromQuery] List<string> trackIds, string position = "end")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -422,23 +430,28 @@ namespace MelonWebApi.Controllers
                 {
                     case "end":
                         queue.Tracks.Add(new ShortTrack(track));
+                        queue.OriginalTrackOrder.Add(track.TrackId);
                         break;
                     case "front":
                         queue.Tracks.Insert(0, new ShortTrack(track));
+                        queue.OriginalTrackOrder.Insert(0, track.TrackId);
                         break;
                     case "random":
                         int randIdx = new Random().Next(0, queue.Tracks.Count());
                         queue.Tracks.Insert(randIdx, new ShortTrack(track));
+                        queue.OriginalTrackOrder.Insert(randIdx, track.TrackId);
                         break;
                 }
             }
             QCollection.ReplaceOne(qFilter, queue);
 
+            StreamManager.AlertQueueUpdate(queue.QueueId);
+
             return new ObjectResult("Tracks added") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("remove-tracks")]
-        public ObjectResult RemoveFromQueue(string id, List<string> trackIds)
+        public ObjectResult RemoveFromQueue(string id, [FromQuery] List<string> trackIds)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -470,9 +483,12 @@ namespace MelonWebApi.Controllers
                 if (query.Count() != 0)
                 {
                     queue.Tracks.Remove(query.ToList()[0]);
+                    queue.OriginalTrackOrder.Remove(query.ToList()[0].TrackId);
                 }
             }
             QCollection.ReplaceOne(qFilter, queue);
+
+            StreamManager.AlertQueueUpdate(queue.QueueId);
 
             return new ObjectResult("Tracks removed") { StatusCode = 200 };
         }
@@ -517,6 +533,8 @@ namespace MelonWebApi.Controllers
 
             QCollection.ReplaceOne(qFilter, queue);
 
+            StreamManager.AlertQueueUpdate(queue.QueueId);
+
             return new ObjectResult("Track moved") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
@@ -558,11 +576,13 @@ namespace MelonWebApi.Controllers
 
             QCollection.ReplaceOne(qFilter, oq);
 
+            StreamManager.AlertQueueUpdate(queue.QueueId);
+
             return new ObjectResult("Queue updated") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("shuffle")]
-        public ObjectResult ShuffleQueue(string id, string shuffle = "none")
+        public ObjectResult ShuffleQueue(string id, string shuffle = "None")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -586,11 +606,23 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            List<ShortTrack> tracks = queue.Tracks;
+            List<ShortTrack> tracks = new List<ShortTrack>(queue.Tracks);
 
             switch (shuffle)
             {
-                case "none":
+                case "None":
+                    tracks.Clear();
+                    foreach(var tid in queue.OriginalTrackOrder)
+                    {
+                        var track = (from t in queue.Tracks
+                                     where t.TrackId == tid
+                                     select t).FirstOrDefault();
+
+                        if (track != null)
+                        {
+                            tracks.Add(track);
+                        }
+                    }
                     break;
                 case "TrackRandom":
                     tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, false);
@@ -621,6 +653,8 @@ namespace MelonWebApi.Controllers
                 queue.Tracks.Add(track);
             }
             QCollection.ReplaceOne(qFilter, queue);
+
+            StreamManager.AlertQueueUpdate(queue.QueueId);
 
             return new ObjectResult("Tracks Shuffled") { StatusCode = 200 };
         }
