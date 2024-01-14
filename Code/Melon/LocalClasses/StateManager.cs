@@ -28,7 +28,7 @@ namespace Melon.LocalClasses
         public static Settings MelonSettings { get; set; }
         public static Flags MelonFlags { get; set; }
         private static Process serverProcess;
-        public static void Init(bool headless)
+        public static void Init(bool headless, bool runSetup)
         {
             // Title
             MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
@@ -69,7 +69,7 @@ namespace Melon.LocalClasses
             {
                 LoadFlags();
             }
-            if (MelonFlags.ForceOOBE)
+            if (MelonFlags.ForceOOBE || runSetup)
             {
                 DisplayManager.UIExtensions.Add(SetupUI.Display);
             }

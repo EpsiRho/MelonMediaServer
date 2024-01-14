@@ -31,9 +31,10 @@ namespace MelonWebApi
             Console.ForegroundColor = ConsoleColor.White;
             Console.OutputEncoding = Encoding.UTF8;
             bool headless = args.Contains("--headless") || args.Contains("-h");
+            bool setup = args.Contains("--setup");
             if (!started)
             {
-                StateManager.Init(headless);
+                StateManager.Init(headless, setup);
             }
 
             if (headless && DisplayManager.UIExtensions.Count() != 0)
