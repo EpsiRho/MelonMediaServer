@@ -118,7 +118,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user,"i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Empty;
@@ -174,7 +174,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user,"i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device,"i"));
@@ -231,7 +231,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
@@ -287,7 +287,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
@@ -344,7 +344,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
@@ -401,7 +401,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Empty;
@@ -445,7 +445,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Empty;
@@ -490,7 +490,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Empty;

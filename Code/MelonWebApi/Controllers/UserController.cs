@@ -14,6 +14,7 @@ using RestSharp;
 using Azure.Core;
 using RestSharp.Authenticators;
 using System.Text;
+using System.Linq;
 
 namespace MelonWebApi.Controllers
 {
@@ -59,7 +60,7 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult(pUser) { StatusCode = 200 };
         }
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("search")]
         public ObjectResult SearchUsers(string username = "")
         {
@@ -67,16 +68,99 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
 
+            var currentUserFilter = Builders<User>.Filter.Eq(x => x.Username, User.Identity.Name);
+            var currentUsers = UserCollection.Find(currentUserFilter).ToList();
+
+            if (currentUsers.Count == 0)
+            {
+                return new ObjectResult("User Not Found") { StatusCode = 404 };
+            }
+            var cUser = currentUsers[0];
+
             var userFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(username, "i"));
             var users = UserCollection.Find(userFilter).ToList();
+
+            var roles = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.Role)
+                       .Select(c => c.Value);
 
             List<PublicUser> pUsers = new List<PublicUser>();
             foreach(var user in users)
             {
+                if(user.Friends == null)
+                {
+                    user.Friends = new List<string>();
+                }
+
+                if (user.Username != User.Identity.Name)
+                {
+                    if (!roles.Contains("Admin"))
+                    {
+                        continue;
+                    }
+                    else if (!user.Friends.Contains(cUser.UserId))
+                    {
+                        continue;
+                    }
+                }
                 pUsers.Add(new PublicUser(user));
             }
 
             return new ObjectResult(pUsers) { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpPost("add-friend")]
+        public ObjectResult AddFriend(string id)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var UserCollection = mongoDatabase.GetCollection<User>("Users");
+
+            var userFilter = Builders<User>.Filter.Eq(x => x.Username, User.Identity.Name);
+            var users = UserCollection.Find(userFilter).ToList();
+            var user = users.FirstOrDefault();
+            if(user == null)
+            {
+                return new ObjectResult("User Not Found") { StatusCode = 404 };
+            }
+
+            if(user.Friends == null)
+            {
+                user.Friends = new List<string>();
+            }
+
+            user.Friends.Add(id);
+
+            UserCollection.ReplaceOne(userFilter, user);
+
+            return new ObjectResult("Friend Added") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpPost("remove-friend")]
+        public ObjectResult RemoveFriend(string id)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var UserCollection = mongoDatabase.GetCollection<User>("Users");
+
+            var userFilter = Builders<User>.Filter.Eq(x => x.Username, User.Identity.Name);
+            var users = UserCollection.Find(userFilter).ToList();
+            var user = users.FirstOrDefault();
+            if(user == null)
+            {
+                return new ObjectResult("User Not Found") { StatusCode = 404 };
+            }
+
+            if(user.Friends == null)
+            {
+                user.Friends = new List<string>();
+            }
+
+            user.Friends.Remove(id);
+
+            UserCollection.ReplaceOne(userFilter, user);
+
+            return new ObjectResult("Friend Removed") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("current")]
