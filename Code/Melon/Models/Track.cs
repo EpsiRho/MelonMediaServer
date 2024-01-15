@@ -29,6 +29,7 @@ namespace Melon.Models
         public string LyricsPath { get; set; }
         public string ServerURL { get; set; }
         public DateTime LastModified { get; set; }
+        public DateTime DateAdded { get; set; }
         public DateTime ReleaseDate { get; set; }
         public List<string> TrackGenres { get; set; }
         public List<ShortArtist> TrackArtists { get; set; }

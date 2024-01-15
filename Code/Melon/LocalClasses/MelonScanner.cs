@@ -442,6 +442,7 @@ namespace Melon.LocalClasses
                                 ArtistPfp = "",
                                 _id = TrackArtistIds[count],
                                 Rating = 0,
+                                DateAdded = DateTime.Now.ToUniversalTime(),
                                 ArtistId = TrackArtistIds[count].ToString(),
                                 Releases = new List<ShortAlbum>(),
                                 Genres = new List<string>(),
@@ -535,6 +536,7 @@ namespace Melon.LocalClasses
                             album._id = AlbumId;
                             album.AlbumId = AlbumId.ToString();
                             album.AlbumName = fileMetadata.Album;
+                            album.DateAdded = DateTime.Now.ToUniversalTime();
                             try { album.Bio = ""; } catch (Exception) { }
                             try { album.TotalDiscs = fileMetadata.DiscTotal.Value; } catch (Exception) { album.TotalDiscs = 1; }
                             try { album.TotalTracks = fileMetadata.TrackTotal.Value; } catch (Exception) { album.TotalTracks = 0; }
@@ -728,6 +730,7 @@ namespace Melon.LocalClasses
                         track._id = TrackId;
                         track.TrackId = TrackId.ToString();
                         track.LastModified = System.IO.File.GetLastWriteTime(file).ToUniversalTime();
+                        track.DateAdded = DateTime.Now.ToUniversalTime();
                         try 
                         {
                             if (fileMetadata.Title == null)

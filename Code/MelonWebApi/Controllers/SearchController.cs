@@ -14,6 +14,9 @@ using Azure.Core;
 using Newtonsoft.Json;
 using System;
 using Humanizer.Localisation;
+using Humanizer.Bytes;
+using System.Security.Policy;
+using static Azure.Core.HttpHeader;
 
 namespace MelonWebApi.Controllers
 {
@@ -34,10 +37,11 @@ namespace MelonWebApi.Controllers
                                                string sampleRate = "", string channels = "", string bitsPerSample = "", string year = "", 
                                                long ltPlayCount = 0, long gtPlayCount = 0, long ltSkipCount = 0, long gtSkipCount = 0, int ltYear = 0, int ltMonth = 0, int ltDay = 0,
                                                int gtYear = 0, int gtMonth = 0, int gtDay = 0, long ltRating = 0, long gtRating = 0, [FromQuery] string[] genres = null, 
-                                               bool externalResults = false, bool searchOr = false)
+                                               bool externalResults = false, bool searchOr = false, string sort = "NameAsc")
         {
             List<Track> tracks = new List<Track>();
             int shortCount = count;
+            int missing = 0;
             if (externalResults)
             {
                 shortCount = count / (Security.Connections.Count() + 1);
@@ -83,6 +87,7 @@ namespace MelonWebApi.Controllers
                             sURL += $"&ltRating={ltRating}";
                             sURL += $"&gtRating={gtRating}";
                             sURL += $"&searchOr={searchOr}";
+                            sURL += $"&sort={sort}";
                             if (genres != null)
                             {
                                 foreach (var genre in genres)
@@ -111,6 +116,7 @@ namespace MelonWebApi.Controllers
                         {
                             Request.Headers["FailedExternalConnections"].Append($";{con.URL}");
                         }
+                        missing += shortCount;
                     }
                 }
             }
@@ -235,9 +241,34 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            var finalCount = count - ((Security.Connections.Count() + 1) * shortCount);
+            var finalCount = count - (((Security.Connections.Count() + 1) * shortCount) + missing);
+
+            SortDefinition<Track> sortDefinition = null;
+            switch (sort)
+            {
+                case "NameDesc":
+                    sortDefinition = Builders<Track>.Sort.Descending(x=>x.TrackName);
+                    break;
+                case "NameAsc":
+                    sortDefinition = Builders<Track>.Sort.Ascending(x => x.TrackName);
+                    break;
+                case "DateAddedDesc":
+                    sortDefinition = Builders<Track>.Sort.Descending(x => x.DateAdded);
+                    break;
+                case "DateAddedAsc":
+                    sortDefinition = Builders<Track>.Sort.Ascending(x => x.DateAdded);
+                    break;
+                case "ReleaseDateDesc":
+                    sortDefinition = Builders<Track>.Sort.Descending(x => x.ReleaseDate);
+                    break;
+                case "ReleaseDateAsc":
+                    sortDefinition = Builders<Track>.Sort.Ascending(x => x.ReleaseDate);
+                    break;
+            }
+
 
             var trackDocs = TracksCollection.Find(combinedFilter)
+                                            .Sort(sortDefinition)
                                             .Skip(page * count)
                                             .Limit(count)
                                             .ToList();
@@ -246,11 +277,33 @@ namespace MelonWebApi.Controllers
             if(finalCount > 0)
             {
                 tracks.AddRange(TracksCollection.Find(combinedFilter)
-                                            .Skip(page * count)
-                                            .Limit(finalCount)
-                                            .ToList());
+                                                .Sort(sortDefinition)
+                                                .Skip(page * count)
+                                                .Limit(finalCount)
+                                                .ToList());
             }
 
+            switch (sort)
+            {
+                case "NameDesc":
+                    tracks = tracks.OrderByDescending(x => x.TrackName).ToList();
+                    break;
+                case "NameAsc":
+                    tracks = tracks.OrderBy(x => x.TrackName).ToList();
+                    break;
+                case "DateAddedDesc":
+                    tracks = tracks.OrderByDescending(x => x.DateAdded).ToList();
+                    break;
+                case "DateAddedAsc":
+                    tracks = tracks.OrderBy(x => x.DateAdded).ToList();
+                    break;
+                case "ReleaseDateDesc":
+                    tracks = tracks.OrderByDescending(x => x.ReleaseDate).ToList();
+                    break;
+                case "ReleaseDateAsc":
+                    tracks = tracks.OrderBy(x => x.ReleaseDate).ToList();
+                    break;
+            }
 
             return new ObjectResult(tracks) { StatusCode = 200 };
         }
@@ -258,8 +311,83 @@ namespace MelonWebApi.Controllers
         [HttpGet("albums")]
         public IEnumerable<Album> SearchAlbums (int page = 0, int count = 100, string albumName = "", string publisher = "", string releaseType = "", string releaseStatus = "",
                                                 long ltPlayCount = 0, long gtPlayCount = 0, long ltRating = 0, long gtRating = 0, int ltYear = 0, int ltMonth = 0, int ltDay = 0,
-                                                int gtYear = 0, int gtMonth = 0, int gtDay = 0, [FromQuery] string[] genres = null, bool searchOr = false)
+                                                int gtYear = 0, int gtMonth = 0, int gtDay = 0, [FromQuery] string[] genres = null, bool searchOr = false, bool externalResults = false, string sort = "NameAsc")
         {
+            List<Album> albums = new List<Album>();
+            int shortCount = count;
+            if (externalResults)
+            {
+                shortCount = count / (Security.Connections.Count() + 1);
+                foreach (var con in Security.Connections)
+                {
+                    try
+                    {
+                        using (HttpClient client = new HttpClient())
+                        {
+                            // Set the base URI for HTTP requests
+                            client.BaseAddress = new Uri(con.URL);
+
+
+                            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", con.JWT);
+                            HttpResponseMessage checkResponse = client.GetAsync($"/auth/check").Result;
+
+                            if (checkResponse.StatusCode != System.Net.HttpStatusCode.OK)
+                            {
+                                HttpResponseMessage authResponse = client.GetAsync($"/auth/login?username={con.Username}&password={con.Password}").Result;
+                                con.JWT = authResponse.Content.ReadAsStringAsync().Result;
+                                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", con.JWT);
+                            }
+
+                            // Get JWT token
+                            string sURL = $"/api/search/albums?page={page}";
+                            sURL += $"&count={shortCount}";
+                            sURL += $"&albumName={albumName}";
+                            sURL += $"&publisher={publisher}";
+                            sURL += $"&releaseType={releaseType}";
+                            sURL += $"&releaseStatus={releaseStatus}";
+                            sURL += $"&ltPlayCount={ltPlayCount}";
+                            sURL += $"&gtPlayCount={gtPlayCount}";
+                            sURL += $"&ltYear={ltYear}";
+                            sURL += $"&gtYear={gtYear}";
+                            sURL += $"&ltMonth={ltMonth}";
+                            sURL += $"&gtMonth={gtMonth}";
+                            sURL += $"&ltDay={ltDay}";
+                            sURL += $"&gtDay={gtDay}";
+                            sURL += $"&ltRating={ltRating}";
+                            sURL += $"&gtRating={gtRating}";
+                            sURL += $"&searchOr={searchOr}";
+                            if (genres != null)
+                            {
+                                foreach (var genre in genres)
+                                {
+                                    sURL += $"&genres={genre}";
+
+                                }
+                            }
+                            HttpResponseMessage response = client.GetAsync(sURL).Result;
+
+                            var tempTxt = response.Content.ReadAsStringAsync().Result;
+                            tempTxt = $"{tempTxt}";
+                            var tempTracks = JsonConvert.DeserializeObject<List<Album>>(tempTxt);
+                            foreach (var track in tempTracks)
+                            {
+                                track.ServerURL = con.URL;
+                            }
+                            albums.AddRange(tempTracks);
+                        }
+
+                    }
+                    catch (Exception e)
+                    {
+                        var check = Request.Headers.TryAdd("FailedExternalConnections", $"{con.URL}");
+                        if (!check)
+                        {
+                            Request.Headers["FailedExternalConnections"].Append($";{con.URL}");
+                        }
+                    }
+                }
+            }
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -356,10 +484,69 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            SortDefinition<Album> sortDefinition = null;
+            switch (sort)
+            {
+                case "NameDesc":
+                    sortDefinition = Builders<Album>.Sort.Descending(x => x.AlbumName);
+                    break;
+                case "NameAsc":
+                    sortDefinition = Builders<Album>.Sort.Ascending(x => x.AlbumName);
+                    break;
+                case "DateAddedDesc":
+                    sortDefinition = Builders<Album>.Sort.Descending(x => x.DateAdded);
+                    break;
+                case "DateAddedAsc":
+                    sortDefinition = Builders<Album>.Sort.Ascending(x => x.DateAdded);
+                    break;
+                case "ReleaseDateDesc":
+                    sortDefinition = Builders<Album>.Sort.Descending(x => x.ReleaseDate);
+                    break;
+                case "ReleaseDateAsc":
+                    sortDefinition = Builders<Album>.Sort.Ascending(x => x.ReleaseDate);
+                    break;
+            }
+
             var albumDocs = AlbumCollection.Find(combinedFilter)
-                                            .Skip(page * count)
-                                            .Limit(count)
-                                            .ToList();
+                                           .Sort(sortDefinition)
+                                           .Skip(page * count)
+                                           .Limit(count)
+                                           .ToList();
+
+            var finalCount = count - ((Security.Connections.Count() + 1) * shortCount);
+
+            albums.AddRange(albumDocs);
+
+            if (finalCount > 0)
+            {
+                albums.AddRange(AlbumCollection.Find(combinedFilter)
+                                               .Sort(sortDefinition)
+                                               .Skip(page * count)
+                                               .Limit(finalCount)
+                                               .ToList());
+            }
+
+            switch (sort)
+            {
+                case "NameDesc":
+                    albums = albums.OrderByDescending(x => x.AlbumName).ToList();
+                    break;
+                case "NameAsc":
+                    albums = albums.OrderBy(x => x.AlbumName).ToList();
+                    break;
+                case "DateAddedDesc":
+                    albums = albums.OrderByDescending(x => x.DateAdded).ToList();
+                    break;
+                case "DateAddedAsc":
+                    albums = albums.OrderBy(x => x.DateAdded).ToList();
+                    break;
+                case "ReleaseDateDesc":
+                    albums = albums.OrderByDescending(x => x.ReleaseDate).ToList();
+                    break;
+                case "ReleaseDateAsc":
+                    albums = albums.OrderBy(x => x.ReleaseDate).ToList();
+                    break;
+            }
 
 
             //foreach (var albumDoc in albumDocs)
@@ -367,13 +554,79 @@ namespace MelonWebApi.Controllers
             //    albumDoc.Tracks = albumDoc.Tracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).ToList();
             //}
 
-            return albumDocs;
+            return albums;
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artists")]
         public IEnumerable<Artist> SearchArtists(int page = 0, int count = 100, string artistName = "", long ltPlayCount = 0, long gtPlayCount = 0, long ltRating = 0, 
-                                                 long gtRating = 0, [FromQuery] string[] genres = null, bool searchOr = false)
+                                                 long gtRating = 0, [FromQuery] string[] genres = null, bool searchOr = false, bool externalResults = false, string sort = "NameAsc")
         {
+            List<Artist> artists = new List<Artist>();
+            int shortCount = count;
+            if (externalResults)
+            {
+                shortCount = count / (Security.Connections.Count() + 1);
+                foreach (var con in Security.Connections)
+                {
+                    try
+                    {
+                        using (HttpClient client = new HttpClient())
+                        {
+                            // Set the base URI for HTTP requests
+                            client.BaseAddress = new Uri(con.URL);
+
+
+                            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", con.JWT);
+                            HttpResponseMessage checkResponse = client.GetAsync($"/auth/check").Result;
+
+                            if (checkResponse.StatusCode != System.Net.HttpStatusCode.OK)
+                            {
+                                HttpResponseMessage authResponse = client.GetAsync($"/auth/login?username={con.Username}&password={con.Password}").Result;
+                                con.JWT = authResponse.Content.ReadAsStringAsync().Result;
+                                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", con.JWT);
+                            }
+
+                            // Get JWT token
+                            string sURL = $"/api/search/albums?page={page}";
+                            sURL += $"&count={shortCount}";
+                            sURL += $"&artistName={artistName}";
+                            sURL += $"&ltPlayCount={ltPlayCount}";
+                            sURL += $"&gtPlayCount={gtPlayCount}";
+                            sURL += $"&ltRating={ltRating}";
+                            sURL += $"&gtRating={gtRating}";
+                            sURL += $"&searchOr={searchOr}";
+                            if (genres != null)
+                            {
+                                foreach (var genre in genres)
+                                {
+                                    sURL += $"&genres={genre}";
+
+                                }
+                            }
+                            HttpResponseMessage response = client.GetAsync(sURL).Result;
+
+                            var tempTxt = response.Content.ReadAsStringAsync().Result;
+                            tempTxt = $"{tempTxt}";
+                            var tempTracks = JsonConvert.DeserializeObject<List<Artist>>(tempTxt);
+                            foreach (var track in tempTracks)
+                            {
+                                track.ServerURL = con.URL;
+                            }
+                            artists.AddRange(tempTracks);
+                        }
+
+                    }
+                    catch (Exception e)
+                    {
+                        var check = Request.Headers.TryAdd("FailedExternalConnections", $"{con.URL}");
+                        if (!check)
+                        {
+                            Request.Headers["FailedExternalConnections"].Append($";{con.URL}");
+                        }
+                    }
+                }
+            }
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -436,10 +689,57 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            SortDefinition<Artist> sortDefinition = null;
+            switch (sort)
+            {
+                case "NameDesc":
+                    sortDefinition = Builders<Artist>.Sort.Descending(x => x.ArtistName);
+                    break;
+                case "NameAsc":
+                    sortDefinition = Builders<Artist>.Sort.Ascending(x => x.ArtistName);
+                    break;
+                case "DateAddedDesc":
+                    sortDefinition = Builders<Artist>.Sort.Descending(x => x.DateAdded);
+                    break;
+                case "DateAddedAsc":
+                    sortDefinition = Builders<Artist>.Sort.Ascending(x => x.DateAdded);
+                    break;
+            }
+
             var ArtistDocs = ArtistCollection.Find(combinedFilter)
-                                            .Skip(page * count)
-                                            .Limit(count)
-                                            .ToList();
+                                             .Sort(sortDefinition)
+                                             .Skip(page * count)
+                                             .Limit(count)
+                                             .ToList();
+
+            var finalCount = count - ((Security.Connections.Count() + 1) * shortCount);
+
+            artists.AddRange(ArtistDocs);
+
+            if (finalCount > 0)
+            {
+                artists.AddRange(ArtistCollection.Find(combinedFilter)
+                                                 .Sort(sortDefinition)
+                                                 .Skip(page * count)
+                                                 .Limit(finalCount)
+                                                 .ToList());
+            }
+
+            switch (sort)
+            {
+                case "NameDesc":
+                    artists = artists.OrderByDescending(x => x.ArtistName).ToList();
+                    break;
+                case "NameAsc":
+                    artists = artists.OrderBy(x => x.ArtistName).ToList();
+                    break;
+                case "DateAddedDesc":
+                    artists = artists.OrderByDescending(x => x.DateAdded).ToList();
+                    break;
+                case "DateAddedAsc":
+                    artists = artists.OrderBy(x => x.DateAdded).ToList();
+                    break;
+            }
 
             //foreach (var artist in ArtistDocs)
             //{
@@ -448,7 +748,7 @@ namespace MelonWebApi.Controllers
             //    try { artist.SeenOn = artist.SeenOn.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
             //}
 
-            return ArtistDocs;
+            return artists;
         }
 
     }

@@ -16,6 +16,8 @@ namespace Melon.Models
         public string ReleaseType { get; set; }
         public long PlayCount { get; set; }
         public float Rating { get; set; }
+        public string ServerURL { get; set; }
+        public DateTime DateAdded { get; set; }
         public DateTime ReleaseDate { get; set; }
         public List<string> AlbumArtPaths { get; set; }
         public List<string> AlbumGenres { get; set; }
