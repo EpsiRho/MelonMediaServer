@@ -69,7 +69,7 @@ namespace Melon.LocalClasses
             {
                 LoadFlags();
             }
-            if (MelonFlags.ForceOOBE || runSetup)
+            if ((MelonFlags.ForceOOBE || runSetup) && !headless)
             {
                 DisplayManager.UIExtensions.Add(SetupUI.Display);
             }
