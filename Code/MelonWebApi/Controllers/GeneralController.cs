@@ -287,8 +287,12 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album/tracks")]
-        public ObjectResult GetAlbumTracks(string id, int page = 0, int count = 50)
+        public ObjectResult GetAlbumTracks(string id, uint page = 0, uint count = 50)
         {
+            if (page > 100000 || count > 100000)
+            {
+                return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
+            }
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -307,7 +311,7 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
             List<Track> tracks = new List<Track>();
-            for(int i = (page * count); i < ((page * count) + count); i++)
+            for(uint i = (page * count); i < ((page * count) + count); i++)
             {
                 try
                 {
@@ -403,8 +407,13 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/tracks")]
-        public ObjectResult GetArtistTracks(string id, int page = 0, int count = 50)
+        public ObjectResult GetArtistTracks(string id, uint page = 0, uint count = 50)
         {
+            if(page > 100000 || count > 100000)
+            {
+                return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
+            }
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -424,7 +433,7 @@ namespace MelonWebApi.Controllers
             }
 
             List<Track> tracks = new List<Track>();
-            for (int i = (page * count); i < ((page * count) + count); i++)
+            for (uint i = (page * count); i < ((page * count) + count); i++)
             {
                 try
                 {
@@ -442,8 +451,12 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/releases")]
-        public ObjectResult GetArtistReleases(string id, int page = 0, int count = 50)
+        public ObjectResult GetArtistReleases(string id, uint page = 0, uint count = 50)
         {
+            if (page > 100000 || count > 100000)
+            {
+                return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
+            }
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -463,7 +476,7 @@ namespace MelonWebApi.Controllers
             }
 
             List<Album> albums = new List<Album>();
-            for (int i = (page * count); i < ((page * count) + count); i++)
+            for (uint i = (page * count); i < ((page * count) + count); i++)
             {
                 try
                 {
@@ -482,8 +495,12 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/seen-on")]
-        public ObjectResult GetArtistSeenOn(string id, int page = 0, int count = 50)
+        public ObjectResult GetArtistSeenOn(string id, uint page = 0, uint count = 50)
         {
+            if (page > 100000 || count > 100000)
+            {
+                return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
+            }
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -502,7 +519,7 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
             List<Album> albums = new List<Album>();
-            for (int i = (page * count); i < ((page * count) + count); i++)
+            for (uint i = (page * count); i < ((page * count) + count); i++)
             {
                 try
                 {
