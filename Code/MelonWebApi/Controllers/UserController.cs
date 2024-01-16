@@ -212,7 +212,7 @@ namespace MelonWebApi.Controllers
             }
 
             byte[] tempSalt;
-            var protectedPassword = Security.HashPasword(password, out tempSalt);
+            var protectedPassword = Security.HashPassword(password, out tempSalt);
             var id = ObjectId.GenerateNewId();
 
             var user = new User();
@@ -232,7 +232,7 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult(user.UserId) { StatusCode = 200 };
         }
-        [Authorize(Roles = "Admin,Server")]
+        [Authorize(Roles = "Admin")]
         [HttpPost("create-connection")]
         public async Task<ObjectResult> CreateConnection(string url, string code, string username, string password)
         {
@@ -394,9 +394,17 @@ namespace MelonWebApi.Controllers
             var userFilter = Builders<User>.Filter.Eq(x => x.UserId, id);
             var users = UserCollection.Find(userFilter).ToList();
 
+            var checkFilter = Builders<User>.Filter.Eq(x => x.Username, username);
+            var u = UserCollection.Find(checkFilter).ToList();
+
             if (users.Count == 0)
             {
                 return new ObjectResult("User Not Found") { StatusCode = 404 };
+            }
+
+            if (u.Count != 0)
+            {
+                return new ObjectResult("Username is Taken") { StatusCode = 400 };
             }
             var user = users[0];
             var roles = ((ClaimsIdentity)User.Identity).Claims
@@ -452,7 +460,7 @@ namespace MelonWebApi.Controllers
             }
 
             byte[] tempSalt;
-            var protectedPassword = Security.HashPasword(password, out tempSalt);
+            var protectedPassword = Security.HashPassword(password, out tempSalt);
             
             user.Password = protectedPassword;
             user.Salt = tempSalt;

@@ -315,7 +315,7 @@ namespace MelonWebApi.Controllers
             {
                 try
                 {
-                    var filter = Builders<Track>.Filter.Eq(x => x.TrackId, album.Tracks[i].TrackId);
+                    var filter = Builders<Track>.Filter.Eq(x => x.TrackId, album.Tracks[(int)i].TrackId);
                     var fullTrack = TracksCollection.Find(filter).FirstOrDefault();
                     tracks.Add(fullTrack);
                 }
@@ -437,7 +437,7 @@ namespace MelonWebApi.Controllers
             {
                 try
                 {
-                    var filter = Builders<Track>.Filter.Eq(x => x.TrackId, artist.Tracks[i].TrackId);
+                    var filter = Builders<Track>.Filter.Eq(x => x.TrackId, artist.Tracks[(int)i].TrackId);
                     var fullTrack = TracksCollection.Find(filter).FirstOrDefault();
                     tracks.Add(fullTrack);
                 }
@@ -480,7 +480,7 @@ namespace MelonWebApi.Controllers
             {
                 try
                 {
-                    var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.Releases[i].AlbumId);
+                    var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.Releases[(int)i].AlbumId);
                     var fullAlbum = AlbumCollection.Find(filter).FirstOrDefault();
                     fullAlbum.Tracks = null;
                     albums.Add(fullAlbum);
@@ -523,7 +523,7 @@ namespace MelonWebApi.Controllers
             {
                 try
                 {
-                    var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.SeenOn[i].AlbumId);
+                    var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.SeenOn[(int)i].AlbumId);
                     var fullAlbum = AlbumCollection.Find(filter).FirstOrDefault();
                     fullAlbum.Tracks = null;
                     albums.Add(fullAlbum);
