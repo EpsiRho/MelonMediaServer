@@ -219,6 +219,7 @@ namespace Melon.LocalClasses
             foreach(var file in files)
             {
                 watch.Restart();
+                int count = 0;
                 try
                 {
                     CurrentFile = file;
@@ -336,7 +337,15 @@ namespace Melon.LocalClasses
 
                         if (artistDoc == null)
                         {
-                            AlbumArtistIds.Add(new MelonId(ObjectId.GenerateNewId()));
+                            if (trackArtists.Contains(albumArtists[i]))
+                            {
+                                var id = TrackArtistIds[trackArtists.IndexOf(albumArtists[i])];
+                                AlbumArtistIds.Add(id);
+                            }
+                            else
+                            {
+                                AlbumArtistIds.Add(new MelonId(ObjectId.GenerateNewId()));
+                            }
                         }
                         else
                         {
@@ -424,12 +433,33 @@ namespace Melon.LocalClasses
                         sTrack.TrackArtists.Add(new ShortArtist() { _id = TrackArtistIds[i], ArtistId = TrackArtistIds[i].ToString(), ArtistName = trackArtists[i] });
                     }
 
-                    int count = 0;
-                    foreach (var artist in trackArtists)
+                    
+                    var combinedArtists = new List<string>();
+                    combinedArtists.AddRange(trackArtists);
+                    combinedArtists.AddRange(albumArtists);
+                    foreach (var artistName in combinedArtists)
                     {
+                        string artist = "";
+                        if(artistName == "")
+                        {
+                            artist = "Unknown Artist";
+                        }
+                        else
+                        {
+                            artist = artistName;
+                        }
                         var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", artist);
                         var artistDoc = ArtistCollection.Find(artistFilter).FirstOrDefault();
 
+                        MelonId aId = new MelonId();
+                        if(count >= TrackArtistIds.Count())
+                        {
+                            aId = AlbumArtistIds[count - TrackArtistIds.Count()];
+                        }
+                        else
+                        {
+                            aId = TrackArtistIds[count];
+                        }
 
                         if (artistDoc == null)
                         {
@@ -440,10 +470,10 @@ namespace Melon.LocalClasses
                                 ArtistName = artist,
                                 Bio = "",
                                 ArtistPfp = "",
-                                _id = TrackArtistIds[count],
+                                _id = aId,
                                 Rating = 0,
                                 DateAdded = DateTime.Now.ToUniversalTime(),
-                                ArtistId = TrackArtistIds[count].ToString(),
+                                ArtistId = aId.ToString(),
                                 Releases = new List<ShortAlbum>(),
                                 Genres = new List<string>(),
                                 SeenOn = new List<ShortAlbum>(),
@@ -470,7 +500,14 @@ namespace Melon.LocalClasses
                         else
                         {
                             CurrentStatus = $"Updating {artist}";
-                            TrackArtistIds[count] = artistDoc._id;
+                            if (count >= TrackArtistIds.Count())
+                            {
+                                AlbumArtistIds[count - TrackArtistIds.Count()] = artistDoc._id;
+                            }
+                            else
+                            {
+                                TrackArtistIds[count] = artistDoc._id;
+                            }
 
 
                             if (albumArtists.Contains(artist))
@@ -531,11 +568,12 @@ namespace Melon.LocalClasses
                         // Add Release
                         if (albumDoc == null)
                         {
+                            string albumName = fileMetadata.Album == "" ? "Unknown Album" : fileMetadata.Album;
                             CurrentStatus = $"Adding {fileMetadata.Album}";
                             Album album = new Album();
                             album._id = AlbumId;
                             album.AlbumId = AlbumId.ToString();
-                            album.AlbumName = fileMetadata.Album;
+                            album.AlbumName = albumName;
                             album.DateAdded = DateTime.Now.ToUniversalTime();
                             try { album.Bio = ""; } catch (Exception) { }
                             try { album.TotalDiscs = fileMetadata.DiscTotal.Value; } catch (Exception) { album.TotalDiscs = 1; }
@@ -815,7 +853,14 @@ namespace Melon.LocalClasses
 
                         for (int i = 0; i < trackArtists.Count(); i++)
                         {
-                            track.TrackArtists.Add(new ShortArtist() { _id = TrackArtistIds[i], ArtistId = TrackArtistIds[i].ToString(), ArtistName = trackArtists[i] });
+                            if (count >= TrackArtistIds.Count())
+                            {
+                                track.TrackArtists.Add(new ShortArtist() { _id = AlbumArtistIds[count - TrackArtistIds.Count()], ArtistId = AlbumArtistIds[count - TrackArtistIds.Count()].ToString(), ArtistName = trackArtists[i] });
+                            }
+                            else
+                            {
+                                track.TrackArtists.Add(new ShortArtist() { _id = TrackArtistIds[i], ArtistId = TrackArtistIds[i].ToString(), ArtistName = trackArtists[i] });
+                            }
                         }
                         foreach (var genre in trackGenres)
                         {
@@ -824,7 +869,15 @@ namespace Melon.LocalClasses
 
                         if (trackDoc == null)
                         {
-                            TracksCollection.InsertOne(track);
+                            try
+                            {
+                                TracksCollection.InsertOne(track);
+                            }
+                            catch (Exception e)
+                            {
+                                count++;
+                                continue;
+                            }
                         }
                         else
                         {
@@ -875,6 +928,7 @@ namespace Melon.LocalClasses
                     if(e.Message.Contains("DuplicateKey"))
                     {
                         ScannedFiles++;
+                        count++;
                         continue;
                     }
 

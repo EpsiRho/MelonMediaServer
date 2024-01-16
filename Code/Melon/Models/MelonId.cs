@@ -22,6 +22,10 @@ namespace Melon.Models
             increment = id.Increment;
             creationTime = id.CreationTime;
         }
+        public MelonId()
+        {
+
+        }
         public override string ToString()
         {
             var id = new ObjectId(creationTime, machine, pid, increment);
