@@ -122,7 +122,7 @@ namespace Melon.DisplayClasses
                 }
 
             } while (passInput[0] != passInput[1]);
-            tempPassword = Security.HashPasword(passInput[0], out tempSalt);
+            tempPassword = Security.HashPassword(passInput[0], out tempSalt);
 
         }
         private static void MongoDbSetup()
