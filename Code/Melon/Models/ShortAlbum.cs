@@ -11,6 +11,20 @@ namespace Melon.Models
         public string ReleaseType { get; set; }
         public List<ShortArtist> AlbumArtists { get; set; }
         public List<ShortArtist> ContributingArtists { get; set; }
+        public ShortAlbum() 
+        {
+            
+        }
+        public ShortAlbum(Album a) 
+        {
+            _id = a._id;
+            AlbumId = a.AlbumId;
+            AlbumName = a.AlbumName;
+            ReleaseDate = a.ReleaseDate;
+            ReleaseType = a.ReleaseType;
+            AlbumArtists = a.AlbumArtists;
+            ContributingArtists = a.ContributingArtists;
+        }
     }
 }
 
