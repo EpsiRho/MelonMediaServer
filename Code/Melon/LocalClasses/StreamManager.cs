@@ -58,8 +58,15 @@ namespace Melon.LocalClasses
         }
         public static void RemoveSocket(WSS wss)
         {
-            wss.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).Wait();
-            Sockets.Remove(wss);
+            try
+            {
+                wss.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).Wait();
+                Sockets.Remove(wss);
+            }
+            catch (Exception)
+            {
+
+            }
         }
         private static async Task HandleWebSocketAsync(WSS wss)
         {
@@ -157,36 +164,50 @@ namespace Melon.LocalClasses
         }
         public static async void WriteToSocket(WSS wss, string message)
         {
-            var buffer = Encoding.UTF8.GetBytes(message);
-            var segment = new ArraySegment<byte>(buffer);
-            await wss.Socket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
+            try
+            {
+                var buffer = Encoding.UTF8.GetBytes(message);
+                var segment = new ArraySegment<byte>(buffer);
+                await wss.Socket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+            catch (Exception)
+            {
+
+            }
         }
         public static async Task<string> ReceiveAsync(WSS wss)
         {
-            var buffer = new byte[1024 * 4];
-            WebSocketReceiveResult result;
-            using (var ms = new MemoryStream())
+            try
             {
-                do
+                var buffer = new byte[1024 * 4];
+                WebSocketReceiveResult result;
+                using (var ms = new MemoryStream())
                 {
-                    result = await wss.Socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                    ms.Write(buffer, 0, result.Count);
-                }
-                while (!result.EndOfMessage);
-
-                ms.Seek(0, SeekOrigin.Begin);
-
-                if (result.MessageType == WebSocketMessageType.Text)
-                {
-                    using (var reader = new StreamReader(ms, Encoding.UTF8))
+                    do
                     {
-                        return await reader.ReadToEndAsync();
+                        result = await wss.Socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                        ms.Write(buffer, 0, result.Count);
+                    }
+                    while (!result.EndOfMessage);
+
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    if (result.MessageType == WebSocketMessageType.Text)
+                    {
+                        using (var reader = new StreamReader(ms, Encoding.UTF8))
+                        {
+                            return await reader.ReadToEndAsync();
+                        }
+                    }
+                    else
+                    {
+                        return string.Empty;
                     }
                 }
-                else
-                {
-                    return string.Empty;
-                }
+            }
+            catch (Exception)
+            {
+                return string.Empty;
             }
         }
     }
