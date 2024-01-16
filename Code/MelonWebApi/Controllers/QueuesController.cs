@@ -362,7 +362,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get-tracks")]
-        public ObjectResult GetTracks(int page, int count, string id)
+        public ObjectResult GetTracks(string id, int page = 0, int count = 100)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -421,7 +421,7 @@ namespace MelonWebApi.Controllers
             {
                 var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, tid);
                 var track = TCollection.Find(trackFilter).ToList()[0];
-                if (track != null)
+                if (track == null)
                 {
                     continue;
                 }
