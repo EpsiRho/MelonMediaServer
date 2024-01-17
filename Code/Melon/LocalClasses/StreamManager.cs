@@ -123,7 +123,7 @@ namespace Melon.LocalClasses
 
             RemoveSocket(wss);
         }
-        public static void AlertQueueUpdate(string id)
+        public static void AlertQueueUpdate(string id, string msg = "UPDATE QUEUE")
         {
             if(Sockets == null)
             {
@@ -133,7 +133,7 @@ namespace Melon.LocalClasses
             {
                 if(wss.CurrentQueue == id)
                 {
-                    WriteToSocket(wss, "UPDATE QUEUE");
+                    WriteToSocket(wss, msg);
                 }
             }
         }
