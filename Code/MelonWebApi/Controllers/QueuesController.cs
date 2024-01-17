@@ -43,6 +43,7 @@ namespace MelonWebApi.Controllers
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
             queue.Tracks = new List<ShortTrack>();
+            queue.CurPosition = 0;
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x.QueueId, queue.QueueId);
             foreach(var id in ids)
@@ -79,6 +80,7 @@ namespace MelonWebApi.Controllers
                     tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackDiscovery, false);
                     break;
             }
+            
             queue.Tracks = tracks;
             queue.OriginalTrackOrder = (from track in queue.Tracks
                                         select track.TrackId).ToList();
@@ -108,6 +110,7 @@ namespace MelonWebApi.Controllers
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
             queue.Tracks = new List<ShortTrack>();
+            queue.CurPosition = 0;
 
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x.QueueId, queue.QueueId);
@@ -181,6 +184,7 @@ namespace MelonWebApi.Controllers
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
             queue.Tracks = new List<ShortTrack>();
+            queue.CurPosition = 0;
 
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x.QueueId, queue.QueueId);
@@ -254,6 +258,7 @@ namespace MelonWebApi.Controllers
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
             queue.Tracks = new List<ShortTrack>();
+            queue.CurPosition = 0;
 
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x.QueueId, queue.QueueId);
