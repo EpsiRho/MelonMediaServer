@@ -7,7 +7,6 @@ namespace Melon.Models
     {
         public MelonId _id { get; set; }
         public string ArtistId { get; set; }
-        public string ArtistPfp { get; set; }
         public string ArtistName { get; set; }
         public string Bio { get; set; }
         public long PlayCount { get; set; }

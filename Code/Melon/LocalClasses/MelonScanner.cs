@@ -469,7 +469,6 @@ namespace Melon.LocalClasses
                             {
                                 ArtistName = artist,
                                 Bio = "",
-                                ArtistPfp = "",
                                 _id = aId,
                                 Rating = 0,
                                 DateAdded = DateTime.Now.ToUniversalTime(),
