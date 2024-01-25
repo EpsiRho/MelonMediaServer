@@ -4,7 +4,7 @@ namespace Melon.Models
 {
     public class ShortTrack
     {
-        public ObjectId _id { get; set; }
+        public MelonId _id { get; set; }
         public string TrackId { get; set; }
         public ShortAlbum Album { get; set; }
         public int Position { get; set; }
@@ -13,6 +13,7 @@ namespace Melon.Models
         public string Duration { get; set; }
         public int TrackArtCount { get; set; }
         public string Path { get; set; }
+        public string ServerURL { get; set; }
         public DateTime ReleaseDate { get; set; }
         public List<ShortArtist> TrackArtists { get; set; }
 
@@ -31,6 +32,7 @@ namespace Melon.Models
             Duration = t.Duration;
             TrackArtCount = t.TrackArtCount;
             Path = t.Path;
+            ServerURL = t.ServerURL;
             ReleaseDate = t.ReleaseDate;
             TrackArtists = t.TrackArtists;
         }

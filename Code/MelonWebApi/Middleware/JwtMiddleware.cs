@@ -33,10 +33,11 @@ namespace MelonWebApi.Middleware
                 try
                 {
                     var tokenHandler = new JwtSecurityTokenHandler();
-                    var key = Encoding.ASCII.GetBytes(StateManager.MelonSettings.JWTKey);
+                    var key = StateManager.MelonSettings.JWTKey;
                     tokenHandler.ValidateToken(token, new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
+                        ValidAlgorithms = new List<string>() { SecurityAlgorithms.HmacSha256Signature },
                         IssuerSigningKey = new SymmetricSecurityKey(key),
                         ValidateIssuer = false,
                         ValidateAudience = false,

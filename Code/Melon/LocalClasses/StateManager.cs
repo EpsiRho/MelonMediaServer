@@ -13,6 +13,8 @@ using Pastel;
 using System.Drawing;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using Amazon.Util;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Melon.LocalClasses
 {
@@ -26,7 +28,7 @@ namespace Melon.LocalClasses
         public static Settings MelonSettings { get; set; }
         public static Flags MelonFlags { get; set; }
         private static Process serverProcess;
-        public static void Init(bool headless)
+        public static void Init(bool headless, bool runSetup)
         {
             // Title
             MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
@@ -67,7 +69,7 @@ namespace Melon.LocalClasses
             {
                 LoadFlags();
             }
-            if (MelonFlags.ForceOOBE)
+            if ((MelonFlags.ForceOOBE || runSetup) && !headless)
             {
                 DisplayManager.UIExtensions.Add(SetupUI.Display);
             }
@@ -106,24 +108,6 @@ namespace Melon.LocalClasses
                     MelonColor.Melon = MelonSettings.Melon;
                     MelonColor.Error = MelonSettings.Error;
 
-                    if(MelonSettings.JWTKey == null || MelonSettings.JWTKey == "")
-                    {
-                        MelonSettings.JWTKey = Security.GenerateSecretKey();
-                        DisplayManager.UIExtensions.Add(SetupUI.Display);
-                    }
-
-                    if(MelonSettings.ListeningURL == null || MelonSettings.ListeningURL == "")
-                    {
-                        MelonSettings.ListeningURL = "https://*:14524";
-                        //DisplayManager.UIExtensions.Add(SetupUI.Display);
-                    }
-
-                    if(MelonSettings.JWTExpireInMinutes == null || MelonSettings.JWTExpireInMinutes == 0)
-                    {
-                        MelonSettings.JWTExpireInMinutes = 60;
-                        //DisplayManager.UIExtensions.Add(SetupUI.Display);
-                    }
-                    SaveSettings();
                 }
                 catch (Exception)
                 {
@@ -196,11 +180,29 @@ namespace Melon.LocalClasses
         public static void LoadSettings()
         {
             string settingstxt = File.ReadAllText($"{melonPath}/Settings.json");
-            MelonSettings = Newtonsoft.Json.JsonConvert.DeserializeObject<Settings>(settingstxt);
+            var set = Newtonsoft.Json.JsonConvert.DeserializeObject<Settings>(settingstxt);
+
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddDataProtection();
+            var services = serviceCollection.BuildServiceProvider();
+
+            var instance = ActivatorUtilities.CreateInstance<Security>(services);
+            set.JWTKey = instance._protector.Unprotect(set.JWTKey);
+
+            MelonSettings = set;
         }
         public static void SaveSettings()
         {
-            string settingstxt = Newtonsoft.Json.JsonConvert.SerializeObject(MelonSettings);
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddDataProtection();
+            var services = serviceCollection.BuildServiceProvider();
+
+            var instance = ActivatorUtilities.CreateInstance<Security>(services);
+            var set = MelonSettings;
+            var key = MelonSettings.JWTKey;
+            set.JWTKey = instance._protector.Protect(key);
+
+            string settingstxt = Newtonsoft.Json.JsonConvert.SerializeObject(set);
             File.WriteAllText($"{melonPath}/Settings.json", settingstxt);
         }
         public static void LoadFlags()

@@ -4,6 +4,7 @@ using Melon.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Pastel;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Melon.LocalClasses
@@ -107,7 +108,7 @@ namespace Melon.LocalClasses
                     if (!File.Exists(track.Path))
                     {
                         // remove from albums
-                        var filter = Builders<Album>.Filter.Eq("_id", track.Album._id);
+                        var filter = Builders<Album>.Filter.Eq(x=>x.AlbumId, track.Album.AlbumId);
                         var albums = AlbumCollection.Find(filter).ToList();
 
                         List<string> zeroed = new List<string>();
@@ -115,8 +116,8 @@ namespace Melon.LocalClasses
                         {
                             var album = albums[0];
                             var query = (from t in album.Tracks
-                                     where t._id == track._id
-                                     select t).FirstOrDefault();
+                                         where t.TrackId == track.TrackId
+                                         select t).FirstOrDefault();
                             album.Tracks.Remove(query);
                             if (album.Tracks.Count == 0)
                             {
@@ -132,7 +133,7 @@ namespace Melon.LocalClasses
                         // remove from artists
                         foreach (var artist in track.TrackArtists)
                         {
-                            var aFilter = Builders<Artist>.Filter.Eq("_id", artist._id);
+                            var aFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, artist.ArtistId);
                             var artists = ArtistCollection.Find(aFilter).ToList();
                             Artist dbArtist = null;
 
@@ -140,7 +141,7 @@ namespace Melon.LocalClasses
                             {
                                 dbArtist = artists[0];
                                 var query = (from t in dbArtist.Tracks
-                                             where t._id == track._id
+                                             where t.TrackId == track.TrackId
                                              select t).FirstOrDefault();
                                 dbArtist.Tracks.Remove(query);
 
@@ -175,7 +176,7 @@ namespace Melon.LocalClasses
                             }
                         }
                         // Remove Track
-                        var tFilter = Builders<Track>.Filter.Eq("_id", track._id);
+                        var tFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, track.TrackId);
                         TracksCollection.DeleteOne(tFilter);
                     }
 
@@ -218,6 +219,7 @@ namespace Melon.LocalClasses
             foreach(var file in files)
             {
                 watch.Restart();
+                int count = 0;
                 try
                 {
                     CurrentFile = file;
@@ -272,20 +274,33 @@ namespace Melon.LocalClasses
                     CurrentStatus = "Preparing Artist and Genre tags";
 
                     // Split artists
-                    var fileMetadata = new ATL.Track(file);//TagLib.File.Create(file);
-                    //var fileMetadataNew = new ATL.Track(file); //TagLib.File.Create(file);
-                    List<string> albumArtists = new List<string>();
+                    var fileMetadata = new ATL.Track(file);
 
                     // TODO: Make this a setting
-                    albumArtists.AddRange(fileMetadata.AlbumArtist.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries));
-                    List<string> trackArtists = new List<string>();
+                    List<string> albumArtists = new List<string>();
+                    var aSplit = fileMetadata.AlbumArtist.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries);
+                    foreach (var a in aSplit)
+                    {
+                        if (!albumArtists.Contains(a))
+                        {
+                            albumArtists.Add(a);
+                        }
+                    }
 
                     // TODO: Make this a setting too
-                    trackArtists.AddRange(fileMetadata.Artist.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries));
+                    List<string> trackArtists = new List<string>();
+                    var tSplit = fileMetadata.Artist.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries);
+                    foreach (var t in tSplit)
+                    {
+                        if (!trackArtists.Contains(t))
+                        {
+                            trackArtists.Add(t);
+                        }
+                    }
 
                     // Split Genres
-                    List<string> trackGenres = new List<string>();
                     // TODO: Make this a setting too
+                    List<string> trackGenres = new List<string>();
                     trackGenres.AddRange(fileMetadata.Genre.Split(new string[] { ",", ";", "/", }, StringSplitOptions.TrimEntries));
 
                     // Conform Genres
@@ -295,55 +310,109 @@ namespace Melon.LocalClasses
                     //}
 
                     // Generate IDs
-                    List<ObjectId> ArtistIds = new List<ObjectId>();
-                    int num = trackArtists.Count();
-                    if (num < albumArtists.Count())
-                    {
-                        num = albumArtists.Count();
-                    }
-                    for (int i = 0; i < num; i++)
+                    List<MelonId> TrackArtistIds = new List<MelonId>();
+                    List<MelonId> AlbumArtistIds = new List<MelonId>();
+                    for (int i = 0; i < trackArtists.Count(); i++)
                     {
                         var artistFilter = Builders<Artist>.Filter.Empty;
-                        if (trackArtists.Count() < num)
-                        {
-                            artistFilter = Builders<Artist>.Filter.Eq("ArtistName", albumArtists[i]);
-                        }
-                        else
-                        {
-                            artistFilter = Builders<Artist>.Filter.Eq("ArtistName", trackArtists[i]);
-                        }
+                        artistFilter = Builders<Artist>.Filter.Eq("ArtistName", trackArtists[i]);
                         var artistDoc = ArtistCollection.Find(artistFilter).FirstOrDefault();
 
 
                         if (artistDoc == null)
                         {
-                            ArtistIds.Add(ObjectId.GenerateNewId());
+                            TrackArtistIds.Add(new MelonId(ObjectId.GenerateNewId()));
                         }
                         else
                         {
-                            ArtistIds.Add(artistDoc._id);
+                            TrackArtistIds.Add(artistDoc._id);
                         }
                     }
+                    for (int i = 0; i < albumArtists.Count(); i++)
+                    {
+                        var artistFilter = Builders<Artist>.Filter.Empty;
+                        artistFilter = Builders<Artist>.Filter.Eq("ArtistName", albumArtists[i]);
+                        var artistDoc = ArtistCollection.Find(artistFilter).FirstOrDefault();
+
+
+                        if (artistDoc == null)
+                        {
+                            if (trackArtists.Contains(albumArtists[i]))
+                            {
+                                var id = TrackArtistIds[trackArtists.IndexOf(albumArtists[i])];
+                                AlbumArtistIds.Add(id);
+                            }
+                            else
+                            {
+                                AlbumArtistIds.Add(new MelonId(ObjectId.GenerateNewId()));
+                            }
+                        }
+                        else
+                        {
+                            AlbumArtistIds.Add(artistDoc._id);
+                        }
+                    }
+
                     var albumFilter = Builders<Album>.Filter.Eq("AlbumName", fileMetadata.Album);
                     albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumArtists[0]);
                     var albumDoc = AlbumCollection.Find(albumFilter).FirstOrDefault();
+                    var trackFilter = Builders<Track>.Filter.Eq("Path", file);
+                    var tCheck = TracksCollection.Find(trackFilter).FirstOrDefault();
 
-                    ObjectId AlbumId = ObjectId.GenerateNewId();
+                    MelonId AlbumId = new MelonId(ObjectId.GenerateNewId());
                     if (albumDoc != null)
                     {
                         AlbumId = albumDoc._id;
                     }
-                    ObjectId TrackId = ObjectId.GenerateNewId();
+                    MelonId TrackId = new MelonId(ObjectId.GenerateNewId());
+                    if (tCheck != null)
+                    {
+                        TrackId = tCheck._id;
+                    }
 
-                    int count = 0;
                     ShortAlbum sAlbum = new ShortAlbum()
                     {
                         _id = AlbumId,
                         AlbumId = AlbumId.ToString(),
                         AlbumName = fileMetadata.Album,
+                        ContributingArtists = new List<ShortArtist>(),
+                        AlbumArtists = new List<ShortArtist>()
                     };
                     try { sAlbum.ReleaseType = fileMetadata.AdditionalFields["RELEASETYPE"]; } catch (Exception) { sAlbum.ReleaseType = ""; }
                     try { sAlbum.ReleaseDate = fileMetadata.Date.Value; } catch (Exception) { }
+
+                    if(albumDoc != null)
+                    {
+                        foreach(var a in albumDoc.ContributingArtists)
+                        {
+                            sAlbum.ContributingArtists.Add(a);
+                        }
+                        foreach(var a in albumDoc.AlbumArtists)
+                        {
+                            sAlbum.AlbumArtists.Add(a);
+                        }
+                    }
+
+                    for (int i = 0; i < trackArtists.Count(); i++)
+                    {
+                        var found = (from a in sAlbum.ContributingArtists
+                                    where a.ArtistId == TrackArtistIds[i].ToString()
+                                    select a).ToList();
+                        if (found.Count() == 0)
+                        {
+                            sAlbum.ContributingArtists.Add(new ShortArtist() { _id = TrackArtistIds[i], ArtistId = TrackArtistIds[i].ToString(), ArtistName = trackArtists[i] });
+                        }
+                    }
+                    for (int i = 0; i < albumArtists.Count(); i++)
+                    {
+                        var found = (from a in sAlbum.AlbumArtists
+                                     where a.ArtistId == AlbumArtistIds[i].ToString()
+                                     select a).ToList();
+                        if (found.Count() == 0)
+                        {
+                            sAlbum.AlbumArtists.Add(new ShortArtist() { _id = AlbumArtistIds[i], ArtistId = AlbumArtistIds[i].ToString(), ArtistName = albumArtists[i] });
+                        }
+                    }
 
                     ShortTrack sTrack = new ShortTrack()
                     {
@@ -361,14 +430,36 @@ namespace Melon.LocalClasses
                     try { sTrack.ReleaseDate = fileMetadata.Date.Value; } catch (Exception) { }
                     for (int i = 0; i < trackArtists.Count(); i++)
                     {
-                        sTrack.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistId = ArtistIds[i].ToString(), ArtistName = trackArtists[i] });
+                        sTrack.TrackArtists.Add(new ShortArtist() { _id = TrackArtistIds[i], ArtistId = TrackArtistIds[i].ToString(), ArtistName = trackArtists[i] });
                     }
 
-                    foreach (var artist in trackArtists)
+                    
+                    var combinedArtists = new List<string>();
+                    combinedArtists.AddRange(trackArtists);
+                    combinedArtists.AddRange(albumArtists);
+                    foreach (var artistName in combinedArtists)
                     {
+                        string artist = "";
+                        if(artistName == "")
+                        {
+                            artist = "Unknown Artist";
+                        }
+                        else
+                        {
+                            artist = artistName;
+                        }
                         var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", artist);
                         var artistDoc = ArtistCollection.Find(artistFilter).FirstOrDefault();
 
+                        MelonId aId = new MelonId();
+                        if(count >= TrackArtistIds.Count())
+                        {
+                            aId = AlbumArtistIds[count - TrackArtistIds.Count()];
+                        }
+                        else
+                        {
+                            aId = TrackArtistIds[count];
+                        }
 
                         if (artistDoc == null)
                         {
@@ -378,10 +469,10 @@ namespace Melon.LocalClasses
                             {
                                 ArtistName = artist,
                                 Bio = "",
-                                ArtistPfp = "",
-                                _id = ArtistIds[count],
+                                _id = aId,
                                 Rating = 0,
-                                ArtistId = ArtistIds[count].ToString(),
+                                DateAdded = DateTime.Now.ToUniversalTime(),
+                                ArtistId = aId.ToString(),
                                 Releases = new List<ShortAlbum>(),
                                 Genres = new List<string>(),
                                 SeenOn = new List<ShortAlbum>(),
@@ -408,7 +499,14 @@ namespace Melon.LocalClasses
                         else
                         {
                             CurrentStatus = $"Updating {artist}";
-                            ArtistIds[count] = artistDoc._id;
+                            if (count >= TrackArtistIds.Count())
+                            {
+                                AlbumArtistIds[count - TrackArtistIds.Count()] = artistDoc._id;
+                            }
+                            else
+                            {
+                                TrackArtistIds[count] = artistDoc._id;
+                            }
 
 
                             if (albumArtists.Contains(artist))
@@ -469,11 +567,13 @@ namespace Melon.LocalClasses
                         // Add Release
                         if (albumDoc == null)
                         {
+                            string albumName = fileMetadata.Album == "" ? "Unknown Album" : fileMetadata.Album;
                             CurrentStatus = $"Adding {fileMetadata.Album}";
                             Album album = new Album();
                             album._id = AlbumId;
                             album.AlbumId = AlbumId.ToString();
-                            album.AlbumName = fileMetadata.Album;
+                            album.AlbumName = albumName;
+                            album.DateAdded = DateTime.Now.ToUniversalTime();
                             try { album.Bio = ""; } catch (Exception) { }
                             try { album.TotalDiscs = fileMetadata.DiscTotal.Value; } catch (Exception) { album.TotalDiscs = 1; }
                             try { album.TotalTracks = fileMetadata.TrackTotal.Value; } catch (Exception) { album.TotalTracks = 0; }
@@ -514,6 +614,7 @@ namespace Melon.LocalClasses
                             album.AlbumArtPaths = new List<string>();
                             album.Tracks = new List<ShortTrack>();
                             album.AlbumArtists = new List<ShortArtist>();
+                            album.ContributingArtists = new List<ShortArtist>();
                             album.AlbumGenres = new List<string>();
                             try
                             {
@@ -525,26 +626,51 @@ namespace Melon.LocalClasses
 
                             for (int i = 0; i < fileMetadata.EmbeddedPictures.Count(); i++)
                             {
-                                using (FileStream artFile = new FileStream($"{StateManager.melonPath}/AlbumArts/{album._id}-{i}.jpg", FileMode.Create, System.IO.FileAccess.Write))
+                                using (FileStream artFile = new FileStream($"{StateManager.melonPath}/AlbumArts/{album.AlbumId}-{i}.jpg", FileMode.Create, System.IO.FileAccess.Write))
                                 {
 
                                     byte[] bytes = fileMetadata.EmbeddedPictures[i].PictureData;
                                     artFile.Write(bytes, 0, bytes.Length);
                                 }
-                                album.AlbumArtPaths.Add($"{album._id}-{i}.jpg");
+                                album.AlbumArtPaths.Add($"{album.AlbumId}-{i}.jpg");
                             }
 
                             for (int i = 0; i < albumArtists.Count(); i++)
                             {
                                 try
                                 {
-                                    albumDoc.AlbumArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], ArtistId = ArtistIds[i].ToString(), _id = ArtistIds[i] });
+                                    var found = (from a in albumDoc.AlbumArtists
+                                                 where a.ArtistId == AlbumArtistIds[i].ToString()
+                                                 select a).ToList();
+                                    if (found.Count() == 0)
+                                    {
+                                        albumDoc.AlbumArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], ArtistId = AlbumArtistIds[i].ToString(), _id = AlbumArtistIds[i] });
+                                    }
                                 }
                                 catch (Exception e)
                                 {
 
                                 }
                             }
+
+                            for (int i = 0; i < trackArtists.Count(); i++)
+                            {
+                                try
+                                {
+                                    var found = (from a in albumDoc.ContributingArtists
+                                                 where a.ArtistId == TrackArtistIds[i].ToString()
+                                                 select a).ToList();
+                                    if (found.Count() == 0)
+                                    {
+                                        albumDoc.ContributingArtists.Add(new ShortArtist() { ArtistName = trackArtists[i], ArtistId = TrackArtistIds[i].ToString(), _id = TrackArtistIds[i] });
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+
+                                }
+                            }
+
                             foreach (var genre in trackGenres)
                             {
                                 albumDoc.AlbumGenres.Add(genre);
@@ -568,14 +694,39 @@ namespace Melon.LocalClasses
                                     albumDoc.AlbumArtists.Remove(art);
                                 }
                             }
+                            for (int i = 0; i < albumArtists.Count(); i++)
+                            {
+                                try
+                                {
+                                    var found = (from a in albumDoc.AlbumArtists
+                                                 where a.ArtistId == AlbumArtistIds[i].ToString()
+                                                 select a).ToList();
+                                    if (found.Count() == 0)
+                                    {
+                                        albumDoc.AlbumArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], ArtistId = AlbumArtistIds[i].ToString(), _id = AlbumArtistIds[i] });
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+
+                                }
+                            }
+
                             for (int i = 0; i < trackArtists.Count(); i++)
                             {
-                                var aQuery = from release in albumDoc.AlbumArtists
-                                             where release.ArtistName == trackArtists[i]
-                                             select release;
-                                if (aQuery.Count() == 0)
+                                try
                                 {
-                                    albumDoc.AlbumArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistId = ArtistIds[i].ToString(), ArtistName = trackArtists[i] });
+                                    var found = (from a in albumDoc.ContributingArtists
+                                                 where a.ArtistId == TrackArtistIds[i].ToString()
+                                                 select a).ToList();
+                                    if (found.Count() == 0)
+                                    {
+                                        albumDoc.ContributingArtists.Add(new ShortArtist() { ArtistName = trackArtists[i], ArtistId = TrackArtistIds[i].ToString(), _id = TrackArtistIds[i] });
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+
                                 }
                             }
                             foreach (var genre in trackGenres)
@@ -616,6 +767,7 @@ namespace Melon.LocalClasses
                         track._id = TrackId;
                         track.TrackId = TrackId.ToString();
                         track.LastModified = System.IO.File.GetLastWriteTime(file).ToUniversalTime();
+                        track.DateAdded = DateTime.Now.ToUniversalTime();
                         try 
                         {
                             if (fileMetadata.Title == null)
@@ -700,7 +852,14 @@ namespace Melon.LocalClasses
 
                         for (int i = 0; i < trackArtists.Count(); i++)
                         {
-                            track.TrackArtists.Add(new ShortArtist() { _id = ArtistIds[i], ArtistId = ArtistIds[i].ToString(), ArtistName = trackArtists[i] });
+                            if (count >= TrackArtistIds.Count())
+                            {
+                                track.TrackArtists.Add(new ShortArtist() { _id = AlbumArtistIds[count - TrackArtistIds.Count()], ArtistId = AlbumArtistIds[count - TrackArtistIds.Count()].ToString(), ArtistName = trackArtists[i] });
+                            }
+                            else
+                            {
+                                track.TrackArtists.Add(new ShortArtist() { _id = TrackArtistIds[i], ArtistId = TrackArtistIds[i].ToString(), ArtistName = trackArtists[i] });
+                            }
                         }
                         foreach (var genre in trackGenres)
                         {
@@ -709,7 +868,15 @@ namespace Melon.LocalClasses
 
                         if (trackDoc == null)
                         {
-                            TracksCollection.InsertOne(track);
+                            try
+                            {
+                                TracksCollection.InsertOne(track);
+                            }
+                            catch (Exception e)
+                            {
+                                count++;
+                                continue;
+                            }
                         }
                         else
                         {
@@ -718,9 +885,9 @@ namespace Melon.LocalClasses
                             TracksCollection.ReplaceOne(trackfilter, track);
 
                             // remove old tracks from old albums
-                            if (trackDoc.Album._id != track.Album._id)
+                            if (trackDoc.Album.AlbumId != track.Album.AlbumId)
                             {
-                                var aFilter = Builders<Album>.Filter.Eq("_id", trackDoc.Album._id);
+                                var aFilter = Builders<Album>.Filter.Eq(x=>x.AlbumId, trackDoc.Album.AlbumId);
                                 var album = AlbumCollection.Find(aFilter).ToList();
                                 if (album.Count() != 0)
                                 {
@@ -733,7 +900,7 @@ namespace Melon.LocalClasses
                             {
                                 if (!track.TrackArtists.Contains(a))
                                 {
-                                    var aFilter = Builders<Artist>.Filter.Eq("_id", trackDoc.Album._id);
+                                    var aFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, a.ArtistId);
                                     var aritst = ArtistCollection.Find(aFilter).ToList();
                                     if (aritst.Count() != 0)
                                     {
@@ -742,6 +909,16 @@ namespace Melon.LocalClasses
                                 }
                             }
                         }
+
+                        // Sort Everything Added
+                        albumDoc.Tracks = albumDoc.Tracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).ToList();
+                        try { artistDoc.Tracks = artistDoc.Tracks.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+                        try { artistDoc.Releases = artistDoc.Releases.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+                        try { artistDoc.SeenOn = artistDoc.SeenOn.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
+
+                        AlbumCollection.ReplaceOne(albumFilter, albumDoc);
+                        ArtistCollection.ReplaceOne(artistFilter, artistDoc);
+
                         count++;
                     }
                 }
@@ -750,6 +927,7 @@ namespace Melon.LocalClasses
                     if(e.Message.Contains("DuplicateKey"))
                     {
                         ScannedFiles++;
+                        count++;
                         continue;
                     }
 

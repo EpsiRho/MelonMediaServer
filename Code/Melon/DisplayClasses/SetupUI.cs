@@ -11,6 +11,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Melon.DisplayClasses
 {
@@ -28,9 +29,9 @@ namespace Melon.DisplayClasses
             SetupSteps = new List<Action>()
             {
                 ToggleColor,
+                MongoDbSetup,
                 GetUsername,
                 GetPassword,
-                MongoDbSetup,
                 GetLibraryPaths,
                 CompleteSetup
             };
@@ -56,6 +57,16 @@ namespace Melon.DisplayClasses
         }
         private static void GetUsername()
         {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var UserCollection = mongoDatabase.GetCollection<User>("Users");
+            var filter = Builders<User>.Filter.Empty;
+            var users = UserCollection.Find(filter);
+            if (users.Count() != 0)
+            {
+                return;
+            }
+
             while (true)
             {
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
@@ -63,6 +74,7 @@ namespace Melon.DisplayClasses
                 Console.WriteLine($"(This will be considered the {"Admin".Pastel(MelonColor.Highlight)} of this Melon instance, and can be changed anytime)".Pastel(MelonColor.Text));
                 Console.Write("> ".Pastel(MelonColor.Text));
                 string nameInput = Console.ReadLine();
+
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
                 Console.WriteLine($"Your username is {nameInput.Pastel(MelonColor.Highlight)}, is that right?".Pastel(MelonColor.Text));
                 string choice = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
@@ -75,6 +87,16 @@ namespace Melon.DisplayClasses
         }
         private static void GetPassword()
         {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var UserCollection = mongoDatabase.GetCollection<User>("Users");
+            var filter = Builders<User>.Filter.Empty;
+            var users = UserCollection.Find(filter);
+            if (users.Count() != 0)
+            {
+                return;
+            }
+
             string[] passInput = new string[2];
             do
             {
@@ -94,9 +116,13 @@ namespace Melon.DisplayClasses
                 Console.WriteLine("Password: ".Pastel(MelonColor.BackgroundText));
                 Console.Write("Confirm password: ".Pastel(MelonColor.Text));
                 passInput[1] = MelonUI.HiddenInput();
+                if (passInput[0] == "")
+                {
+                    passInput[0] = new Random().Next().ToString();
+                }
 
             } while (passInput[0] != passInput[1]);
-            tempPassword = Security.HashPasword(passInput[0], out tempSalt);
+            tempPassword = Security.HashPassword(passInput[0], out tempSalt);
 
         }
         private static void MongoDbSetup()
@@ -234,7 +260,7 @@ namespace Melon.DisplayClasses
             var id = ObjectId.GenerateNewId();
             var document = new User
             {
-                _id = id,
+                _id = new MelonId(id),
                 UserId = id.ToString(),
                 Username = tempUsername,
                 Password = tempPassword,

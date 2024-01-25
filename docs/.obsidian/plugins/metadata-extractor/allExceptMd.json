@@ -25,12 +25,12 @@
       "relativePath": "models"
     },
     {
-      "name": "queues",
-      "relativePath": "queues"
-    },
-    {
       "name": "playlists",
       "relativePath": "playlists"
+    },
+    {
+      "name": "queues",
+      "relativePath": "queues"
     },
     {
       "name": "search",

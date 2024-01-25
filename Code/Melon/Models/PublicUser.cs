@@ -4,7 +4,7 @@ namespace Melon.Models
 {
     public class PublicUser
     {
-        public ObjectId _id { get; set; }
+        public MelonId _id { get; set; }
         public string UserId { get; set; }
         public string Username { get; set; }
         public string Bio { get; set; }

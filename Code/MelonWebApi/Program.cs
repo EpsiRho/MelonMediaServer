@@ -31,9 +31,10 @@ namespace MelonWebApi
             Console.ForegroundColor = ConsoleColor.White;
             Console.OutputEncoding = Encoding.UTF8;
             bool headless = args.Contains("--headless") || args.Contains("-h");
+            bool setup = args.Contains("--setup");
             if (!started)
             {
-                StateManager.Init(headless);
+                StateManager.Init(headless, setup);
             }
 
             if (headless && DisplayManager.UIExtensions.Count() != 0)
@@ -88,7 +89,7 @@ namespace MelonWebApi
 
             builder.Host.UseSerilog();
 
-            var key = Encoding.ASCII.GetBytes(StateManager.MelonSettings.JWTKey);
+            var key = StateManager.MelonSettings.JWTKey;
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(x =>
                     {
@@ -121,6 +122,13 @@ namespace MelonWebApi
             app.UseAuthorization();
 
             app.UseMiddleware<JwtMiddleware>();
+
+            var webSocketOptions = new WebSocketOptions
+            {
+                KeepAliveInterval = TimeSpan.FromMinutes(2)
+            };
+
+            app.UseWebSockets(webSocketOptions);
 
             app.UseSwagger(options =>
             {

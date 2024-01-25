@@ -4,7 +4,7 @@ namespace Melon.Models
 {
     public class User
     {
-        public ObjectId _id { get; set; }
+        public MelonId _id { get; set; }
         public string UserId { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
@@ -15,6 +15,7 @@ namespace Melon.Models
         public string FavAlbum { get; set; }
         public string FavArtist { get; set; }
         public bool PublicStats { get; set; }
+        public List<string> Friends { get; set; }
         public DateTime LastLogin { get; set; }
 
     }
