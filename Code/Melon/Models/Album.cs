@@ -5,7 +5,7 @@ namespace Melon.Models
 {
     public class Album
     {
-        public ObjectId _id { get; set; }
+        public MelonId _id { get; set; }
         public string AlbumId { get; set; }
         public int TotalDiscs { get; set; }
         public int TotalTracks { get; set; }
@@ -16,10 +16,13 @@ namespace Melon.Models
         public string ReleaseType { get; set; }
         public long PlayCount { get; set; }
         public float Rating { get; set; }
+        public string ServerURL { get; set; }
+        public DateTime DateAdded { get; set; }
         public DateTime ReleaseDate { get; set; }
         public List<string> AlbumArtPaths { get; set; }
         public List<string> AlbumGenres { get; set; }
         public List<ShortArtist> AlbumArtists { get; set; }
+        public List<ShortArtist> ContributingArtists { get; set; }
         public List<ShortTrack> Tracks { get; set; }
     }
 }

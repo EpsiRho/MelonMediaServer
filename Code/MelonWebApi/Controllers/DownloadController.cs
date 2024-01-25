@@ -32,7 +32,7 @@ namespace MelonWebApi.Controllers
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
 
-            var tFilter = Builders<Track>.Filter.Eq("_id", ObjectId.Parse(id));
+            var tFilter = Builders<Track>.Filter.Eq("TrackId", id);
             var track = TCollection.Find(tFilter).ToList()[0];
 
             FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
@@ -45,7 +45,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("track-art")]
-        public async Task<IActionResult> DownloadTrackArt(string id, int index)
+        public async Task<IActionResult> DownloadTrackArt(string id, int index = 0)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -54,7 +54,7 @@ namespace MelonWebApi.Controllers
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
 
-            var tFilter = Builders<Track>.Filter.Eq("_id", ObjectId.Parse(id));
+            var tFilter = Builders<Track>.Filter.Eq("TrackId", id);
             var track = TCollection.Find(tFilter).ToList()[0];
 
             //FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
@@ -91,7 +91,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album-art")]
-        public async Task<IActionResult> DownloadAlbumArt(string id, int index)
+        public async Task<IActionResult> DownloadAlbumArt(string id, int index = 0)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -102,7 +102,7 @@ namespace MelonWebApi.Controllers
 
             try
             {
-                var aFilter = Builders<Album>.Filter.Eq("_id", ObjectId.Parse(id));
+                var aFilter = Builders<Album>.Filter.Eq("AlbumId", id);
                 var album = ACollection.Find(aFilter).ToList()[0];
 
                 // Load image data in MemoryStream

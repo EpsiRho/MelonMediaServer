@@ -13,26 +13,13 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "api/lyrics.md",
-                "mode": "source",
+                "file": "db/bitrate.md",
+                "mode": "preview",
                 "source": true
               }
             }
-          },
-          {
-            "id": "8854d3a1d957a7ed",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Untitled.md",
-                "mode": "source",
-                "source": false
-              }
-            }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -98,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Untitled.md",
+                "file": "db/bitrate.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -115,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Untitled.md",
+                "file": "db/bitrate.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -138,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Untitled.md"
+                "file": "db/bitrate.md"
               }
             }
           }
@@ -159,14 +146,20 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "8854d3a1d957a7ed",
+  "active": "8b82fb671072fa31",
   "lastOpenFiles": [
+    "README 1.md",
+    "db/bitrate.md",
+    "db/bits-per-sample.md",
+    "api/_sidebar.md",
     "api/lyrics.md",
-    "Untitled.md",
+    "api/album.md",
+    "getting-started.md",
+    "MelonAPI Planning.md",
+    "Matches.md",
     "api/tracks.md",
     "api/track.md",
     "api/apiOverview.md",
-    "api/_sidebar.md",
     "users/change-password.md",
     "users/change-username.md",
     "users/create.md",
@@ -181,12 +174,6 @@
     "stats/top-artists.md",
     "stats/top-albums.md",
     "stats/log-play.md",
-    "queues/remove-tracks.md",
-    "queues/queuesOverview.md",
-    "queues/move-track.md",
-    "models/modelsOverview.md",
-    "models/PublicUser.md",
-    "models/PlayStat.md",
     "users",
     "stats",
     "search",

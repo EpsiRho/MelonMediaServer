@@ -29,7 +29,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var userFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(username, "i"));
+            var userFilter = Builders<User>.Filter.Eq(x => x.Username, username);
             var users = UserCollection.Find(userFilter).ToList();
             
             if(users.Count == 0) 

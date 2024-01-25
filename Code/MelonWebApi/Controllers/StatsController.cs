@@ -38,7 +38,7 @@ namespace MelonWebApi.Controllers
 
             // Get track, album, artists
             Track track = null;
-            var tFilter = Builders<Track>.Filter.Eq("_id", ObjectId.Parse(id));
+            var tFilter = Builders<Track>.Filter.Eq("TrackId", id);
             try
             {
                 track = TCollection.Find(tFilter).ToList()[0];
@@ -48,13 +48,13 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Track not found") { StatusCode = 404 };
             }
 
-            var albumFilter = Builders<Album>.Filter.Eq("_id", track.Album._id);
+            var albumFilter = Builders<Album>.Filter.Eq("AlbumId", track.Album.AlbumId);
             var album = AlbumCollection.Find(albumFilter).ToList()[0];
 
             List<Artist> artists = new List<Artist>();
             foreach (var a in track.TrackArtists)
             {
-                var artistFilter = Builders<Artist>.Filter.Eq("_id", a._id);
+                var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", a.ArtistId);
                 var artist = ArtistCollection.Find(artistFilter).ToList()[0];
                 artist.PlayCount++;
                 artists.Add(artist);
@@ -69,10 +69,11 @@ namespace MelonWebApi.Controllers
 
             // Add Play Stat
             PlayStat stat = new PlayStat();
-            stat._id = ObjectId.GenerateNewId();
+            stat._id = new MelonId(ObjectId.GenerateNewId());
             stat.StatId = stat._id.ToString();
             stat.TrackId = track.TrackId; 
             stat.AlbumId = album.AlbumId;
+            stat.Duration = track.Duration;
             stat.ArtistIds =
             [
                 .. from a in artists
@@ -107,6 +108,62 @@ namespace MelonWebApi.Controllers
         }
 
         [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("listening-time")]
+        public ObjectResult ListeningTime(string user, string ltDateTime = "", string gtDateTime = "", int page = 0, int count = 100)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
+            var users = UsersCollection.Find(uFilter).ToList();
+
+            var statFilter = Builders<PlayStat>.Filter.Empty;
+            if (users.Count() == 0)
+            {
+                return new ObjectResult("User not found") { StatusCode = 404 };
+            }
+
+            if(user != User.Identity.Name)
+            {
+                if (!users[0].PublicStats)
+                {
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
+            }
+            else
+            {
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
+            }
+
+
+            if (ltDateTime != "")
+            {
+                DateTime ltdt = DateTime.Parse(ltDateTime);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Lte(x => x.LogDate, ltdt);
+            }
+
+            if (gtDateTime != "")
+            {
+                DateTime gtdt = DateTime.Parse(gtDateTime);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Gte(x => x.LogDate, gtdt);
+            }
+
+            var stats = StatsCollection.Find(statFilter).ToList();
+
+            double total = 0;
+            foreach(var stat in stats)
+            {
+                total += Convert.ToDouble(stat.Duration);
+            }
+
+            return new ObjectResult(total) { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("top-tracks")]
         public ObjectResult TopTracks(string user, string ltDateTime = "", string gtDateTime = "", string device = "", int page = 0, int count = 100)
         {
@@ -117,7 +174,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user,"i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device,"i"));
@@ -132,11 +189,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user,"i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
 
@@ -174,7 +231,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
@@ -189,11 +246,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
             if (ltDateTime != "")
@@ -230,7 +287,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
@@ -245,11 +302,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
             if (ltDateTime != "")
@@ -287,7 +344,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
@@ -302,11 +359,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
             if (ltDateTime != "")
@@ -344,7 +401,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Empty;
@@ -359,11 +416,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
             var recentStats = StatsCollection.Find(statFilter)
@@ -388,7 +445,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Empty;
@@ -403,11 +460,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
             var recentStats = StatsCollection.Find(statFilter)
@@ -433,7 +490,7 @@ namespace MelonWebApi.Controllers
             var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var uFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(user, "i"));
+            var uFilter = Builders<User>.Filter.Eq(x => x.Username, user);
             var users = UsersCollection.Find(uFilter).ToList();
 
             var statFilter = Builders<PlayStat>.Filter.Empty;
@@ -448,11 +505,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Regex(x => x.User, new BsonRegularExpression(user, "i"));
+                statFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user);
             }
 
             var recentStats = StatsCollection.Find(statFilter)
