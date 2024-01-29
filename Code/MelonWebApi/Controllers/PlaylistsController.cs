@@ -331,6 +331,8 @@ namespace MelonWebApi.Controllers
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
             var pFilter = Builders<Playlist>.Filter.Eq(x => x.PlaylistId, id);
 
@@ -357,7 +359,21 @@ namespace MelonWebApi.Controllers
 
             var tracks = playlist.Tracks.Take(new Range(page * count, (page * count) + count));
 
-            return new ObjectResult(tracks) { StatusCode = 200 };
+            List<Track> fullTracks = TracksCollection.Find(Builders<Track>.Filter.In(x => x.TrackId, tracks.Select(x => x.TrackId))).ToList();
+
+            foreach (var track in fullTracks)
+            {
+                List<string> usernames =
+                    [
+                        User.Identity.Name,
+                        .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
+                    ];
+                try { track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+                try { track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+                try { track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+            }
+
+            return new ObjectResult(fullTracks) { StatusCode = 200 };
         }
     }
 }

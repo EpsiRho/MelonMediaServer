@@ -22,9 +22,9 @@ namespace Melon.Models
         public string TrackName { get; set; }
         public string Path { get; set; }
         public string Duration { get; set; }
-        public long PlayCount { get; set; }
-        public long SkipCount { get; set; }
-        public float Rating { get; set; }
+        public List<UserStat> PlayCounts { get; set; }
+        public List<UserStat> SkipCounts { get; set; }
+        public List<UserStat> Ratings { get; set; }
         public int TrackArtCount { get; set; }
         public string LyricsPath { get; set; }
         public string ServerURL { get; set; }

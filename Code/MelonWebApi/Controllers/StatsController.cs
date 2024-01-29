@@ -39,31 +39,77 @@ namespace MelonWebApi.Controllers
             // Get track, album, artists
             Track track = null;
             var tFilter = Builders<Track>.Filter.Eq("TrackId", id);
-            try
+            track = TCollection.Find(tFilter).FirstOrDefault();
+
+            if(track == null)
             {
-                track = TCollection.Find(tFilter).ToList()[0];
-            }
-            catch(Exception ex)
-            {
-                return new ObjectResult("Track not found") { StatusCode = 404 };
+                return new ObjectResult("Track Not Found") { StatusCode = 404 };
             }
 
             var albumFilter = Builders<Album>.Filter.Eq("AlbumId", track.Album.AlbumId);
             var album = AlbumCollection.Find(albumFilter).ToList()[0];
 
+            // Update artists
             List<Artist> artists = new List<Artist>();
             foreach (var a in track.TrackArtists)
             {
                 var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", a.ArtistId);
                 var artist = ArtistCollection.Find(artistFilter).ToList()[0];
-                artist.PlayCount++;
+                if (artist.PlayCounts == null)
+                {
+                    artist.PlayCounts = new List<UserStat>() { new UserStat() { Username = User.Identity.Name, Value = 1 } };
+                }
+                else 
+                { 
+                    var curPC = artist.PlayCounts.Where(x => x.Username == User.Identity.Name).FirstOrDefault();
+                    if (curPC != null)
+                    {
+                        artist.PlayCounts[artist.PlayCounts.IndexOf(curPC)].Value++;
+                    }
+                    else
+                    {
+                        artist.PlayCounts.Add(new UserStat() { Username = User.Identity.Name, Value = 1 });
+                    }
+                }
                 artists.Add(artist);
                 ArtistCollection.ReplaceOne(artistFilter, artist);
             }
 
-            // Update track, album, artist
-            track.PlayCount++;
-            album.PlayCount++;
+            // Update track
+            if (track.PlayCounts == null)
+            {
+                track.PlayCounts = new List<UserStat>() { new UserStat() { Username = User.Identity.Name, Value = 1 } };
+            }
+            else
+            {
+                var curTC = track.PlayCounts.Where(x => x.Username == User.Identity.Name).FirstOrDefault();
+                if (curTC != null)
+                {
+                    track.PlayCounts[track.PlayCounts.IndexOf(curTC)].Value++;
+                }
+                else
+                {
+                    track.PlayCounts.Add(new UserStat() { Username = User.Identity.Name, Value = 1 });
+                }
+            }
+
+            // Update album
+            if (album.PlayCounts == null)
+            {
+                album.PlayCounts = new List<UserStat>() { new UserStat() { Username = User.Identity.Name, Value = 1 } };
+            }
+            else
+            {
+                var curAC = album.PlayCounts.Where(x => x.Username == User.Identity.Name).FirstOrDefault();
+                if (curAC != null)
+                {
+                    album.PlayCounts[album.PlayCounts.IndexOf(curAC)].Value++;
+                }
+                else
+                {
+                    album.PlayCounts.Add(new UserStat() { Username = User.Identity.Name, Value = 1 });
+                }
+            }
             TCollection.ReplaceOne(tFilter, track);
             AlbumCollection.ReplaceOne(albumFilter, album);
 

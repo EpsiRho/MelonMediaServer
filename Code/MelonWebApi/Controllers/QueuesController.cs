@@ -34,6 +34,7 @@ namespace MelonWebApi.Controllers
             var queueDoc = new BsonDocument();
             PlayQueue queue = new PlayQueue();
             var userName = User.Identity.Name;
+
             queue._id = new MelonId(ObjectId.GenerateNewId());
             queue.QueueId = queue._id.ToString();
             queue.Name = name;
@@ -42,46 +43,47 @@ namespace MelonWebApi.Controllers
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
-            queue.Tracks = new List<Track>();
+            queue.Tracks = new List<ShortTrack>();
             queue.CurPosition = 0;
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x.QueueId, queue.QueueId);
+            List<Track> tracks = new List<Track>();
             foreach(var id in ids)
             {
                 var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, id);
                 var trackDoc = TCollection.Find(trackFilter).ToList()[0];
-                queue.Tracks.Add(trackDoc);
+                queue.Tracks.Add(new ShortTrack(trackDoc));
+                tracks.Add(trackDoc);
             }
 
-            var tracks = queue.Tracks;
             switch (shuffle)
             {
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByAlbum, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByAlbum, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByArtistRandom, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackFavorites, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackDiscovery, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false);
                     break;
             }
             
-            queue.Tracks = tracks;
+            queue.Tracks = tracks.Select(x=>new ShortTrack(x)).ToList();
             queue.OriginalTrackOrder = (from track in queue.Tracks
                                         select track.TrackId).ToList();
             QCollection.InsertOne(queue);
@@ -109,7 +111,7 @@ namespace MelonWebApi.Controllers
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
-            queue.Tracks = new List<Track>();
+            queue.Tracks = new List<ShortTrack>();
             queue.CurPosition = 0;
 
 
@@ -132,32 +134,30 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByAlbum, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByAlbum, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByArtistRandom, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackFavorites, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackDiscovery, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false);
                     break;
             }
 
-            foreach (var track in tracks)
-            {
-                queue.Tracks.Add(track);
-            }
+            queue.Tracks = tracks.Select(x => new ShortTrack(x)).ToList();
+
             queue.OriginalTrackOrder = (from track in queue.Tracks
                                         select track.TrackId).ToList();
             QCollection.InsertOne(queue);
@@ -185,7 +185,7 @@ namespace MelonWebApi.Controllers
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
-            queue.Tracks = new List<Track>();
+            queue.Tracks = new List<ShortTrack>();
             queue.CurPosition = 0;
 
 
@@ -208,32 +208,29 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByAlbum, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByAlbum, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByArtistRandom, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackFavorites, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackDiscovery, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false);
                     break;
             }
 
-            foreach (var track in tracks)
-            {
-                queue.Tracks.Add(track);
-            }
+            queue.Tracks = tracks.Select(x => new ShortTrack(x)).ToList();
             queue.OriginalTrackOrder = (from track in queue.Tracks
                                         select track.TrackId).ToList();
             QCollection.InsertOne(queue);
@@ -261,7 +258,7 @@ namespace MelonWebApi.Controllers
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
-            queue.Tracks = new List<Track>();
+            queue.Tracks = new List<ShortTrack>();
             queue.CurPosition = 0;
 
 
@@ -284,32 +281,29 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByAlbum, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByAlbum, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByArtistRandom, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackFavorites, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackDiscovery, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false);
                     break;
             }
 
-            foreach (var track in tracks)
-            {
-                queue.Tracks.Add(track);
-            }
+            queue.Tracks = tracks.Select(x => new ShortTrack(x)).ToList();
             queue.OriginalTrackOrder = (from track in queue.Tracks
                                         select track.TrackId).ToList();
             QCollection.InsertOne(queue);
@@ -378,6 +372,8 @@ namespace MelonWebApi.Controllers
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x.QueueId, id);
 
@@ -399,7 +395,21 @@ namespace MelonWebApi.Controllers
 
             var tracks = Queues[0].Tracks.Take(new Range(page * count, (page * count) + count));
 
-            return new ObjectResult(tracks) { StatusCode = 200 };
+            List<Track> fullTracks = TracksCollection.Find(Builders<Track>.Filter.In(x => x.TrackId, tracks.Select(x => x.TrackId))).ToList();
+
+            foreach (var track in fullTracks)
+            {
+                List<string> usernames =
+                    [
+                        User.Identity.Name,
+                        .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
+                    ];
+                try { track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+                try { track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+                try { track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+            }
+
+            return new ObjectResult(fullTracks) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("add-tracks")]
@@ -440,7 +450,7 @@ namespace MelonWebApi.Controllers
                 switch (position)
                 {
                     case "end":
-                        queue.Tracks.Add(track);
+                        queue.Tracks.Add(new ShortTrack(track));
                         queue.OriginalTrackOrder.Add(track.TrackId);
                         break;
                     case "front":
@@ -448,7 +458,7 @@ namespace MelonWebApi.Controllers
                         {
                             queue.CurPosition++;
                         }
-                        queue.Tracks.Insert(0, track);
+                        queue.Tracks.Insert(0, new ShortTrack(track));
                         queue.OriginalTrackOrder.Insert(0, track.TrackId);
                         break;
                     case "random":
@@ -457,7 +467,7 @@ namespace MelonWebApi.Controllers
                         {
                             queue.CurPosition++;
                         }
-                        queue.Tracks.Insert(randIdx, track);
+                        queue.Tracks.Insert(randIdx, new ShortTrack(track));
                         queue.OriginalTrackOrder.Insert(randIdx, track.TrackId);
                         break;
                     case "at":
@@ -465,7 +475,7 @@ namespace MelonWebApi.Controllers
                         {
                             queue.CurPosition++;
                         }
-                        queue.Tracks.Insert(place, track);
+                        queue.Tracks.Insert(place, new ShortTrack(track));
                         queue.OriginalTrackOrder.Insert(place, track.TrackId);
                         break;
                 }
@@ -675,6 +685,7 @@ namespace MelonWebApi.Controllers
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
             var userName = User.Identity.Name;
 
@@ -694,15 +705,18 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            List<Track> tracks = new List<Track>(queue.Tracks);
-            Track currentTrack = queue.Tracks[queue.CurPosition];
+
+            List<Track> tracks = TCollection.Find(Builders<Track>.Filter.In(x => x.TrackId, queue.Tracks.Select(x => x.TrackId))).ToList();
+            Track currentTrack = tracks.Where(x=>x.TrackId == queue.Tracks[queue.CurPosition].TrackId).FirstOrDefault();
             tracks.Remove(currentTrack);
 
             switch (shuffle)
             {
                 case "None":
                     tracks.Clear();
-                    foreach(var tid in queue.OriginalTrackOrder)
+                    queue.Tracks.Remove(queue.Tracks[queue.CurPosition]);
+                    List<ShortTrack> sTracks = new List<ShortTrack>();
+                    foreach (var tid in queue.OriginalTrackOrder)
                     {
                         var track = (from t in queue.Tracks
                                      where t.TrackId == tid
@@ -710,40 +724,41 @@ namespace MelonWebApi.Controllers
 
                         if (track != null)
                         {
-                            tracks.Add(track);
+                            sTracks.Add(track);
                         }
                     }
-                    break;
+                    queue.Tracks.Clear();
+                    queue.Tracks.Add(new ShortTrack(currentTrack));
+                    queue.Tracks.AddRange(sTracks);
+                    QCollection.ReplaceOne(qFilter, queue);
+                    return new ObjectResult("Tracks Reset") { StatusCode = 200 };
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrack, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByAlbum, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByAlbum, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByArtistRandom, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackFavorites, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, Melon.Types.ShuffleType.ByTrackDiscovery, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false);
                     break;
             }
 
             queue.Tracks.Clear();
-            queue.Tracks.Add(currentTrack);
+            queue.Tracks.Add(new ShortTrack(currentTrack));
             queue.CurPosition = 0;
-            foreach (var track in tracks)
-            {
-                queue.Tracks.Add(track);
-            }
+            queue.Tracks.AddRange(tracks.Select(x=> new ShortTrack(x)));
             QCollection.ReplaceOne(qFilter, queue);
 
             StreamManager.AlertQueueUpdate(queue.QueueId);
