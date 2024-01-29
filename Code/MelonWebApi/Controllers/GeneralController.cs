@@ -45,14 +45,23 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Track not found") { StatusCode = 404 };
             }
 
-            List<string> usernames =
-            [
-                User.Identity.Name,
-                .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x=>x.Username),
-            ];
-            try { track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-            try { track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();} catch (Exception) { }
-            try { track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList();} catch (Exception) { }
+            var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+            usernames.Add(User.Identity.Name);
+
+            if (track.PlayCounts != null)
+            {
+                track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+            }
+
+            if (track.SkipCounts != null)
+            {
+                track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+            }
+
+            if (track.Ratings != null)
+            {
+                track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+            }
 
             return new ObjectResult(track) { StatusCode = 200 };
         }
@@ -299,14 +308,24 @@ namespace MelonWebApi.Controllers
                 var track = TracksCollection.Find(trackFilter).FirstOrDefault();
                 if(track != null)
                 {
-                    List<string> usernames =
-                    [
-                        User.Identity.Name,
-                        .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
-                    ];
-                    try { track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (track.PlayCounts != null)
+                    {
+                        track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (track.SkipCounts != null)
+                    {
+                        track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (track.Ratings != null)
+                    {
+                        track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     tracks.Add(track);
                 }
             }
@@ -336,14 +355,24 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
             album.Tracks = null;
-            List<string> usernames =
-            [
-                User.Identity.Name,
-                .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
-            ];
-            try { album.PlayCounts = album.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-            try { album.SkipCounts = album.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-            try { album.Ratings = album.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+
+            var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+            usernames.Add(User.Identity.Name);
+
+            if (album.PlayCounts != null)
+            {
+                album.PlayCounts = album.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+            }
+
+            if (album.SkipCounts != null)
+            {
+                album.SkipCounts = album.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+            }
+
+            if (album.Ratings != null)
+            {
+                album.Ratings = album.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+            }
 
             return new ObjectResult(album) { StatusCode = 200 };
         }
@@ -646,14 +675,25 @@ namespace MelonWebApi.Controllers
                 {
                     var filter = Builders<Track>.Filter.Eq(x => x.TrackId, album.Tracks[(int)i].TrackId);
                     var fullTrack = TracksCollection.Find(filter).FirstOrDefault();
-                    List<string> usernames =
-                    [
-                        User.Identity.Name,
-                        .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
-                    ];
-                    try { fullTrack.PlayCounts = fullTrack.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { fullTrack.SkipCounts = fullTrack.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { fullTrack.Ratings = fullTrack.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (fullTrack.PlayCounts != null)
+                    {
+                        fullTrack.PlayCounts = fullTrack.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullTrack.SkipCounts != null)
+                    {
+                        fullTrack.SkipCounts = fullTrack.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullTrack.Ratings != null)
+                    {
+                        fullTrack.Ratings = fullTrack.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     tracks.Add(fullTrack);
                 }
                 catch (Exception)
@@ -763,14 +803,25 @@ namespace MelonWebApi.Controllers
                 {
                     var filter = Builders<Track>.Filter.Eq(x => x.TrackId, artist.Tracks[(int)i].TrackId);
                     var fullTrack = TracksCollection.Find(filter).FirstOrDefault();
-                    List<string> usernames =
-                    [
-                        User.Identity.Name,
-                        .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
-                    ];
-                    try { fullTrack.PlayCounts = fullTrack.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { fullTrack.SkipCounts = fullTrack.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { fullTrack.Ratings = fullTrack.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (fullTrack.PlayCounts != null)
+                    {
+                        fullTrack.PlayCounts = fullTrack.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullTrack.SkipCounts != null)
+                    {
+                        fullTrack.SkipCounts = fullTrack.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullTrack.Ratings != null)
+                    {
+                        fullTrack.Ratings = fullTrack.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     tracks.Add(fullTrack);
                 }
                 catch (Exception)
@@ -814,14 +865,25 @@ namespace MelonWebApi.Controllers
                     var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.Releases[(int)i].AlbumId);
                     var fullAlbum = AlbumCollection.Find(filter).FirstOrDefault();
                     fullAlbum.Tracks = null;
-                    List<string> usernames =
-                    [
-                        User.Identity.Name,
-                        .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
-                    ];
-                    try { fullAlbum.PlayCounts = fullAlbum.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { fullAlbum.SkipCounts = fullAlbum.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { fullAlbum.Ratings = fullAlbum.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (fullAlbum.PlayCounts != null)
+                    {
+                        fullAlbum.PlayCounts = fullAlbum.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullAlbum.SkipCounts != null)
+                    {
+                        fullAlbum.SkipCounts = fullAlbum.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullAlbum.Ratings != null)
+                    {
+                        fullAlbum.Ratings = fullAlbum.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     albums.Add(fullAlbum);
                 }
                 catch (Exception)
@@ -864,14 +926,25 @@ namespace MelonWebApi.Controllers
                     var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.SeenOn[(int)i].AlbumId);
                     var fullAlbum = AlbumCollection.Find(filter).FirstOrDefault();
                     fullAlbum.Tracks = null;
-                    List<string> usernames =
-                    [
-                        User.Identity.Name,
-                        .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
-                    ];
-                    try { fullAlbum.PlayCounts = fullAlbum.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { fullAlbum.SkipCounts = fullAlbum.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { fullAlbum.Ratings = fullAlbum.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (fullAlbum.PlayCounts != null)
+                    {
+                        fullAlbum.PlayCounts = fullAlbum.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullAlbum.SkipCounts != null)
+                    {
+                        fullAlbum.SkipCounts = fullAlbum.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullAlbum.Ratings != null)
+                    {
+                        fullAlbum.Ratings = fullAlbum.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     albums.Add(fullAlbum);
                 }
                 catch (Exception)
@@ -901,14 +974,25 @@ namespace MelonWebApi.Controllers
                     artist.Releases = null;
                     artist.SeenOn = null;
                     artist.Tracks = null;
-                    List<string> usernames =
-                    [
-                        User.Identity.Name,
-                        .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
-                    ];
-                    try { artist.PlayCounts = artist.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { artist.SkipCounts = artist.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                    try { artist.Ratings = artist.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (artist.PlayCounts != null)
+                    {
+                        artist.PlayCounts = artist.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (artist.SkipCounts != null)
+                    {
+                        artist.SkipCounts = artist.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (artist.Ratings != null)
+                    {
+                        artist.Ratings = artist.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     artists.Add(artist);
                 }
             }
