@@ -9,6 +9,7 @@ namespace Melon.Models
         public MelonId _id { get; set; }
         public string TrackId { get; set; }
         public ShortAlbum Album { get; set; }
+        public string AlbumName { get; set; }
         public int Position { get; set; }
         public int Disc { get; set; }
         public string Format { get; set; }
@@ -33,6 +34,7 @@ namespace Melon.Models
         public DateTime ReleaseDate { get; set; }
         public List<string> TrackGenres { get; set; }
         public List<ShortArtist> TrackArtists { get; set; }
+        public List<ShortArtist> TrackArtistNames { get; set; }
     }
 }
 

@@ -24,7 +24,7 @@ namespace Melon.LocalClasses
     /// </summary>
     public static class MelonAPI
     {
-        public static List<ShortTrack> ShuffleTracks(List<ShortTrack> tracks, ShuffleType type, bool FullRandom = false)
+        public static List<Track> ShuffleTracks(List<Track> tracks, ShuffleType type, bool FullRandom = false)
         {
             Random rng = new Random();
             // Shuffle the list.
@@ -37,7 +37,7 @@ namespace Melon.LocalClasses
                     {
                         n--;
                         int k = rng.Next(n + 1);
-                        ShortTrack value = tracks[k];
+                        Track value = tracks[k];
                         tracks[k] = tracks[n];
                         tracks[n] = value;
                     }
@@ -64,7 +64,7 @@ namespace Melon.LocalClasses
 
                 // Shuffle By Album
                 case ShuffleType.ByAlbum:
-                    var albumDic = new Dictionary<string, List<ShortTrack>>();
+                    var albumDic = new Dictionary<string, List<Track>>();
 
                     foreach (var track in tracks)
                     {
@@ -87,13 +87,13 @@ namespace Melon.LocalClasses
                         }
                         else
                         {
-                            albumDic.Add(track.Album.AlbumId, new List<ShortTrack>() { track });
+                            albumDic.Add(track.Album.AlbumId, new List<Track>() { track });
                         }
                     }
 
                     albumDic = albumDic.OrderBy(x => rng.Next()).ToDictionary(item => item.Key, item => item.Value);
 
-                    var newTracks = new List<ShortTrack>();
+                    var newTracks = new List<Track>();
                     foreach(var album in albumDic)
                     {
                         var tks = album.Value;
@@ -104,7 +104,7 @@ namespace Melon.LocalClasses
                             {
                                 number--;
                                 int k = rng.Next(number + 1);
-                                ShortTrack value = tks[k];
+                                Track value = tks[k];
                                 tks[k] = tks[number];
                                 tks[number] = value;
                             }
@@ -120,7 +120,7 @@ namespace Melon.LocalClasses
 
                 // Shuffle By Artist
                 case ShuffleType.ByArtistRandom:
-                    var artistDic = new Dictionary<string, List<ShortTrack>>();
+                    var artistDic = new Dictionary<string, List<Track>>();
 
                     foreach (var track in tracks)
                     {
@@ -130,13 +130,13 @@ namespace Melon.LocalClasses
                         }
                         else
                         {
-                            artistDic.Add(track.TrackArtists[0].ArtistId, new List<ShortTrack>() { track });
+                            artistDic.Add(track.TrackArtists[0].ArtistId, new List<Track>() { track });
                         }
                     }
 
                     artistDic = artistDic.OrderBy(x => rng.Next()).ToDictionary(item => item.Key, item => item.Value);
 
-                    var nTracks = new List<ShortTrack>();
+                    var nTracks = new List<Track>();
                     foreach (var album in artistDic)
                     {
                         var tks = album.Value;
@@ -145,7 +145,7 @@ namespace Melon.LocalClasses
                         {
                             nm--;
                             int k = rng.Next(nm + 1);
-                            ShortTrack value = tks[k];
+                            Track value = tks[k];
                             tks[k] = tks[nm];
                             tks[nm] = value;
                         }
@@ -158,18 +158,18 @@ namespace Melon.LocalClasses
                     var mongoDatabase = mongoClient.GetDatabase("Melon");
                     var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-                    List<Track> fullTracks = new List<Track>();
-                    foreach (var track in tracks)
-                    {
-                        var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, track.TrackId);
-                        var t = TracksCollection.Find(trackFilter).FirstOrDefault();
-                        fullTracks.Add(t);
-                    }
+                    //List<Track> fullTracks = new List<Track>();
+                    //foreach (var track in tracks)
+                    //{
+                    //    var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, track.TrackId);
+                    //    var t = TracksCollection.Find(trackFilter).FirstOrDefault();
+                    //    fullTracks.Add(t);
+                    //}
 
                     Random rand = new Random();
 
                     // Sort with a bias towards PlayCount and Rating
-                    fullTracks = fullTracks.OrderByDescending(x => x.PlayCount + x.Rating + rand.NextDouble()).ToList();
+                    var fullTracks = tracks.OrderByDescending(x => x.PlayCount + x.Rating + rand.NextDouble()).ToList();
 
                     //int num = fullTracks.Count;
                     //for (int i = 0; i < num; i++)
@@ -180,10 +180,10 @@ namespace Melon.LocalClasses
                     //    fullTracks[r] = temp;
                     //}
 
-                    List<ShortTrack> finalTracks = new List<ShortTrack>();
+                    List<Track> finalTracks = new List<Track>();
                     foreach(var track in fullTracks)
                     {
-                        finalTracks.Add(new ShortTrack(track));
+                        finalTracks.Add(track);
                     }
 
                     return finalTracks;
@@ -214,10 +214,10 @@ namespace Melon.LocalClasses
                     //    fullTracks[r] = temp;
                     //}
 
-                    List<ShortTrack> outTracks = new List<ShortTrack>();
+                    List<Track> outTracks = new List<Track>();
                     foreach (var track in fTracks)
                     {
-                        outTracks.Add(new ShortTrack(track));
+                        outTracks.Add(track);
                     }
 
                     return outTracks;

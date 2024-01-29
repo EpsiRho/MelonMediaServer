@@ -90,7 +90,9 @@ namespace MelonWebApi.Controllers
                     return new ObjectResult("Album Not Found") { StatusCode = 404 };
                 }
                 newAlbum.Tracks.Add(new ShortTrack(foundTrack));
-                newAlbum.Tracks = newAlbum.Tracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).ToList();
+                var tFilter = Builders<Track>.Filter.In(a => a.TrackId, newAlbum.Tracks.Select(x => x.TrackId));
+                var fullTracks = TracksCollection.Find(tFilter).ToList();
+                newAlbum.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x=>new ShortTrack() { _id = x._id, TrackId = x.TrackId, TrackName = x.TrackName}).ToList();
                 newShortAlbum = new ShortAlbum(newAlbum);
                 AlbumsCollection.ReplaceOne(aFilter, newAlbum);
 
@@ -193,16 +195,7 @@ namespace MelonWebApi.Controllers
             {
                 _id = foundTrack._id,
                 TrackId = foundTrack.TrackId,
-                TrackName = trackName,
-                Disc = Convert.ToInt32(disc),
-                ReleaseDate = DateTime.Parse(releaseDate).ToUniversalTime(),
-                Album = newShortAlbum,
-                TrackArtists = newShortArtists,
-                Position = Convert.ToInt32(position),
-                ServerURL = foundTrack.ServerURL,
-                Duration = foundTrack.Duration,
-                Path = foundTrack.Path,
-                TrackArtCount = foundTrack.TrackArtCount
+                TrackName = trackName
             };
 
             // Replace objects
@@ -457,12 +450,7 @@ namespace MelonWebApi.Controllers
             var newShortAlbum = new ShortAlbum()
             {
                 _id = foundAlbum._id,
-                AlbumId = foundAlbum.AlbumId,
-                AlbumArtists = newAlbumShortArtists,
-                ContributingArtists = newConShortArtists,
-                AlbumName = albumName,
-                ReleaseDate = DateTime.Parse(releaseDate),
-                ReleaseType = releaseType
+                AlbumId = foundAlbum.AlbumId
             };
 
             if (trackIds != null)
@@ -560,7 +548,9 @@ namespace MelonWebApi.Controllers
             ArtistsCollection.UpdateMany(conArtistFilter, conArtistUpdate);
 
             // Update File
-            foreach (var track in newAlbum.Tracks)
+            var ftFilter = Builders<Track>.Filter.In(a => a.TrackId, newAlbum.Tracks.Select(x => x.TrackId));
+            var fullTracks = TracksCollection.Find(ftFilter).ToList();
+            foreach (var track in fullTracks)
             {
                 var fileMetadata = new ATL.Track(track.Path);
 
@@ -1045,7 +1035,9 @@ namespace MelonWebApi.Controllers
             AlbumsCollection.UpdateMany(conArtistFilter, conArtistUpdate);
 
             // Update File
-            foreach (var track in newArtist.Tracks)
+            var ftFilter = Builders<Track>.Filter.In(a => a.TrackId, newArtist.Tracks.Select(x => x.TrackId));
+            var fullTracks = TracksCollection.Find(ftFilter).ToList();
+            foreach (var track in fullTracks)
             {
                 var fileMetadata = new ATL.Track(track.Path);
                 string artistStr = fileMetadata.Artist;
@@ -1072,7 +1064,9 @@ namespace MelonWebApi.Controllers
 
             foreach (var item in missingReleases)
             {
-                foreach (var track in item.Tracks)
+                var fFilter = Builders<Track>.Filter.In(a => a.TrackId, item.Tracks.Select(x => x.TrackId));
+                var fTracks = TracksCollection.Find(fFilter).ToList();
+                foreach (var track in fTracks)
                 {
                     var fileMetadata = new ATL.Track(track.Path);
                     string artistStr = fileMetadata.AlbumArtist;
@@ -1086,7 +1080,9 @@ namespace MelonWebApi.Controllers
 
             foreach (var item in newFullReleases)
             {
-                foreach (var track in item.Tracks)
+                var fFilter = Builders<Track>.Filter.In(a => a.TrackId, item.Tracks.Select(x => x.TrackId));
+                var fTracks = TracksCollection.Find(fFilter).ToList();
+                foreach (var track in fTracks)
                 {
                     var fileMetadata = new ATL.Track(track.Path);
                     string artistStr = fileMetadata.AlbumArtist;
