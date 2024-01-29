@@ -287,7 +287,7 @@ namespace Melon.LocalClasses
                     List<string> trackArtists = SplitArtists(fileMetadata.Artist);
 
                     // Split Genres
-                    List<string> trackGenres = SplitArtists(fileMetadata.Genre);
+                    List<string> trackGenres = SplitGenres(fileMetadata.Genre);
 
                     // Conform Genres
                     // https://github.com/EpsiRho/MelonMediaServer/issues/12
@@ -362,25 +362,25 @@ namespace Melon.LocalClasses
                             }
                         }
 
-                        debug.Stop();
-                        DebugLines.Add($"Create or update artist\t{debug.Elapsed}");
-                        debug.Restart();
+                        //debug.Stop();
+                        //DebugLines.Add($"Create or update artist\t{debug.Elapsed}");
+                        //debug.Restart();
 
                         CreateOrUpdateAlbum(ref albumDoc, trackDoc, AlbumId, fileMetadata, albumArtists,
                                                               AlbumArtistIds, trackArtists, TrackArtistIds, trackGenres, sTrack,
                                                               AlbumCollection);
 
-                        debug.Stop();
-                        DebugLines.Add($"Create or update album\t{debug.Elapsed}");
-                        debug.Restart();
+                        //debug.Stop();
+                        //DebugLines.Add($"Create or update album\t{debug.Elapsed}");
+                        //debug.Restart();
 
                         CreateOrUpdateTrack(TrackId, fileMetadata, sAlbum, albumArtists, trackArtists,
                                                                AlbumArtistIds, TrackArtistIds, count, trackGenres, trackDoc,
                                                                TracksCollection, AlbumCollection, ArtistCollection);
 
-                        debug.Stop();
-                        DebugLines.Add($"Create or update track\t{debug.Elapsed}");
-                        debug.Restart();
+                        //debug.Stop();
+                        //DebugLines.Add($"Create or update track\t{debug.Elapsed}");
+                        //debug.Restart();
 
                         count++;
                     }
@@ -530,10 +530,11 @@ namespace Melon.LocalClasses
                 AlbumId = AlbumId.ToString(),
                 AlbumName = name,
                 ContributingArtists = new List<ShortArtist>(),
-                AlbumArtists = new List<ShortArtist>()
+                AlbumArtists = new List<ShortArtist>(),
+                ReleaseType = fileMetadata.AdditionalFields.TryGetValue("RELEASETYPE", out var rt) ? rt : "",
+                ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
+
             };
-            try { sAlbum.ReleaseType = fileMetadata.AdditionalFields["RELEASETYPE"]; } catch (Exception) { sAlbum.ReleaseType = ""; }
-            try { sAlbum.ReleaseDate = fileMetadata.Date.Value; } catch (Exception) { }
 
             if (albumDoc != null)
             {
@@ -585,9 +586,10 @@ namespace Melon.LocalClasses
                 TrackArtCount = fileMetadata.EmbeddedPictures.Count(),
                 TrackName = fileMetadata.Title,
                 Path = fileMetadata.Path,
-                TrackArtists = new List<ShortArtist>()
+                TrackArtists = new List<ShortArtist>(),
+                ReleaseDate = fileMetadata.Date ?? DateTime.MinValue
             };
-            try { sTrack.ReleaseDate = fileMetadata.Date.Value; } catch (Exception) { }
+
             for (int i = 0; i < trackArtists.Count(); i++)
             {
                 sTrack.TrackArtists.Add(new ShortArtist() { _id = TrackArtistIds[i], ArtistId = TrackArtistIds[i].ToString(), ArtistName = trackArtists[i] });
@@ -682,6 +684,7 @@ namespace Melon.LocalClasses
                 }
 
                 // Update the artist
+                
                 ArtistCollection.ReplaceOne(artistFilter, artistDoc);
                 return (artistDoc, false);
             }
