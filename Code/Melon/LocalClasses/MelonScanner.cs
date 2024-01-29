@@ -788,6 +788,8 @@ namespace Melon.LocalClasses
                 TrackGenres = trackGenres ?? new List<string>(),
                 ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
                 LyricsPath = "",
+                nextTrack = "",
+                ServerURL = ""
             };
 
             // Check if any of the found lyric files match with the new track
