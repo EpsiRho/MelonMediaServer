@@ -24,7 +24,7 @@ namespace Melon.LocalClasses
     /// </summary>
     public static class MelonAPI
     {
-        public static List<Track> ShuffleTracks(List<Track> tracks, string Username, ShuffleType type, bool FullRandom = false)
+        public static List<Track> ShuffleTracks(List<Track> tracks, string Username, ShuffleType type, bool FullRandom = false, bool enableTrackLinks = true)
         {
             Random rng = new Random();
             // Shuffle the list.
@@ -48,7 +48,7 @@ namespace Melon.LocalClasses
                         for (int l = 0; l < 5; l++)
                         {
                             var count = tracks.Count();
-                            for (int i = 0; i < tracks.Count - 1; i++)
+                            for (int i = 0; i < count - 1; i++)
                             {
                                 if (tracks[i].TrackArtists.Contains(tracks[i + 1].TrackArtists[0]) || tracks[i].Album.AlbumName == tracks[i + 1].Album.AlbumName)
                                 {
@@ -60,6 +60,29 @@ namespace Melon.LocalClasses
                             }
                         }
                     }
+
+                    if (!enableTrackLinks)
+                    {
+                        return tracks;
+                    }
+                    // Find track links and connect them
+                    for (int i = 0; i < tracks.Count() - 1; i++)
+                    {
+                        if (tracks[i].nextTrack != "")
+                        {
+                            for (int j = 0; j < tracks.Count(); j++)
+                            {
+                                if (tracks[j].TrackId == tracks[i].nextTrack)
+                                {
+                                    var temp = tracks[i+1];
+                                    tracks[i + 1] = tracks[j];
+                                    tracks[j] = temp;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
                     return tracks;
 
                 // Shuffle By Album
