@@ -698,5 +698,128 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult(albums) { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("rate-track")]
+        public ObjectResult RateTrack(string id, long rating)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            // Get track
+            Track track = null;
+            var tFilter = Builders<Track>.Filter.Eq("TrackId", id);
+            track = TCollection.Find(tFilter).FirstOrDefault();
+
+            if (track == null)
+            {
+                return new ObjectResult("Track Not Found") { StatusCode = 404 };
+            }
+
+            // Update track
+            if (track.Ratings == null)
+            {
+                track.Ratings = new List<UserStat>() { new UserStat() { Username = User.Identity.Name, Value = rating } };
+            }
+            else
+            {
+                var curRating = track.Ratings.Where(x => x.Username == User.Identity.Name).FirstOrDefault();
+                if (curRating != null)
+                {
+                    track.Ratings[track.Ratings.IndexOf(curRating)].Value = rating;
+                }
+                else
+                {
+                    track.Ratings.Add(new UserStat() { Username = User.Identity.Name, Value = rating });
+                }
+            }
+
+            TCollection.ReplaceOne(tFilter, track);
+
+            return new ObjectResult("Track Rated") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("rate-album")]
+        public ObjectResult RateAlbum(string id, long rating)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var ACollection = mongoDatabase.GetCollection<Album>("Albums");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            // Get track
+            Album album = null;
+            var aFilter = Builders<Album>.Filter.Eq("AlbumId", id);
+            album = ACollection.Find(aFilter).FirstOrDefault();
+
+            if (album == null)
+            {
+                return new ObjectResult("Album Not Found") { StatusCode = 404 };
+            }
+
+            // Update track
+            if (album.Ratings == null)
+            {
+                album.Ratings = new List<UserStat>() { new UserStat() { Username = User.Identity.Name, Value = rating } };
+            }
+            else
+            {
+                var curRating = album.Ratings.Where(x => x.Username == User.Identity.Name).FirstOrDefault();
+                if (curRating != null)
+                {
+                    album.Ratings[album.Ratings.IndexOf(curRating)].Value = rating;
+                }
+                else
+                {
+                    album.Ratings.Add(new UserStat() { Username = User.Identity.Name, Value = rating });
+                }
+            }
+
+            ACollection.ReplaceOne(aFilter, album);
+
+            return new ObjectResult("Album Rated") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("rate-artist")]
+        public ObjectResult RateArtist(string id, long rating)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var ACollection = mongoDatabase.GetCollection<Artist>("Artists");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+
+            // Get track
+            Artist artist = null;
+            var aFilter = Builders<Artist>.Filter.Eq("ArtistId", id);
+            artist = ACollection.Find(aFilter).FirstOrDefault();
+
+            if (artist == null)
+            {
+                return new ObjectResult("Artist Not Found") { StatusCode = 404 };
+            }
+
+            // Update track
+            if (artist.Ratings == null)
+            {
+                artist.Ratings = new List<UserStat>() { new UserStat() { Username = User.Identity.Name, Value = rating } };
+            }
+            else
+            {
+                var curRating = artist.Ratings.Where(x => x.Username == User.Identity.Name).FirstOrDefault();
+                if (curRating != null)
+                {
+                    artist.Ratings[artist.Ratings.IndexOf(curRating)].Value = rating;
+                }
+                else
+                {
+                    artist.Ratings.Add(new UserStat() { Username = User.Identity.Name, Value = rating });
+                }
+            }
+
+            ACollection.ReplaceOne(aFilter, artist);
+
+            return new ObjectResult("Artist Rated") { StatusCode = 200 };
+        }
     }
 }
