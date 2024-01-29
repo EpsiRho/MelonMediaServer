@@ -14,8 +14,9 @@ namespace Melon.Models
         public string Publisher { get; set; }
         public string ReleaseStatus { get; set; }
         public string ReleaseType { get; set; }
-        public long PlayCount { get; set; }
-        public float Rating { get; set; }
+        public List<UserStat> PlayCounts { get; set; }
+        public List<UserStat> SkipCounts { get; set; }
+        public List<UserStat> Ratings { get; set; }
         public string ServerURL { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime ReleaseDate { get; set; }

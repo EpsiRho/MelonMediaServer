@@ -13,7 +13,7 @@ namespace Melon.Models
         public List<string> Viewers { get; set; }
         public bool PublicViewing { get; set; }
         public bool PublicEditing { get; set; }
-        public List<Track> Tracks { get; set; }
+        public List<ShortTrack> Tracks { get; set; }
         public List<string> OriginalTrackOrder { get; set; }
     }
 }

@@ -32,6 +32,7 @@ namespace MelonWebApi.Controllers
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             var trackFilter = Builders<Track>.Filter.Eq("TrackId", id);
 
@@ -42,6 +43,24 @@ namespace MelonWebApi.Controllers
             if(track == null)
             {
                 return new ObjectResult("Track not found") { StatusCode = 404 };
+            }
+
+            var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+            usernames.Add(User.Identity.Name);
+
+            if (track.PlayCounts != null)
+            {
+                track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+            }
+
+            if (track.SkipCounts != null)
+            {
+                track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+            }
+
+            if (track.Ratings != null)
+            {
+                track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
             }
 
             return new ObjectResult(track) { StatusCode = 200 };
@@ -172,7 +191,7 @@ namespace MelonWebApi.Controllers
                 Format = foundTrack.Format,
                 ISRC = foundTrack.ISRC,
                 MusicBrainzID = foundTrack.MusicBrainzID,
-                Rating = foundTrack.Rating,
+                Ratings = foundTrack.Ratings,
                 ReleaseDate = DateTime.Parse(releaseDate).ToUniversalTime(),
                 SampleRate = foundTrack.SampleRate,
                 LyricsPath = foundTrack.LyricsPath,
@@ -186,8 +205,8 @@ namespace MelonWebApi.Controllers
                 DateAdded = foundTrack.DateAdded,
                 LastModified = foundTrack.LastModified,
                 Path = foundTrack.Path,
-                PlayCount = foundTrack.PlayCount,
-                SkipCount = foundTrack.SkipCount,
+                PlayCounts = foundTrack.PlayCounts,
+                SkipCounts = foundTrack.SkipCounts,
                 TrackArtCount = foundTrack.TrackArtCount
             };
 
@@ -280,6 +299,7 @@ namespace MelonWebApi.Controllers
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             List<Track> tracks = new List<Track>();
             foreach(var id in ids)
@@ -288,6 +308,24 @@ namespace MelonWebApi.Controllers
                 var track = TracksCollection.Find(trackFilter).FirstOrDefault();
                 if(track != null)
                 {
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (track.PlayCounts != null)
+                    {
+                        track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (track.SkipCounts != null)
+                    {
+                        track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (track.Ratings != null)
+                    {
+                        track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     tracks.Add(track);
                 }
             }
@@ -304,6 +342,7 @@ namespace MelonWebApi.Controllers
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             var albumFilter = Builders<Album>.Filter.Eq("AlbumId", id);
 
@@ -316,6 +355,24 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
             album.Tracks = null;
+
+            var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+            usernames.Add(User.Identity.Name);
+
+            if (album.PlayCounts != null)
+            {
+                album.PlayCounts = album.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+            }
+
+            if (album.SkipCounts != null)
+            {
+                album.SkipCounts = album.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+            }
+
+            if (album.Ratings != null)
+            {
+                album.Ratings = album.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+            }
 
             return new ObjectResult(album) { StatusCode = 200 };
         }
@@ -517,12 +574,13 @@ namespace MelonWebApi.Controllers
                 AlbumArtPaths = foundAlbum.AlbumArtPaths,
                 AlbumName = albumName,
                 ContributingArtists = newConShortArtists,
-                PlayCount = foundAlbum.PlayCount,
+                PlayCounts = foundAlbum.PlayCounts,
                 DateAdded = foundAlbum.DateAdded,
+                SkipCounts = foundAlbum.SkipCounts,
                 ReleaseDate = DateTime.Parse(releaseDate).ToUniversalTime(),
                 ReleaseStatus = releaseStatus,
                 ReleaseType = releaseType,
-                Rating = foundAlbum.Rating,
+                Ratings = foundAlbum.Ratings,
                 Bio = bio,
                 Publisher = publisher,
                 ServerURL = foundAlbum.ServerURL,
@@ -595,11 +653,10 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
             }
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             var albumFilter = Builders<Album>.Filter.Eq("AlbumId", id);
 
@@ -618,6 +675,25 @@ namespace MelonWebApi.Controllers
                 {
                     var filter = Builders<Track>.Filter.Eq(x => x.TrackId, album.Tracks[(int)i].TrackId);
                     var fullTrack = TracksCollection.Find(filter).FirstOrDefault();
+
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (fullTrack.PlayCounts != null)
+                    {
+                        fullTrack.PlayCounts = fullTrack.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullTrack.SkipCounts != null)
+                    {
+                        fullTrack.SkipCounts = fullTrack.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullTrack.Ratings != null)
+                    {
+                        fullTrack.Ratings = fullTrack.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     tracks.Add(fullTrack);
                 }
                 catch (Exception)
@@ -633,10 +709,9 @@ namespace MelonWebApi.Controllers
         public ObjectResult GetAlbums([FromQuery] string[] ids)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             List<Album> albums = new List<Album>();
             foreach (var id in ids)
@@ -646,6 +721,14 @@ namespace MelonWebApi.Controllers
                 if (album != null)
                 {
                     album.Tracks = null;
+                    List<string> usernames =
+                    [
+                        User.Identity.Name,
+                        .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
+                    ];
+                    try { album.PlayCounts = album.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+                    try { album.SkipCounts = album.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+                    try { album.Ratings = album.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
                     albums.Add(album);
                 }
             }
@@ -660,13 +743,11 @@ namespace MelonWebApi.Controllers
         public ObjectResult GetArtist(string id)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", id);
-
             var ArtistDocs = ArtistCollection.Find(artistFilter)
                                             .ToList();
 
@@ -678,6 +759,14 @@ namespace MelonWebApi.Controllers
             artist.Releases = null;
             artist.SeenOn = null;
             artist.Tracks = null;
+            List<string> usernames =
+            [
+                User.Identity.Name,
+                .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
+            ];
+            try { artist.PlayCounts = artist.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+            try { artist.SkipCounts = artist.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+            try { artist.Ratings = artist.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
 
             return new ObjectResult(artist) { StatusCode = 200 };
         }
@@ -691,11 +780,10 @@ namespace MelonWebApi.Controllers
             }
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             var artistFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, id);
 
@@ -715,6 +803,25 @@ namespace MelonWebApi.Controllers
                 {
                     var filter = Builders<Track>.Filter.Eq(x => x.TrackId, artist.Tracks[(int)i].TrackId);
                     var fullTrack = TracksCollection.Find(filter).FirstOrDefault();
+
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (fullTrack.PlayCounts != null)
+                    {
+                        fullTrack.PlayCounts = fullTrack.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullTrack.SkipCounts != null)
+                    {
+                        fullTrack.SkipCounts = fullTrack.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullTrack.Ratings != null)
+                    {
+                        fullTrack.Ratings = fullTrack.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     tracks.Add(fullTrack);
                 }
                 catch (Exception)
@@ -734,11 +841,10 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
             }
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             var artistFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, id);
 
@@ -759,6 +865,25 @@ namespace MelonWebApi.Controllers
                     var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.Releases[(int)i].AlbumId);
                     var fullAlbum = AlbumCollection.Find(filter).FirstOrDefault();
                     fullAlbum.Tracks = null;
+
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (fullAlbum.PlayCounts != null)
+                    {
+                        fullAlbum.PlayCounts = fullAlbum.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullAlbum.SkipCounts != null)
+                    {
+                        fullAlbum.SkipCounts = fullAlbum.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullAlbum.Ratings != null)
+                    {
+                        fullAlbum.Ratings = fullAlbum.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     albums.Add(fullAlbum);
                 }
                 catch (Exception)
@@ -778,11 +903,10 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
             }
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             var artistFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, id);
 
@@ -802,6 +926,25 @@ namespace MelonWebApi.Controllers
                     var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.SeenOn[(int)i].AlbumId);
                     var fullAlbum = AlbumCollection.Find(filter).FirstOrDefault();
                     fullAlbum.Tracks = null;
+
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (fullAlbum.PlayCounts != null)
+                    {
+                        fullAlbum.PlayCounts = fullAlbum.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullAlbum.SkipCounts != null)
+                    {
+                        fullAlbum.SkipCounts = fullAlbum.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (fullAlbum.Ratings != null)
+                    {
+                        fullAlbum.Ratings = fullAlbum.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     albums.Add(fullAlbum);
                 }
                 catch (Exception)
@@ -817,10 +960,9 @@ namespace MelonWebApi.Controllers
         public ObjectResult GetArtists([FromQuery] string[] ids)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             List<Artist> artists = new List<Artist>();
             foreach (var id in ids)
@@ -832,6 +974,25 @@ namespace MelonWebApi.Controllers
                     artist.Releases = null;
                     artist.SeenOn = null;
                     artist.Tracks = null;
+
+                    var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+                    usernames.Add(User.Identity.Name);
+
+                    if (artist.PlayCounts != null)
+                    {
+                        artist.PlayCounts = artist.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (artist.SkipCounts != null)
+                    {
+                        artist.SkipCounts = artist.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
+                    if (artist.Ratings != null)
+                    {
+                        artist.Ratings = artist.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    }
+
                     artists.Add(artist);
                 }
             }
@@ -1001,8 +1162,9 @@ namespace MelonWebApi.Controllers
                 ArtistId = foundArtist.ArtistId,
                 ArtistName = artistName,
                 Bio = bio,
-                PlayCount = foundArtist.PlayCount,
-                Rating = foundArtist.Rating,
+                PlayCounts = foundArtist.PlayCounts,
+                Ratings = foundArtist.Ratings,
+                SkipCounts = new List<UserStat>(),
                 ServerURL = foundArtist.ServerURL,
                 ArtistArtPaths = foundArtist.ArtistArtPaths,
                 ArtistBannerPaths = foundArtist.ArtistBannerPaths,
