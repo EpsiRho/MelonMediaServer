@@ -68,7 +68,7 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPatch("track/update")]
         public ObjectResult UpdateTrack(string trackId, string disc = "", string isrc = "", string releaseDate = "", string position = "",
-                                        [FromQuery] string[] trackGenres = null, string trackName = "", string year = "",
+                                        [FromQuery] string[] trackGenres = null, string trackName = "", string year = "", string nextTrack = "",
                                         string albumId = "", [FromQuery] string[] artistIds = null)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -90,6 +90,7 @@ namespace MelonWebApi.Controllers
             position = position == "" ? foundTrack.Position.ToString() : position;
             trackName = trackName == "" ? foundTrack.TrackName.ToString() : trackName;
             year = year == "" ? foundTrack.Year : year;
+            nextTrack = nextTrack == "" ? foundTrack.nextTrack : nextTrack;
 
             if (trackGenres == null)
             {
@@ -207,7 +208,8 @@ namespace MelonWebApi.Controllers
                 Path = foundTrack.Path,
                 PlayCounts = foundTrack.PlayCounts,
                 SkipCounts = foundTrack.SkipCounts,
-                TrackArtCount = foundTrack.TrackArtCount
+                TrackArtCount = foundTrack.TrackArtCount,
+                nextTrack = nextTrack,
             };
 
             var newShortTrack = new ShortTrack()
