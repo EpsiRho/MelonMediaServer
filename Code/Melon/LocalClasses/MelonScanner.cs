@@ -1015,11 +1015,14 @@ namespace Melon.LocalClasses
             switch (input)
             {
                 case "Yes":
-                    Thread scanThread = new Thread(MelonScanner.StartScan);
-                    scanThread.Start(false);
-                    DisplayManager.UIExtensions.Add(() => { Console.WriteLine("Library scan started!".Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
-                    //DisplayManager.MenuOptions.Remove("Library Scanner");
-                    //DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
+                    if (!Scanning)
+                    {
+                        Thread scanThread = new Thread(MelonScanner.StartScan);
+                        scanThread.Start(false);
+                        DisplayManager.UIExtensions.Add(() => { Console.WriteLine("Library scan started!".Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
+                        //DisplayManager.MenuOptions.Remove("Library Scanner");
+                        //DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
+                    }
                     ScanProgressView();
                     break;
                 case "No":
@@ -1054,11 +1057,14 @@ namespace Melon.LocalClasses
             switch (input)
             {
                 case "Yes":
-                    Thread scanThread = new Thread(MelonScanner.StartScan);
-                    scanThread.Start(true);
-                    DisplayManager.UIExtensions.Add(() => { Console.WriteLine("Library scan started!".Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
-                    //DisplayManager.MenuOptions.Remove("Library Scanner");
-                    //DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
+                    if (Scanning)
+                    {
+                        Thread scanThread = new Thread(MelonScanner.StartScan);
+                        scanThread.Start(true);
+                        DisplayManager.UIExtensions.Add(() => { Console.WriteLine("Library scan started!".Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
+                        //DisplayManager.MenuOptions.Remove("Library Scanner");
+                        //DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
+                    }
                     ScanProgressView();
                     break;
                 case "No":
@@ -1092,7 +1098,7 @@ namespace Melon.LocalClasses
                     }
                     try
                     {
-                        string controls = $"Ctrls: ";
+                        string controls = $"Ctrls: Esc(Back)";
                         int conX = Console.WindowWidth - controls.Length - 2;
                         Console.CursorLeft = conX;
                         Console.CursorTop = sTop;
@@ -1140,7 +1146,15 @@ namespace Melon.LocalClasses
 
             while (!endDisplay)
             {
-
+                if (Console.KeyAvailable)
+                {
+                    var k = Console.ReadKey();
+                    if(k.Key == ConsoleKey.Escape)
+                    {
+                        endDisplay = true;
+                        return;
+                    }
+                }
             }
 
         }
