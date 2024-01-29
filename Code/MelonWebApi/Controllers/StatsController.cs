@@ -152,6 +152,135 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Play Logged") { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("log-skip")]
+        public ObjectResult LogSkip(string id, string device = "", string dateTime = "")
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
+            var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
+
+            // Get track, album, artists
+            Track track = null;
+            var tFilter = Builders<Track>.Filter.Eq("TrackId", id);
+            track = TCollection.Find(tFilter).FirstOrDefault();
+
+            if (track == null)
+            {
+                return new ObjectResult("Track Not Found") { StatusCode = 404 };
+            }
+
+            var albumFilter = Builders<Album>.Filter.Eq("AlbumId", track.Album.AlbumId);
+            var album = AlbumCollection.Find(albumFilter).ToList()[0];
+
+            // Update artists
+            List<Artist> artists = new List<Artist>();
+            foreach (var a in track.TrackArtists)
+            {
+                var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", a.ArtistId);
+                var artist = ArtistCollection.Find(artistFilter).ToList()[0];
+                if (artist.SkipCounts == null)
+                {
+                    artist.SkipCounts = new List<UserStat>() { new UserStat() { Username = User.Identity.Name, Value = 1 } };
+                }
+                else
+                {
+                    var curPC = artist.SkipCounts.Where(x => x.Username == User.Identity.Name).FirstOrDefault();
+                    if (curPC != null)
+                    {
+                        artist.SkipCounts[artist.SkipCounts.IndexOf(curPC)].Value++;
+                    }
+                    else
+                    {
+                        artist.SkipCounts.Add(new UserStat() { Username = User.Identity.Name, Value = 1 });
+                    }
+                }
+                artists.Add(artist);
+                ArtistCollection.ReplaceOne(artistFilter, artist);
+            }
+
+            // Update track
+            if (track.SkipCounts == null)
+            {
+                track.SkipCounts = new List<UserStat>() { new UserStat() { Username = User.Identity.Name, Value = 1 } };
+            }
+            else
+            {
+                var curTC = track.SkipCounts.Where(x => x.Username == User.Identity.Name).FirstOrDefault();
+                if (curTC != null)
+                {
+                    track.SkipCounts[track.SkipCounts.IndexOf(curTC)].Value++;
+                }
+                else
+                {
+                    track.SkipCounts.Add(new UserStat() { Username = User.Identity.Name, Value = 1 });
+                }
+            }
+
+            // Update album
+            if (album.SkipCounts == null)
+            {
+                album.SkipCounts = new List<UserStat>() { new UserStat() { Username = User.Identity.Name, Value = 1 } };
+            }
+            else
+            {
+                var curAC = album.SkipCounts.Where(x => x.Username == User.Identity.Name).FirstOrDefault();
+                if (curAC != null)
+                {
+                    album.SkipCounts[album.SkipCounts.IndexOf(curAC)].Value++;
+                }
+                else
+                {
+                    album.SkipCounts.Add(new UserStat() { Username = User.Identity.Name, Value = 1 });
+                }
+            }
+            TCollection.ReplaceOne(tFilter, track);
+            AlbumCollection.ReplaceOne(albumFilter, album);
+
+            // Add Play Stat
+            PlayStat stat = new PlayStat();
+            stat._id = new MelonId(ObjectId.GenerateNewId());
+            stat.StatId = stat._id.ToString();
+            stat.TrackId = track.TrackId;
+            stat.AlbumId = album.AlbumId;
+            stat.Duration = track.Duration;
+            stat.ArtistIds =
+            [
+                .. from a in artists
+                   select a.ArtistId,
+            ];
+            stat.Device = device;
+            stat.User = User.Identity.Name;
+            if (dateTime != "")
+            {
+                try
+                {
+                    stat.LogDate = DateTime.Parse(dateTime).ToUniversalTime();
+                }
+                catch (Exception)
+                {
+                    return new ObjectResult("Invalid Datetime") { StatusCode = 400 };
+                }
+            }
+            else
+            {
+                stat.LogDate = DateTime.Now.ToUniversalTime();
+            }
+            stat.Genres = new List<string>();
+            foreach (var genre in track.TrackGenres)
+            {
+                stat.Genres.Add(genre);
+            }
+
+            StatsCollection.InsertOne(stat);
+
+            return new ObjectResult("Skip Logged") { StatusCode = 200 };
+        }
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("listening-time")]
