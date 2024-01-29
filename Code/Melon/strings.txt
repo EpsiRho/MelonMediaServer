@@ -1,0 +1,179 @@
+Melon
+Old Color
+New Color
+Ctrls: Arrow Keys ↑/↓, <-/->, Enter(Save), Esc(Back)
+Ctrls: Arrow Keys ↑/↓, Enter
+Loading Settings...
+Melon
+Settings
+Back
+Edit Users
+Edit MongoDB Connection
+Edit Library Paths
+Edit Listening URL
+Configure HTTPS
+Edit Colors 
+Melon
+Settings
+Configure HTTPS
+Changing this setting will require a server restart!
+SSL is already configured, would you like to disabled or edit it?
+Back
+Disable SSL
+Edit SSL Config
+Back
+Disable SSL
+Edit SSL Config
+in menus?
+of this Melon instance, and can be changed anytime
+depending on how many files you have.
+Setting up HTTPS requires a valid SSL Certificate.
+Please enter the path to your
+certificate (or enter nothing to cancel)
+Invalid Cert or Password
+Next, enter the password to your SSL Certificate (or enter nothing to cancel)
+Melon
+Settings
+Listening URL
+Current URL
+Enter new urls separated by ";" or nothing to keep the current string
+Invalid URL
+Melon
+Settings
+MongoDB
+Current MongoDB connection string
+Enter a new string or nothing to keep the current string
+Couldn't connect to server, try again
+Full Scan
+Short Scan
+Reset DB
+Settings
+Exit
+Melon
+Settings
+Libraries
+Select a path to delete it
+Back
+Add New Path
+Add New Path
+Melon
+Settings
+Libraries
+Add Library
+Invalid Path, Please try again (Or enter nothing to quit)
+Enter a new library path
+Back
+Back
+Set the
+normal text color
+shaded text color
+background text color
+Melon title color
+highlight color
+error color
+Set all colors back to their defaults
+Melon
+Settings
+Colors
+Choose a color to change:
+Melon
+Setup
+Heyo, welcome to
+First thing, would you like to use
+color
+If you don't see color anywhere now, you should select no.
+Yes
+No
+Yes
+Melon
+Users
+Let's get you setup, starting with your username.
+This will be considered the
+Admin
+Your username is {}, is that right?
+Yes
+Alright {}, let's set up a password.
+This will be used to log you in to apps. When you want to add other users, they'll have their own passwords.
+Passwords do not match, please try again.
+Password
+Confirm password 
+Password
+Confirm password
+Next, we need to connect you to a MongoDb instance.
+This can be local or through atlas, using a connection string
+Enter nothing for default: mongodb://localhost:27017
+Couldn't connect to that server!
+debug
+debug
+debug
+Checking Connection...
+Lastly, where do you store your music?
+You can enter multiple paths if needed, just enter nothing when you're done.
+was not found!
+debug
+You're going to need to add at least one path!
+debug
+Melon
+Users
+Admin
+Tracks
+Melon
+Tracks
+No library paths to search!
+Press any key to continue...
+N/A
+N/A
+Sorting Tracks and Releases
+Delete Pass, Finishing up~
+Complete!
+Artists
+Albums
+Tracks
+Preparing Artist and Genre tags
+Unknown Artist
+Unknown Artist
+Adding
+Updating
+Unkown album
+Unknown Album
+Unknown
+Melon
+Database Reset
+This will remove all of the db entries.
+It shouldn't take long but will require you to rescan your files.
+Would you still like to reset?
+Yes
+No
+Yes
+No
+Melon
+Full Scan
+The scanner is already running, view progress?
+Yes
+No
+This will start a scan of all saved paths and their subdirectories.
+It may
+take awhile
+Ready to Start?
+Library scan started!
+Library Scanner
+Melon
+Short Scan
+The short scan will only scan recently updated files or files not already in the db.
+Melon
+Scanner Progress
+Ctrls: Esc(Back)
+Scanned 
+Found
+Time Left
+Avg Time Per File
+Current Folder
+Current File
+Status
+Timeout
+Melon
+Init
+Load settings
+Connect to mongodb
+Error: Couldn't Connect to MongoDB, is the connection string correct?
+Press any key to return to the menu

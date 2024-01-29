@@ -1,0 +1,371 @@
+Console.Write("\x1b[3J"); // required for linux||\x1b[3J
+Console.WriteLine($"[{"✓".Pastel(MelonColor.Highlight)}] {item.Value.Key}                 ");||[{
+Console.WriteLine($"[{"✓".Pastel(MelonColor.Highlight)}] {item.Value.Key}                 ");||.Pastel(MelonColor.Highlight)}] {}                 
+Console.WriteLine($"[ ] {item.Value.Key}                  ");||[ ] {}                  
+MelonUI.BreadCrumbBar(new List<string>() { "Melon" });||Melon
+choices.Add($"{item}");||{}
+Console.Write("[".Pastel(MelonColor.Text));||[
+Console.Write("/".Pastel(MelonColor.Text));||/
+Console.WriteLine("]".Pastel(MelonColor.Text));||]
+[DllImport("libc")]||libc
+system("clear");||clear
+Console.WriteLine($"{"Old Color -".Pastel(CurColor)}{"> New Color".Pastel(NewColor)}");||{
+Console.WriteLine($"{"Old Color -".Pastel(CurColor)}{"> New Color".Pastel(NewColor)}");||.Pastel(CurColor)}{
+Console.WriteLine($"{"Old Color -".Pastel(CurColor)}{"> New Color".Pastel(NewColor)}");||.Pastel(NewColor)}
+string RedBar = $"{new string('-', (int)RedLineFront)}#{new string('-', (int)RedLineBack)}";||{}#{}
+string GreenBar = $"{new string('-', (int)GreenLineFront)}#{new string('-', (int)GreenLineBack)}";||{}#{}
+string BlueBar = $"{new string('-', (int)BlueLineFront)}#{new string('-', (int)BlueLineBack)}";||{}#{}
+Console.WriteLine($"[{RedBar.Pastel(Color.FromArgb(255, 255 - NewColor.R, 255 - NewColor.R))}] {NewColor.R.ToString("000")}".Pastel(select));||[{}] {NewColor.R.ToString(
+Console.WriteLine($"[{RedBar.Pastel(Color.FromArgb(255, 255 - NewColor.R, 255 - NewColor.R))}] {NewColor.R.ToString("000")}".Pastel(select));||)}
+Console.WriteLine($"[{GreenBar.Pastel(Color.FromArgb(255 - NewColor.G, 255, 255 - NewColor.G))}] {NewColor.G.ToString("000")}".Pastel(select));||[{}] {NewColor.G.ToString(
+Console.WriteLine($"[{GreenBar.Pastel(Color.FromArgb(255 - NewColor.G, 255, 255 - NewColor.G))}] {NewColor.G.ToString("000")}".Pastel(select));||)}
+Console.WriteLine($"[{BlueBar.Pastel(Color.FromArgb(255 - NewColor.B, 255 - NewColor.B, 255))}] {NewColor.B.ToString("000")}".Pastel(select));||[{}] {NewColor.B.ToString(
+Console.WriteLine($"[{BlueBar.Pastel(Color.FromArgb(255 - NewColor.B, 255 - NewColor.B, 255))}] {NewColor.B.ToString("000")}".Pastel(select));||)}
+Console.WriteLine("Ctrls: Arrow Keys ↑/↓, <-/->, Enter(Save), Esc(Back)".Pastel(MelonColor.BackgroundText));||Ctrls: Arrow Keys ↑/↓, <-/->, Enter(Save), Esc(Back)
+string Input = "";||
+Console.Write("\b \b");||\b \b
+Console.Write("*");||*
+Console.WriteLine($"[{progressBar.Pastel(MelonColor.Highlight)}{backgroundBar.Pastel(MelonColor.ShadedText)}] ");||[{}{}] 
+string Bar = $"{new string('-', (int)LineFront)}{"#".Pastel(MelonColor.Highlight)}{new string('-', (int)LineBack)}".Pastel(MelonColor.Text);||{}{
+string Bar = $"{new string('-', (int)LineFront)}{"#".Pastel(MelonColor.Highlight)}{new string('-', (int)LineBack)}".Pastel(MelonColor.Text);||.Pastel(MelonColor.Highlight)}{}
+string controls = "Ctrls: Arrow Keys ↑/↓, Enter";||Ctrls: Arrow Keys ↑/↓, Enter
+Console.WriteLine($"• {Choices[i]}".Pastel(clr));||• {}
+Console.WriteLine((i == place ? "> " : "• ") + Choices[i]);||> 
+Console.WriteLine((i == place ? "> " : "• ") + Choices[i]);||• 
+return "";||
+string command = "";||
+string prediction = "";||
+temp = "";||
+string spaces = "";||
+spaces += " ";|| 
+Console.WriteLine($"• {choice.Substring(place).Pastel(clr)}".Pastel(MelonColor.Text));||• {}
+Console.Write($"> {command}".Pastel(MelonColor.Text));||> {}
+Console.Write($"{prediction.Substring(place).Pastel(MelonColor.BackgroundText)}".Pastel(MelonColor.Text));||{}
+Console.Write($" ");|| 
+Console.WriteLine("Loading Settings...".Pastel(MelonColor.Text));||Loading Settings...
+if (!System.IO.File.Exists($"{melonPath}/Settings.mln"))||{}/Settings.mln
+MongoDbConnectionString = "mongodb://localhost:27017",||mongodb://localhost:27017
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings" });||Settings
+{ "Back" , () => { LockUI = false; } },||Back
+//{ "Edit Users", UserSettings },||Edit Users
+{ "Edit MongoDB Connection", MongoDBSettings },||Edit MongoDB Connection
+{ "Edit Library Paths" , LibraryPathSettings },||Edit Library Paths
+{ "Edit Listening URL", ChangeListeningURL },||Edit Listening URL
+{ "Configure HTTPS", HTTPSSetup },||Configure HTTPS
+{ "Edit Colors " , ChangeMelonColors }||Edit Colors 
+if(config.Key != "")||
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Configure HTTPS" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Configure HTTPS" });||Settings
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Configure HTTPS" });||Configure HTTPS
+Console.WriteLine($"Changing this setting will require a server restart!".Pastel(MelonColor.Highlight));||Changing this setting will require a server restart!
+Console.WriteLine($"SSL is already configured, would you like to disabled or edit it?".Pastel(MelonColor.Text));||SSL is already configured, would you like to disabled or edit it?
+var opt = MelonUI.OptionPicker(new List<string>() { "Back", "Disable SSL", "Edit SSL Config"});||Back
+var opt = MelonUI.OptionPicker(new List<string>() { "Back", "Disable SSL", "Edit SSL Config"});||Disable SSL
+var opt = MelonUI.OptionPicker(new List<string>() { "Back", "Disable SSL", "Edit SSL Config"});||Edit SSL Config
+case "Back":||Back
+case "Disable SSL":||Disable SSL
+Security.SetSSLConfig("", "");||
+case "Edit SSL Config":||Edit SSL Config
+Console.WriteLine($"Setting up HTTPS requires a valid SSL Certificate.".Pastel(MelonColor.Text));||Setting up HTTPS requires a valid SSL Certificate.
+Console.WriteLine($"Please enter the path to your {".pfx".Pastel(MelonColor.Highlight)} certificate (or enter nothing to cancel):".Pastel(MelonColor.Text));||Please enter the path to your {
+Console.WriteLine($"Please enter the path to your {".pfx".Pastel(MelonColor.Highlight)} certificate (or enter nothing to cancel):".Pastel(MelonColor.Text));||.Pastel(MelonColor.Highlight)} certificate (or enter nothing to cancel):
+Console.WriteLine($"[Invalid Cert or Password]".Pastel(MelonColor.Error));||[Invalid Cert or Password]
+Console.Write("> ".Pastel(MelonColor.Text));||> 
+if (pathToCert == "")||
+Console.WriteLine($"Next, enter the password to your SSL Certificate (or enter nothing to cancel):".Pastel(MelonColor.Text));||Next, enter the password to your SSL Certificate (or enter nothing to cancel):
+if (password == "")||
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Listening URL" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Listening URL" });||Settings
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Listening URL" });||Listening URL
+Console.WriteLine($"Current URL: {StateManager.MelonSettings.ListeningURL.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));||Current URL: {}
+Console.WriteLine($"(Enter new urls separated by \";\" or nothing to keep the current string)".Pastel(MelonColor.Text));||(Enter new urls separated by \
+Console.WriteLine($"(Enter new urls separated by \";\" or nothing to keep the current string)".Pastel(MelonColor.Text));|| or nothing to keep the current string)
+Console.WriteLine($"[Invalid URL]".Pastel(MelonColor.Error));||[Invalid URL]
+if (input == "")||
+foreach(var url in input.Split(";"))||;
+Regex UrlWithWildcardRegex = new Regex(@"^(https?:\/\/)([\w*]+\.)*[\w*]+(:\d+)?(\/[\w\/]*)*(\?.*)?(#.*)?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);||^(https?:\/\/)([\w*]+\.)*[\w*]+(:\d+)?(\/[\w\/]*)*(\?.*)?(#.*)?$
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "MongoDB" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "MongoDB" });||Settings
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "MongoDB" });||MongoDB
+Console.WriteLine($"Current MongoDB connection string: {StateManager.MelonSettings.MongoDbConnectionString.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));||Current MongoDB connection string: {}
+Console.WriteLine($"(Enter a new string or nothing to keep the current string)".Pastel(MelonColor.Text));||(Enter a new string or nothing to keep the current string)
+Console.WriteLine($"[Couldn't connect to server, try again]".Pastel(MelonColor.Error));||[Couldn't connect to server, try again]
+DisplayManager.MenuOptions.Add("Full Scan", MelonScanner.Scan);||Full Scan
+DisplayManager.MenuOptions.Add("Short Scan", MelonScanner.ScanShort);||Short Scan
+DisplayManager.MenuOptions.Add("Reset DB", MelonScanner.ResetDB);||Reset DB
+DisplayManager.MenuOptions.Add("Settings", SettingsUI.Settings);||Settings
+DisplayManager.MenuOptions.Add("Exit", () => Environment.Exit(0));||Exit
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Libraries" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Libraries" });||Settings
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Libraries" });||Libraries
+Console.WriteLine($"(Select a path to delete it)".Pastel(MelonColor.Text));||(Select a path to delete it)
+NewPaths.Add("Back");||Back
+NewPaths.Add("Add New Path");||Add New Path
+if (input == "Add New Path")||Add New Path
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Libraries", "Add Library" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Libraries", "Add Library" });||Settings
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Libraries", "Add Library" });||Libraries
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Libraries", "Add Library" });||Add Library
+Console.WriteLine("Invalid Path, Please try again (Or enter nothing to quit)".Pastel(MelonColor.Error));||Invalid Path, Please try again (Or enter nothing to quit)
+Console.WriteLine("Enter a new library path:".Pastel(MelonColor.Text));||Enter a new library path:
+Console.Write($"> ".Pastel(MelonColor.Text));||> 
+if (path == "")||
+else if (input == "Back")||Back
+{ $"Back" , 7 },||Back
+{ $"Set the {"normal text color".Pastel(MelonColor.Text)}", 0 },||Set the {
+{ $"Set the {"normal text color".Pastel(MelonColor.Text)}", 0 },||.Pastel(MelonColor.Text)}
+{ $"Set the {"shaded text color".Pastel(MelonColor.ShadedText)}", 1 },||Set the {
+{ $"Set the {"shaded text color".Pastel(MelonColor.ShadedText)}", 1 },||.Pastel(MelonColor.ShadedText)}
+{ $"Set the {"background text color".Pastel(MelonColor.BackgroundText)}", 2 },||Set the {
+{ $"Set the {"background text color".Pastel(MelonColor.BackgroundText)}", 2 },||.Pastel(MelonColor.BackgroundText)}
+{ $"Set the {"Melon Title/Select color".Pastel(MelonColor.Melon)}", 3 },||Set the {
+{ $"Set the {"Melon Title/Select color".Pastel(MelonColor.Melon)}", 3 },||.Pastel(MelonColor.Melon)}
+{ $"Set the {"highlight color".Pastel(MelonColor.Highlight)}", 4 },||Set the {
+{ $"Set the {"highlight color".Pastel(MelonColor.Highlight)}", 4 },||.Pastel(MelonColor.Highlight)}
+{ $"Set the {"error color".Pastel(MelonColor.Error)}", 5 },||Set the {
+{ $"Set the {"error color".Pastel(MelonColor.Error)}", 5 },||.Pastel(MelonColor.Error)}
+{ $"Set all colors back to their defaults", 6 }||Set all colors back to their defaults
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Colors" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Colors" });||Settings
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Colors" });||Colors
+Console.WriteLine("Choose a color to change:".Pastel(MelonColor.Text));||Choose a color to change:
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Setup"});||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Setup"});||Setup
+Console.WriteLine($"Heyo, welcome to {"Melon".Pastel(MelonColor.Melon)}!".Pastel(MelonColor.Text));||Heyo, welcome to {
+Console.WriteLine($"Heyo, welcome to {"Melon".Pastel(MelonColor.Melon)}!".Pastel(MelonColor.Text));||.Pastel(MelonColor.Melon)}!
+Console.WriteLine($"First thing, would you like to use {"color".Pastel(MelonColor.Highlight)} in menus? ".Pastel(MelonColor.Text));||First thing, would you like to use {
+Console.WriteLine($"First thing, would you like to use {"color".Pastel(MelonColor.Highlight)} in menus? ".Pastel(MelonColor.Text));||.Pastel(MelonColor.Highlight)} in menus? 
+Console.WriteLine($"(If you don't see color anywhere now, you should select no.)".Pastel(MelonColor.ShadedText));||(If you don't see color anywhere now, you should select no.)
+string choice = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });||Yes
+string choice = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });||No
+StateManager.MelonSettings.UseMenuColor = (choice == "Yes") ? true : false;||Yes
+var mongoDatabase = mongoClient.GetDatabase("Melon");||Melon
+var UserCollection = mongoDatabase.GetCollection<User>("Users");||Users
+Console.WriteLine("Let's get you setup, starting with your username.".Pastel(MelonColor.Text));||Let's get you setup, starting with your username.
+Console.WriteLine($"(This will be considered the {"Admin".Pastel(MelonColor.Highlight)} of this Melon instance, and can be changed anytime)".Pastel(MelonColor.Text));||(This will be considered the {
+Console.WriteLine($"(This will be considered the {"Admin".Pastel(MelonColor.Highlight)} of this Melon instance, and can be changed anytime)".Pastel(MelonColor.Text));||.Pastel(MelonColor.Highlight)} of this Melon instance, and can be changed anytime)
+Console.WriteLine($"Your username is {nameInput.Pastel(MelonColor.Highlight)}, is that right?".Pastel(MelonColor.Text));||Your username is {}, is that right?
+if(choice == "Yes")||Yes
+Console.WriteLine($"Alright {tempUsername.Pastel(MelonColor.Highlight)}, let's set up a password.".Pastel(MelonColor.Text));||Alright {}, let's set up a password.
+Console.WriteLine("This will be used to log you in to apps. When you want to add other users, they'll have their own passwords.".Pastel(MelonColor.Text));||This will be used to log you in to apps. When you want to add other users, they'll have their own passwords.
+Console.WriteLine("Passwords do not match, please try again.".Pastel(MelonColor.Error));||Passwords do not match, please try again.
+Console.WriteLine("Password: ".Pastel(MelonColor.Text));||Password: 
+Console.Write("Confirm password: ".Pastel(MelonColor.BackgroundText));||Confirm password: 
+Console.WriteLine("Password: ".Pastel(MelonColor.BackgroundText));||Password: 
+Console.Write("Confirm password: ".Pastel(MelonColor.Text));||Confirm password: 
+if (passInput[0] == "")||
+Console.WriteLine("Next, we need to connect you to a MongoDb instance.".Pastel(MelonColor.Text));||Next, we need to connect you to a MongoDb instance.
+Console.WriteLine("This can be local or through atlas, using a connection string".Pastel(MelonColor.Text));||This can be local or through atlas, using a connection string
+Console.WriteLine("(Enter nothing for default: mongodb://localhost:27017)".Pastel(MelonColor.ShadedText));||(Enter nothing for default: mongodb://localhost:27017)
+Console.WriteLine($"Couldn't connect to that server!".Pastel(MelonColor.Error));||Couldn't connect to that server!
+Console.Write("> ");||> 
+if (connInput == "")||
+StateManager.MelonSettings.MongoDbConnectionString = "mongodb://localhost:27017";||mongodb://localhost:27017
+connInput = "mongodb://localhost:27017";||mongodb://localhost:27017
+else if (connInput.ToLower() == "debug")||debug
+StateManager.MelonSettings.MongoDbConnectionString = "debug";||debug
+connInput = "debug";||debug
+Console.WriteLine("Checking Connection...".Pastel(MelonColor.Text));||Checking Connection...
+Console.WriteLine("Lastly, where do you store your music?".Pastel(MelonColor.Text));||Lastly, where do you store your music?
+Console.WriteLine("You can enter multiple paths if needed, just enter nothing when you're done.".Pastel(MelonColor.Text));||You can enter multiple paths if needed, just enter nothing when you're done.
+string pathInput = "";||
+Console.WriteLine($"{pathInput} was not found!".Pastel(MelonColor.Error));||{} was not found!
+Console.Write($"[{StateManager.MelonSettings.LibraryPaths.Count()}]> ");||[{}]> 
+// If input is "debug" allow passing, maybe turn this into a flag later||debug
+if(pathInput == "debug")||debug
+// If input is "", leave if enough paths are added||
+if (pathInput == "")||
+Console.WriteLine("You're going to need to add at least one path!".Pastel(MelonColor.Text));||You're going to need to add at least one path!
+if(StateManager.MelonSettings.MongoDbConnectionString == "debug")||debug
+var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");||Melon
+var collection = NewMelonDB.GetCollection<User>("Users");||Users
+Type = "Admin",||Admin
+FavTrack = "",||
+FavAlbum = "",||
+FavArtist = "",||
+Bio = ""||
+if (tracks[i].nextTrack != "")||
+if (newTracks[i].nextTrack != "")||
+if (nTracks[i].nextTrack != "")||
+var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");||Tracks
+if (finalTracks[i].nextTrack != "")||
+var md = mc.GetDatabase("Melon");||Melon
+var TCollection = md.GetCollection<Track>("Tracks");||Tracks
+if (outTracks[i].nextTrack != "")||
+Console.WriteLine("No library paths to search!".Pastel(MelonColor.Error));||No library paths to search!
+Console.WriteLine("Press any key to continue...".Pastel(MelonColor.BackgroundText));||Press any key to continue...
+if (!Directory.Exists($"{StateManager.melonPath}/AlbumArts"))||{}/AlbumArts
+Directory.CreateDirectory($"{StateManager.melonPath}/AlbumArts");||{}/AlbumArts
+CurrentFolder = "N/A";||N/A
+CurrentFile = "N/A";||N/A
+CurrentStatus = "Sorting Tracks and Releases";||Sorting Tracks and Releases
+CurrentStatus = "Delete Pass, Finishing up~";||Delete Pass, Finishing up~
+CurrentStatus = "Complete!";||Complete!
+var ArtistCollection = NewMelonDB.GetCollection<Artist>("Artists");||Artists
+var AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");||Albums
+var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");||Tracks
+var trackFilter = Builders<Track>.Filter.Regex("TrackName", new BsonRegularExpression("", "i"));||TrackName
+var trackFilter = Builders<Track>.Filter.Regex("TrackName", new BsonRegularExpression("", "i"));||
+var trackFilter = Builders<Track>.Filter.Regex("TrackName", new BsonRegularExpression("", "i"));||i
+var FailedCollection = NewMelonDB.GetCollection<FailedFiles>("FailedFiles");||FailedFiles
+if (filename.EndsWith(".lrc"))||.lrc
+var trackfilter = Builders<Track>.Filter.Eq("Path", file);||Path
+if(trackDoc.LastModified.ToString("MM/dd/yyyy hh:mm:ss") == lastModified.ToString("MM/dd/yyyy hh:mm:ss"))||MM/dd/yyyy hh:mm:ss
+CurrentStatus = "Preparing Artist and Genre tags";||Preparing Artist and Genre tags
+var albumFilter = Builders<Album>.Filter.Eq("AlbumName", fileMetadata.Album);||AlbumName
+albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumArtists[0]);||AlbumArtists.ArtistName
+if(e.Message.Contains("DuplicateKey"))||DuplicateKey
+var fileFilter = Builders<FailedFiles>.Filter.Eq("Type", "Failed");||Type
+var fileFilter = Builders<FailedFiles>.Filter.Eq("Type", "Failed");||Failed
+failed.Type = "Failed";||Failed
+var arrayUpdateFailed = Builders<FailedFiles>.Update.Push("Paths", file);||Paths
+var tf = Builders<Track>.Filter.Where(x => x.Path.StartsWith(file.Replace(".lrc", "")));||.lrc
+var tf = Builders<Track>.Filter.Where(x => x.Path.StartsWith(file.Replace(".lrc", "")));||
+if (!filename.EndsWith(".flac") && !filename.EndsWith(".aac") && !filename.EndsWith(".wma") &&||.flac
+if (!filename.EndsWith(".flac") && !filename.EndsWith(".aac") && !filename.EndsWith(".wma") &&||.aac
+if (!filename.EndsWith(".flac") && !filename.EndsWith(".aac") && !filename.EndsWith(".wma") &&||.wma
+!filename.EndsWith(".wav") && !filename.EndsWith(".mp3") && !filename.EndsWith(".m4a"))||.wav
+!filename.EndsWith(".wav") && !filename.EndsWith(".mp3") && !filename.EndsWith(".m4a"))||.mp3
+!filename.EndsWith(".wav") && !filename.EndsWith(".mp3") && !filename.EndsWith(".m4a"))||.m4a
+var aSplit = artistsStr.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries);||,
+var aSplit = artistsStr.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries);||;
+var aSplit = artistsStr.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries);||/
+var aSplit = artistsStr.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries);||feat.
+var aSplit = artistsStr.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries);||ft.
+var gSplit = genresStr.Split(new string[] { ",", ";", "/" }, StringSplitOptions.TrimEntries);||,
+var gSplit = genresStr.Split(new string[] { ",", ";", "/" }, StringSplitOptions.TrimEntries);||;
+var gSplit = genresStr.Split(new string[] { ",", ";", "/" }, StringSplitOptions.TrimEntries);||/
+var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", trackArtists[i]);||ArtistName
+var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", albumArtists[i]);||ArtistName
+// If artist name is nothing, set to "Unknown Artist"||Unknown Artist
+string artist = string.IsNullOrEmpty(artistName) ? "Unknown Artist" : artistName;||Unknown Artist
+var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", artist);||ArtistName
+MelonScanner.CurrentStatus = $"Adding {artist}";||Adding {}
+Bio = "",||
+MelonScanner.CurrentStatus = $"Updating {artist}";||Updating {}
+// Set the album name to "Unkown album" if no album name is found.||Unkown album
+string albumName = string.IsNullOrEmpty(fileMetadata.Album) ? "Unknown Album" : fileMetadata.Album;||Unknown Album
+MelonScanner.CurrentStatus = $"Adding {fileMetadata.Album}";||Adding {}
+Publisher = fileMetadata.Publisher ?? "",||
+ReleaseStatus = fileMetadata.AdditionalFields.TryGetValue("RELEASESTATUS", out var rs) ? rs : "",||RELEASESTATUS
+ReleaseStatus = fileMetadata.AdditionalFields.TryGetValue("RELEASESTATUS", out var rs) ? rs : "",||
+ReleaseType = fileMetadata.AdditionalFields.TryGetValue("RELEASETYPE", out var rt) ? rt : "",||RELEASETYPE
+ReleaseType = fileMetadata.AdditionalFields.TryGetValue("RELEASETYPE", out var rt) ? rt : "",||
+using (FileStream artFile = new FileStream($"{StateManager.melonPath}/AlbumArts/{albumDoc.AlbumId}-{i}.jpg", FileMode.Create, System.IO.FileAccess.Write))||{}/AlbumArts/{}-{}.jpg
+albumDoc.AlbumArtPaths.Add($"{albumDoc.AlbumId}-{i}.jpg");||{}-{}.jpg
+TrackName = fileMetadata.Title ?? "Unknown",||Unknown
+Format = Path.GetExtension(fileMetadata.Path)?.TrimStart('.') ?? "",||
+Bitrate = fileMetadata.Bitrate.ToString() ?? "",||
+SampleRate = fileMetadata.SampleRate.ToString() ?? "",||
+Channels = fileMetadata.ChannelsArrangement?.NbChannels.ToString() ?? "",||
+BitsPerSample = fileMetadata.BitDepth.ToString() ?? "",||
+MusicBrainzID = fileMetadata.AdditionalFields.TryGetValue("MUSICBRAINZ_RELEASETRACKID", out var mbId) ? mbId : "",||MUSICBRAINZ_RELEASETRACKID
+MusicBrainzID = fileMetadata.AdditionalFields.TryGetValue("MUSICBRAINZ_RELEASETRACKID", out var mbId) ? mbId : "",||
+ISRC = fileMetadata.AdditionalFields.TryGetValue("ISRC", out var isrc) ? isrc : "",||ISRC
+ISRC = fileMetadata.AdditionalFields.TryGetValue("ISRC", out var isrc) ? isrc : "",||
+Year = fileMetadata.Year?.ToString() ?? "",||
+Duration = fileMetadata.DurationMs.ToString() ?? "",||
+LyricsPath = "",||
+nextTrack = "",||
+ServerURL = ""||
+if (track.Path.StartsWith(MelonScanner.LyricFiles[i].Replace(".lrc", "")))||.lrc
+if (track.Path.StartsWith(MelonScanner.LyricFiles[i].Replace(".lrc", "")))||
+var trackfilter = Builders<Track>.Filter.Eq("Path", fileMetadata.Path);||Path
+var albumFilter = Builders<Album>.Filter.Eq("AlbumName", albumDoc.AlbumName);||AlbumName
+albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumDoc.AlbumArtists[0].ArtistName);||AlbumArtists.ArtistName
+var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", artistDoc.ArtistName);||ArtistName
+var trackIndexKeysDefinition = Builders<BsonDocument>.IndexKeys.Ascending("TrackName");||TrackName
+var TracksCollection = NewMelonDB.GetCollection<BsonDocument>("Tracks");||Tracks
+var artistIndexKeysDefinition = Builders<BsonDocument>.IndexKeys.Ascending("ArtistName");||ArtistName
+var ArtistCollection = NewMelonDB.GetCollection<BsonDocument>("Artists");||Artists
+var albumIndexKeysDefinition = Builders<BsonDocument>.IndexKeys.Ascending("AlbumName");||AlbumName
+var AlbumCollection = NewMelonDB.GetCollection<BsonDocument>("Albums");||Albums
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Database Reset" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Database Reset" });||Database Reset
+Console.WriteLine($"This will remove all of the db entries.");||This will remove all of the db entries.
+Console.WriteLine($"It shouldn't take long but will require you to rescan your files.");||It shouldn't take long but will require you to rescan your files.
+Console.WriteLine($"Would you still like to reset?");||Would you still like to reset?
+var input = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });||Yes
+var input = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });||No
+case "Yes":||Yes
+var QueueCollection = NewMelonDB.GetCollection<PlayQueue>("Queues");||Queues
+var PlaylistCollection = NewMelonDB.GetCollection<Playlist>("Playlists");||Playlists
+var failedCollection = NewMelonDB.GetCollection<FailedFiles>("FailedFiles");||FailedFiles
+var statsCollection = NewMelonDB.GetCollection<FailedFiles>("Stats");||Stats
+if (Directory.Exists($"{StateManager.melonPath}/AlbumArts/"))||{}/AlbumArts/
+foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/AlbumArts/"))||{}/AlbumArts/
+case "No":||No
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Full Scan" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Full Scan" });||Full Scan
+Console.WriteLine($"The scanner is already running, view progress?");||The scanner is already running, view progress?
+var opt = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });||Yes
+var opt = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });||No
+Console.WriteLine($"This will start a scan of all saved paths and their subdirectories.");||This will start a scan of all saved paths and their subdirectories.
+Console.WriteLine($"It may {"take awhile".Pastel(MelonColor.Highlight)} depending on how many files you have.");||It may {
+Console.WriteLine($"It may {"take awhile".Pastel(MelonColor.Highlight)} depending on how many files you have.");||.Pastel(MelonColor.Highlight)} depending on how many files you have.
+Console.WriteLine($"Ready to Start?");||Ready to Start?
+DisplayManager.UIExtensions.Add(() => { Console.WriteLine("Library scan started!".Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });||Library scan started!
+//DisplayManager.MenuOptions.Remove("Library Scanner");||Library Scanner
+//DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);||Scan Progress
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Short Scan" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Short Scan" });||Short Scan
+Console.WriteLine($"The short scan will only scan recently updated files or files not already in the db.");||The short scan will only scan recently updated files or files not already in the db.
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Scanner Progress" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Scanner Progress" });||Scanner Progress
+string controls = $"Ctrls: Esc(Back)";||Ctrls: Esc(Back)
+Console.WriteLine($"Scanned {ScannedFiles.ToString().Pastel(MelonColor.Melon)} // {FoundFiles.ToString().Pastel(MelonColor.Melon)} Found");||Scanned {} // {} Found
+string msg = $"Time Left: {TimeSpan.FromMilliseconds((averageMilliseconds / ScannedFiles)*(FoundFiles - ScannedFiles)).ToString(@"hh\:mm\:ss")}";||Time Left: {TimeSpan.FromMilliseconds((averageMilliseconds / ScannedFiles)*(FoundFiles - ScannedFiles)).ToString(@
+string msg = $"Time Left: {TimeSpan.FromMilliseconds((averageMilliseconds / ScannedFiles)*(FoundFiles - ScannedFiles)).ToString(@"hh\:mm\:ss")}";||)}
+msg = $"Avg Time Per File: {TimeSpan.FromMilliseconds(averageMilliseconds / ScannedFiles)}";||Avg Time Per File: {}
+msg = $"Current Folder: {CurrentFolder}";||Current Folder: {}
+msg = $"Current File: {CurrentFile}";||Current File: {}
+msg = $"Status: {CurrentStatus}";||Status: {}
+_protector = provider.CreateProtector("Melon.SSLConfig.v1");||Melon.SSLConfig.v1
+string txt = File.ReadAllText($"{StateManager.melonPath}/Connections.json");||{}/Connections.json
+File.WriteAllText($"{StateManager.melonPath}/Connections.json", txt);||{}/Connections.json
+string txt = File.ReadAllText($"{StateManager.melonPath}/SSLConfig.json");||{}/SSLConfig.json
+File.WriteAllText($"{StateManager.melonPath}/SSLConfig.json", txt);||{}/SSLConfig.json
+return "Timeout";||Timeout
+const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";||ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
+public static string melonPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.Personal)}/Melon";||{}/Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });||Melon
+MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });||Init
+"Load settings",||Load settings
+"Connect to mongodb"||Connect to mongodb
+if (!File.Exists($"{melonPath}/Flags.json"))||{}/Flags.json
+if (!File.Exists($"{melonPath}/Settings.json"))||{}/Settings.json
+ListeningURL = "https://*:14524",||https://*:14524
+if (File.Exists($"{melonPath}/SSLConfig.json"))||{}/SSLConfig.json
+Console.WriteLine("Error: Couldn't Connect to MongoDB, is the connection string correct?".Pastel(MelonColor.Error));||Error: Couldn't Connect to MongoDB, is the connection string correct?
+Console.WriteLine("Press any key to return to the menu".Pastel(MelonColor.BackgroundText));||Press any key to return to the menu
+string settingstxt = File.ReadAllText($"{melonPath}/Settings.json");||{}/Settings.json
+File.WriteAllText($"{melonPath}/Settings.json", settingstxt);||{}/Settings.json
+string flagstxt = File.ReadAllText($"{melonPath}/Flags.json");||{}/Flags.json
+File.WriteAllText($"{melonPath}/Flags.json", flagtxt);||{}/Flags.json
+serverProcess.StartInfo.FileName = $"";||
+wss.CurrentQueue = "";||
+if(wss.DeviceName != "")||
+wss.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).Wait();||
+if (message.Contains("PONG"))||PONG
+else if (message.Contains("GET QUEUE"))||GET QUEUE
+else if (message.Contains("SET QUEUE"))||SET QUEUE
+var queueId = message.Split(":")[1];||:
+WriteToSocket(wss, "Invalid Syntax");||Invalid Syntax
+else if (message.Contains("SET DEVICE"))||SET DEVICE
+var name = message.Split(":")[1];||:
+WriteToSocket(wss, "Device Name Taken");||Device Name Taken
+public static void AlertQueueUpdate(string id, string msg = "UPDATE QUEUE")||UPDATE QUEUE
+WriteToSocket(wss, "PING");||PING
+[assembly: global::System.Runtime.Versioning.TargetFrameworkAttribute(".NETCoreApp,Version=v6.0", FrameworkDisplayName = ".NET 6.0")]||.NETCoreApp,Version=v6.0
+[assembly: global::System.Runtime.Versioning.TargetFrameworkAttribute(".NETCoreApp,Version=v6.0", FrameworkDisplayName = ".NET 6.0")]||.NET 6.0
+[assembly: System.Reflection.AssemblyCompanyAttribute("Melon")]||Melon
+[assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]||Debug
+[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]||1.0.0.0
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]||1.0.0
+[assembly: System.Reflection.AssemblyProductAttribute("Melon")]||Melon
+[assembly: System.Reflection.AssemblyTitleAttribute("Melon")]||Melon
+[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]||1.0.0.0
+[assembly: global::System.Runtime.Versioning.TargetFrameworkAttribute(".NETCoreApp,Version=v8.0", FrameworkDisplayName = ".NET 8.0")]||.NETCoreApp,Version=v8.0
+[assembly: global::System.Runtime.Versioning.TargetFrameworkAttribute(".NETCoreApp,Version=v8.0", FrameworkDisplayName = ".NET 8.0")]||.NET 8.0
+[assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]||Release
