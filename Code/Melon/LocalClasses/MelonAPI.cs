@@ -65,6 +65,7 @@ namespace Melon.LocalClasses
                     {
                         return tracks;
                     }
+
                     // Find track links and connect them
                     for (int i = 0; i < tracks.Count() - 1; i++)
                     {
@@ -175,6 +176,30 @@ namespace Melon.LocalClasses
 
                         nTracks.AddRange(tks);
                     }
+
+                    if (!enableTrackLinks)
+                    {
+                        return nTracks;
+                    }
+
+                    // Find track links and connect them
+                    for (int i = 0; i < nTracks.Count() - 1; i++)
+                    {
+                        if (nTracks[i].nextTrack != "")
+                        {
+                            for (int j = 0; j < nTracks.Count(); j++)
+                            {
+                                if (nTracks[j].TrackId == nTracks[i].nextTrack)
+                                {
+                                    var temp = nTracks[i + 1];
+                                    nTracks[i + 1] = nTracks[j];
+                                    nTracks[j] = temp;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
                     return nTracks;
                 case ShuffleType.ByTrackFavorites:
                     var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -208,6 +233,29 @@ namespace Melon.LocalClasses
 
                     List<Track> finalTracks = new List<Track>(fullTracks);
 
+                    if (!enableTrackLinks)
+                    {
+                        return finalTracks;
+                    }
+
+                    // Find track links and connect them
+                    for (int i = 0; i < finalTracks.Count() - 1; i++)
+                    {
+                        if (finalTracks[i].nextTrack != "")
+                        {
+                            for (int j = 0; j < finalTracks.Count(); j++)
+                            {
+                                if (finalTracks[j].TrackId == finalTracks[i].nextTrack)
+                                {
+                                    var temp = finalTracks[i + 1];
+                                    finalTracks[i + 1] = finalTracks[j];
+                                    finalTracks[j] = temp;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
                     return finalTracks;
                 case ShuffleType.ByTrackDiscovery:
                     var mc = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -239,10 +287,29 @@ namespace Melon.LocalClasses
                     //    fullTracks[r] = temp;
                     //}
 
-                    List<Track> outTracks = new List<Track>();
-                    foreach (var track in fTracks)
+                    List<Track> outTracks = new List<Track>(fTracks);
+
+                    if (!enableTrackLinks)
                     {
-                        outTracks.Add(track);
+                        return outTracks;
+                    }
+
+                    // Find track links and connect them
+                    for (int i = 0; i < outTracks.Count() - 1; i++)
+                    {
+                        if (outTracks[i].nextTrack != "")
+                        {
+                            for (int j = 0; j < outTracks.Count(); j++)
+                            {
+                                if (outTracks[j].TrackId == outTracks[i].nextTrack)
+                                {
+                                    var temp = outTracks[i + 1];
+                                    outTracks[i + 1] = outTracks[j];
+                                    outTracks[j] = temp;
+                                    break;
+                                }
+                            }
+                        }
                     }
 
                     return outTracks;
