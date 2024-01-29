@@ -24,7 +24,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create")]
-        public ObjectResult CreateQueueFromIDs(string name, [FromQuery] List<string> ids, string shuffle = "none")
+        public ObjectResult CreateQueueFromIDs(string name, [FromQuery] List<string> ids, string shuffle = "none", bool enableTrackLinks = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -61,25 +61,25 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
                     break;
             }
             
@@ -92,7 +92,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-albums")]
-        public ObjectResult CreateQueueAlbums(string name, [FromQuery] List<string> ids, string shuffle = "none")
+        public ObjectResult CreateQueueAlbums(string name, [FromQuery] List<string> ids, string shuffle = "none", bool enableTrackLinks = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -134,25 +134,25 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
                     break;
             }
 
@@ -166,7 +166,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-artists")]
-        public ObjectResult CreateQueueArtists(string name, [FromQuery] List<string> ids, string shuffle = "none")
+        public ObjectResult CreateQueueArtists(string name, [FromQuery] List<string> ids, string shuffle = "none", bool enableTrackLinks = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -208,25 +208,25 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
                     break;
             }
 
@@ -239,7 +239,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-playlists")]
-        public ObjectResult CreateQueuePlaylists(string name, [FromQuery] List<string> ids, string shuffle = "none")
+        public ObjectResult CreateQueuePlaylists(string name, [FromQuery] List<string> ids, string shuffle = "none", bool enableTrackLinks = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -281,25 +281,25 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
                     break;
             }
 
@@ -690,7 +690,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("shuffle")]
-        public ObjectResult ShuffleQueue(string id, string shuffle = "None")
+        public ObjectResult ShuffleQueue(string id, string shuffle = "None", bool enableTrackLinks = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -743,25 +743,25 @@ namespace MelonWebApi.Controllers
                     QCollection.ReplaceOne(qFilter, queue);
                     return new ObjectResult("Tracks Reset") { StatusCode = 200 };
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false);
+                    tracks = MelonAPI.ShuffleTracks(tracks, userName, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
                     break;
             }
 
