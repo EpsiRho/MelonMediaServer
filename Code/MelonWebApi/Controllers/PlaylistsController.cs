@@ -361,16 +361,26 @@ namespace MelonWebApi.Controllers
 
             List<Track> fullTracks = TracksCollection.Find(Builders<Track>.Filter.In(x => x.TrackId, tracks.Select(x => x.TrackId))).ToList();
 
+            var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+            usernames.Add(User.Identity.Name);
+
             foreach (var track in fullTracks)
             {
-                List<string> usernames =
-                    [
-                        User.Identity.Name,
-                        .. UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username),
-                    ];
-                try { track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                try { track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
-                try { track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList(); } catch (Exception) { }
+                // Check for null or empty collections to avoid exceptions
+                if (track.PlayCounts != null)
+                {
+                    track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+
+                if (track.SkipCounts != null)
+                {
+                    track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+
+                if (track.Ratings != null)
+                {
+                    track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                }
             }
 
             return new ObjectResult(fullTracks) { StatusCode = 200 };
