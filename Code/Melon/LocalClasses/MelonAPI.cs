@@ -140,6 +140,27 @@ namespace Melon.LocalClasses
                         newTracks.AddRange(tks);
                     }
 
+                    if (FullRandom && enableTrackLinks)
+                    {
+                        // Find track links and connect them
+                        for (int i = 0; i < newTracks.Count() - 1; i++)
+                        {
+                            if (newTracks[i].nextTrack != "")
+                            {
+                                for (int j = 0; j < newTracks.Count(); j++)
+                                {
+                                    if (newTracks[j].TrackId == newTracks[i].nextTrack)
+                                    {
+                                        var temp = newTracks[i + 1];
+                                        newTracks[i + 1] = newTracks[j];
+                                        newTracks[j] = temp;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     return newTracks;
 
                 // Shuffle By Artist
