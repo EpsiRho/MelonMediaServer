@@ -1,0 +1,125 @@
+Add Library
+Add New Path
+Adding
+Admin
+Albums
+Alright {}, let's set up a password.
+Artists
+Avg Time Per File
+Back
+background text color
+certificate (or enter nothing to cancel)
+Changing this setting will require a server restart!
+Checking Connection...
+Choose a color to change:
+color
+Colors
+Complete!
+Configure HTTPS
+Confirm password
+Confirm password 
+Connect to mongodb
+Couldn't connect to server, try again
+Couldn't connect to that server!
+Ctrls: Arrow Keys ↑/↓, <-/->, Enter(Save), Esc(Back)
+Ctrls: Arrow Keys ↑/↓, Enter
+Ctrls: Esc(Back)
+Current File
+Current Folder
+Current MongoDB connection string
+Current URL
+Database Reset
+debug
+Delete Pass, Finishing up~
+depending on how many files you have.
+Disable SSL
+Edit Colors 
+Edit Library Paths
+Edit Listening URL
+Edit MongoDB Connection
+Edit SSL Config
+Edit Users
+Enter a new library path
+Enter a new string or nothing to keep the current string
+Enter new urls separated by ";" or nothing to keep the current string
+Enter nothing for default: mongodb://localhost:27017
+error color
+Error: Couldn't Connect to MongoDB, is the connection string correct?
+Exit
+First thing, would you like to use
+Found
+Full Scan
+Heyo, welcome to
+highlight color
+If you don't see color anywhere now, you should select no.
+in menus?
+Init
+Invalid Cert or Password
+Invalid Path, Please try again (Or enter nothing to quit)
+Invalid URL
+It may
+It shouldn't take long but will require you to rescan your files.
+Lastly, where do you store your music?
+Let's get you setup, starting with your username.
+Libraries
+Library scan started!
+Library Scanner
+Listening URL
+Load settings
+Loading Settings...
+Melon
+Melon title color
+MongoDB
+N/A
+New Color
+Next, enter the password to your SSL Certificate (or enter nothing to cancel)
+Next, we need to connect you to a MongoDb instance.
+No
+No library paths to search!
+normal text color
+of this Melon instance, and can be changed anytime
+Old Color
+Password
+Passwords do not match, please try again.
+Please enter the path to your
+Preparing Artist and Genre tags
+Press any key to continue...
+Press any key to return to the menu
+Ready to Start?
+Reset DB
+Scanned 
+Scanner Progress
+Select a path to delete it
+Set all colors back to their defaults
+Set the
+Setting up HTTPS requires a valid SSL Certificate.
+Settings
+Setup
+shaded text color
+Short Scan
+Sorting Tracks and Releases
+SSL is already configured, would you like to disabled or edit it?
+Status
+take awhile
+The scanner is already running, view progress?
+The short scan will only scan recently updated files or files not already in the db.
+This can be local or through atlas, using a connection string
+This will be considered the
+This will be used to log you in to apps. When you want to add other users, they'll have their own passwords.
+This will remove all of the db entries.
+This will start a scan of all saved paths and their subdirectories.
+Time Left
+Timeout
+Tracks
+Unknown
+Unknown Album
+Unknown Artist
+Unkown album
+Updating
+Users
+was not found!
+Would you still like to reset?
+Yes
+You can enter multiple paths if needed, just enter nothing when you're done.
+You're going to need to add at least one path!
+Your username is {}, is that right?

@@ -327,7 +327,7 @@ namespace Melon.DisplayClasses
                     { $"Set the {"normal text color".Pastel(MelonColor.Text)}", 0 },
                     { $"Set the {"shaded text color".Pastel(MelonColor.ShadedText)}", 1 },
                     { $"Set the {"background text color".Pastel(MelonColor.BackgroundText)}", 2 },
-                    { $"Set the {"Melon Title/Select color".Pastel(MelonColor.Melon)}", 3 },
+                    { $"Set the {"Melon title color".Pastel(MelonColor.Melon)}", 3 },
                     { $"Set the {"highlight color".Pastel(MelonColor.Highlight)}", 4 },
                     { $"Set the {"error color".Pastel(MelonColor.Error)}", 5 },
                     { $"Set all colors back to their defaults", 6 }
