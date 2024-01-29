@@ -122,10 +122,9 @@ namespace MelonWebApi.Controllers
             }
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             List<FilterDefinition<Track>> filterList = new List<FilterDefinition<Track>>();
             if (trackName != "")
@@ -305,6 +304,28 @@ namespace MelonWebApi.Controllers
                     break;
             }
 
+            var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+            usernames.Add(User.Identity.Name);
+
+            foreach (var track in tracks)
+            {
+                // Check for null or empty collections to avoid exceptions
+                if (track.PlayCounts != null)
+                {
+                    track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+
+                if (track.SkipCounts != null)
+                {
+                    track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+
+                if (track.Ratings != null)
+                {
+                    track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+            }
+
             return new ObjectResult(tracks) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
@@ -389,10 +410,9 @@ namespace MelonWebApi.Controllers
             }
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             List<FilterDefinition<Album>> filterList = new List<FilterDefinition<Album>>();
 
@@ -548,11 +568,28 @@ namespace MelonWebApi.Controllers
                     break;
             }
 
+            // Initialize usernames as a HashSet for better performance
+            var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+            usernames.Add(User.Identity.Name);
 
-            //foreach (var albumDoc in albumDocs)
-            //{
-            //    albumDoc.Tracks = albumDoc.Tracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).ToList();
-            //}
+            foreach (var album in albums)
+            {
+                // Check for null or empty collections to avoid exceptions
+                if (album.PlayCounts != null)
+                {
+                    album.PlayCounts = album.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+
+                if (album.SkipCounts != null)
+                {
+                    album.SkipCounts = album.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+
+                if (album.Ratings != null)
+                {
+                    album.Ratings = album.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+            }
 
             return albums;
         }
@@ -630,6 +667,7 @@ namespace MelonWebApi.Controllers
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             List<FilterDefinition<Artist>> filterList = new List<FilterDefinition<Artist>>();
             if (artistName != "")
@@ -741,12 +779,27 @@ namespace MelonWebApi.Controllers
                     break;
             }
 
-            //foreach (var artist in ArtistDocs)
-            //{
-            //    try { artist.Tracks = artist.Tracks.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
-            //    try { artist.Releases = artist.Releases.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
-            //    try { artist.SeenOn = artist.SeenOn.OrderBy(x => x.ReleaseDate).ToList(); } catch (Exception) { }
-            //}
+            var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
+            usernames.Add(User.Identity.Name);
+
+            foreach (var artist in artists)
+            {
+                // Check for null or empty collections to avoid exceptions
+                if (artist.PlayCounts != null)
+                {
+                    artist.PlayCounts = artist.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+
+                if (artist.SkipCounts != null)
+                {
+                    artist.SkipCounts = artist.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+
+                if (artist.Ratings != null)
+                {
+                    artist.Ratings = artist.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                }
+            }
 
             return artists;
         }

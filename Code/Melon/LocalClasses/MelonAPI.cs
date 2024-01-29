@@ -24,7 +24,7 @@ namespace Melon.LocalClasses
     /// </summary>
     public static class MelonAPI
     {
-        public static List<Track> ShuffleTracks(List<Track> tracks, ShuffleType type, bool FullRandom = false)
+        public static List<Track> ShuffleTracks(List<Track> tracks, string Username, ShuffleType type, bool FullRandom = false)
         {
             Random rng = new Random();
             // Shuffle the list.
@@ -169,7 +169,10 @@ namespace Melon.LocalClasses
                     Random rand = new Random();
 
                     // Sort with a bias towards PlayCount and Rating
-                    var fullTracks = tracks.OrderByDescending(x => x.PlayCount + x.Rating + rand.NextDouble()).ToList();
+                    var fullTracks = tracks.OrderByDescending(x => x.PlayCounts.Where(x=>x.Username == Username).Select(x=>x.Value).FirstOrDefault() + 
+                                                                   x.Ratings.Where(x => x.Username == Username).Select(x => x.Value).FirstOrDefault() - 
+                                                                   x.SkipCounts.Where(x => x.Username == Username).Select(x => x.Value).FirstOrDefault() + 
+                                                                   rand.NextDouble()).ToList();
 
                     //int num = fullTracks.Count;
                     //for (int i = 0; i < num; i++)
@@ -180,11 +183,7 @@ namespace Melon.LocalClasses
                     //    fullTracks[r] = temp;
                     //}
 
-                    List<Track> finalTracks = new List<Track>();
-                    foreach(var track in fullTracks)
-                    {
-                        finalTracks.Add(track);
-                    }
+                    List<Track> finalTracks = new List<Track>(fullTracks);
 
                     return finalTracks;
                 case ShuffleType.ByTrackDiscovery:
@@ -203,7 +202,10 @@ namespace Melon.LocalClasses
                     Random r = new Random();
 
                     // Sort with a bias against PlayCount
-                    fTracks = fTracks.OrderBy(x => x.PlayCount + r.NextDouble()).ToList();
+                    fTracks = fTracks.OrderBy(x => x.PlayCounts.Where(x => x.Username == Username).Select(x => x.Value).FirstOrDefault() +
+                                                   x.Ratings.Where(x => x.Username == Username).Select(x => x.Value).FirstOrDefault() -
+                                                   x.SkipCounts.Where(x => x.Username == Username).Select(x => x.Value).FirstOrDefault() +
+                                                   r.NextDouble()).ToList();
 
                     //int num = fullTracks.Count;
                     //for (int i = 0; i < num; i++)
