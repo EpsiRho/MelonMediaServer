@@ -53,8 +53,6 @@ namespace MelonWebApi
             builder.WebHost.UseUrls(StateManager.MelonSettings.ListeningURL);
 
             // Load SSL Certificate
-            //var certificatePath = @"C:\Users\jhset\Documents\Melon\certificate.pfx";
-            //var certificatePassword = "Mn516199!!";
             var sslConfig = Security.GetSSLConfig();
 
             if (sslConfig.Key != "")
