@@ -42,7 +42,7 @@ namespace MelonWebApi.Controllers
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
-            queue.Tracks = new List<ShortTrack>();
+            queue.Tracks = new List<Track>();
             queue.CurPosition = 0;
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x.QueueId, queue.QueueId);
@@ -50,7 +50,7 @@ namespace MelonWebApi.Controllers
             {
                 var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, id);
                 var trackDoc = TCollection.Find(trackFilter).ToList()[0];
-                queue.Tracks.Add(new ShortTrack(trackDoc));
+                queue.Tracks.Add(trackDoc);
             }
 
             var tracks = queue.Tracks;
@@ -109,19 +109,21 @@ namespace MelonWebApi.Controllers
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
-            queue.Tracks = new List<ShortTrack>();
+            queue.Tracks = new List<Track>();
             queue.CurPosition = 0;
 
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x.QueueId, queue.QueueId);
-            List<ShortTrack> tracks = new List<ShortTrack>();
+            List<Track> tracks = new List<Track>();
             foreach (var id in ids)
             {
                 var aFilter = Builders<Album>.Filter.Eq(x=>x.AlbumId, id);
-                var album = ACollection.Find(aFilter).ToList();
-                if(album.Count() != 0)
+                var album = ACollection.Find(aFilter).FirstOrDefault();
+                if(album != null)
                 {
-                    tracks.AddRange(album[0].Tracks);
+                    var fFilter = Builders<Track>.Filter.In(a => a.TrackId, album.Tracks.Select(x => x.TrackId));
+                    var fTracks = TCollection.Find(fFilter).ToList();
+                    tracks.AddRange(fTracks);
                 }
             }
 
@@ -183,19 +185,21 @@ namespace MelonWebApi.Controllers
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
-            queue.Tracks = new List<ShortTrack>();
+            queue.Tracks = new List<Track>();
             queue.CurPosition = 0;
 
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x.QueueId, queue.QueueId);
-            List<ShortTrack> tracks = new List<ShortTrack>();
+            List<Track> tracks = new List<Track>();
             foreach (var id in ids)
             {
                 var aFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, id);
-                var artist = ACollection.Find(aFilter).ToList();
-                if (artist.Count() != 0)
+                var artist = ACollection.Find(aFilter).FirstOrDefault();
+                if (artist != null)
                 {
-                    tracks.AddRange(artist[0].Tracks);
+                    var fFilter = Builders<Track>.Filter.In(a => a.TrackId, artist.Tracks.Select(x => x.TrackId));
+                    var fTracks = TCollection.Find(fFilter).ToList();
+                    tracks.AddRange(fTracks);
                 }
             }
 
@@ -257,19 +261,21 @@ namespace MelonWebApi.Controllers
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
-            queue.Tracks = new List<ShortTrack>();
+            queue.Tracks = new List<Track>();
             queue.CurPosition = 0;
 
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x.QueueId, queue.QueueId);
-            List<ShortTrack> tracks = new List<ShortTrack>();
+            List<Track> tracks = new List<Track>();
             foreach (var id in ids)
             {
                 var pFilter = Builders<Playlist>.Filter.Eq(x=>x.PlaylistId, id);
-                var playlist = PCollection.Find(pFilter).ToList();
-                if (playlist.Count() != 0)
+                var playlist = PCollection.Find(pFilter).FirstOrDefault();
+                if (playlist != null)
                 {
-                    tracks.AddRange(playlist[0].Tracks);
+                    var fFilter = Builders<Track>.Filter.In(a => a.TrackId, playlist.Tracks.Select(x => x.TrackId));
+                    var fTracks = TCollection.Find(fFilter).ToList();
+                    tracks.AddRange(fTracks);
                 }
             }
 
@@ -434,7 +440,7 @@ namespace MelonWebApi.Controllers
                 switch (position)
                 {
                     case "end":
-                        queue.Tracks.Add(new ShortTrack(track));
+                        queue.Tracks.Add(track);
                         queue.OriginalTrackOrder.Add(track.TrackId);
                         break;
                     case "front":
@@ -442,7 +448,7 @@ namespace MelonWebApi.Controllers
                         {
                             queue.CurPosition++;
                         }
-                        queue.Tracks.Insert(0, new ShortTrack(track));
+                        queue.Tracks.Insert(0, track);
                         queue.OriginalTrackOrder.Insert(0, track.TrackId);
                         break;
                     case "random":
@@ -451,7 +457,7 @@ namespace MelonWebApi.Controllers
                         {
                             queue.CurPosition++;
                         }
-                        queue.Tracks.Insert(randIdx, new ShortTrack(track));
+                        queue.Tracks.Insert(randIdx, track);
                         queue.OriginalTrackOrder.Insert(randIdx, track.TrackId);
                         break;
                     case "at":
@@ -459,7 +465,7 @@ namespace MelonWebApi.Controllers
                         {
                             queue.CurPosition++;
                         }
-                        queue.Tracks.Insert(place, new ShortTrack(track));
+                        queue.Tracks.Insert(place, track);
                         queue.OriginalTrackOrder.Insert(place, track.TrackId);
                         break;
                 }
@@ -688,8 +694,8 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            List<ShortTrack> tracks = new List<ShortTrack>(queue.Tracks);
-            ShortTrack currentTrack = queue.Tracks[queue.CurPosition];
+            List<Track> tracks = new List<Track>(queue.Tracks);
+            Track currentTrack = queue.Tracks[queue.CurPosition];
             tracks.Remove(currentTrack);
 
             switch (shuffle)
