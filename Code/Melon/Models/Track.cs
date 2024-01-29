@@ -22,6 +22,7 @@ namespace Melon.Models
         public string TrackName { get; set; }
         public string Path { get; set; }
         public string Duration { get; set; }
+        public string nextTrack { get; set; }
         public List<UserStat> PlayCounts { get; set; }
         public List<UserStat> SkipCounts { get; set; }
         public List<UserStat> Ratings { get; set; }
