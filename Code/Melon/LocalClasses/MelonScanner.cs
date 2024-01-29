@@ -514,6 +514,7 @@ namespace Melon.LocalClasses
             {
                 _id = TrackId,
                 TrackId = TrackId.ToString(),
+                TrackName = fileMetadata.Title
             };
 
             return sTrack;
