@@ -123,3 +123,7 @@ PathRequirementReminder=You're going to need to add at least one path!
 UsernameConfirmation=Your username is {}, is that right?
 HeadlessSetupRequired=Melon must go through setup first, which cannot show in headless mode.
 HeadlessSetupInstructions=Please run melon without headless mode first to complete setup.
+CurrentLanguageDefault=The current language is set to
+LanguageInstructions=Enter a valid language code (en,es) to swap language.
+LanguageError=No support for {} found in Melon.
+DefaultLanguageOption=Change Default Language
