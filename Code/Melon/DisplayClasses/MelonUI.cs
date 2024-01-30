@@ -114,7 +114,7 @@ namespace Melon.Classes
 
                 
                 int sTop = Console.CursorTop;
-                Console.WriteLine($"{"Old Color -".Pastel(CurColor)}{"> New Color".Pastel(NewColor)}");
+                Console.WriteLine($"{$"{StateManager.StringsManager.GetString("OldColorDisplay")} -".Pastel(CurColor)}{$"> {StateManager.StringsManager.GetString("NewColorDisplay")}".Pastel(NewColor)}");
 
                 string RedBar = $"{new string('-', (int)RedLineFront)}#{new string('-', (int)RedLineBack)}";
                 string GreenBar = $"{new string('-', (int)GreenLineFront)}#{new string('-', (int)GreenLineBack)}";
@@ -130,7 +130,7 @@ namespace Melon.Classes
                 if (place == 2) { select = MelonColor.Text; }
                 Console.WriteLine($"[{BlueBar.Pastel(Color.FromArgb(255 - NewColor.B, 255 - NewColor.B, 255))}] {NewColor.B.ToString("000")}".Pastel(select));
 
-                Console.WriteLine("Ctrls: Arrow Keys ↑/↓, <-/->, Enter(Save), Esc(Back)".Pastel(MelonColor.BackgroundText));
+                Console.WriteLine(StateManager.StringsManager.GetString("NavigationControls").Pastel(MelonColor.BackgroundText));
                 
                 // Debug info for hold acceleration
                 //Console.WriteLine(Count);
@@ -383,8 +383,8 @@ namespace Melon.Classes
                     }
                     try
                     {
-                        string controls = "Ctrls: Arrow Keys ↑/↓, Enter";
-                        int conX = Console.WindowWidth - controls.Length - 2;
+                        string controls = StateManager.StringsManager.GetString("SimpleNavigationControls");
+                        int conX = Console.WindowWidth - controls.Length - 4;
                         Console.CursorLeft = conX;
                         Console.CursorTop = sTop;
                         Console.Write(controls.Pastel(MelonColor.BackgroundText));

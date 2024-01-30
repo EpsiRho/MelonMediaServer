@@ -1,4 +1,5 @@
-﻿using Melon.Classes;
+﻿using Amazon.Util.Internal;
+using Melon.Classes;
 using Melon.LocalClasses;
 using Melon.Models;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +12,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
+using static Melon.LocalClasses.StateManager;
 
 namespace Melon.DisplayClasses
 {
@@ -38,26 +39,27 @@ namespace Melon.DisplayClasses
 
             for(int i = 0; i < SetupSteps.Count(); i++)
             {
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Setup"});
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SetupProcess") });
                 SetupSteps[i]();
-
             }
 
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon" });
+            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle") });
             return;
         }
         private static void ToggleColor()
         {
-            Console.WriteLine($"Heyo, welcome to {"Melon".Pastel(MelonColor.Melon)}!".Pastel(MelonColor.Text));
-            Console.WriteLine($"First thing, would you like to use {"color".Pastel(MelonColor.Highlight)} in menus? ".Pastel(MelonColor.Text));
-            Console.WriteLine($"(If you don't see color anywhere now, you should select no.)".Pastel(MelonColor.ShadedText));
-            StateManager.MelonSettings.UseMenuColor = false;
-            string choice = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
-            StateManager.MelonSettings.UseMenuColor = (choice == "Yes") ? true : false;
+            Console.WriteLine($"{StringsManager.GetString("WelcomeMessage")} {StringsManager.GetString("MelonTitle").Pastel(MelonColor.Melon)}!".Pastel(MelonColor.Text));
+            Console.WriteLine($"{StringsManager.GetString("FirstTimeSetupPrompt")} {StringsManager.GetString("ColorProperty").Pastel(MelonColor.Highlight)} {StringsManager.GetString("MenuColorQuery")}".Pastel(MelonColor.Text));
+            Console.WriteLine($"({StringsManager.GetString("ColorVisibilityCheck")})".Pastel(MelonColor.ShadedText));
+            MelonSettings.UseMenuColor = false;
+            string PositiveConfirmation = StringsManager.GetString("PositiveConfirmation");
+            string NegativeConfirmation = StringsManager.GetString("NegativeConfirmation");
+            string choice = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
+            MelonSettings.UseMenuColor = (choice == PositiveConfirmation) ? true : false;
         }
         private static void GetUsername()
         {
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoClient = new MongoClient(MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
             var filter = Builders<User>.Filter.Empty;
@@ -67,18 +69,20 @@ namespace Melon.DisplayClasses
                 return;
             }
 
+            string PositiveConfirmation = StringsManager.GetString("PositiveConfirmation");
+            string NegativeConfirmation = StringsManager.GetString("NegativeConfirmation");
             while (true)
             {
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
-                Console.WriteLine("Let's get you setup, starting with your username.".Pastel(MelonColor.Text));
-                Console.WriteLine($"(This will be considered the {"Admin".Pastel(MelonColor.Highlight)} of this Melon instance, and can be changed anytime)".Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("SetupUsernamePrompt").Pastel(MelonColor.Text));
+                Console.WriteLine($"({StringsManager.GetString("AdminConsideration")} {StringsManager.GetString("AdminAccountDescriptor").Pastel(MelonColor.Highlight)} {StringsManager.GetString("AdminCreationNote")})".Pastel(MelonColor.Text));
                 Console.Write("> ".Pastel(MelonColor.Text));
                 string nameInput = Console.ReadLine();
 
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
-                Console.WriteLine($"Your username is {nameInput.Pastel(MelonColor.Highlight)}, is that right?".Pastel(MelonColor.Text));
-                string choice = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
-                if(choice == "Yes")
+                Console.WriteLine(StringsManager.GetString("UsernameConfirmation").Replace("{}", nameInput.Pastel(MelonColor.Highlight)).Pastel(MelonColor.Text));
+                string choice = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
+                if(choice == PositiveConfirmation)
                 {
                     tempUsername = nameInput;
                     break;
@@ -87,7 +91,7 @@ namespace Melon.DisplayClasses
         }
         private static void GetPassword()
         {
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoClient = new MongoClient(MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
             var filter = Builders<User>.Filter.Empty;
@@ -101,20 +105,20 @@ namespace Melon.DisplayClasses
             do
             {
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
-                Console.WriteLine($"Alright {tempUsername.Pastel(MelonColor.Highlight)}, let's set up a password.".Pastel(MelonColor.Text));
-                Console.WriteLine("This will be used to log you in to apps. When you want to add other users, they'll have their own passwords.".Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("PasswordSetupPrompt").Replace("{}", tempUsername.Pastel(MelonColor.Highlight)).Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("AppLoginInstruction").Pastel(MelonColor.Text));
                 if (!passInput[0].IsNullOrEmpty())
                 {
                     Console.SetCursorPosition(0, 3);
-                    Console.WriteLine("Passwords do not match, please try again.".Pastel(MelonColor.Error));
+                    Console.WriteLine(StringsManager.GetString("PasswordMismatchError").Pastel(MelonColor.Error));
                 }
-                Console.WriteLine("Password: ".Pastel(MelonColor.Text));
-                Console.Write("Confirm password: ".Pastel(MelonColor.BackgroundText));
+                Console.WriteLine($"{StringsManager.GetString("PasswordSetting")}: ".Pastel(MelonColor.Text));
+                Console.Write($"{StringsManager.GetString("PasswordConfirmation")}: ".Pastel(MelonColor.BackgroundText));
                 Console.SetCursorPosition(10, Console.CursorTop - 1);
                 passInput[0] = MelonUI.HiddenInput();
                 Console.SetCursorPosition(0, Console.CursorTop);
-                Console.WriteLine("Password: ".Pastel(MelonColor.BackgroundText));
-                Console.Write("Confirm password: ".Pastel(MelonColor.Text));
+                Console.WriteLine($"{StringsManager.GetString("PasswordSetting")}: ".Pastel(MelonColor.BackgroundText));
+                Console.Write($"{StringsManager.GetString("PasswordConfirmation")}: ".Pastel(MelonColor.Text));
                 passInput[1] = MelonUI.HiddenInput();
                 if (passInput[0] == "")
                 {
@@ -130,35 +134,29 @@ namespace Melon.DisplayClasses
             bool showDbError = false;
             while (true)
             {
-                Console.WriteLine("Next, we need to connect you to a MongoDb instance.".Pastel(MelonColor.Text));
-                Console.WriteLine("This can be local or through atlas, using a connection string".Pastel(MelonColor.Text));
-                Console.WriteLine("(Enter nothing for default: mongodb://localhost:27017)".Pastel(MelonColor.ShadedText));
+                Console.WriteLine(StringsManager.GetString("MongoDBSetupPrompt").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ConnectionStringNote").Pastel(MelonColor.Text));
+                Console.WriteLine($"({StringsManager.GetString("DefaultMongoDBEntry")}: mongodb://localhost:27017)".Pastel(MelonColor.ShadedText));
                 if (showDbError)
                 {
-                    Console.WriteLine($"Couldn't connect to that server!".Pastel(MelonColor.Error));
+                    Console.WriteLine(StringsManager.GetString("MongoDBConnectionError").Pastel(MelonColor.Error));
                     showDbError = false;
                 }
                 Console.Write("> ");
                 string connInput = Console.ReadLine();
                 if (connInput == "")
                 {
-                    StateManager.MelonSettings.MongoDbConnectionString = "mongodb://localhost:27017";
+                    MelonSettings.MongoDbConnectionString = "mongodb://localhost:27017";
                     connInput = "mongodb://localhost:27017";
-                }
-                else if (connInput.ToLower() == "debug")
-                {
-                    StateManager.MelonSettings.MongoDbConnectionString = "debug";
-                    connInput = "debug";
-                    return;
                 }
                 else
                 {
-                    StateManager.MelonSettings.MongoDbConnectionString = connInput;
+                    MelonSettings.MongoDbConnectionString = connInput;
                 }
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
-                Console.WriteLine("Checking Connection...".Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ConnectionCheckStatus").Pastel(MelonColor.Text));
                 MelonUI.IndeterminateProgressToggle();
-                var check = StateManager.CheckMongoDB(connInput);
+                var check = CheckMongoDB(connInput);
                 MelonUI.IndeterminateProgressToggle();
                 Thread.Sleep(100);
                 if (check)
@@ -175,8 +173,8 @@ namespace Melon.DisplayClasses
         private static void GetLibraryPaths()
         {
             MelonUI.ClearConsole(0, 1, Console.WindowWidth, 6);
-            Console.WriteLine("Lastly, where do you store your music?".Pastel(MelonColor.Text));
-            Console.WriteLine("You can enter multiple paths if needed, just enter nothing when you're done.".Pastel(MelonColor.Text));
+            Console.WriteLine(StringsManager.GetString("MusicStorageQuery").Pastel(MelonColor.Text));
+            Console.WriteLine(StringsManager.GetString("MultiplePathEntry").Pastel(MelonColor.Text));
             bool shownHaHaHaOne = false; // Make sure atleast one path is added
             bool showPathError = false; // Make sure paths are valid
             string pathInput = "";
@@ -185,17 +183,11 @@ namespace Melon.DisplayClasses
                 // Input UI
                 if (showPathError)
                 {
-                    Console.WriteLine($"{pathInput} was not found!".Pastel(MelonColor.Error));
+                    Console.WriteLine($"{pathInput} {StringsManager.GetString("NotFoundError")}".Pastel(MelonColor.Error));
                     showPathError = false;
                 }
                 Console.Write($"[{StateManager.MelonSettings.LibraryPaths.Count()}]> ");
                 pathInput = Console.ReadLine();
-
-                // If input is "debug" allow passing, maybe turn this into a flag later
-                if(pathInput == "debug")
-                {
-                    break;
-                }
 
                 // If input is "", leave if enough paths are added
                 if (pathInput == "")
@@ -205,7 +197,7 @@ namespace Melon.DisplayClasses
                         if (!shownHaHaHaOne)
                         {
                             Console.CursorTop--;
-                            Console.WriteLine("You're going to need to add at least one path!".Pastel(MelonColor.Text));
+                            Console.WriteLine(StringsManager.GetString("PathRequirementReminder").Pastel(MelonColor.Text));
                             shownHaHaHaOne = true;
                         }
                         else
@@ -243,14 +235,6 @@ namespace Melon.DisplayClasses
         }
         private static void CompleteSetup()
         { 
-            // Don't try to connect if debug was set 
-            if(StateManager.MelonSettings.MongoDbConnectionString == "debug")
-            {
-                StateManager.SaveSettings();
-                DisplayManager.UIExtensions.Remove(Display);
-                Console.CursorVisible = false;
-                return;
-            }
             // Here we'll connect to the database and add the first user
             // We'll also save all the settings set during the OOBE
             var databaseNames = StateManager.DbClient.ListDatabaseNames().ToList();
@@ -278,6 +262,11 @@ namespace Melon.DisplayClasses
             StateManager.SaveSettings();
             DisplayManager.UIExtensions.Remove(Display);
             Console.CursorVisible = false;
+        }
+        public static void ShowSetupError()
+        {
+            Console.WriteLine($"[!] {StringsManager.GetString("HeadlessSetupRequired")}");
+            Console.WriteLine($"[!] {StringsManager.GetString("HeadlessSetupInstructions")}");
         }
     }
 }

@@ -19,6 +19,7 @@ namespace Melon.LocalClasses
         public byte[]? JWTKey { get; set; }
         public List<string> LibraryPaths { get; set; }
         public string ListeningURL { get; set; }
+        public string DefaultLanguage { get; set; }
         public int JWTExpireInMinutes { get; set; }
         public Color Text { get; set; }
         public Color ShadedText { get; set; }

@@ -48,8 +48,8 @@ namespace Melon.LocalClasses
             if(StateManager.MelonSettings.LibraryPaths.Count() == 0)
             {
                 MelonUI.ClearConsole();
-                Console.WriteLine("No library paths to search!".Pastel(MelonColor.Error));
-                Console.WriteLine("Press any key to continue...".Pastel(MelonColor.BackgroundText));
+                Console.WriteLine(StateManager.StringsManager.GetString("NoPathWarning").Pastel(MelonColor.Error));
+                Console.WriteLine(StateManager.StringsManager.GetString("ContinuationPrompt").Pastel(MelonColor.BackgroundText));
                 Console.ReadKey(intercept: true);
                 return;
             }
@@ -69,18 +69,18 @@ namespace Melon.LocalClasses
                 ScanFolder(path, skip);
             }
 
-            CurrentFolder = "N/A";
-            CurrentFile = "N/A";
-            CurrentStatus = "Sorting Tracks and Releases";
+            CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
+            CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
+            CurrentStatus = StateManager.StringsManager.GetString("TrackSortingStatus");
             Sort();
 
-            CurrentFolder = "N/A";
-            CurrentFile = "N/A";
-            CurrentStatus = "Delete Pass, Finishing up~";
+            CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
+            CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
+            CurrentStatus = StateManager.StringsManager.GetString("DeletionStepStatus");
             DeletePass();
             endDisplay = true;
-            CurrentFile = "N/A";
-            CurrentStatus = "Complete!";
+            CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
+            CurrentStatus = StateManager.StringsManager.GetString("CompletionStatus");
             IndexCollections();
             DisplayManager.UIExtensions.Clear();
             Scanning = false;
@@ -273,7 +273,7 @@ namespace Melon.LocalClasses
                         }
                     }
 
-                    CurrentStatus = "Preparing Artist and Genre tags";
+                    CurrentStatus = StateManager.StringsManager.GetString("TagPreparationStatus");
 
                     // Get and Split the artists metadata tag
                     List<string> albumArtists = SplitArtists(fileMetadata.AlbumArtist);
@@ -524,7 +524,7 @@ namespace Melon.LocalClasses
                                                           ShortTrack sTrack, Track trackDoc, List<string> albumArtists, List<string> trackGenres)
         {
             // If artist name is nothing, set to "Unknown Artist"
-            string artist = string.IsNullOrEmpty(artistName) ? "Unknown Artist" : artistName;
+            string artist = string.IsNullOrEmpty(artistName) ? StateManager.StringsManager.GetString("UnknownArtistStatus") : artistName;
 
             // Try to find the artist
             var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", artist);
@@ -534,7 +534,7 @@ namespace Melon.LocalClasses
             if (artistDoc == null)
             {
                 // Create Artist Object
-                MelonScanner.CurrentStatus = $"Adding {artist}";
+                MelonScanner.CurrentStatus = $"{StateManager.StringsManager.GetString("AdditionProcess")} {artist}";
                 artistDoc = new Artist()
                 {
                     _id = aId,
@@ -565,7 +565,7 @@ namespace Melon.LocalClasses
             }
             else // If the artist was found, update it
             {
-                MelonScanner.CurrentStatus = $"Updating {artist}";
+                MelonScanner.CurrentStatus = $"{StateManager.StringsManager.GetString("UpdateProcess")} {artist}";
 
                 if (albumArtists.Contains(artist)) // If it's an album artists, it's their release
                 {
@@ -625,9 +625,9 @@ namespace Melon.LocalClasses
             if (albumDoc == null) // If albumDoc is null, make a new album.
             {
                 // Set the album name to "Unkown album" if no album name is found.
-                string albumName = string.IsNullOrEmpty(fileMetadata.Album) ? "Unknown Album" : fileMetadata.Album;
+                string albumName = string.IsNullOrEmpty(fileMetadata.Album) ? StateManager.StringsManager.GetString("UnknownAlbumStatus") : fileMetadata.Album;
 
-                MelonScanner.CurrentStatus = $"Adding {fileMetadata.Album}";
+                MelonScanner.CurrentStatus = $"{StateManager.StringsManager.GetString("AdditionProcess")} {fileMetadata.Album}";
 
                 // Create the new album object
                 albumDoc = new Album
@@ -698,6 +698,7 @@ namespace Melon.LocalClasses
             }
             else
             {
+                MelonScanner.CurrentStatus = $"{StateManager.StringsManager.GetString("UpdateProcess")} {fileMetadata.Album}";
                 // Add artists to album artists if they are not already listed
                 for (int i = 0; i < albumArtists.Count(); i++)
                 {
@@ -766,7 +767,7 @@ namespace Melon.LocalClasses
                 TrackId = TrackId.ToString(),
                 LastModified = File.GetLastWriteTime(fileMetadata.Path).ToUniversalTime(),
                 DateAdded = DateTime.UtcNow,
-                TrackName = fileMetadata.Title ?? "Unknown",
+                TrackName = fileMetadata.Title ?? StateManager.StringsManager.GetString("UnknownStatus"),
                 Album = sAlbum,
                 Path = fileMetadata.Path,
                 Position = fileMetadata.TrackNumber ?? 0,
@@ -791,6 +792,8 @@ namespace Melon.LocalClasses
                 nextTrack = "",
                 ServerURL = ""
             };
+
+            MelonScanner.CurrentStatus = $"{StateManager.StringsManager.GetString("AdditionProcess")} / {StateManager.StringsManager.GetString("UpdateProcess")} {track.TrackName}";
 
             // Check if any of the found lyric files match with the new track
             for (int i = 0; i < MelonScanner.LyricFiles.Count(); i++)
@@ -947,133 +950,139 @@ namespace Melon.LocalClasses
         public static void ResetDB()
         {
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Database Reset" });
+            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("DatabaseResetOption") });
 
             // Description
-            Console.WriteLine($"This will remove all of the db entries.");
-            Console.WriteLine($"It shouldn't take long but will require you to rescan your files.");
-            Console.WriteLine($"Would you still like to reset?");
-            var input = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
-            switch (input)
+            Console.WriteLine(StateManager.StringsManager.GetString("DatabaseRemovalWarning").Pastel(MelonColor.Text));
+            Console.WriteLine(StateManager.StringsManager.GetString("RescanRequirement").Pastel(MelonColor.Text));
+            Console.WriteLine(StateManager.StringsManager.GetString("ResetConfirmation").Pastel(MelonColor.Text));
+            string PositiveConfirmation = StateManager.StringsManager.GetString("PositiveConfirmation");
+            string NegativeConfirmation = StateManager.StringsManager.GetString("NegativeConfirmation");
+            var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
+            if (input == PositiveConfirmation) 
             {
-                case "Yes":
-                    var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
 
-                    var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
-                    TracksCollection.DeleteMany(Builders<Track>.Filter.Empty);
+                var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
 
-                    var ArtistCollection = NewMelonDB.GetCollection<Artist>("Artists");
-                    ArtistCollection.DeleteMany(Builders<Artist>.Filter.Empty);
+                var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
+                TracksCollection.DeleteMany(Builders<Track>.Filter.Empty);
 
-                    var AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");
-                    AlbumCollection.DeleteMany(Builders<Album>.Filter.Empty);
+                var ArtistCollection = NewMelonDB.GetCollection<Artist>("Artists");
+                ArtistCollection.DeleteMany(Builders<Artist>.Filter.Empty);
 
-                    var QueueCollection = NewMelonDB.GetCollection<PlayQueue>("Queues");
-                    QueueCollection.DeleteMany(Builders<PlayQueue>.Filter.Empty);
+                var AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");
+                AlbumCollection.DeleteMany(Builders<Album>.Filter.Empty);
 
-                    var PlaylistCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
-                    PlaylistCollection.DeleteMany(Builders<Playlist>.Filter.Empty);
+                var QueueCollection = NewMelonDB.GetCollection<PlayQueue>("Queues");
+                QueueCollection.DeleteMany(Builders<PlayQueue>.Filter.Empty);
 
-                    var failedCollection = NewMelonDB.GetCollection<FailedFiles>("FailedFiles");
-                    failedCollection.DeleteMany(Builders<FailedFiles>.Filter.Empty);
+                var PlaylistCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
+                PlaylistCollection.DeleteMany(Builders<Playlist>.Filter.Empty);
 
-                    var statsCollection = NewMelonDB.GetCollection<FailedFiles>("Stats");
-                    statsCollection.DeleteMany(Builders<FailedFiles>.Filter.Empty);
+                var failedCollection = NewMelonDB.GetCollection<FailedFiles>("FailedFiles");
+                failedCollection.DeleteMany(Builders<FailedFiles>.Filter.Empty);
 
-                    if (Directory.Exists($"{StateManager.melonPath}/AlbumArts/"))
+                var statsCollection = NewMelonDB.GetCollection<FailedFiles>("Stats");
+                statsCollection.DeleteMany(Builders<FailedFiles>.Filter.Empty);
+
+                if (Directory.Exists($"{StateManager.melonPath}/AlbumArts/"))
+                {
+                    foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/AlbumArts/"))
                     {
-                        foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/AlbumArts/"))
-                        {
-                            File.Delete(file);
-                        }
+                        File.Delete(file);
                     }
-                    break;
-                case "No":
-                    return;
+                }
+            }
+            else 
+            {
+                return;
             }
         }
         public static void Scan()
         {
+            string PositiveConfirmation = StateManager.StringsManager.GetString("PositiveConfirmation");
+            string NegativeConfirmation = StateManager.StringsManager.GetString("NegativeConfirmation");
             if (Scanning)
             {
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Full Scan" });
+                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("FullScanOption") });
 
-                Console.WriteLine($"The scanner is already running, view progress?");
-                var opt = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
-                switch (opt)
+                Console.WriteLine(StateManager.StringsManager.GetString("ScannerRunningCheck").Pastel(MelonColor.Text));
+                var opt = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
+                if(opt == PositiveConfirmation)
                 {
-                    case "Yes":
-                        ScanProgressView();
-                        break;
-                    case "No":
-                        return;
+                    ScanProgressView();
+                }
+                else
+                {
+                    return;
                 }
             }
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Full Scan" });
+            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("FullScanOption") });
 
             // Description
-            Console.WriteLine($"This will start a scan of all saved paths and their subdirectories.");
-            Console.WriteLine($"It may {"take awhile".Pastel(MelonColor.Highlight)} depending on how many files you have.");
-            Console.WriteLine($"Ready to Start?");
-            var input = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
-            switch (input)
+            Console.WriteLine(StateManager.StringsManager.GetString("FullLibraryScanInitiation").Pastel(MelonColor.Text));
+            Console.WriteLine($"{StateManager.StringsManager.GetString("ScanDurationNote")} {StateManager.StringsManager.GetString("TimeConsumptionNote").Pastel(MelonColor.Highlight)} {StateManager.StringsManager.GetString("FileCountNote")}".Pastel(MelonColor.Text));
+            Console.WriteLine(StateManager.StringsManager.GetString("StartConfirmation").Pastel(MelonColor.Text));
+            var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
+            if (input == PositiveConfirmation)
             {
-                case "Yes":
-                    if (!Scanning)
-                    {
-                        Thread scanThread = new Thread(MelonScanner.StartScan);
-                        scanThread.Start(false);
-                        DisplayManager.UIExtensions.Add(() => { Console.WriteLine("Library scan started!".Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
-                        //DisplayManager.MenuOptions.Remove("Library Scanner");
-                        //DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
-                    }
-                    ScanProgressView();
-                    break;
-                case "No":
-                    return;
+                if (!Scanning)
+                {
+                    Thread scanThread = new Thread(MelonScanner.StartScan);
+                    scanThread.Start(false);
+                    DisplayManager.UIExtensions.Add(() => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
+                }
+                ScanProgressView();
+            }
+            else
+            {
+                return;
             }
         }
         public static void ScanShort()
         {
+            string PositiveConfirmation = StateManager.StringsManager.GetString("PositiveConfirmation");
+            string NegativeConfirmation = StateManager.StringsManager.GetString("NegativeConfirmation");
             if (Scanning)
             {
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Short Scan" });
+                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("ShortScanOption") });
 
-                Console.WriteLine($"The scanner is already running, view progress?");
-                var opt = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
-                switch (opt)
+                Console.WriteLine(StateManager.StringsManager.GetString("ScannerRunningCheck").Pastel(MelonColor.Text));
+                var opt = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
+                if (opt == PositiveConfirmation)
                 {
-                    case "Yes":
-                        ScanProgressView();
-                        break;
-                    case "No":
-                        return;
+                    ScanProgressView();
+                }
+                else
+                {
+                    return;
                 }
             }
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Short Scan" });
+            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("ShortScanOption") });
 
             // Description
-            Console.WriteLine($"The short scan will only scan recently updated files or files not already in the db.");
-            Console.WriteLine($"It may {"take awhile".Pastel(MelonColor.Highlight)} depending on how many files you have.");
-            Console.WriteLine($"Ready to Start?");
-            var input = MelonUI.OptionPicker(new List<string>() { "Yes", "No" });
-            switch (input)
+            Console.WriteLine(StateManager.StringsManager.GetString("ShortScanExplanation").Pastel(MelonColor.Text));
+            Console.WriteLine($"{StateManager.StringsManager.GetString("ScanDurationNote")} {StateManager.StringsManager.GetString("TimeConsumptionNote").Pastel(MelonColor.Highlight)} {StateManager.StringsManager.GetString("FileCountNote")}".Pastel(MelonColor.Text));
+            Console.WriteLine(StateManager.StringsManager.GetString("StartConfirmation").Pastel(MelonColor.Text));
+            var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
+            if (input == PositiveConfirmation)
             {
-                case "Yes":
-                    if (Scanning)
-                    {
-                        Thread scanThread = new Thread(MelonScanner.StartScan);
-                        scanThread.Start(true);
-                        DisplayManager.UIExtensions.Add(() => { Console.WriteLine("Library scan started!".Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
-                        //DisplayManager.MenuOptions.Remove("Library Scanner");
-                        //DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
-                    }
-                    ScanProgressView();
-                    break;
-                case "No":
-                    return;
+                ScanProgressView();
+                if (Scanning)
+                {
+                    Thread scanThread = new Thread(MelonScanner.StartScan);
+                    scanThread.Start(true);
+                    DisplayManager.UIExtensions.Add(() => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
+                    //DisplayManager.MenuOptions.Remove("Library Scanner");
+                    //DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
+                }
+                ScanProgressView();
+            }
+            else 
+            { 
+                return;
             }
         }
         public static void ScanProgressView()
@@ -1081,7 +1090,7 @@ namespace Melon.LocalClasses
             // Title
             Console.CursorVisible = false;
             MelonUI.ClearConsole();
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Scanner Progress" });
+            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("ScannerProgressDisplay") });
 
             endDisplay = false;
             int sLeft = Console.CursorLeft;
@@ -1099,42 +1108,42 @@ namespace Melon.LocalClasses
                     {
                         x = Console.WindowWidth;
                         MelonUI.ClearConsole();
-                        MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Scanner Progress" });
+                        MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("ScannerProgressDisplay") });
                     }
                     try
                     {
-                        string controls = $"Ctrls: Esc(Back)";
+                        string controls = StateManager.StringsManager.GetString("BackEscapeControl");
                         int conX = Console.WindowWidth - controls.Length - 2;
                         Console.CursorLeft = conX;
                         Console.CursorTop = sTop;
                         Console.Write(controls.Pastel(MelonColor.BackgroundText));
                         Console.CursorTop = sTop;
                         Console.CursorLeft = sLeft;
-                        Console.WriteLine($"Scanned {ScannedFiles.ToString().Pastel(MelonColor.Melon)} // {FoundFiles.ToString().Pastel(MelonColor.Melon)} Found");
+                        Console.WriteLine($"{StateManager.StringsManager.GetString("ScanStatus")} {ScannedFiles.ToString().Pastel(MelonColor.Melon)} // {FoundFiles.ToString().Pastel(MelonColor.Melon)} {StateManager.StringsManager.GetString("FoundStatus")}");
                         MelonUI.DisplayProgressBar(ScannedFiles, FoundFiles, '#', '-');
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        string msg = $"Time Left: {TimeSpan.FromMilliseconds((averageMilliseconds / ScannedFiles)*(FoundFiles - ScannedFiles)).ToString(@"hh\:mm\:ss")}";
+                        string msg = $"{StateManager.StringsManager.GetString("TimeLeftDisplay")}: {TimeSpan.FromMilliseconds((averageMilliseconds / ScannedFiles)*(FoundFiles - ScannedFiles)).ToString(@"hh\:mm\:ss")}";
                         int max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"Avg Time Per File: {TimeSpan.FromMilliseconds(averageMilliseconds / ScannedFiles)}";
+                        msg = $"{StateManager.StringsManager.GetString("AverageFileTime")}: {TimeSpan.FromMilliseconds(averageMilliseconds / ScannedFiles)}";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"Current Folder: {CurrentFolder}";
+                        msg = $"{StateManager.StringsManager.GetString("FolderStatusDisplay")}: {CurrentFolder}";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"Current File: {CurrentFile}";
+                        msg = $"{StateManager.StringsManager.GetString("FileStatusDisplay")}: {CurrentFile}";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"Status: {CurrentStatus}";
+                        msg = $"{StateManager.StringsManager.GetString("SystemStatusDisplay")}: {CurrentStatus}";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.WriteLine(new string(' ', Console.WindowWidth));
