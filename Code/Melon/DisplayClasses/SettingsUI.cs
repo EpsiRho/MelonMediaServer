@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Resources;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -69,6 +70,7 @@ namespace Melon.DisplayClasses
                     { StringsManager.GetString("LibraryPathEditOption") , LibraryPathSettings },
                     { StringsManager.GetString("ListeningURLEditOption"), ChangeListeningURL },
                     { StringsManager.GetString("HTTPSConfigOption"), HTTPSSetup },
+                    { StringsManager.GetString("DefaultLanguageOption"), ChangeDeafultLanguage },
                     { StringsManager.GetString("ColorEditOption") , ChangeMelonColors }
                 };
                 var choice = MelonUI.OptionPicker(MenuOptions.Keys.ToList());
@@ -210,7 +212,7 @@ namespace Melon.DisplayClasses
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("MongoDBOption") });
 
                 // Description
-                Console.WriteLine($"{StringsManager.GetString("MongoDBConnectionString")}: {StateManager.MelonSettings.MongoDbConnectionString.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
+                Console.WriteLine($"{StringsManager.GetString("MongoDBConnectionString")}: {MelonSettings.MongoDbConnectionString.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
                 Console.WriteLine($"({StringsManager.GetString("StringEntryPrompt")})".Pastel(MelonColor.Text));
                 if (!check)
                 {
@@ -226,12 +228,12 @@ namespace Melon.DisplayClasses
                     return;
                 }
 
-                check = StateManager.CheckMongoDB(input);
+                check = CheckMongoDB(input);
                 if (check)
                 {
                     // Set and Save new conn string
-                    StateManager.MelonSettings.MongoDbConnectionString = input;
-                    StateManager.SaveSettings();
+                    MelonSettings.MongoDbConnectionString = input;
+                    SaveSettings();
                     if (DisplayManager.MenuOptions.Count < 5)
                     {
                         DisplayManager.MenuOptions.Clear();
@@ -244,6 +246,49 @@ namespace Melon.DisplayClasses
                     break;
                 }
 
+            }
+
+        }
+        private static void ChangeDeafultLanguage()
+        {
+            bool check = true;
+            string input = "";
+            while (true)
+            {
+                // Title
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("DefaultLanguageOption") });
+
+                // Description
+                Console.WriteLine($"{StringsManager.GetString("CurrentLanguageDefault")}: {MelonSettings.DefaultLanguage.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
+                Console.WriteLine($"({StringsManager.GetString("LanguageInstructions")})".Pastel(MelonColor.Text));
+                if (!check)
+                {
+                    Console.WriteLine($"[{StringsManager.GetString("LanguageError").Replace("{}", input)}]".Pastel(MelonColor.Error));
+                }
+                check = false;
+
+                // Get New MongoDb Connection String
+                Console.Write("> ".Pastel(MelonColor.Text));
+                input = Console.ReadLine();
+                if (input == "")
+                {
+                    return;
+                }
+
+                var resources = typeof(Program).Assembly.GetManifestResourceNames();
+                if (resources.Contains($"Melon.Strings.UIStrings{input.ToUpper()}.resources"))
+                {
+                    MelonSettings.DefaultLanguage = input;
+                    StringsManager = StringsManager = new ResourceManager($"Melon.Strings.UIStrings{input.ToUpper()}", typeof(Program).Assembly);
+                    SaveSettings();
+                    DisplayManager.MenuOptions.Clear();
+                    DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
+                    DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);
+                    DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDB);
+                    DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
+                    DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
+                    break;
+                }
             }
 
         }

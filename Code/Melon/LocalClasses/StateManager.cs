@@ -17,6 +17,7 @@ using Amazon.Util;
 using Microsoft.Extensions.DependencyInjection;
 using System.Resources;
 using Amazon.Util.Internal;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Melon.LocalClasses
 {
@@ -33,8 +34,21 @@ namespace Melon.LocalClasses
         public static ResourceManager StringsManager { get; set; }
         public static void Init(bool headless, bool runSetup, string language)
         {
+            if (language == "")
+            {
+                try
+                {
+                    LoadSettings();
+                    language = MelonSettings.DefaultLanguage;
+                }
+                catch (Exception)
+                {
+                    language = "EN";
+                }
+            }
+
             var resources = typeof(Program).Assembly.GetManifestResourceNames();
-            if (resources.Contains($"Melon.UIStrings{language.ToUpper()}.resources"))
+            if (resources.Contains($"Melon.Strings.UIStrings{language.ToUpper()}.resources"))
             {
                 StringsManager = new ResourceManager($"Melon.Strings.UIStrings{language.ToUpper()}", typeof(Program).Assembly);
             }
@@ -103,6 +117,7 @@ namespace Melon.LocalClasses
                     Melon = Color.FromArgb(26, 225, 19),
                     Error = Color.FromArgb(255, 0, 0),
                     ListeningURL = "https://*:14524",
+                    DefaultLanguage = "EN",
                     JWTExpireInMinutes = 60,
                     UseMenuColor = true,
                 };
@@ -114,7 +129,10 @@ namespace Melon.LocalClasses
                 try
                 {
                     LoadSettings();
-
+                    if(MelonSettings.DefaultLanguage.IsNullOrEmpty())
+                    {
+                        MelonSettings.DefaultLanguage = "EN";
+                    }
                     MelonColor.Text = MelonSettings.Text;
                     MelonColor.ShadedText = MelonSettings.ShadedText;
                     MelonColor.BackgroundText = MelonSettings.BackgroundText;
@@ -137,6 +155,7 @@ namespace Melon.LocalClasses
                         Melon = Color.FromArgb(26, 225, 19),
                         Error = Color.FromArgb(255, 0, 0),
                         ListeningURL = "https://*:14524",
+                        DefaultLanguage = "EN",
                         JWTExpireInMinutes = 60,
                         UseMenuColor = true,
                     };

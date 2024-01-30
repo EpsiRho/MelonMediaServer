@@ -123,3 +123,7 @@ PathRequirementReminder=¡Vas a necesitar agregar al menos un camino!
 UsernameConfirmation=Tu nombre de usuario es {}, ¿es correcto?
 HeadlessSetupRequired=Melon debe pasar por la configuración primero, la cual no se puede mostrar en modo sin cabeza.
 HeadlessSetupInstructions=Por favor, ejecuta Melon sin el modo sin cabeza primero para completar la configuración.
+CurrentLanguageDefault=El idioma actual está configurado en
+LanguageInstructions=Ingresa un código de idioma válido (en, es) para cambiar el idioma.
+LanguageError=No se encontró soporte para {} en Melón.
+DefaultLanguageOption=Cambiar Idioma Predeterminado
