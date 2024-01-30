@@ -31,7 +31,7 @@ namespace Melon.DisplayClasses
             if (StateManager.MelonSettings == null)
             {
                 MelonUI.ClearConsole();
-                Console.WriteLine("Loading Settings...".Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("SettingsLoadingProcess").Pastel(MelonColor.Text));
                 if (!Directory.Exists(melonPath))
                 {
                     Directory.CreateDirectory(melonPath);
@@ -58,18 +58,18 @@ namespace Melon.DisplayClasses
             while (LockUI)
             {
                 // Title
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings" });
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption") });
 
                 // Input
                 Dictionary<string, Action> MenuOptions = new Dictionary<string, Action>()
                 {
-                    { "Back" , () => { LockUI = false; } },
+                    { StringsManager.GetString("BackNavigation") , () => { LockUI = false; } },
                     //{ "Edit Users", UserSettings },
-                    { "Edit MongoDB Connection", MongoDBSettings },
-                    { "Edit Library Paths" , LibraryPathSettings },
-                    { "Edit Listening URL", ChangeListeningURL },
-                    { "Configure HTTPS", HTTPSSetup },
-                    { "Edit Colors " , ChangeMelonColors }
+                    { StringsManager.GetString("MongoDBConnectionEditOption"), MongoDBSettings },
+                    { StringsManager.GetString("LibraryPathEditOption") , LibraryPathSettings },
+                    { StringsManager.GetString("ListeningURLEditOption"), ChangeListeningURL },
+                    { StringsManager.GetString("HTTPSConfigOption"), HTTPSSetup },
+                    { StringsManager.GetString("ColorEditOption") , ChangeMelonColors }
                 };
                 var choice = MelonUI.OptionPicker(MenuOptions.Keys.ToList());
                 MenuOptions[choice]();
@@ -81,20 +81,19 @@ namespace Melon.DisplayClasses
             var config = Security.GetSSLConfig();
             if(config.Key != "")
             {
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Configure HTTPS" });
-                Console.WriteLine($"Changing this setting will require a server restart!".Pastel(MelonColor.Highlight));
-                Console.WriteLine($"SSL is already configured, would you like to disabled or edit it?".Pastel(MelonColor.Text));
-                var opt = MelonUI.OptionPicker(new List<string>() { "Back", "Disable SSL", "Edit SSL Config"});
-                switch (opt) 
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
+                Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
+                Console.WriteLine(StringsManager.GetString("SSLConfigStatus").Pastel(MelonColor.Text));
+                var opt = MelonUI.OptionPicker(new List<string>() { StringsManager.GetString("BackNavigation"), StringsManager.GetString("SSLDisableOption"), StringsManager.GetString("SSLConfigEditOption") });
+                if(opt == StringsManager.GetString("BackNavigation"))
                 {
-                    case "Back":
-                        return;
-                    case "Disable SSL":
-                        Security.SetSSLConfig("", "");
-                        Security.SaveSSLConfig();
-                        return;
-                    case "Edit SSL Config":
-                        break;
+                    return;
+                }
+                else if(opt == StringsManager.GetString("SSLDisableOption"))
+                {
+                    Security.SetSSLConfig("", "");
+                    Security.SaveSSLConfig();
+                    return;
                 }
 
             }
@@ -103,13 +102,13 @@ namespace Melon.DisplayClasses
             while (true)
             {
                 // Get the Path to the pfx
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Configure HTTPS" });
-                Console.WriteLine($"Changing this setting will require a server restart!".Pastel(MelonColor.Highlight));
-                Console.WriteLine($"Setting up HTTPS requires a valid SSL Certificate.".Pastel(MelonColor.Text));
-                Console.WriteLine($"Please enter the path to your {".pfx".Pastel(MelonColor.Highlight)} certificate (or enter nothing to cancel):".Pastel(MelonColor.Text));
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
+                Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
+                Console.WriteLine(StringsManager.GetString("HTTPSRequirementNote").Pastel(MelonColor.Text));
+                Console.WriteLine($"{StringsManager.GetString("SSLCertificatePathEntryFirst")} {".pfx".Pastel(MelonColor.Highlight)} {StringsManager.GetString("SSLCertificatePathEntrySecond")}:".Pastel(MelonColor.Text));
                 if (!result)
                 {
-                    Console.WriteLine($"[Invalid Cert or Password]".Pastel(MelonColor.Error));
+                    Console.WriteLine($"[{StringsManager.GetString("CertificatePasswordError")}]".Pastel(MelonColor.Error));
                 }
                 result = false;
 
@@ -121,8 +120,8 @@ namespace Melon.DisplayClasses
                 }
 
                 // Get the password to the cert
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Configure HTTPS" });
-                Console.WriteLine($"Next, enter the password to your SSL Certificate (or enter nothing to cancel):".Pastel(MelonColor.Text));
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
+                Console.WriteLine(StringsManager.GetString("SSLPasswordEntry").Pastel(MelonColor.Text));
 
                 Console.Write("> ".Pastel(MelonColor.Text));
                 string password = MelonUI.HiddenInput();
@@ -160,15 +159,15 @@ namespace Melon.DisplayClasses
             while (true)
             {
                 // Title
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Listening URL" });
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("ListeningURLDisplay") });
 
                 // Description
-                Console.WriteLine($"Changing this setting will require a server restart!".Pastel(MelonColor.Highlight));
-                Console.WriteLine($"Current URL: {StateManager.MelonSettings.ListeningURL.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
-                Console.WriteLine($"(Enter new urls separated by \";\" or nothing to keep the current string)".Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
+                Console.WriteLine($"{StringsManager.GetString("URLDisplay")}: {StateManager.MelonSettings.ListeningURL.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
+                Console.WriteLine($"({StringsManager.GetString("URLListEntry")})".Pastel(MelonColor.Text));
                 if (!result)
                 {
-                    Console.WriteLine($"[Invalid URL]".Pastel(MelonColor.Error));
+                    Console.WriteLine($"[{StringsManager.GetString("URLValidationError")}]".Pastel(MelonColor.Error));
                 }
                 result = false;
 
@@ -208,14 +207,14 @@ namespace Melon.DisplayClasses
             while (true)
             {
                 // Title
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "MongoDB" });
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("MongoDBOption") });
 
                 // Description
-                Console.WriteLine($"Current MongoDB connection string: {StateManager.MelonSettings.MongoDbConnectionString.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
-                Console.WriteLine($"(Enter a new string or nothing to keep the current string)".Pastel(MelonColor.Text));
+                Console.WriteLine($"{StringsManager.GetString("MongoDBConnectionString")}: {StateManager.MelonSettings.MongoDbConnectionString.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
+                Console.WriteLine($"({StringsManager.GetString("StringEntryPrompt")})".Pastel(MelonColor.Text));
                 if (!check)
                 {
-                    Console.WriteLine($"[Couldn't connect to server, try again]".Pastel(MelonColor.Error));
+                    Console.WriteLine($"[{StringsManager.GetString("MongoDBConnectionError")}]".Pastel(MelonColor.Error));
                 }
                 check = false;
 
@@ -236,11 +235,11 @@ namespace Melon.DisplayClasses
                     if (DisplayManager.MenuOptions.Count < 5)
                     {
                         DisplayManager.MenuOptions.Clear();
-                        DisplayManager.MenuOptions.Add("Full Scan", MelonScanner.Scan);
-                        DisplayManager.MenuOptions.Add("Short Scan", MelonScanner.ScanShort);
-                        DisplayManager.MenuOptions.Add("Reset DB", MelonScanner.ResetDB);
-                        DisplayManager.MenuOptions.Add("Settings", SettingsUI.Settings);
-                        DisplayManager.MenuOptions.Add("Exit", () => Environment.Exit(0));
+                        DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
+                        DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);
+                        DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDB);
+                        DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
+                        DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
                     }
                     break;
                 }
@@ -253,35 +252,35 @@ namespace Melon.DisplayClasses
             while (true)
             {
                 // title
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Libraries" });
-                Console.WriteLine($"(Select a path to delete it)".Pastel(MelonColor.Text));
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("LibraryOption") });
+                Console.WriteLine($"({StringsManager.GetString("PathDeletionSelection")})".Pastel(MelonColor.Text));
 
                 // Get paths
                 List<string> NewPaths = new List<string>();
-                NewPaths.Add("Back");
-                NewPaths.Add("Add New Path");
+                NewPaths.Add(StringsManager.GetString("BackNavigation"));
+                NewPaths.Add(StringsManager.GetString("PathAddition"));
                 NewPaths.AddRange(StateManager.MelonSettings.LibraryPaths);
 
                 // Add Options
 
                 // Get Selection
                 string input = MelonUI.OptionPicker(NewPaths);
-                if (input == "Add New Path")
+                if (input == StringsManager.GetString("PathAddition"))
                 {
                     // For showing error color when directory doesn't exist
                     bool showPathError = false;
                     while (true)
                     {
                         // Title
-                        MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Libraries", "Add Library" });
+                        MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("LibraryOption"), StringsManager.GetString("LibraryAddMenu") });
 
                         // Description and Input UI
                         if (showPathError)
                         {
-                            Console.WriteLine("Invalid Path, Please try again (Or enter nothing to quit)".Pastel(MelonColor.Error));
+                            Console.WriteLine(StringsManager.GetString("PathValidationError").Pastel(MelonColor.Error));
                             showPathError = false;
                         }
-                        Console.WriteLine("Enter a new library path:".Pastel(MelonColor.Text));
+                        Console.WriteLine(StringsManager.GetString("LibraryPathEntry").Pastel(MelonColor.Text));
                         Console.Write($"> ".Pastel(MelonColor.Text));
 
                         // Get Path
@@ -304,7 +303,7 @@ namespace Melon.DisplayClasses
                         }
                     }
                 }
-                else if (input == "Back")
+                else if (input == StringsManager.GetString("BackNavigation"))
                 {
                     // Leave
                     return;
@@ -324,16 +323,16 @@ namespace Melon.DisplayClasses
                 Dictionary<string, int> ColorMenuOptions = new Dictionary<string, int>()
                 {
                     { $"Back" , 7 },
-                    { $"Set the {"normal text color".Pastel(MelonColor.Text)}", 0 },
-                    { $"Set the {"shaded text color".Pastel(MelonColor.ShadedText)}", 1 },
-                    { $"Set the {"background text color".Pastel(MelonColor.BackgroundText)}", 2 },
-                    { $"Set the {"Melon title color".Pastel(MelonColor.Melon)}", 3 },
-                    { $"Set the {"highlight color".Pastel(MelonColor.Highlight)}", 4 },
-                    { $"Set the {"error color".Pastel(MelonColor.Error)}", 5 },
-                    { $"Set all colors back to their defaults", 6 }
+                    { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("NormalTextColorSetting").Pastel(MelonColor.Text)}", 0 },
+                    { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("ShadedTextColorSetting").Pastel(MelonColor.ShadedText)}", 1 },
+                    { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("BackgroundTextColorSetting").Pastel(MelonColor.BackgroundText)}", 2 },
+                    { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("MelonTitleColorSetting").Pastel(MelonColor.Melon)}", 3 },
+                    { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("HighlightColorSetting").Pastel(MelonColor.Highlight)}", 4 },
+                    { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("ErrorColorSetting").Pastel(MelonColor.Error)}", 5 },
+                    { StringsManager.GetString("DefaultColorReset"), 6 }
                 };
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Settings", "Colors" });
-                Console.WriteLine("Choose a color to change:".Pastel(MelonColor.Text));
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("LibraryOption"), StringsManager.GetString("ColorOptions") });
+                Console.WriteLine(StringsManager.GetString("ColorSelection").Pastel(MelonColor.Text));
                 var choice = MelonUI.OptionPicker(ColorMenuOptions.Keys.ToList());
                 Thread.Sleep(100);
                 Color newClr = new Color();
