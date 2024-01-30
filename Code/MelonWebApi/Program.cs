@@ -32,15 +32,15 @@ namespace MelonWebApi
             Console.OutputEncoding = Encoding.UTF8;
             bool headless = args.Contains("--headless") || args.Contains("-h");
             bool setup = args.Contains("--setup");
+            string lang = args.Where(x => x.Contains("--lang")).FirstOrDefault() != null ? args.Where(x=>x.Contains("--lang")).FirstOrDefault().Split("=")[1] : "";
             if (!started)
             {
-                StateManager.Init(headless, setup);
+                StateManager.Init(headless, setup, lang);
             }
 
             if (headless && DisplayManager.UIExtensions.Count() != 0)
             {
-                Console.WriteLine("[!] Melon must go through setup first, which cannot show in headless mode.");
-                Console.WriteLine("[!] Please run melon without headless mode first to complete setup.");
+                SetupUI.ShowSetupError();
                 return -1;
             }
 

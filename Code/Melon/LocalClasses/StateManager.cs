@@ -15,6 +15,9 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using Amazon.Util;
 using Microsoft.Extensions.DependencyInjection;
+using System.Resources;
+using Amazon.Util.Internal;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Melon.LocalClasses
 {
@@ -28,17 +31,42 @@ namespace Melon.LocalClasses
         public static Settings MelonSettings { get; set; }
         public static Flags MelonFlags { get; set; }
         private static Process serverProcess;
-        public static void Init(bool headless, bool runSetup)
+        public static ResourceManager StringsManager { get; set; }
+        public static void Init(bool headless, bool runSetup, string language)
         {
+            if (language == "")
+            {
+                try
+                {
+                    LoadSettings();
+                    language = MelonSettings.DefaultLanguage;
+                }
+                catch (Exception)
+                {
+                    language = "EN";
+                }
+            }
+
+            var resources = typeof(Program).Assembly.GetManifestResourceNames();
+            if (resources.Contains($"Melon.Strings.UIStrings{language.ToUpper()}.resources"))
+            {
+                StringsManager = new ResourceManager($"Melon.Strings.UIStrings{language.ToUpper()}", typeof(Program).Assembly);
+            }
+            else
+            {
+                StringsManager = new ResourceManager($"Melon.Strings.UIStringsEN", typeof(Program).Assembly);
+            }
+
+
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
+            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("InitializationStatus") });
             if (!headless)
             {
                 // Setup checklist UI
                 ChecklistUI.CreateChecklist(new List<string>()
             {
-                "Load settings",
-                "Connect to mongodb"
+                StringsManager.GetString("SettingsLoadStatus"),
+                StringsManager.GetString("MongoDBConnectStatus")
             });
             }
             
@@ -89,6 +117,7 @@ namespace Melon.LocalClasses
                     Melon = Color.FromArgb(26, 225, 19),
                     Error = Color.FromArgb(255, 0, 0),
                     ListeningURL = "https://*:14524",
+                    DefaultLanguage = "EN",
                     JWTExpireInMinutes = 60,
                     UseMenuColor = true,
                 };
@@ -100,7 +129,10 @@ namespace Melon.LocalClasses
                 try
                 {
                     LoadSettings();
-
+                    if(MelonSettings.DefaultLanguage.IsNullOrEmpty())
+                    {
+                        MelonSettings.DefaultLanguage = "EN";
+                    }
                     MelonColor.Text = MelonSettings.Text;
                     MelonColor.ShadedText = MelonSettings.ShadedText;
                     MelonColor.BackgroundText = MelonSettings.BackgroundText;
@@ -123,6 +155,7 @@ namespace Melon.LocalClasses
                         Melon = Color.FromArgb(26, 225, 19),
                         Error = Color.FromArgb(255, 0, 0),
                         ListeningURL = "https://*:14524",
+                        DefaultLanguage = "EN",
                         JWTExpireInMinutes = 60,
                         UseMenuColor = true,
                     };
@@ -158,20 +191,20 @@ namespace Melon.LocalClasses
                 ChecklistUI.end = true;
                 Thread.Sleep(200);
                 MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
-                Console.WriteLine("Error: Couldn't Connect to MongoDB, is the connection string correct?".Pastel(MelonColor.Error));
-                Console.WriteLine("Press any key to return to the menu".Pastel(MelonColor.BackgroundText));
+                Console.WriteLine(StringsManager.GetString("MongoDBConnectionError").Pastel(MelonColor.Error));
+                Console.WriteLine(StringsManager.GetString("ReturnPrompt").Pastel(MelonColor.BackgroundText));
                 Console.ReadKey(intercept: true);
-                DisplayManager.MenuOptions.Add("Settings", SettingsUI.Settings);
-                DisplayManager.MenuOptions.Add("Exit", () => Environment.Exit(0));
+                DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
+                DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
                 return;
             }
 
             // Setup Menu
-            DisplayManager.MenuOptions.Add("Full Scan", MelonScanner.Scan);
-            DisplayManager.MenuOptions.Add("Short Scan", MelonScanner.ScanShort);
-            DisplayManager.MenuOptions.Add("Reset DB", MelonScanner.ResetDB);
-            DisplayManager.MenuOptions.Add("Settings", SettingsUI.Settings);
-            DisplayManager.MenuOptions.Add("Exit", () => Environment.Exit(0));
+            DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
+            DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);
+            DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDB);
+            DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
+            DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
             ChecklistUI.UpdateChecklist(1, true);
             ChecklistUI.end = true;
             Thread.Sleep(200);
@@ -222,7 +255,9 @@ namespace Melon.LocalClasses
             {
                 try
                 {
-                    DbClient = new MongoClient(connectionString);
+                    MongoClientSettings settings = MongoClientSettings.FromConnectionString(connectionString);
+                    settings.ConnectTimeout = TimeSpan.FromSeconds(10);
+                    DbClient = new MongoClient(settings);
                     if (DbClient.Cluster.Description.State == MongoDB.Driver.Core.Clusters.ClusterState.Connected)
                     {
                         return true;
@@ -235,7 +270,7 @@ namespace Melon.LocalClasses
                 }
                 catch (Exception)
                 {
-
+                    count++;
                 }
             }
             return false;
@@ -250,7 +285,6 @@ namespace Melon.LocalClasses
             // Wait for the server to start
             Thread.Sleep(2000);
         }
-
         public static void StopServer()
         {
             if (serverProcess != null && !serverProcess.HasExited)

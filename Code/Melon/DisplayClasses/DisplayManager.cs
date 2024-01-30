@@ -25,7 +25,7 @@ namespace Melon.Classes
                 MelonUI.ClearConsole();
 
                 // Title
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon" });
+                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle") });
 
                 // UI Extensions
                 foreach (var extension in UIExtensions.ToArray())

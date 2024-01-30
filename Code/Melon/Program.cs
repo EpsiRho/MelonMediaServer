@@ -9,7 +9,7 @@ Console.ForegroundColor = ConsoleColor.White;
 Console.OutputEncoding = Encoding.UTF8;
 
 // Melon Startup
-StateManager.Init(false, false);
+StateManager.Init(false, false, "en");
 
 // UI Startup
 DisplayManager.DisplayHome();
