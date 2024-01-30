@@ -377,7 +377,7 @@ namespace Melon.DisplayClasses
                     { StringsManager.GetString("DefaultColorReset"), 6 }
                 };
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("LibraryOption"), StringsManager.GetString("ColorOptions") });
-                Console.WriteLine(StringsManager.GetString("ColorSelection").Pastel(MelonColor.Text));
+                Console.WriteLine($"{StringsManager.GetString("ColorSelection")}:".Pastel(MelonColor.Text));
                 var choice = MelonUI.OptionPicker(ColorMenuOptions.Keys.ToList());
                 Thread.Sleep(100);
                 Color newClr = new Color();
