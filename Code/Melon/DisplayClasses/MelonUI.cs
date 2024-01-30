@@ -384,7 +384,7 @@ namespace Melon.Classes
                     try
                     {
                         string controls = StateManager.StringsManager.GetString("SimpleNavigationControls");
-                        int conX = Console.WindowWidth - controls.Length - 2;
+                        int conX = Console.WindowWidth - controls.Length - 4;
                         Console.CursorLeft = conX;
                         Console.CursorTop = sTop;
                         Console.Write(controls.Pastel(MelonColor.BackgroundText));
