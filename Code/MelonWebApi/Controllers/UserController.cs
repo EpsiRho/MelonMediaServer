@@ -37,7 +37,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var userFilter = Builders<User>.Filter.Eq(x => x.UserId, id);
+            var userFilter = Builders<User>.Filter.Eq(x => x._id, id);
             var users = UserCollection.Find(userFilter).ToList();
             
             if(users.Count == 0) 
@@ -98,7 +98,7 @@ namespace MelonWebApi.Controllers
                     {
                         continue;
                     }
-                    else if (!user.Friends.Contains(cUser.UserId))
+                    else if (!user.Friends.Contains(cUser._id))
                     {
                         continue;
                     }
@@ -213,11 +213,9 @@ namespace MelonWebApi.Controllers
 
             byte[] tempSalt;
             var protectedPassword = Security.HashPassword(password, out tempSalt);
-            var id = ObjectId.GenerateNewId();
 
             var user = new User();
-            user._id = new MelonId(id);
-            user.UserId = id.ToString();
+            user._id = ObjectId.GenerateNewId().ToString();
             user.Username = username;
             user.Password = protectedPassword;
             user.Salt = tempSalt;
@@ -230,7 +228,7 @@ namespace MelonWebApi.Controllers
 
             UserCollection.InsertOne(user);
 
-            return new ObjectResult(user.UserId) { StatusCode = 200 };
+            return new ObjectResult(user._id) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin")]
         [HttpPost("create-connection")]
@@ -307,7 +305,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var userFilter = Builders<User>.Filter.Eq(x => x.UserId, id);
+            var userFilter = Builders<User>.Filter.Eq(x => x._id, id);
             var users = UserCollection.Find(userFilter).ToList();
             
             if(users.Count == 0) 
@@ -328,7 +326,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var userFilter = Builders<User>.Filter.Eq(x => x.UserId, id);
+            var userFilter = Builders<User>.Filter.Eq(x => x._id, id);
             var users = UserCollection.Find(userFilter).ToList();
 
 
@@ -391,7 +389,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var userFilter = Builders<User>.Filter.Eq(x => x.UserId, id);
+            var userFilter = Builders<User>.Filter.Eq(x => x._id, id);
             var users = UserCollection.Find(userFilter).ToList();
 
             var checkFilter = Builders<User>.Filter.Eq(x => x.Username, username);
@@ -439,7 +437,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var userFilter = Builders<User>.Filter.Eq(x => x.UserId, id);
+            var userFilter = Builders<User>.Filter.Eq(x => x._id, id);
             var users = UserCollection.Find(userFilter).ToList();
 
             if (users.Count == 0)

@@ -77,7 +77,7 @@ namespace MelonWebApi.Controllers
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
             
-            var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, trackId);
+            var trackFilter = Builders<Track>.Filter.Eq(x=>x._id, trackId);
             var foundTrack = TracksCollection.Find(trackFilter).FirstOrDefault();
             if(foundTrack == null)
             {
@@ -103,22 +103,22 @@ namespace MelonWebApi.Controllers
             List<ShortArtist> newShortArtists = new List<ShortArtist>();
             if(albumId != "")
             {
-                var aFilter = Builders<Album>.Filter.Eq(x=>x.AlbumId, albumId);
+                var aFilter = Builders<Album>.Filter.Eq(x=>x._id, albumId);
                 newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
                 if (newAlbum == null)
                 {
                     return new ObjectResult("Album Not Found") { StatusCode = 404 };
                 }
                 newAlbum.Tracks.Add(new ShortTrack(foundTrack));
-                var tFilter = Builders<Track>.Filter.In(a => a.TrackId, newAlbum.Tracks.Select(x => x.TrackId));
+                var tFilter = Builders<Track>.Filter.In(a => a._id, newAlbum.Tracks.Select(x => x._id));
                 var fullTracks = TracksCollection.Find(tFilter).ToList();
-                newAlbum.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x=>new ShortTrack() { _id = x._id, TrackId = x.TrackId, TrackName = x.TrackName}).ToList();
+                newAlbum.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x=>new ShortTrack() { _id = x._id, TrackName = x.TrackName}).ToList();
                 newShortAlbum = new ShortAlbum(newAlbum);
                 AlbumsCollection.ReplaceOne(aFilter, newAlbum);
 
                 try
                 {
-                    var bFilter = Builders<Album>.Filter.Eq(x => x.AlbumId, foundTrack.Album.AlbumId);
+                    var bFilter = Builders<Album>.Filter.Eq(x => x._id, foundTrack.Album._id);
                     var oldAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
                     oldAlbum.Tracks.Remove(new ShortTrack(foundTrack));
                     AlbumsCollection.ReplaceOne(bFilter, oldAlbum);
@@ -137,7 +137,7 @@ namespace MelonWebApi.Controllers
             {
                 foreach (var id in artistIds)
                 {
-                    var aFilter = Builders<Artist>.Filter.Eq(x => x.ArtistId, id);
+                    var aFilter = Builders<Artist>.Filter.Eq(x => x._id, id);
                     var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
                     if (newArtist == null)
                     {
@@ -145,7 +145,7 @@ namespace MelonWebApi.Controllers
                     }
 
                     var items = (from artist in foundTrack.TrackArtists
-                                where artist.ArtistId == id
+                                where artist._id == id
                                 select id).ToList();
                     if (items.Count() == 0) 
                     {
@@ -157,13 +157,13 @@ namespace MelonWebApi.Controllers
                     newShortArtists.Add(new ShortArtist(newArtist));
                 }
                 var missing = (from artist in foundTrack.TrackArtists
-                              where !artistIds.Contains(artist.ArtistId)
+                              where !artistIds.Contains(artist._id)
                               select artist).ToList();
                 foreach(var mArtist in missing)
                 {
                     try
                     {
-                        var aFilter = Builders<Artist>.Filter.Eq(x => x.ArtistId, mArtist.ArtistId);
+                        var aFilter = Builders<Artist>.Filter.Eq(x => x._id, mArtist._id);
                         var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
                         newArtist.Tracks.Remove(new ShortTrack(foundTrack));
                         ArtistsCollection.ReplaceOne(aFilter, newArtist);
@@ -183,7 +183,6 @@ namespace MelonWebApi.Controllers
             var newTrack = new Track()
             {
                 _id = foundTrack._id,
-                TrackId = foundTrack.TrackId,
                 Album = newShortAlbum,
                 Bitrate = foundTrack.Bitrate,
                 BitsPerSample = foundTrack.BitsPerSample,
@@ -215,14 +214,13 @@ namespace MelonWebApi.Controllers
             var newShortTrack = new ShortTrack()
             {
                 _id = foundTrack._id,
-                TrackId = foundTrack.TrackId,
                 TrackName = trackName
             };
 
             // Replace objects
             TracksCollection.ReplaceOne(trackFilter, newTrack);
-            var albumFilter = Builders<Album>.Filter.ElemMatch(x => x.Tracks, Builders<ShortTrack>.Filter.Eq(x => x.TrackId, foundTrack.TrackId));
-            var artistFilter = Builders<Artist>.Filter.ElemMatch(x => x.Tracks, Builders<ShortTrack>.Filter.Eq(x => x.TrackId, foundTrack.TrackId));
+            var albumFilter = Builders<Album>.Filter.ElemMatch(x => x.Tracks, Builders<ShortTrack>.Filter.Eq(x => x._id, foundTrack._id));
+            var artistFilter = Builders<Artist>.Filter.ElemMatch(x => x.Tracks, Builders<ShortTrack>.Filter.Eq(x => x._id, foundTrack._id));
             var albumnUpdate = Builders<Album>.Update.Set("Tracks.$", newShortTrack);
             var artistUpdate = Builders<Artist>.Update.Set("Tracks.$", newShortTrack);
 
@@ -390,7 +388,7 @@ namespace MelonWebApi.Controllers
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
 
-            var albumFilter = Builders<Album>.Filter.Eq(x => x.AlbumId, albumId);
+            var albumFilter = Builders<Album>.Filter.Eq(x => x._id, albumId);
             var foundAlbum = AlbumsCollection.Find(albumFilter).FirstOrDefault();
             if (foundAlbum == null)
             {
@@ -409,7 +407,7 @@ namespace MelonWebApi.Controllers
             {
                 foreach (var id in albumArtistIds)
                 {
-                    var aFilter = Builders<Artist>.Filter.Eq(x => x.ArtistId, id);
+                    var aFilter = Builders<Artist>.Filter.Eq(x => x._id, id);
                     var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
                     if (newArtist == null)
                     {
@@ -417,7 +415,7 @@ namespace MelonWebApi.Controllers
                     }
 
                     var items = (from artist in foundAlbum.AlbumArtists
-                                   where artist.ArtistId == id
+                                   where artist._id == id
                                    select artist).ToList();
                     if(items.Count() == 0)
                     {
@@ -429,13 +427,13 @@ namespace MelonWebApi.Controllers
                     newAlbumShortArtists.Add(new ShortArtist(newArtist));
                 }
                 var missing = (from artist in foundAlbum.AlbumArtists
-                               where !albumArtistIds.Contains(artist.ArtistId)
+                               where !albumArtistIds.Contains(artist._id)
                                select artist).ToList();
                 foreach (var mArtist in missing)
                 {
                     try
                     {
-                        var aFilter = Builders<Artist>.Filter.Eq(x => x.ArtistId, mArtist.ArtistId);
+                        var aFilter = Builders<Artist>.Filter.Eq(x => x._id, mArtist._id);
                         var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
                         newArtist.Releases.Remove(new ShortAlbum(foundAlbum));
                         ArtistsCollection.ReplaceOne(aFilter, newArtist);
@@ -455,7 +453,7 @@ namespace MelonWebApi.Controllers
             {
                 foreach (var id in contributingAristsIds)
                 {
-                    var aFilter = Builders<Artist>.Filter.Eq(x => x.ArtistId, id);
+                    var aFilter = Builders<Artist>.Filter.Eq(x => x._id, id);
                     var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
                     if (newArtist == null)
                     {
@@ -463,7 +461,7 @@ namespace MelonWebApi.Controllers
                     }
 
                     var items = (from artist in foundAlbum.ContributingArtists
-                                 where artist.ArtistId == id
+                                 where artist._id == id
                                  select artist).ToList();
                     if (items.Count() == 0)
                     {
@@ -475,13 +473,13 @@ namespace MelonWebApi.Controllers
                     newConShortArtists.Add(new ShortArtist(newArtist));
                 }
                 var missing = (from artist in foundAlbum.ContributingArtists
-                               where !albumArtistIds.Contains(artist.ArtistId)
+                               where !albumArtistIds.Contains(artist._id)
                                select artist).ToList();
                 foreach (var mArtist in missing)
                 {
                     try
                     {
-                        var aFilter = Builders<Artist>.Filter.Eq(x => x.ArtistId, mArtist.ArtistId);
+                        var aFilter = Builders<Artist>.Filter.Eq(x => x._id, mArtist._id);
                         var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
                         newArtist.SeenOn.Remove(new ShortAlbum(foundAlbum));
                         ArtistsCollection.ReplaceOne(aFilter, newArtist);
@@ -509,14 +507,14 @@ namespace MelonWebApi.Controllers
             var newShortAlbum = new ShortAlbum()
             {
                 _id = foundAlbum._id,
-                AlbumId = foundAlbum.AlbumId
+                AlbumName = albumName
             };
 
             if (trackIds != null)
             {
                 foreach (var id in trackIds)
                 {
-                    var tFilter = Builders<Track>.Filter.Eq(x => x.TrackId, id);
+                    var tFilter = Builders<Track>.Filter.Eq(x => x._id, id);
                     var newTrack = TracksCollection.Find(tFilter).FirstOrDefault();
                     if (newTrack == null)
                     {
@@ -524,7 +522,7 @@ namespace MelonWebApi.Controllers
                     }
 
                     var items = (from track in foundAlbum.Tracks
-                                 where track.TrackId == id
+                                 where track._id == id
                                  select track).ToList();
                     if (items.Count() == 0)
                     {
@@ -536,13 +534,13 @@ namespace MelonWebApi.Controllers
                     newShortTracks.Add(new ShortTrack(newTrack));
                 }
                 var missing = (from track in foundAlbum.Tracks
-                               where !trackIds.Contains(track.TrackId)
+                               where !trackIds.Contains(track._id)
                                select track).ToList();
                 foreach (var mTrack in missing)
                 {
                     try
                     {
-                        var tFilter = Builders<Track>.Filter.Eq(x => x.TrackId, mTrack.TrackId);
+                        var tFilter = Builders<Track>.Filter.Eq(x => x._id, mTrack._id);
                         var newTrack = TracksCollection.Find(tFilter).FirstOrDefault();
                         newTrack.Album = null;
                         TracksCollection.ReplaceOne(tFilter, newTrack);
@@ -570,7 +568,6 @@ namespace MelonWebApi.Controllers
             var newAlbum = new Album()
             {
                 _id = foundAlbum._id,
-                AlbumId = foundAlbum.AlbumId,
                 AlbumGenres = albumGenres.ToList(),
                 AlbumArtists = newAlbumShortArtists,
                 AlbumArtPaths = foundAlbum.AlbumArtPaths,
@@ -596,9 +593,9 @@ namespace MelonWebApi.Controllers
             // Replace objects
             AlbumsCollection.ReplaceOne(albumFilter, newAlbum);
 
-            var trackFilter = Builders<Track>.Filter.Eq(x => x.Album.AlbumId, foundAlbum.AlbumId);
-            var artistFilter = Builders<Artist>.Filter.ElemMatch(x => x.Releases, Builders<ShortAlbum>.Filter.Eq(x => x.AlbumId, foundAlbum.AlbumId));
-            var conArtistFilter = Builders<Artist>.Filter.ElemMatch(x => x.SeenOn, Builders<ShortAlbum>.Filter.Eq(x => x.AlbumId, foundAlbum.AlbumId));
+            var trackFilter = Builders<Track>.Filter.Eq(x => x.Album._id, foundAlbum._id);
+            var artistFilter = Builders<Artist>.Filter.ElemMatch(x => x.Releases, Builders<ShortAlbum>.Filter.Eq(x => x._id, foundAlbum._id));
+            var conArtistFilter = Builders<Artist>.Filter.ElemMatch(x => x.SeenOn, Builders<ShortAlbum>.Filter.Eq(x => x._id, foundAlbum._id));
             var trackUpdate = Builders<Track>.Update.Set(x=>x.Album, newShortAlbum);
             var artistUpdate = Builders<Artist>.Update.AddToSet("Releases.$", newShortAlbum);
             var conArtistUpdate = Builders<Artist>.Update.AddToSet("SeenOn.$", newShortAlbum);
@@ -608,7 +605,7 @@ namespace MelonWebApi.Controllers
             ArtistsCollection.UpdateMany(conArtistFilter, conArtistUpdate);
 
             // Update File
-            var ftFilter = Builders<Track>.Filter.In(a => a.TrackId, newAlbum.Tracks.Select(x => x.TrackId));
+            var ftFilter = Builders<Track>.Filter.In(a => a._id, newAlbum.Tracks.Select(x => x._id));
             var fullTracks = TracksCollection.Find(ftFilter).ToList();
             foreach (var track in fullTracks)
             {
@@ -675,7 +672,7 @@ namespace MelonWebApi.Controllers
             {
                 try
                 {
-                    var filter = Builders<Track>.Filter.Eq(x => x.TrackId, album.Tracks[(int)i].TrackId);
+                    var filter = Builders<Track>.Filter.Eq(x => x._id, album.Tracks[(int)i]._id);
                     var fullTrack = TracksCollection.Find(filter).FirstOrDefault();
 
                     var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
@@ -787,7 +784,7 @@ namespace MelonWebApi.Controllers
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var artistFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, id);
+            var artistFilter = Builders<Artist>.Filter.Eq(x=>x._id, id);
 
             var artistDocs = ArtistsCollection.Find(artistFilter)
                                             .ToList();
@@ -803,7 +800,7 @@ namespace MelonWebApi.Controllers
             {
                 try
                 {
-                    var filter = Builders<Track>.Filter.Eq(x => x.TrackId, artist.Tracks[(int)i].TrackId);
+                    var filter = Builders<Track>.Filter.Eq(x => x._id, artist.Tracks[(int)i]._id);
                     var fullTrack = TracksCollection.Find(filter).FirstOrDefault();
 
                     var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
@@ -848,7 +845,7 @@ namespace MelonWebApi.Controllers
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var artistFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, id);
+            var artistFilter = Builders<Artist>.Filter.Eq(x=>x._id, id);
 
             var artistDocs = ArtistsCollection.Find(artistFilter)
                                             .ToList();
@@ -864,7 +861,7 @@ namespace MelonWebApi.Controllers
             {
                 try
                 {
-                    var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.Releases[(int)i].AlbumId);
+                    var filter = Builders<Album>.Filter.Eq(x => x._id, artist.Releases[(int)i]._id);
                     var fullAlbum = AlbumCollection.Find(filter).FirstOrDefault();
                     fullAlbum.Tracks = null;
 
@@ -910,7 +907,7 @@ namespace MelonWebApi.Controllers
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var artistFilter = Builders<Artist>.Filter.Eq(x=>x.ArtistId, id);
+            var artistFilter = Builders<Artist>.Filter.Eq(x=>x._id, id);
 
             var artistDocs = ArtistsCollection.Find(artistFilter)
                                             .ToList();
@@ -925,7 +922,7 @@ namespace MelonWebApi.Controllers
             {
                 try
                 {
-                    var filter = Builders<Album>.Filter.Eq(x => x.AlbumId, artist.SeenOn[(int)i].AlbumId);
+                    var filter = Builders<Album>.Filter.Eq(x => x._id, artist.SeenOn[(int)i]._id);
                     var fullAlbum = AlbumCollection.Find(filter).FirstOrDefault();
                     fullAlbum.Tracks = null;
 
@@ -1013,7 +1010,7 @@ namespace MelonWebApi.Controllers
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
 
-            var artistFilter = Builders<Artist>.Filter.Eq(x => x.ArtistId, artistId);
+            var artistFilter = Builders<Artist>.Filter.Eq(x => x._id, artistId);
             var foundArtist = ArtistsCollection.Find(artistFilter).FirstOrDefault();
             if (foundArtist == null)
             {
@@ -1032,7 +1029,7 @@ namespace MelonWebApi.Controllers
             {
                 foreach (var id in releaseIds)
                 {
-                    var aFilter = Builders<Album>.Filter.Eq(x => x.AlbumId, id);
+                    var aFilter = Builders<Album>.Filter.Eq(x => x._id, id);
                     var newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
                     if (newAlbum == null)
                     {
@@ -1040,7 +1037,7 @@ namespace MelonWebApi.Controllers
                     }
 
                     var items = (from album in foundArtist.Releases
-                                 where album.AlbumId == id
+                                 where album._id == id
                                  select album).ToList();
                     if (items.Count() == 0)
                     {
@@ -1052,13 +1049,13 @@ namespace MelonWebApi.Controllers
                     newFullReleases.Add(newAlbum);
                 }
                 var missing = (from album in foundArtist.Releases
-                               where !trackIds.Contains(album.AlbumId)
+                               where !trackIds.Contains(album._id)
                                select album).ToList();
                 foreach (var mAlbum in missing)
                 {
                     try
                     {
-                        var aFilter = Builders<Album>.Filter.Eq(x => x.AlbumId, mAlbum.AlbumId);
+                        var aFilter = Builders<Album>.Filter.Eq(x => x._id, mAlbum._id);
                         var newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
                         newAlbum.AlbumArtists.Remove(new ShortArtist(foundArtist));
                         AlbumsCollection.ReplaceOne(aFilter, newAlbum);
@@ -1079,7 +1076,7 @@ namespace MelonWebApi.Controllers
             {
                 foreach (var id in seenOnIds)
                 {
-                    var aFilter = Builders<Album>.Filter.Eq(x => x.AlbumId, id);
+                    var aFilter = Builders<Album>.Filter.Eq(x => x._id, id);
                     var newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
                     if (newAlbum == null)
                     {
@@ -1087,7 +1084,7 @@ namespace MelonWebApi.Controllers
                     }
 
                     var items = (from album in foundArtist.SeenOn
-                                 where album.AlbumId == id
+                                 where album._id == id
                                  select album).ToList();
                     if (items.Count() == 0)
                     {
@@ -1098,13 +1095,13 @@ namespace MelonWebApi.Controllers
                     newSeenOns.Add(new ShortAlbum(newAlbum));
                 }
                 var missing = (from album in foundArtist.Releases
-                               where !trackIds.Contains(album.AlbumId)
+                               where !trackIds.Contains(album._id)
                                select album).ToList();
                 foreach (var mAlbum in missing)
                 {
                     try
                     {
-                        var aFilter = Builders<Album>.Filter.Eq(x => x.AlbumId, mAlbum.AlbumId);
+                        var aFilter = Builders<Album>.Filter.Eq(x => x._id, mAlbum._id);
                         var newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
                         newAlbum.ContributingArtists.Remove(new ShortArtist(foundArtist));
                         AlbumsCollection.ReplaceOne(aFilter, newAlbum);
@@ -1124,7 +1121,7 @@ namespace MelonWebApi.Controllers
             {
                 foreach (var id in trackIds)
                 {
-                    var tFilter = Builders<Track>.Filter.Eq(x => x.TrackId, id);
+                    var tFilter = Builders<Track>.Filter.Eq(x => x._id, id);
                     var newTrack = TracksCollection.Find(tFilter).FirstOrDefault();
                     if (newTrack == null)
                     {
@@ -1132,7 +1129,7 @@ namespace MelonWebApi.Controllers
                     }
 
                     var items = (from track in foundArtist.Tracks
-                                 where track.TrackId == id
+                                 where track._id == id
                                  select track).ToList();
                     if (items.Count() == 0)
                     {
@@ -1161,7 +1158,6 @@ namespace MelonWebApi.Controllers
             var newArtist = new Artist()
             {
                 _id = foundArtist._id,
-                ArtistId = foundArtist.ArtistId,
                 ArtistName = artistName,
                 Bio = bio,
                 PlayCounts = foundArtist.PlayCounts,
@@ -1180,16 +1176,15 @@ namespace MelonWebApi.Controllers
             var newShortArtist = new ShortArtist()
             {
                 _id = foundArtist._id,
-                ArtistId = foundArtist.ArtistId,
                 ArtistName = artistName
             };
 
             // Replace objects
             ArtistsCollection.ReplaceOne(artistFilter, newArtist);
 
-            var trackFilter = Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, Builders<ShortArtist>.Filter.Eq(x => x.ArtistId, foundArtist.ArtistId));
-            var albumArtistFilter = Builders<Album>.Filter.ElemMatch(x => x.AlbumArtists, Builders<ShortArtist>.Filter.Eq(x => x.ArtistId, foundArtist.ArtistId));
-            var conArtistFilter = Builders<Album>.Filter.ElemMatch(x => x.ContributingArtists, Builders<ShortArtist>.Filter.Eq(x => x.ArtistId, foundArtist.ArtistId));
+            var trackFilter = Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, Builders<ShortArtist>.Filter.Eq(x => x._id, foundArtist._id));
+            var albumArtistFilter = Builders<Album>.Filter.ElemMatch(x => x.AlbumArtists, Builders<ShortArtist>.Filter.Eq(x => x._id, foundArtist._id));
+            var conArtistFilter = Builders<Album>.Filter.ElemMatch(x => x.ContributingArtists, Builders<ShortArtist>.Filter.Eq(x => x._id, foundArtist._id));
             var trackUpdate = Builders<Track>.Update.Set("TrackArtists.$", newShortArtist);
             var artistUpdate = Builders<Album>.Update.Set("AlbumArtists.$", newShortArtist);
             var conArtistUpdate = Builders<Album>.Update.Set("ContributingArtists.$", newShortArtist);
@@ -1199,7 +1194,7 @@ namespace MelonWebApi.Controllers
             AlbumsCollection.UpdateMany(conArtistFilter, conArtistUpdate);
 
             // Update File
-            var ftFilter = Builders<Track>.Filter.In(a => a.TrackId, newArtist.Tracks.Select(x => x.TrackId));
+            var ftFilter = Builders<Track>.Filter.In(a => a._id, newArtist.Tracks.Select(x => x._id));
             var fullTracks = TracksCollection.Find(ftFilter).ToList();
             foreach (var track in fullTracks)
             {
@@ -1228,7 +1223,7 @@ namespace MelonWebApi.Controllers
 
             foreach (var item in missingReleases)
             {
-                var fFilter = Builders<Track>.Filter.In(a => a.TrackId, item.Tracks.Select(x => x.TrackId));
+                var fFilter = Builders<Track>.Filter.In(a => a._id, item.Tracks.Select(x => x._id));
                 var fTracks = TracksCollection.Find(fFilter).ToList();
                 foreach (var track in fTracks)
                 {
@@ -1244,7 +1239,7 @@ namespace MelonWebApi.Controllers
 
             foreach (var item in newFullReleases)
             {
-                var fFilter = Builders<Track>.Filter.In(a => a.TrackId, item.Tracks.Select(x => x.TrackId));
+                var fFilter = Builders<Track>.Filter.In(a => a._id, item.Tracks.Select(x => x._id));
                 var fTracks = TracksCollection.Find(fFilter).ToList();
                 foreach (var track in fTracks)
                 {

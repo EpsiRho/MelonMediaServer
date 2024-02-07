@@ -11,8 +11,12 @@
             "id": "8b82fb671072fa31",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {}
+              "type": "markdown",
+              "state": {
+                "file": "users/usersOverview.md",
+                "mode": "source",
+                "source": false
+              }
             }
           }
         ]
@@ -81,6 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "users/usersOverview.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -97,6 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "users/usersOverview.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -118,7 +124,9 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {}
+              "state": {
+                "file": "users/usersOverview.md"
+              }
             }
           }
         ]
@@ -140,11 +148,13 @@
   },
   "active": "8b82fb671072fa31",
   "lastOpenFiles": [
+    "_sidebar.md",
     "_sidebar 1.md",
+    "README.md",
     "Untitled.canvas",
+    "getting-started.md",
     "search/_sidebar.md",
     "2024-02-07.md",
-    "getting-started.md",
     "users/search.md",
     "api/_sidebar.md",
     "db/bitrate.md",
@@ -164,9 +174,6 @@
     "users/current.md",
     "users/get.md",
     "users/update.md",
-    "users/usersOverview.md",
-    "models/User.md",
-    "stats/top-genres.md",
     "users",
     "stats",
     "search",

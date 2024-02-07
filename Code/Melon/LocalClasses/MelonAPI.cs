@@ -73,7 +73,7 @@ namespace Melon.LocalClasses
                         {
                             for (int j = 0; j < tracks.Count(); j++)
                             {
-                                if (tracks[j].TrackId == tracks[i].nextTrack)
+                                if (tracks[j]._id == tracks[i].nextTrack)
                                 {
                                     var temp = tracks[i+1];
                                     tracks[i + 1] = tracks[j];
@@ -92,7 +92,7 @@ namespace Melon.LocalClasses
 
                     foreach (var track in tracks)
                     {
-                        if (albumDic.ContainsKey(track.Album.AlbumId))
+                        if (albumDic.ContainsKey(track.Album._id))
                         {
                             //for(int i = 0; i < albumDic[track.Album.AlbumId].Count ; i++)
                             //{
@@ -107,11 +107,11 @@ namespace Melon.LocalClasses
                             //        break;
                             //    }
                             //}
-                            albumDic[track.Album.AlbumId].Add(track);
+                            albumDic[track.Album._id].Add(track);
                         }
                         else
                         {
-                            albumDic.Add(track.Album.AlbumId, new List<Track>() { track });
+                            albumDic.Add(track.Album._id, new List<Track>() { track });
                         }
                     }
 
@@ -149,7 +149,7 @@ namespace Melon.LocalClasses
                             {
                                 for (int j = 0; j < newTracks.Count(); j++)
                                 {
-                                    if (newTracks[j].TrackId == newTracks[i].nextTrack)
+                                    if (newTracks[j]._id == newTracks[i].nextTrack)
                                     {
                                         var temp = newTracks[i + 1];
                                         newTracks[i + 1] = newTracks[j];
@@ -169,13 +169,13 @@ namespace Melon.LocalClasses
 
                     foreach (var track in tracks)
                     {
-                        if (artistDic.ContainsKey(track.TrackArtists[0].ArtistId))
+                        if (artistDic.ContainsKey(track.TrackArtists[0]._id))
                         {
-                            artistDic[track.TrackArtists[0].ArtistId].Add(track);
+                            artistDic[track.TrackArtists[0]._id].Add(track);
                         }
                         else
                         {
-                            artistDic.Add(track.TrackArtists[0].ArtistId, new List<Track>() { track });
+                            artistDic.Add(track.TrackArtists[0]._id, new List<Track>() { track });
                         }
                     }
 
@@ -210,7 +210,7 @@ namespace Melon.LocalClasses
                         {
                             for (int j = 0; j < nTracks.Count(); j++)
                             {
-                                if (nTracks[j].TrackId == nTracks[i].nextTrack)
+                                if (nTracks[j]._id == nTracks[i].nextTrack)
                                 {
                                     var temp = nTracks[i + 1];
                                     nTracks[i + 1] = nTracks[j];
@@ -266,7 +266,7 @@ namespace Melon.LocalClasses
                         {
                             for (int j = 0; j < finalTracks.Count(); j++)
                             {
-                                if (finalTracks[j].TrackId == finalTracks[i].nextTrack)
+                                if (finalTracks[j]._id == finalTracks[i].nextTrack)
                                 {
                                     var temp = finalTracks[i + 1];
                                     finalTracks[i + 1] = finalTracks[j];
@@ -286,7 +286,7 @@ namespace Melon.LocalClasses
                     List<Track> fTracks = new List<Track>();
                     foreach (var track in tracks)
                     {
-                        var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, track.TrackId);
+                        var trackFilter = Builders<Track>.Filter.Eq(x=>x._id, track._id);
                         var t = TCollection.Find(trackFilter).FirstOrDefault();
                         fTracks.Add(t);
                     }
@@ -322,7 +322,7 @@ namespace Melon.LocalClasses
                         {
                             for (int j = 0; j < outTracks.Count(); j++)
                             {
-                                if (outTracks[j].TrackId == outTracks[i].nextTrack)
+                                if (outTracks[j]._id == outTracks[i].nextTrack)
                                 {
                                     var temp = outTracks[i + 1];
                                     outTracks[i + 1] = outTracks[j];

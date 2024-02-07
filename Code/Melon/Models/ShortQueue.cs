@@ -4,8 +4,7 @@ namespace Melon.Models
 {
     public class ShortQueue
     {
-        public MelonId _id { get; set; }
-        public string QueueId { get; set; }
+        public string _id { get; set; }
         public int CurPosition { get; set; }
         public string Name { get; set; }
         public string Owner { get; set; }
@@ -16,7 +15,6 @@ namespace Melon.Models
         public ShortQueue(PlayQueue q)
         {
             _id = q._id;
-            QueueId = q.QueueId;
             CurPosition = q.CurPosition;
             Name = q.Name;
             Owner = q.Owner;

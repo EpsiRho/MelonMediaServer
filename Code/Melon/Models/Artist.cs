@@ -5,8 +5,7 @@ namespace Melon.Models
 {
     public class Artist
     {
-        public MelonId _id { get; set; }
-        public string ArtistId { get; set; }
+        public string _id { get; set; }
         public string ArtistName { get; set; }
         public string Bio { get; set; }
         public List<UserStat> PlayCounts { get; set; }
