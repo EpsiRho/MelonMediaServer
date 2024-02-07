@@ -118,7 +118,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("albums")]
-        public ObjectResult DiscoverAlbums([FromQuery] List<string> ids, bool shuffle = false, int count = 25, bool includeArtists = true, bool includeGenres = true)
+        public ObjectResult DiscoverAlbums([FromQuery] List<string> ids, bool shuffle = true, int count = 25, int page = 0, bool includeArtists = true, bool includeGenres = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -238,28 +238,52 @@ namespace MelonWebApi.Controllers
             }
 
             count = count <= finalAlbums.Count ? count : finalAlbums.Count;
-            return new ObjectResult(finalAlbums.Slice(0,count).Select(x=>new ShortAlbum(x))) { StatusCode = 200 };
+            var end = (count * page) + count <= finalAlbums.Count ? (count * page) + count : finalAlbums.Count;
+            return new ObjectResult(finalAlbums.Take(new Range(count*page, end)).Select(x=>new ShortAlbum(x))) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
-        [HttpGet("testEndpoint")]
-        public ObjectResult TestEndpoint(string id)
+        [HttpGet("artists")]
+        public ObjectResult DiscoverArtists([FromQuery] List<string> ids, int count = 25, int page = 0, bool shuffle = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var QueuesCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
 
-            var filter = Builders<PlayQueue>.Filter.Eq(x => x.QueueId, id);
-            var queue = QueuesCollection.Find(filter).FirstOrDefault();
+            HashSet<string> Genres = new HashSet<string>();
 
-            if (queue == null)
+            var filter = Builders<Artist>.Filter.In(x => x.ArtistId, ids);
+            var artists = ArtistsCollection.Find(filter).ToList();
+            foreach (var artist in artists)
             {
-                return new ObjectResult("Queue Not Found") { StatusCode = 200 };
+                foreach (var genre in artist.Genres) { Genres.Add(genre); }
+            }
+            Genres.Remove("");
+
+
+            var genrefilter = Builders<Artist>.Filter.AnyIn(x => x.Genres, Genres);
+            var genreBasedArtists = ArtistsCollection.Find(genrefilter).ToList();
+
+
+            genreBasedArtists = genreBasedArtists.Where(x => ids.Contains(x.ArtistId) == false).ToList();
+
+            string username = User.Identity.Name;
+            if (shuffle)
+            {
+                Random rng = new Random();
+                int n = genreBasedArtists.Count;
+                while (n > 1)
+                {
+                    n--;
+                    int k = rng.Next(n + 1);
+                    Artist value = genreBasedArtists[k];
+                    genreBasedArtists[k] = genreBasedArtists[n];
+                    genreBasedArtists[n] = value;
+                }
             }
 
-            var ids = queue.Tracks.Select(x => x.TrackId).ToList();
-
-            return new ObjectResult(ids) { StatusCode = 200 };
+            count = count <= genreBasedArtists.Count ? count : genreBasedArtists.Count;
+            var end = (count * page) + count <= genreBasedArtists.Count ? (count * page) + count : genreBasedArtists.Count;
+            return new ObjectResult(genreBasedArtists.Take(new Range(count * page, end)).Select(x => new ShortArtist(x))) { StatusCode = 200 };
         }
     }
 }
