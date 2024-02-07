@@ -11,12 +11,8 @@
             "id": "8b82fb671072fa31",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "db/bitrate.md",
-                "mode": "preview",
-                "source": true
-              }
+              "type": "graph",
+              "state": {}
             }
           }
         ]
@@ -85,7 +81,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "db/bitrate.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +97,6 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "db/bitrate.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -124,9 +118,7 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {
-                "file": "db/bitrate.md"
-              }
+              "state": {}
             }
           }
         ]
@@ -148,13 +140,16 @@
   },
   "active": "8b82fb671072fa31",
   "lastOpenFiles": [
-    "README 1.md",
-    "db/bitrate.md",
-    "db/bits-per-sample.md",
+    "2024-02-07.md",
+    "Untitled.canvas",
+    "getting-started.md",
+    "users/search.md",
     "api/_sidebar.md",
+    "db/bitrate.md",
+    "README 1.md",
+    "db/bits-per-sample.md",
     "api/lyrics.md",
     "api/album.md",
-    "getting-started.md",
     "MelonAPI Planning.md",
     "Matches.md",
     "api/tracks.md",
@@ -165,15 +160,12 @@
     "users/create.md",
     "users/delete.md",
     "users/current.md",
-    "users/search.md",
     "users/get.md",
     "users/update.md",
     "users/usersOverview.md",
     "models/User.md",
     "stats/top-genres.md",
     "stats/top-artists.md",
-    "stats/top-albums.md",
-    "stats/log-play.md",
     "users",
     "stats",
     "search",
@@ -183,7 +175,6 @@
     "queues",
     "playlists",
     "models",
-    "api",
-    "Untitled.canvas"
+    "api"
   ]
 }

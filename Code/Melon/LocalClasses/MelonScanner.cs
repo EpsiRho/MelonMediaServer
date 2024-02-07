@@ -332,7 +332,8 @@ namespace Melon.LocalClasses
 
                         // Create or Update the artist
                         (Artist artistDoc, bool created) = CreateOrUpdateArtist(ArtistCollection, fileMetadata, artistName, aId, 
-                                                                                                  sAlbum, sTrack, trackDoc, albumArtists, trackGenres);
+                                                                                                  sAlbum, sTrack, trackDoc, albumArtists, trackArtists,
+                                                                                                  AlbumArtistIds, TrackArtistIds, trackGenres);
 
                         // If the artist was found and updated, make sure the list of IDs gets fixed
                         if (!created)
@@ -453,6 +454,8 @@ namespace Melon.LocalClasses
                 }
             }
 
+            genres.Remove("");
+
             return genres;
         }
         public static void GenerateArtistIDs(List<string> trackArtists, List<string> albumArtists, IMongoCollection<Artist> ArtistsCollection,
@@ -521,7 +524,7 @@ namespace Melon.LocalClasses
         }
 
         public static (Artist, bool) CreateOrUpdateArtist(IMongoCollection<Artist> ArtistCollection, ATL.Track fileMetadata, string artistName, MelonId aId, ShortAlbum sAlbum,
-                                                          ShortTrack sTrack, Track trackDoc, List<string> albumArtists, List<string> trackGenres)
+                                                          ShortTrack sTrack, Track trackDoc, List<string> albumArtists, List<string> trackArtists, List<MelonId> AlbumArtistIds, List<MelonId> TrackArtistIds, List<string> trackGenres)
         {
             // If artist name is nothing, set to "Unknown Artist"
             string artist = string.IsNullOrEmpty(artistName) ? StateManager.StringsManager.GetString("UnknownArtistStatus") : artistName;
@@ -546,8 +549,33 @@ namespace Melon.LocalClasses
                     Releases = new List<ShortAlbum>(),
                     Genres = new List<string>(),
                     SeenOn = new List<ShortAlbum>(),
-                    Tracks = new List<ShortTrack> { sTrack }
+                    Tracks = new List<ShortTrack> { sTrack },
+                    ConnectedArtists = new List<ShortArtist>()
                 };
+
+                if (trackArtists.Count() > 1)
+                {
+                    for (int i = 0; i < trackArtists.Count(); i++)
+                    {
+                        if (aId != TrackArtistIds[i])
+                        {
+                            artistDoc.ConnectedArtists.Add(new ShortArtist() { ArtistName = trackArtists[i], ArtistId = TrackArtistIds[i].ToString(), _id = TrackArtistIds[i] });
+                        }
+                    }
+
+                }
+
+                if (albumArtists.Count() > 1)
+                {
+                    for (int i = 0; i < albumArtists.Count(); i++)
+                    {
+                        if (aId != AlbumArtistIds[i])
+                        {
+                            artistDoc.ConnectedArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], ArtistId = AlbumArtistIds[i].ToString(), _id = AlbumArtistIds[i] });
+                        }
+                    }
+
+                }
 
                 // Add the release
                 if (albumArtists.Contains(artist))
@@ -566,6 +594,30 @@ namespace Melon.LocalClasses
             else // If the artist was found, update it
             {
                 MelonScanner.CurrentStatus = $"{StateManager.StringsManager.GetString("UpdateProcess")} {artist}";
+
+                if (trackArtists.Count() > 1)
+                {
+                    for (int i = 0; i < trackArtists.Count(); i++)
+                    {
+                        if (aId.ToString() != TrackArtistIds[i].ToString() && artistDoc.ConnectedArtists.Where(x=>x.ArtistId == TrackArtistIds[i].ToString()).FirstOrDefault() == null)
+                        {
+                            artistDoc.ConnectedArtists.Add(new ShortArtist() { ArtistName = trackArtists[i], ArtistId = TrackArtistIds[i].ToString(), _id = TrackArtistIds[i] });
+                        }
+                    }
+
+                }
+
+                if (albumArtists.Count() > 1)
+                {
+                    for (int i = 0; i < albumArtists.Count(); i++)
+                    {
+                        if (aId.ToString() != AlbumArtistIds[i].ToString() && artistDoc.ConnectedArtists.Where(x => x.ArtistId == AlbumArtistIds[i].ToString()).FirstOrDefault() == null)
+                        {
+                            artistDoc.ConnectedArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], ArtistId = AlbumArtistIds[i].ToString(), _id = AlbumArtistIds[i] });
+                        }
+                    }
+
+                }
 
                 if (albumArtists.Contains(artist)) // If it's an album artists, it's their release
                 {

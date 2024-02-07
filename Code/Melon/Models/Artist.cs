@@ -19,6 +19,7 @@ namespace Melon.Models
         public DateTime DateAdded { get; set; }
         public List<ShortAlbum> Releases { get; set; }
         public List<ShortAlbum> SeenOn { get; set; }
+        public List<ShortArtist> ConnectedArtists { get; set; }
         public List<ShortTrack> Tracks { get; set; }
     }
 }
