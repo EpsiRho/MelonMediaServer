@@ -218,7 +218,6 @@ namespace Melon.LocalClasses
             var ArtistCollection = NewMelonDB.GetCollection<Artist>("Artists");
             var AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");
             var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
-            var FailedCollection = NewMelonDB.GetCollection<FailedFiles>("FailedFiles");
 
             // Get Files, for each file:
             var files = Directory.GetFiles(path);
@@ -368,25 +367,17 @@ namespace Melon.LocalClasses
                         continue;
                     }
 
+                    var FailedCollection = NewMelonDB.GetCollection<FailedFile>("FailedFiles");
 
-                    var fileFilter = Builders<FailedFiles>.Filter.Eq("Type", "Failed");
-                    var fileDoc = FailedCollection.Find(fileFilter).FirstOrDefault();
-                    if (fileDoc == null)
+                    var failed = new FailedFile()
                     {
-                        FailedFiles failed = new FailedFiles();
-                        failed.Type = "Failed";
-                        failed.Paths = new List<string>
-                        {
-                            file
-                        };
-                        FailedCollection.InsertOne(failed);
+                        _id = new MelonId(ObjectId.GenerateNewId()),
+                        Path = file,
+                        ErrorMessage = e.Message,
+                        StackTrace = e.StackTrace
+                    };
 
-                    }
-                    else
-                    {
-                        var arrayUpdateFailed = Builders<FailedFiles>.Update.Push("Paths", file);
-                        FailedCollection.UpdateOne(fileFilter, arrayUpdateFailed);
-                    }
+                    FailedCollection.InsertOne(failed);
                 }
                 watch.Stop();
                 averageMilliseconds += watch.ElapsedMilliseconds;
@@ -670,7 +661,6 @@ namespace Melon.LocalClasses
                                                List<MelonId> AlbumArtistIds, List<string> trackArtists, List<MelonId> TrackArtistIds,
                                                List<string> trackGenres, ShortTrack sTrack, IMongoCollection<Album> AlbumCollection)
         {
-
             var albumFilter = Builders<Album>.Filter.Eq("AlbumName", fileMetadata.Album);
             albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumArtists[0]);
 
@@ -1031,11 +1021,11 @@ namespace Melon.LocalClasses
                 var PlaylistCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
                 PlaylistCollection.DeleteMany(Builders<Playlist>.Filter.Empty);
 
-                var failedCollection = NewMelonDB.GetCollection<FailedFiles>("FailedFiles");
-                failedCollection.DeleteMany(Builders<FailedFiles>.Filter.Empty);
+                var failedCollection = NewMelonDB.GetCollection<FailedFile>("FailedFiles");
+                failedCollection.DeleteMany(Builders<FailedFile>.Filter.Empty);
 
-                var statsCollection = NewMelonDB.GetCollection<FailedFiles>("Stats");
-                statsCollection.DeleteMany(Builders<FailedFiles>.Filter.Empty);
+                var statsCollection = NewMelonDB.GetCollection<PlayStat>("Stats");
+                statsCollection.DeleteMany(Builders<PlayStat>.Filter.Empty);
 
                 if (Directory.Exists($"{StateManager.melonPath}/AlbumArts/"))
                 {
