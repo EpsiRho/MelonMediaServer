@@ -25,12 +25,12 @@
       "relativePath": "models"
     },
     {
-      "name": "playlists",
-      "relativePath": "playlists"
-    },
-    {
       "name": "queues",
       "relativePath": "queues"
+    },
+    {
+      "name": "playlists",
+      "relativePath": "playlists"
     },
     {
       "name": "search",
@@ -60,6 +60,11 @@
       "name": "style.css",
       "basename": "style",
       "relativePath": "style.css"
+    },
+    {
+      "name": "Untitled.canvas",
+      "basename": "Untitled",
+      "relativePath": "Untitled.canvas"
     }
   ]
 }
