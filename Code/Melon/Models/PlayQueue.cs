@@ -4,8 +4,7 @@ namespace Melon.Models
 {
     public class PlayQueue
     {
-        public MelonId _id { get; set; }
-        public string QueueId { get; set; }
+        public string _id { get; set; }
         public string Name { get; set; }
         public int CurPosition { get; set; }
         public string Owner { get; set; }

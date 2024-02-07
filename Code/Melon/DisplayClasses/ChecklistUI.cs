@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Melon.DisplayClasses
 {
     /// <summary>
-    /// Allows for creating checklists to keep the user updated with the current progress.
+    /// Allows for creating checklists to keep the user updated with current progress.
     /// </summary>
     public static class ChecklistUI
     {

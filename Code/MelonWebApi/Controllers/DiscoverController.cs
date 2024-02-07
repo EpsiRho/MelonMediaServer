@@ -38,12 +38,12 @@ namespace MelonWebApi.Controllers
             HashSet<string> Artists = new HashSet<string>();
             HashSet<string> NewTrackIds = new HashSet<string>();
 
-            var filter = Builders<Track>.Filter.In(x => x.TrackId, ids);
+            var filter = Builders<Track>.Filter.In(x => x._id, ids);
             var tracks = TracksCollection.Find(filter).ToList();
             foreach (var track in tracks)
             {
                 foreach (var genre in track.TrackGenres) { Genres.Add(genre); }
-                foreach (var artist in track.TrackArtists) { Artists.Add(artist.ArtistId); }
+                foreach (var artist in track.TrackArtists) { Artists.Add(artist._id); }
             }
             Genres.Remove("");
             Artists.Remove("");
@@ -51,24 +51,24 @@ namespace MelonWebApi.Controllers
 
             if (includeArtists)
             {
-                var artistFilter = Builders<Artist>.Filter.In(x => x.ArtistId, Artists);
+                var artistFilter = Builders<Artist>.Filter.In(x => x._id, Artists);
                 var artists = ArtistsCollection.Find(artistFilter).ToList();
 
                 HashSet<string> artistIds = new HashSet<string>();
                 foreach (var artist in artists)
                 {
-                    foreach (var a in artist.ConnectedArtists.Select(x => x.ArtistId))
+                    foreach (var a in artist.ConnectedArtists.Select(x => x._id))
                     {
                         artistIds.Add(a);
                     }
                 }
 
-                var artistConnectionsFilter = Builders<Artist>.Filter.In(x => x.ArtistId, artistIds);
+                var artistConnectionsFilter = Builders<Artist>.Filter.In(x => x._id, artistIds);
                 var connections = ArtistsCollection.Find(artistConnectionsFilter).ToList();
 
                 foreach (var artist in connections)
                 {
-                    if (!artists.Where(x => x.ArtistId == artist.ArtistId).Any())
+                    if (!artists.Where(x => x._id == artist._id).Any())
                     {
                         artists.Add(artist);
                     }
@@ -78,13 +78,13 @@ namespace MelonWebApi.Controllers
                 {
                     foreach (var track in artist.Tracks)
                     {
-                        NewTrackIds.Add(track.TrackId);
+                        NewTrackIds.Add(track._id);
                     }
                 }
             }
             if (includeGenres)
             {
-                var projection = Builders<Track>.Projection.Include(x => x.TrackId);
+                var projection = Builders<Track>.Projection.Include(x => x._id);
                 var genrefilter = Builders<Track>.Filter.AnyIn(x => x.TrackGenres, Genres);
                 var genreBasedTracks = TracksCollection.Find(genrefilter).Project(projection).ToList();
 
@@ -94,10 +94,10 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            var finalFilter = Builders<Track>.Filter.In(x => x.TrackId, NewTrackIds);
+            var finalFilter = Builders<Track>.Filter.In(x => x._id, NewTrackIds);
             var finalTracks = TracksCollection.Find(finalFilter).ToList();
 
-            finalTracks = finalTracks.Where(x => ids.Contains(x.TrackId) == false).ToList();
+            finalTracks = finalTracks.Where(x => ids.Contains(x._id) == false).ToList();
 
             string username = User.Identity.Name;
             if (orderByFavorites)
@@ -129,13 +129,13 @@ namespace MelonWebApi.Controllers
             HashSet<string> Artists = new HashSet<string>();
             HashSet<string> NewAlbumIds = new HashSet<string>();
 
-            var filter = Builders<Album>.Filter.In(x => x.AlbumId, ids);
+            var filter = Builders<Album>.Filter.In(x => x._id, ids);
             var albums = AlbumsCollection.Find(filter).ToList();
             foreach (var track in albums)
             {
                 foreach (var genre in track.AlbumGenres) { Genres.Add(genre); }
-                foreach (var artist in track.AlbumArtists) { Artists.Add(artist.ArtistId); }
-                foreach (var artist in track.ContributingArtists) { Artists.Add(artist.ArtistId); }
+                foreach (var artist in track.AlbumArtists) { Artists.Add(artist._id); }
+                foreach (var artist in track.ContributingArtists) { Artists.Add(artist._id); }
             }
             Genres.Remove("");
             Artists.Remove("");
@@ -143,13 +143,13 @@ namespace MelonWebApi.Controllers
             List<Album> finalAlbums = new List<Album>();
             if (includeArtists)
             {
-                var artistFilter = Builders<Artist>.Filter.In(x => x.ArtistId, Artists);
+                var artistFilter = Builders<Artist>.Filter.In(x => x._id, Artists);
                 var artists = ArtistsCollection.Find(artistFilter).ToList();
 
                 HashSet<string> artistIds = new HashSet<string>();
                 foreach (var artist in artists)
                 {
-                    foreach (var a in artist.ConnectedArtists.Select(x => x.ArtistId))
+                    foreach (var a in artist.ConnectedArtists.Select(x => x._id))
                     {
                         artistIds.Add(a);
                     }
@@ -159,32 +159,32 @@ namespace MelonWebApi.Controllers
                 {
                     foreach (var album in artist.Releases)
                     {
-                        NewAlbumIds.Add(album.AlbumId);
+                        NewAlbumIds.Add(album._id);
                     }
                     foreach (var album in artist.SeenOn)
                     {
-                        NewAlbumIds.Add(album.AlbumId);
+                        NewAlbumIds.Add(album._id);
                     }
                 }
 
-                var final = Builders<Album>.Filter.In(x => x.AlbumId, NewAlbumIds);
+                var final = Builders<Album>.Filter.In(x => x._id, NewAlbumIds);
                 finalAlbums = AlbumsCollection.Find(final).ToList();
                 NewAlbumIds.Clear();
 
-                var artistConnectionsFilter = Builders<Artist>.Filter.In(x => x.ArtistId, artistIds);
+                var artistConnectionsFilter = Builders<Artist>.Filter.In(x => x._id, artistIds);
                 var connections = ArtistsCollection.Find(artistConnectionsFilter).ToList();
 
                 foreach (var artist in connections)
                 {
-                    if (!artists.Where(x => x.ArtistId == artist.ArtistId).Any())
+                    if (!artists.Where(x => x._id == artist._id).Any())
                     {
                         foreach (var album in artist.Releases)
                         {
-                            NewAlbumIds.Add(album.AlbumId);
+                            NewAlbumIds.Add(album._id);
                         }
                         foreach (var album in artist.SeenOn)
                         {
-                            NewAlbumIds.Add(album.AlbumId);
+                            NewAlbumIds.Add(album._id);
                         }
                     }
                 }
@@ -192,7 +192,7 @@ namespace MelonWebApi.Controllers
 
             if (includeGenres)
             {
-                var projection = Builders<Album>.Projection.Include(x => x.AlbumId);
+                var projection = Builders<Album>.Projection.Include(x => x._id);
                 var genrefilter = Builders<Album>.Filter.AnyIn(x => x.AlbumGenres, Genres);
                 var genreBasedAlbums = AlbumsCollection.Find(genrefilter).Project(projection).ToList();
 
@@ -202,10 +202,10 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            var finalFilter = Builders<Album>.Filter.In(x => x.AlbumId, NewAlbumIds);
+            var finalFilter = Builders<Album>.Filter.In(x => x._id, NewAlbumIds);
             var exAlbums = AlbumsCollection.Find(finalFilter).ToList();
 
-            finalAlbums.AddRange(exAlbums.Where(x => ids.Contains(x.AlbumId) == false).ToList());
+            finalAlbums.AddRange(exAlbums.Where(x => ids.Contains(x._id) == false).ToList());
 
             string username = User.Identity.Name;
             if (shuffle)
@@ -251,7 +251,7 @@ namespace MelonWebApi.Controllers
 
             HashSet<string> Genres = new HashSet<string>();
 
-            var filter = Builders<Artist>.Filter.In(x => x.ArtistId, ids);
+            var filter = Builders<Artist>.Filter.In(x => x._id, ids);
             var artists = ArtistsCollection.Find(filter).ToList();
             foreach (var artist in artists)
             {
@@ -264,7 +264,7 @@ namespace MelonWebApi.Controllers
             var genreBasedArtists = ArtistsCollection.Find(genrefilter).ToList();
 
 
-            genreBasedArtists = genreBasedArtists.Where(x => ids.Contains(x.ArtistId) == false).ToList();
+            genreBasedArtists = genreBasedArtists.Where(x => ids.Contains(x._id) == false).ToList();
 
             string username = User.Identity.Name;
             if (shuffle)

@@ -5,8 +5,7 @@ namespace Melon.Models
 {
     public class Album
     {
-        public MelonId _id { get; set; }
-        public string AlbumId { get; set; }
+        public string _id { get; set; }
         public int TotalDiscs { get; set; }
         public int TotalTracks { get; set; }
         public string AlbumName { get; set; }

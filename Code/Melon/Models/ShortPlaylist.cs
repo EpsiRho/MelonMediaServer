@@ -4,8 +4,7 @@ namespace Melon.Models
 {
     public class ShortPlaylist
     {
-        public MelonId _id { get; set; }
-        public string PlaylistId { get; set; }
+        public string _id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public long TrackCount { get; set; }
@@ -18,7 +17,6 @@ namespace Melon.Models
         public ShortPlaylist(Playlist p)
         {
             _id = p._id;
-            PlaylistId = p.PlaylistId;
             Name = p.Name;
             Description = p.Description;
             TrackCount = p.TrackCount;

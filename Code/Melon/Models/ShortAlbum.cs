@@ -4,8 +4,7 @@ namespace Melon.Models
 {
     public class ShortAlbum
     {
-        public MelonId _id { get; set; }
-        public string AlbumId { get; set; }
+        public string _id { get; set; }
         public string AlbumName { get; set; }
         public ShortAlbum() 
         {
@@ -14,7 +13,6 @@ namespace Melon.Models
         public ShortAlbum(Album a) 
         {
             _id = a._id;
-            AlbumId = a.AlbumId;
             AlbumName = a.AlbumName;
         }
     }

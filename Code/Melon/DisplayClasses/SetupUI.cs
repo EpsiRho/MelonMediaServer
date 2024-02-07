@@ -241,11 +241,9 @@ namespace Melon.DisplayClasses
             var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
             var collection = NewMelonDB.GetCollection<User>("Users");
 
-            var id = ObjectId.GenerateNewId();
             var document = new User
             {
-                _id = new MelonId(id),
-                UserId = id.ToString(),
+                _id = ObjectId.GenerateNewId().ToString(),
                 Username = tempUsername,
                 Password = tempPassword,
                 Salt = tempSalt,

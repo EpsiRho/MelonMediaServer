@@ -37,8 +37,7 @@ namespace MelonWebApi.Controllers
             var userName = User.Identity.Name;
 
             Playlist playlist = new Playlist();
-            playlist._id = new MelonId(ObjectId.GenerateNewId());
-            playlist.PlaylistId = playlist._id.ToString();
+            playlist._id = ObjectId.GenerateNewId().ToString();
             playlist.Name = name;
             playlist.TrackCount = 0;
             playlist.Owner = userName;
@@ -50,7 +49,7 @@ namespace MelonWebApi.Controllers
             playlist.ArtworkPath = "";
             playlist.Tracks = new List<ShortTrack>();
             //var str = queue._id.ToString();
-            var pFilter = Builders<Playlist>.Filter.Eq(x=>x.PlaylistId, playlist.PlaylistId);
+            var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, playlist._id);
             if(trackIds == null)
             {
                 PCollection.InsertOne(playlist);
@@ -151,7 +150,7 @@ namespace MelonWebApi.Controllers
             foreach (var tid in trackIds)
             {
                 var query = from track in playlist.Tracks
-                            where track.TrackId == tid
+                            where track._id == tid
                             select track;
                 if (query.Count() != 0)
                 {
@@ -180,7 +179,7 @@ namespace MelonWebApi.Controllers
                 var userName = User.Identity.Name;
 
                 //var str = queue._id.ToString();
-                var pFilter = Builders<Playlist>.Filter.Eq("PlaylistId", playlist.PlaylistId);
+                var pFilter = Builders<Playlist>.Filter.Eq("PlaylistId", playlist._id);
                 var playlists = PCollection.Find(pFilter).ToList();
                 if (playlists.Count == 0)
                 {
@@ -197,7 +196,6 @@ namespace MelonWebApi.Controllers
                 }
 
                 plst._id = playlist._id;
-                plst.PlaylistId = playlist.PlaylistId;
                 plst.ArtworkPath = playlist.ArtworkPath;
                 plst.Description = playlist.Description;
                 plst.Name = playlist.Name;
@@ -276,7 +274,7 @@ namespace MelonWebApi.Controllers
             }
 
             var tracks = (from t in playlist.Tracks
-                          where t.TrackId == trackId
+                          where t._id == trackId
                           select t).ToList();
             if (tracks.Count() == 0)
             {
@@ -334,7 +332,7 @@ namespace MelonWebApi.Controllers
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-            var pFilter = Builders<Playlist>.Filter.Eq(x => x.PlaylistId, id);
+            var pFilter = Builders<Playlist>.Filter.Eq(x => x._id, id);
 
             if(page == 0 || count == 0)
             {
@@ -359,7 +357,7 @@ namespace MelonWebApi.Controllers
 
             var tracks = playlist.Tracks.Take(new Range(page * count, (page * count) + count));
 
-            List<Track> fullTracks = TracksCollection.Find(Builders<Track>.Filter.In(x => x.TrackId, tracks.Select(x => x.TrackId))).ToList();
+            List<Track> fullTracks = TracksCollection.Find(Builders<Track>.Filter.In(x => x._id, tracks.Select(x => x._id))).ToList();
 
             var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
             usernames.Add(User.Identity.Name);

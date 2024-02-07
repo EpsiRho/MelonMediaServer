@@ -46,14 +46,14 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Track Not Found") { StatusCode = 404 };
             }
 
-            var albumFilter = Builders<Album>.Filter.Eq("AlbumId", track.Album.AlbumId);
+            var albumFilter = Builders<Album>.Filter.Eq("AlbumId", track.Album._id);
             var album = AlbumCollection.Find(albumFilter).ToList()[0];
 
             // Update artists
             List<Artist> artists = new List<Artist>();
             foreach (var a in track.TrackArtists)
             {
-                var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", a.ArtistId);
+                var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", a._id);
                 var artist = ArtistCollection.Find(artistFilter).ToList()[0];
                 if (artist.PlayCounts == null)
                 {
@@ -115,15 +115,14 @@ namespace MelonWebApi.Controllers
 
             // Add Play Stat
             PlayStat stat = new PlayStat();
-            stat._id = new MelonId(ObjectId.GenerateNewId());
-            stat.StatId = stat._id.ToString();
-            stat.TrackId = track.TrackId; 
-            stat.AlbumId = album.AlbumId;
+            stat._id = ObjectId.GenerateNewId().ToString();
+            stat.TrackId = track._id; 
+            stat.AlbumId = album._id;
             stat.Duration = track.Duration;
             stat.ArtistIds =
             [
                 .. from a in artists
-                   select a.ArtistId,
+                   select a._id,
             ];
             stat.Device = device;
             stat.User = User.Identity.Name;
@@ -175,14 +174,14 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Track Not Found") { StatusCode = 404 };
             }
 
-            var albumFilter = Builders<Album>.Filter.Eq("AlbumId", track.Album.AlbumId);
+            var albumFilter = Builders<Album>.Filter.Eq("AlbumId", track.Album._id);
             var album = AlbumCollection.Find(albumFilter).ToList()[0];
 
             // Update artists
             List<Artist> artists = new List<Artist>();
             foreach (var a in track.TrackArtists)
             {
-                var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", a.ArtistId);
+                var artistFilter = Builders<Artist>.Filter.Eq("ArtistId", a._id);
                 var artist = ArtistCollection.Find(artistFilter).ToList()[0];
                 if (artist.SkipCounts == null)
                 {
@@ -244,15 +243,14 @@ namespace MelonWebApi.Controllers
 
             // Add Play Stat
             PlayStat stat = new PlayStat();
-            stat._id = new MelonId(ObjectId.GenerateNewId());
-            stat.StatId = stat._id.ToString();
-            stat.TrackId = track.TrackId;
-            stat.AlbumId = album.AlbumId;
+            stat._id = ObjectId.GenerateNewId().ToString();
+            stat.TrackId = track._id;
+            stat.AlbumId = album._id;
             stat.Duration = track.Duration;
             stat.ArtistIds =
             [
                 .. from a in artists
-                   select a.ArtistId,
+                   select a._id,
             ];
             stat.Device = device;
             stat.User = User.Identity.Name;
