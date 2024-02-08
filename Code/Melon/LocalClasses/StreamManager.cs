@@ -12,7 +12,7 @@ namespace Melon.LocalClasses
     public static class StreamManager
     {
         private static List<WSS> Sockets { get; set; }
-        public static void AddSocket(WebSocket socket)
+        public static void AddSocket(WebSocket socket, string username)
         {
             if(Sockets == null)
             {
@@ -21,6 +21,8 @@ namespace Melon.LocalClasses
             WSS wss = new WSS();
             wss.Socket = socket;
             wss.CurrentQueue = "";
+            wss.Username = username;
+            wss.IsPublic = false;
             wss.LastPing = DateTime.Now;
             var check = Sockets.Count() == 0;
             Sockets.Add(wss);
@@ -31,30 +33,33 @@ namespace Melon.LocalClasses
                 t.Start();
             }
         }
-        public static List<string> GetDevices()
+        public static List<string> GetDevices(string username)
         {
             var devices = new List<string>();
             foreach(var wss in Sockets)
             {
-                if(wss.DeviceName != "")
+                if(wss.Username == username || wss.IsPublic == true)
                 {
                     devices.Add(wss.DeviceName);
                 }
             }
             return devices;
         }
-        public static WSS GetDevice(string name)
+        public static WSS GetDevice(string name, string username)
         {
-            var device = new WSS();
             foreach(var wss in Sockets)
             {
                 if(wss.DeviceName == name)
                 {
-                    device = wss;
-                    break;
+                    if(username != wss.Username && wss.IsPublic == false)
+                    {
+                        return null;
+                    }
+
+                    return wss;
                 }
             }
-            return device;
+            return null;
         }
         public static void RemoveSocket(WSS wss)
         {
@@ -113,6 +118,20 @@ namespace Melon.LocalClasses
 
                         wss.DeviceName = name;
                         WriteToSocket(wss, name);
+                    }
+                    catch (Exception)
+                    {
+                        WriteToSocket(wss, "Invalid Syntax");
+                    }
+                }
+                else if (message.Contains("SET PUBLIC"))
+                {
+                    try
+                    {
+                        bool set = bool.Parse(message.Split(":")[1]);
+
+                        wss.IsPublic = set;
+                        WriteToSocket(wss, $"DEVICE IS PUBLIC:{set}");
                     }
                     catch (Exception)
                     {

@@ -32,7 +32,7 @@ namespace MelonWebApi.Controllers
             }
 
             var webSocket = HttpContext.WebSockets.AcceptWebSocketAsync().Result;
-            StreamManager.AddSocket(webSocket);
+            StreamManager.AddSocket(webSocket, User.Identity.Name);
 
             while (webSocket.State == System.Net.WebSockets.WebSocketState.Open)
             {
@@ -43,19 +43,67 @@ namespace MelonWebApi.Controllers
         [HttpGet("get-external")]
         public ObjectResult GetDevices()
         {
-            return new ObjectResult(StreamManager.GetDevices()){ StatusCode = 200 };
+            return new ObjectResult(StreamManager.GetDevices(User.Identity.Name)){ StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("play-external")]
         public ObjectResult PlayDevice(string deviceName, string queueId)
         {
-            var wss = StreamManager.GetDevice(deviceName);
+            var wss = StreamManager.GetDevice(deviceName, User.Identity.Name);
             if (wss == null)
             {
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };
             }
             StreamManager.WriteToSocket(wss, $"PLAY QUEUE:{queueId}");
-            return new ObjectResult("Play Request Sent") { StatusCode = 200 };
+            return new ObjectResult("Request Sent") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet("pause-external")]
+        public ObjectResult PauseDevice(string deviceName)
+        {
+            var wss = StreamManager.GetDevice(deviceName, User.Identity.Name);
+            if (wss == null)
+            {
+                return new ObjectResult("Device Not Found") { StatusCode = 404 };
+            }
+            StreamManager.WriteToSocket(wss, $"PAUSE");
+            return new ObjectResult("Request Sent") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet("skip-external")]
+        public ObjectResult SkipDevice(string deviceName)
+        {
+            var wss = StreamManager.GetDevice(deviceName, User.Identity.Name);
+            if (wss == null)
+            {
+                return new ObjectResult("Device Not Found") { StatusCode = 404 };
+            }
+            StreamManager.WriteToSocket(wss, $"SKIP");
+            return new ObjectResult("Request Sent") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet("rewind-external")]
+        public ObjectResult ReturnDevice(string deviceName)
+        {
+            var wss = StreamManager.GetDevice(deviceName, User.Identity.Name);
+            if (wss == null)
+            {
+                return new ObjectResult("Device Not Found") { StatusCode = 404 };
+            }
+            StreamManager.WriteToSocket(wss, $"REWIND");
+            return new ObjectResult("Request Sent") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet("volume-external")]
+        public ObjectResult SetDeviceVolume(string deviceName, int volume = 50)
+        {
+            var wss = StreamManager.GetDevice(deviceName, User.Identity.Name);
+            if (wss == null)
+            {
+                return new ObjectResult("Device Not Found") { StatusCode = 404 };
+            }
+            StreamManager.WriteToSocket(wss, $"VOLUME:{volume}");
+            return new ObjectResult("Request Sent") { StatusCode = 200 };
         }
 
     }

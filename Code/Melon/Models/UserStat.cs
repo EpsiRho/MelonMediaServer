@@ -8,7 +8,7 @@ namespace Melon.Models
 {
     public class UserStat
     {
-        public string Username { get; set; }
+        public string UserId { get; set; }
         public long Value { get; set; }
     }
 }

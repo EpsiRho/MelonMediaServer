@@ -44,7 +44,7 @@ namespace MelonWebApi.Controllers
             {
                 user.LastLogin = DateTime.Now;
                 UserCollection.ReplaceOne(userFilter, user);
-                return new ObjectResult(Security.GenerateJwtToken(username, user.Type)) { StatusCode = 200 };
+                return new ObjectResult(Security.GenerateJwtToken(username, user.Type, user._id)) { StatusCode = 200 };
             }
             else
             {
@@ -70,7 +70,7 @@ namespace MelonWebApi.Controllers
             {
                 return new ObjectResult("Invalid Invite code") { StatusCode = 401 };
             }
-            return new ObjectResult(Security.GenerateJwtToken("ServerTemp", "Server", 10)) { StatusCode = 200 };
+            return new ObjectResult(Security.GenerateJwtToken("ServerTemp", "Server", "NA", 10)) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("check")]

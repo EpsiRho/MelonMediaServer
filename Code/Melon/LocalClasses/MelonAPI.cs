@@ -24,7 +24,7 @@ namespace Melon.LocalClasses
     /// </summary>
     public static class MelonAPI
     {
-        public static List<Track> ShuffleTracks(List<Track> tracks, string Username, ShuffleType type, bool FullRandom = false, bool enableTrackLinks = true)
+        public static List<Track> ShuffleTracks(List<Track> tracks, string UserId, ShuffleType type, bool FullRandom = false, bool enableTrackLinks = true)
         {
             Random rng = new Random();
             // Shuffle the list.
@@ -50,7 +50,7 @@ namespace Melon.LocalClasses
                             var count = tracks.Count();
                             for (int i = 0; i < count - 1; i++)
                             {
-                                if (tracks[i].TrackArtists.Contains(tracks[i + 1].TrackArtists[0]) || tracks[i].Album.AlbumName == tracks[i + 1].Album.AlbumName)
+                                if (tracks[i].TrackArtists.Contains(tracks[i + 1].TrackArtists[0]) || tracks[i].Album.Name == tracks[i + 1].Album.Name)
                                 {
                                     var temp = tracks[i];
                                     tracks.RemoveAt(i);
@@ -238,9 +238,9 @@ namespace Melon.LocalClasses
                     Random rand = new Random();
 
                     // Sort with a bias towards PlayCount and Rating
-                    var fullTracks = tracks.OrderByDescending(x => x.PlayCounts.Where(x=>x.Username == Username).Select(x=>x.Value).FirstOrDefault() + 
-                                                                   x.Ratings.Where(x => x.Username == Username).Select(x => x.Value).FirstOrDefault() - 
-                                                                   x.SkipCounts.Where(x => x.Username == Username).Select(x => x.Value).FirstOrDefault() + 
+                    var fullTracks = tracks.OrderByDescending(x => x.PlayCounts.Where(x=>x.UserId == UserId).Select(x=>x.Value).FirstOrDefault() + 
+                                                                   x.Ratings.Where(x => x.UserId == UserId).Select(x => x.Value).FirstOrDefault() - 
+                                                                   x.SkipCounts.Where(x => x.UserId == UserId).Select(x => x.Value).FirstOrDefault() + 
                                                                    rand.NextDouble()).ToList();
 
                     //int num = fullTracks.Count;
@@ -294,9 +294,9 @@ namespace Melon.LocalClasses
                     Random r = new Random();
 
                     // Sort with a bias against PlayCount
-                    fTracks = fTracks.OrderBy(x => x.PlayCounts.Where(x => x.Username == Username).Select(x => x.Value).FirstOrDefault() +
-                                                   x.Ratings.Where(x => x.Username == Username).Select(x => x.Value).FirstOrDefault() -
-                                                   x.SkipCounts.Where(x => x.Username == Username).Select(x => x.Value).FirstOrDefault() +
+                    fTracks = fTracks.OrderBy(x => x.PlayCounts.Where(x => x.UserId == UserId).Select(x => x.Value).FirstOrDefault() +
+                                                   x.Ratings.Where(x => x.UserId == UserId).Select(x => x.Value).FirstOrDefault() -
+                                                   x.SkipCounts.Where(x => x.UserId == UserId).Select(x => x.Value).FirstOrDefault() +
                                                    r.NextDouble()).ToList();
 
                     //int num = fullTracks.Count;

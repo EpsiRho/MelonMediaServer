@@ -114,7 +114,7 @@ namespace MelonWebApi.Controllers
             }
 
             count = count <= finalTracks.Count ? count : finalTracks.Count;
-            return new ObjectResult(finalTracks.Slice(0,count).Select(x=>new ShortTrack(x))) { StatusCode = 200 };
+            return new ObjectResult(finalTracks.Slice(0,count).Select(x=>new DbLink(x))) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("albums")]
@@ -239,7 +239,7 @@ namespace MelonWebApi.Controllers
 
             count = count <= finalAlbums.Count ? count : finalAlbums.Count;
             var end = (count * page) + count <= finalAlbums.Count ? (count * page) + count : finalAlbums.Count;
-            return new ObjectResult(finalAlbums.Take(new Range(count*page, end)).Select(x=>new ShortAlbum(x))) { StatusCode = 200 };
+            return new ObjectResult(finalAlbums.Take(new Range(count*page, end)).Select(x=>new DbLink(x))) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("artists")]
@@ -283,7 +283,7 @@ namespace MelonWebApi.Controllers
 
             count = count <= genreBasedArtists.Count ? count : genreBasedArtists.Count;
             var end = (count * page) + count <= genreBasedArtists.Count ? (count * page) + count : genreBasedArtists.Count;
-            return new ObjectResult(genreBasedArtists.Take(new Range(count * page, end)).Select(x => new ShortArtist(x))) { StatusCode = 200 };
+            return new ObjectResult(genreBasedArtists.Take(new Range(count * page, end)).Select(x => new DbLink(x))) { StatusCode = 200 };
         }
     }
 }

@@ -56,7 +56,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            PublicUser pUser = new PublicUser(user);
+            ResponseUser pUser = new ResponseUser(user);
 
             return new ObjectResult(pUser) { StatusCode = 200 };
         }
@@ -84,7 +84,7 @@ namespace MelonWebApi.Controllers
                        .Where(c => c.Type == ClaimTypes.Role)
                        .Select(c => c.Value);
 
-            List<PublicUser> pUsers = new List<PublicUser>();
+            List<ResponseUser> pUsers = new List<ResponseUser>();
             foreach(var user in users)
             {
                 if(user.Friends == null)
@@ -103,7 +103,7 @@ namespace MelonWebApi.Controllers
                         continue;
                     }
                 }
-                pUsers.Add(new PublicUser(user));
+                pUsers.Add(new ResponseUser(user));
             }
 
             return new ObjectResult(pUsers) { StatusCode = 200 };
@@ -179,7 +179,7 @@ namespace MelonWebApi.Controllers
             }
             var user = users[0];
 
-            PublicUser pUser = new PublicUser(user);
+            ResponseUser pUser = new ResponseUser(user);
 
             return new ObjectResult(pUser) { StatusCode = 200 };
         }
@@ -229,73 +229,6 @@ namespace MelonWebApi.Controllers
             UserCollection.InsertOne(user);
 
             return new ObjectResult(user._id) { StatusCode = 200 };
-        }
-        [Authorize(Roles = "Admin")]
-        [HttpPost("create-connection")]
-        public async Task<ObjectResult> CreateConnection(string url, string code, string username, string password)
-        {
-            //var client = new RestClient(url);
-
-            string tempJWT = "";
-            //jwtRequest.AddQueryParameter("code",code);
-            //jwtRequest.Timeout = 10000;
-            //var jwtResponse = client.Execute(jwtRequest);
-
-            using (HttpClient client = new HttpClient())
-            {
-                // Set the base URI for HTTP requests
-                client.BaseAddress = new Uri(url);
-
-                try
-                {
-                    // Get JWT token
-                    HttpResponseMessage response = await client.GetAsync($"/auth/code-authenticate?code={code}");
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        tempJWT = await response.Content.ReadAsStringAsync();
-                    }
-                    else
-                    {
-                        return new ObjectResult("Invalid Invite Code") { StatusCode = 400 };
-                    }
-
-                    // Create user
-                    
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tempJWT);
-                    HttpResponseMessage createResponse = await client.PostAsync($"/api/users/create?username={username}&password={password}", null);
-
-                    if (createResponse.IsSuccessStatusCode)
-                    {
-
-                    }
-                    else
-                    {
-                        return new ObjectResult($"Couldn't Create user: {createResponse.Content}") { StatusCode = 400 };
-                    }
-
-                    // login to user
-                    HttpResponseMessage authResponse = await client.GetAsync($"/auth/login?username={username}&password={password}");
-
-                    if (authResponse.IsSuccessStatusCode)
-                    {
-                        tempJWT = await authResponse.Content.ReadAsStringAsync();
-                    }
-                    else
-                    {
-                        return new ObjectResult($"Failed to login to user: {authResponse.Content}") { StatusCode = 400 };
-                    }
-                }
-                catch (HttpRequestException e)
-                {
-                    return new ObjectResult(e.Message) { StatusCode = 500 };
-                }
-            }
-
-            Security.Connections.Add(new Connection() { Username = username, Password = password, JWT = tempJWT, URL = url });
-            Security.SaveConnections();
-
-            return new ObjectResult("Connection Added") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin")]
         [HttpPost("delete")]
@@ -416,10 +349,6 @@ namespace MelonWebApi.Controllers
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
-            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
-            var statsFilter = Builders<PlayStat>.Filter.Eq(x => x.User, user.Username);
-            var update = Builders<PlayStat>.Update.Set(x => x.User, username);
-            StatsCollection.UpdateMany(statsFilter, update);
 
             user.Username = username;
 

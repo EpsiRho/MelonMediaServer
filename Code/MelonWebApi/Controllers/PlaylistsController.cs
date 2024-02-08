@@ -9,6 +9,7 @@ using System.Diagnostics;
 using Melon.Models;
 using System.Security.Claims;
 using ATL.Playlist;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace MelonWebApi.Controllers
 {
@@ -25,7 +26,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create")]
-        public ObjectResult CreatePlaylist(string name, string description = "", List<string> trackIds = null)
+        public ObjectResult CreatePlaylist(string name, string description = "", [FromQuery] List<string> trackIds = null)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             
@@ -47,7 +48,7 @@ namespace MelonWebApi.Controllers
             playlist.PublicViewing = false;
             playlist.Description = description;
             playlist.ArtworkPath = "";
-            playlist.Tracks = new List<ShortTrack>();
+            playlist.Tracks = new List<DbLink>();
             //var str = queue._id.ToString();
             var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, playlist._id);
             if(trackIds == null)
@@ -57,24 +58,24 @@ namespace MelonWebApi.Controllers
             }
             foreach(var id in trackIds)
             {
-                var trackFilter = Builders<Track>.Filter.Eq("TrackId", id);
+                var trackFilter = Builders<Track>.Filter.Eq(x=>x._id, id);
                 var trackDoc = TCollection.Find(trackFilter).ToList();
                 if(trackDoc.Count != 0)
                 {
                     playlist.TrackCount++;
-                    playlist.Tracks.Add(new ShortTrack(trackDoc[0]));
+                    playlist.Tracks.Add(new DbLink(trackDoc[0]));
                 }
             
             }
             PCollection.InsertOne(playlist);
 
 
-            return new ObjectResult(playlist._id.ToString()) { StatusCode = 200 };
+            return new ObjectResult(playlist._id) { StatusCode = 200 };
         }
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("add-tracks")]
-        public ObjectResult AddToPlaylist(string id, List<string> trackIds)
+        public ObjectResult AddToPlaylist(string id, [FromQuery] List<string> trackIds)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -86,7 +87,7 @@ namespace MelonWebApi.Controllers
             var userName = User.Identity.Name;
 
             //var str = queue._id.ToString();
-            var pFilter = Builders<Playlist>.Filter.Eq("PlaylistId", id);
+            var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
             var playlists = PCollection.Find(pFilter).ToList();
             if(playlists.Count == 0)
             {
@@ -104,11 +105,11 @@ namespace MelonWebApi.Controllers
 
             foreach (var tid in trackIds)
             {
-                var trackFilter = Builders<Track>.Filter.Eq("TrackId", tid);
+                var trackFilter = Builders<Track>.Filter.Eq(x=>x._id, tid);
                 var trackDoc = TCollection.Find(trackFilter).ToList();
                 if (trackDoc.Count != 0)
                 {
-                    playlist.Tracks.Add(new ShortTrack(trackDoc[0]));
+                    playlist.Tracks.Add(new DbLink(trackDoc[0]));
                     playlist.TrackCount++;
                 }
             }
@@ -119,7 +120,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("remove-tracks")]
-        public ObjectResult RemoveFromPlaylist(string id, List<string> trackIds)
+        public ObjectResult RemoveFromPlaylist(string id, [FromQuery] List<int> positions)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -131,7 +132,7 @@ namespace MelonWebApi.Controllers
             var userName = User.Identity.Name;
 
             //var str = queue._id.ToString();
-            var pFilter = Builders<Playlist>.Filter.Eq("PlaylistId", id);
+            var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
             var playlists = PCollection.Find(pFilter).ToList();
             if (playlists.Count == 0)
             {
@@ -147,16 +148,10 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            foreach (var tid in trackIds)
+            foreach (var pos in positions)
             {
-                var query = from track in playlist.Tracks
-                            where track._id == tid
-                            select track;
-                if (query.Count() != 0)
-                {
-                    playlist.Tracks.Remove(query.ToList()[0]);
-                    playlist.TrackCount--;
-                }
+                playlist.Tracks.RemoveAt(pos);
+                playlist.TrackCount--;
             }
             PCollection.ReplaceOne(pFilter, playlist);
 
@@ -165,21 +160,19 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin, User")]
         [HttpPost("update")]
-        public ObjectResult updatePlaylist(ShortPlaylist playlist)
+        public ObjectResult updatePlaylist(string id, string description = "", string name = "", [FromQuery] List<string> editors = null, [FromQuery] List<string> viewers = null,
+                                           string publicEditing = "", string publicViewing = "")
         {
             try
             {
                 var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
                 var mongoDatabase = mongoClient.GetDatabase("Melon");
-
                 var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
                 var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
                 var userName = User.Identity.Name;
 
-                //var str = queue._id.ToString();
-                var pFilter = Builders<Playlist>.Filter.Eq("PlaylistId", playlist._id);
+                var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
                 var playlists = PCollection.Find(pFilter).ToList();
                 if (playlists.Count == 0)
                 {
@@ -195,15 +188,30 @@ namespace MelonWebApi.Controllers
                     }
                 }
 
-                plst._id = playlist._id;
-                plst.ArtworkPath = playlist.ArtworkPath;
-                plst.Description = playlist.Description;
-                plst.Name = playlist.Name;
-                plst.Owner = playlist.Owner;
-                plst.Editors = playlist.Editors;
-                plst.Viewers = playlist.Viewers;
-                plst.PublicEditing = playlist.PublicEditing;
-                plst.PublicViewing = playlist.PublicViewing;
+                description = description == "" ? plst.Description : description;
+                name = name == "" ? plst.Name : name;
+                editors = editors == null ? plst.Editors : editors;
+                viewers = viewers == null ? plst.Viewers : viewers;
+                bool pubEditing = false;
+                bool pubViewing = false;
+                try
+                {
+                    pubEditing = publicEditing == "" ? plst.PublicEditing : bool.Parse(publicEditing);
+                    pubViewing = publicViewing == "" ? plst.PublicViewing : bool.Parse(publicViewing);
+                }
+                catch (Exception)
+                {
+                    return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
+                }
+                
+
+                plst._id = id;
+                plst.Description = description;
+                plst.Name = name;
+                plst.Editors = editors;
+                plst.Viewers = viewers;
+                plst.PublicEditing = pubEditing;
+                plst.PublicViewing = pubViewing;
 
                 PCollection.ReplaceOne(pFilter, plst);
             }
@@ -215,7 +223,41 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Playlist updated") { StatusCode = 404 };
         }
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("move-track")]
+        public ObjectResult MoveTrack(string id, int fromPos, int toPos)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
+            var userName = User.Identity.Name;
+
+            var pFilter = Builders<Playlist>.Filter.Eq(x => x._id, id);
+            var playlist = PCollection.Find(pFilter).FirstOrDefault();
+            if (playlist == null)
+            {
+                return new ObjectResult("Playlist not found") { StatusCode = 404 };
+            }
+
+            if (playlist.PublicEditing == false)
+            {
+                if (playlist.Owner != userName && !playlist.Editors.Contains(userName))
+                {
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+            }
+
+            var track = playlist.Tracks[fromPos];
+            playlist.Tracks.RemoveAt(fromPos);
+            playlist.Tracks.Insert(toPos, track);
+
+            PCollection.ReplaceOne(pFilter, playlist);
+
+            StreamManager.AlertQueueUpdate(playlist._id);
+
+            return new ObjectResult("Track moved") { StatusCode = 200 };
+        }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("get")]
         public ObjectResult GetPlaylistById(string id)
@@ -228,12 +270,16 @@ namespace MelonWebApi.Controllers
 
             var pCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
-            var pFilter = Builders<Playlist>.Filter.Eq("PlaylistId", id);
-            var pDoc = pCollection.Find(pFilter).ToList();
+            var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
+            var plstProjection = Builders<Playlist>.Projection.Exclude(x => x.Tracks)
+                                                              .Exclude(x => x.ArtworkPath);
+            var pDocs = pCollection.Find(pFilter).Project(plstProjection)
+                                            .ToList();
 
-            if(pDoc.Count > 0)
+            var plst = pDocs.Select(x => BsonSerializer.Deserialize<ResponsePlaylist>(x)).FirstOrDefault();
+
+            if (plst != null)
             {
-                var plst = pDoc[0];
                 if (plst.PublicEditing == false)
                 {
                     if (plst.Owner != userName && !plst.Editors.Contains(userName) && !plst.Viewers.Contains(userName))
@@ -241,7 +287,7 @@ namespace MelonWebApi.Controllers
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
                 }
-                return new ObjectResult(new ShortPlaylist(plst)) { StatusCode = 200 };
+                return new ObjectResult(plst) { StatusCode = 200 };
             }
 
             return new ObjectResult("Playlist not found") { StatusCode = 404 };
@@ -257,7 +303,7 @@ namespace MelonWebApi.Controllers
 
             var userName = User.Identity.Name;
 
-            var pFilter = Builders<Playlist>.Filter.Eq("PlaylistId", id);
+            var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
             var playlists = PCollection.Find(pFilter).ToList();
             if (playlists.Count() == 0)
             {
@@ -299,7 +345,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
-            List<ShortPlaylist> playlists = new List<ShortPlaylist>();
+            List<ResponsePlaylist> playlists = new List<ResponsePlaylist>();
 
             var user = User.Identity.Name;
 
@@ -311,12 +357,15 @@ namespace MelonWebApi.Controllers
             // Combine filters with OR
             var combinedFilter = Builders<Playlist>.Filter.Or(ownerFilter, viewersFilter, publicViewingFilter, EditorsFilter);
             combinedFilter = combinedFilter & Builders<Playlist>.Filter.Regex(x=>x.Name, new BsonRegularExpression(name, "i"));
+            var plstProjection = Builders<Playlist>.Projection.Exclude(x => x.Tracks)
+                                                              .Exclude(x => x.ArtworkPath);
 
             playlists.AddRange(PCollection.Find(combinedFilter)
-                                    .Skip(page * count)
-                                    .Limit(count)
-                                    .ToList()
-                                    .Select(x => new ShortPlaylist(x)));
+                                          .Project(plstProjection)
+                                          .Skip(page * count)
+                                          .Limit(count)
+                                          .ToList()
+                                          .Select(x => BsonSerializer.Deserialize<ResponsePlaylist>(x)));
 
             
 
@@ -324,7 +373,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("get-tracks")]
-        public ObjectResult GetTracks(int page, int count, string id)
+        public ObjectResult GetTracks(string id, int page = 0, int count = 25)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -334,10 +383,6 @@ namespace MelonWebApi.Controllers
 
             var pFilter = Builders<Playlist>.Filter.Eq(x => x._id, id);
 
-            if(page == 0 || count == 0)
-            {
-                return new ObjectResult("Playlist not found") { StatusCode = 400 };
-            }
 
             var Playlists = PCollection.Find(pFilter).ToList();
             if (Playlists.Count() == 0)
@@ -357,31 +402,43 @@ namespace MelonWebApi.Controllers
 
             var tracks = playlist.Tracks.Take(new Range(page * count, (page * count) + count));
 
-            List<Track> fullTracks = TracksCollection.Find(Builders<Track>.Filter.In(x => x._id, tracks.Select(x => x._id))).ToList();
+            var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
+                                                            .Exclude(x => x.LyricsPath);
 
-            var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x.Username));
-            usernames.Add(User.Identity.Name);
+            List<ResponseTrack> fullTracks = TracksCollection.Find(Builders<Track>.Filter.In(x => x._id, tracks.Select(x => x._id)))
+                                                     .Project(trackProjection).ToList().Select(x => BsonSerializer.Deserialize<ResponseTrack>(x)).ToList();
 
-            foreach (var track in fullTracks)
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
+            userIds.Add(curId);
+
+            List<ResponseTrack> orderedTracks = new List<ResponseTrack>();
+            foreach (var sTrack in tracks)
             {
+                ResponseTrack track = fullTracks.Where(x => x._id == sTrack._id).FirstOrDefault();
+
                 // Check for null or empty collections to avoid exceptions
                 if (track.PlayCounts != null)
                 {
-                    track.PlayCounts = track.PlayCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    track.PlayCounts = track.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
                 }
 
                 if (track.SkipCounts != null)
                 {
-                    track.SkipCounts = track.SkipCounts.Where(x => usernames.Contains(x.Username)).ToList();
+                    track.SkipCounts = track.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList();
                 }
 
                 if (track.Ratings != null)
                 {
-                    track.Ratings = track.Ratings.Where(x => usernames.Contains(x.Username)).ToList();
+                    track.Ratings = track.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
                 }
+
+                orderedTracks.Add(track);
             }
 
-            return new ObjectResult(fullTracks) { StatusCode = 200 };
+            return new ObjectResult(orderedTracks) { StatusCode = 200 };
         }
     }
 }
