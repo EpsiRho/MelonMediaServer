@@ -15,8 +15,9 @@ namespace Melon.Models
         public List<string> ArtistIds { get; set; }
         public List<string> Genres { get; set; }
         public string Device { get; set; }
-        public string User { get; set; }
+        public string UserId { get; set; }
         public string Duration { get; set; }
+        public string Type { get; set; }
         public DateTime LogDate { get; set; }
     }
 }

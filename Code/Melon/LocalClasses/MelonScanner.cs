@@ -6,6 +6,7 @@ using MongoDB.Driver;
 using Pastel;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Melon.LocalClasses
 {
@@ -291,7 +292,7 @@ namespace Melon.LocalClasses
 
                     // Attempt to find the album if it's already in the DB
                     var albumFilter = Builders<Album>.Filter.Eq("AlbumName", fileMetadata.Album);
-                    albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumArtists[0]);
+                    albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.Name", albumArtists[0]);
                     var albumDoc = AlbumCollection.Find(albumFilter).FirstOrDefault();
 
                     // Generate / Get IDs for the track and album
@@ -307,9 +308,9 @@ namespace Melon.LocalClasses
                     }
 
                     // Create new ShortAlbum and ShortTrack
-                    ShortAlbum sAlbum = CreateShortAlbum(fileMetadata, AlbumId, albumDoc, trackArtists, 
+                    DbLink sAlbum = CreateShortAlbum(fileMetadata, AlbumId, albumDoc, trackArtists, 
                                                                            albumArtists, TrackArtistIds, AlbumArtistIds, fileMetadata.Album);
-                    ShortTrack sTrack = CreateShortTrack(fileMetadata, TrackId, sAlbum, trackArtists, TrackArtistIds);
+                    DbLink sTrack = CreateShortTrack(fileMetadata, TrackId, sAlbum, trackArtists, TrackArtistIds);
 
                     // Combine artists lists, then for each artists add / update data.
                     var combinedArtists = new List<string>();
@@ -487,33 +488,33 @@ namespace Melon.LocalClasses
                 }
             }
         }
-        public static ShortAlbum CreateShortAlbum(ATL.Track fileMetadata, string AlbumId, Album albumDoc, List<string> trackArtists, List<string> albumArtists,
+        public static DbLink CreateShortAlbum(ATL.Track fileMetadata, string AlbumId, Album albumDoc, List<string> trackArtists, List<string> albumArtists,
                                                   List<string> TrackArtistIds, List<string> AlbumArtistIds, string name)
         {
             // Create the album
-            ShortAlbum sAlbum = new ShortAlbum()
+            DbLink sAlbum = new DbLink()
             {
                 _id = AlbumId,
-                AlbumName = name
+                Name = name
             };
 
             return sAlbum;
         }
 
-        public static ShortTrack CreateShortTrack(ATL.Track fileMetadata, string TrackId, ShortAlbum sAlbum,
+        public static DbLink CreateShortTrack(ATL.Track fileMetadata, string TrackId, DbLink sAlbum,
                                                   List<string> trackArtists, List<string> TrackArtistIds)
         {
-            ShortTrack sTrack = new ShortTrack()
+            DbLink sTrack = new DbLink()
             {
                 _id = TrackId,
-                TrackName = fileMetadata.Title
+                Name = fileMetadata.Title
             };
 
             return sTrack;
         }
 
-        public static (Artist, bool) CreateOrUpdateArtist(IMongoCollection<Artist> ArtistCollection, ATL.Track fileMetadata, string artistName, string aId, ShortAlbum sAlbum,
-                                                          ShortTrack sTrack, Track trackDoc, List<string> albumArtists, List<string> trackArtists, List<string> AlbumArtistIds, List<string> TrackArtistIds, List<string> trackGenres)
+        public static (Artist, bool) CreateOrUpdateArtist(IMongoCollection<Artist> ArtistCollection, ATL.Track fileMetadata, string artistName, string aId, DbLink sAlbum,
+                                                          DbLink sTrack, Track trackDoc, List<string> albumArtists, List<string> trackArtists, List<string> AlbumArtistIds, List<string> TrackArtistIds, List<string> trackGenres)
         {
             // If artist name is nothing, set to "Unknown Artist"
             string artist = string.IsNullOrEmpty(artistName) ? StateManager.StringsManager.GetString("UnknownArtistStatus") : artistName;
@@ -534,11 +535,13 @@ namespace Melon.LocalClasses
                     Bio = "",
                     Ratings = new List<UserStat>(),
                     DateAdded = DateTime.Now.ToUniversalTime(),
-                    Releases = new List<ShortAlbum>(),
+                    Releases = new List<DbLink>(),
                     Genres = new List<string>(),
-                    SeenOn = new List<ShortAlbum>(),
-                    Tracks = new List<ShortTrack> { sTrack },
-                    ConnectedArtists = new List<ShortArtist>()
+                    SeenOn = new List<DbLink>(),
+                    Tracks = new List<DbLink> { sTrack },
+                    ConnectedArtists = new List<DbLink>(),
+                    ArtistBannerArtCount = 0,
+                    ArtistPfpArtCount = 0
                 };
 
                 if (trackArtists.Count() > 1)
@@ -547,7 +550,7 @@ namespace Melon.LocalClasses
                     {
                         if (aId != TrackArtistIds[i])
                         {
-                            artistDoc.ConnectedArtists.Add(new ShortArtist() { ArtistName = trackArtists[i], _id = TrackArtistIds[i] });
+                            artistDoc.ConnectedArtists.Add(new DbLink() { Name = trackArtists[i], _id = TrackArtistIds[i] });
                         }
                     }
 
@@ -559,7 +562,7 @@ namespace Melon.LocalClasses
                     {
                         if (aId != AlbumArtistIds[i])
                         {
-                            artistDoc.ConnectedArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], _id = AlbumArtistIds[i] });
+                            artistDoc.ConnectedArtists.Add(new DbLink() { Name = albumArtists[i], _id = AlbumArtistIds[i] });
                         }
                     }
 
@@ -589,7 +592,7 @@ namespace Melon.LocalClasses
                     {
                         if (aId.ToString() != TrackArtistIds[i].ToString() && artistDoc.ConnectedArtists.Where(x=>x._id == TrackArtistIds[i].ToString()).FirstOrDefault() == null)
                         {
-                            artistDoc.ConnectedArtists.Add(new ShortArtist() { ArtistName = trackArtists[i], _id = TrackArtistIds[i] });
+                            artistDoc.ConnectedArtists.Add(new DbLink() { Name = trackArtists[i], _id = TrackArtistIds[i] });
                         }
                     }
 
@@ -601,7 +604,7 @@ namespace Melon.LocalClasses
                     {
                         if (aId.ToString() != AlbumArtistIds[i].ToString() && artistDoc.ConnectedArtists.Where(x => x._id == AlbumArtistIds[i].ToString()).FirstOrDefault() == null)
                         {
-                            artistDoc.ConnectedArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], _id = AlbumArtistIds[i] });
+                            artistDoc.ConnectedArtists.Add(new DbLink() { Name = albumArtists[i], _id = AlbumArtistIds[i] });
                         }
                     }
 
@@ -609,7 +612,7 @@ namespace Melon.LocalClasses
 
                 if (albumArtists.Contains(artist)) // If it's an album artists, it's their release
                 {
-                    if (!artistDoc.Releases.Any(release => release.AlbumName == fileMetadata.Album))
+                    if (!artistDoc.Releases.Any(release => release.Name == fileMetadata.Album))
                     {
                         if (trackDoc != null)
                         {
@@ -621,7 +624,7 @@ namespace Melon.LocalClasses
                 else // This release is not from the artist
                 {
                     // Check if it's in the db already
-                    if (!artistDoc.SeenOn.Any(release => release.AlbumName == fileMetadata.Album))
+                    if (!artistDoc.SeenOn.Any(release => release.Name == fileMetadata.Album))
                     {
                         if (trackDoc != null)
                         {
@@ -656,10 +659,10 @@ namespace Melon.LocalClasses
         }
         public static void CreateOrUpdateAlbum(ref Album albumDoc, Track trackDoc, string AlbumId, ATL.Track fileMetadata, List<string> albumArtists,
                                                List<string> AlbumArtistIds, List<string> trackArtists, List<string> TrackArtistIds,
-                                               List<string> trackGenres, ShortTrack sTrack, IMongoCollection<Album> AlbumCollection)
+                                               List<string> trackGenres, DbLink sTrack, IMongoCollection<Album> AlbumCollection)
         {
             var albumFilter = Builders<Album>.Filter.Eq("AlbumName", fileMetadata.Album);
-            albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumArtists[0]);
+            albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.Name", albumArtists[0]);
 
             if (albumDoc == null) // If albumDoc is null, make a new album.
             {
@@ -681,11 +684,12 @@ namespace Melon.LocalClasses
                     ReleaseStatus = fileMetadata.AdditionalFields.TryGetValue("RELEASESTATUS", out var rs) ? rs : "",
                     ReleaseType = fileMetadata.AdditionalFields.TryGetValue("RELEASETYPE", out var rt) ? rt : "",
                     ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
-                    AlbumArtists = new List<ShortArtist>(),
+                    AlbumArtists = new List<DbLink>(),
                     AlbumArtPaths = new List<string>(),
-                    Tracks = new List<ShortTrack>(),
-                    ContributingArtists = new List<ShortArtist>(),
-                    AlbumGenres = trackGenres ?? new List<string>()
+                    Tracks = new List<DbLink>(),
+                    ContributingArtists = new List<DbLink>(),
+                    AlbumGenres = trackGenres ?? new List<string>(),
+                    AlbumArtCount = 0,
                 };
 
                 // Get any images from the album and save them to the disk under the album ID
@@ -700,6 +704,7 @@ namespace Melon.LocalClasses
                         artFile.Write(bytes, 0, bytes.Length);
                     }
                     albumDoc.AlbumArtPaths.Add($"{albumDoc._id}-{i}.jpg");
+                    albumDoc.AlbumArtCount++;
                 }
 
                 // Set the album's artists.
@@ -707,7 +712,7 @@ namespace Melon.LocalClasses
                 {
                     try
                     {
-                        albumDoc.AlbumArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], _id = AlbumArtistIds[i] });
+                        albumDoc.AlbumArtists.Add(new DbLink() { Name = albumArtists[i], _id = AlbumArtistIds[i] });
                     }
                     catch (Exception e)
                     {
@@ -720,7 +725,7 @@ namespace Melon.LocalClasses
                 {
                     try
                     {
-                        albumDoc.ContributingArtists.Add(new ShortArtist() { ArtistName = trackArtists[i], _id = TrackArtistIds[i] });
+                        albumDoc.ContributingArtists.Add(new DbLink() { Name = trackArtists[i], _id = TrackArtistIds[i] });
                     }
                     catch (Exception e)
                     {
@@ -744,7 +749,7 @@ namespace Melon.LocalClasses
                     {
                         if (!albumDoc.AlbumArtists.Any(artist => artist._id == AlbumArtistIds[i].ToString()))
                         {
-                            albumDoc.AlbumArtists.Add(new ShortArtist() { ArtistName = albumArtists[i], _id = AlbumArtistIds[i] });
+                            albumDoc.AlbumArtists.Add(new DbLink() { Name = albumArtists[i], _id = AlbumArtistIds[i] });
                         }
                     }
                     catch (Exception e)
@@ -760,7 +765,7 @@ namespace Melon.LocalClasses
                     {
                         if (!albumDoc.ContributingArtists.Any(artist => artist._id == TrackArtistIds[i].ToString()))
                         {
-                            albumDoc.ContributingArtists.Add(new ShortArtist() { ArtistName = trackArtists[i], _id = TrackArtistIds[i] });
+                            albumDoc.ContributingArtists.Add(new DbLink() { Name = trackArtists[i], _id = TrackArtistIds[i] });
                         }
                     }
                     catch (Exception e)
@@ -793,7 +798,7 @@ namespace Melon.LocalClasses
 
             }
         }
-        public static void CreateOrUpdateTrack(string TrackId, ATL.Track fileMetadata, ShortAlbum sAlbum, List<string> albumArtists,
+        public static void CreateOrUpdateTrack(string TrackId, ATL.Track fileMetadata, DbLink sAlbum, List<string> albumArtists,
                                                List<string> trackArtists, List<string> AlbumArtistIds, List<string> TrackArtistIds, int count,
                                                List<string> trackGenres, Track trackDoc, IMongoCollection<Track> TracksCollection,
                                                IMongoCollection<Album> AlbumCollection, IMongoCollection<Artist> ArtistCollection)
@@ -822,12 +827,12 @@ namespace Melon.LocalClasses
                 SkipCounts = new List<UserStat>(),
                 TrackArtCount = fileMetadata.EmbeddedPictures?.Count() ?? 0,
                 Duration = fileMetadata.DurationMs.ToString() ?? "",
-                TrackArtists = new List<ShortArtist>(),
+                TrackArtists = new List<DbLink>(),
                 TrackGenres = trackGenres ?? new List<string>(),
                 ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
                 LyricsPath = "",
                 nextTrack = "",
-                ServerURL = ""
+                ServerURL = "",
             };
 
             MelonScanner.CurrentStatus = $"{StateManager.StringsManager.GetString("AdditionProcess")} / {StateManager.StringsManager.GetString("UpdateProcess")} {track.TrackName}";
@@ -848,11 +853,17 @@ namespace Melon.LocalClasses
             {
                 if (count >= TrackArtistIds.Count())
                 {
-                    track.TrackArtists.Add(new ShortArtist() { _id = AlbumArtistIds[count - TrackArtistIds.Count()], ArtistName = albumArtists[count - TrackArtistIds.Count()] });
+                    if(track.TrackArtists.Where(x=>x._id == AlbumArtistIds[count - TrackArtistIds.Count()]).Count() == 0)
+                    {
+                        track.TrackArtists.Add(new DbLink() { _id = AlbumArtistIds[count - TrackArtistIds.Count()], Name = albumArtists[count - TrackArtistIds.Count()] });
+                    }
                 }
                 else
                 {
-                    track.TrackArtists.Add(new ShortArtist() { _id = TrackArtistIds[i], ArtistName = trackArtists[i] });
+                    if (track.TrackArtists.Where(x => x._id == TrackArtistIds[i]).Count() == 0)
+                    {
+                        track.TrackArtists.Add(new DbLink() { _id = TrackArtistIds[i], Name = trackArtists[i] });
+                    }
                 }
             }
 
@@ -882,7 +893,7 @@ namespace Melon.LocalClasses
                     var album = AlbumCollection.Find(aFilter).ToList();
                     if (album.Count() != 0)
                     {
-                        album[0].Tracks.Remove(new ShortTrack(trackDoc));
+                        album[0].Tracks.Remove(new DbLink(trackDoc));
                     }
                 }
 
@@ -895,7 +906,7 @@ namespace Melon.LocalClasses
                         var aritst = ArtistCollection.Find(aFilter).ToList();
                         if (aritst.Count() != 0)
                         {
-                            aritst[0].Tracks.Remove(new ShortTrack(trackDoc));
+                            aritst[0].Tracks.Remove(new DbLink(trackDoc));
                         }
                     }
                 }
@@ -919,9 +930,9 @@ namespace Melon.LocalClasses
                 {
                     var filter = Builders<Track>.Filter.In(a => a._id, albumDoc.Tracks.Select(x=>x._id));
                     var fullTracks = TracksCollection.Find(filter).ToList();
-                    albumDoc.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x=>new ShortTrack() { _id = x._id, TrackName = x.TrackName }).ToList();
-                    var albumFilter = Builders<Album>.Filter.Eq("AlbumName", albumDoc.AlbumName);
-                    albumFilter = albumFilter & Builders<Album>.Filter.AnyStringIn("AlbumArtists.ArtistName", albumDoc.AlbumArtists[0].ArtistName);
+                    albumDoc.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x=>new DbLink() { _id = x._id, Name = x.TrackName }).ToList();
+                    albumDoc.TotalTracks = albumDoc.Tracks.Count();
+                    var albumFilter = Builders<Album>.Filter.Eq(x=>x._id, albumDoc._id);
                     AlbumCollection.ReplaceOneAsync(albumFilter, albumDoc);
                     ScannedFiles++;
                 }
@@ -947,10 +958,10 @@ namespace Melon.LocalClasses
                     var fullReleases = AlbumCollection.Find(rAlbumFilter).ToList();
                     var sAlbumFilter = Builders<Album>.Filter.In(a => a._id, artistDoc.SeenOn.Select(x => x._id));
                     var fullSeenOn = AlbumCollection.Find(sAlbumFilter).ToList();
-                    try { artistDoc.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x => new ShortTrack() { _id = x._id, TrackName = x.TrackName }).ToList(); } catch (Exception) { }
-                    try { artistDoc.Releases = fullReleases.OrderBy(x => x.ReleaseDate).Select(x => new ShortAlbum() { _id = x._id, AlbumName = x.AlbumName }).ToList(); } catch (Exception) { }
-                    try { artistDoc.SeenOn = fullSeenOn.OrderBy(x => x.ReleaseDate).Select(x => new ShortAlbum() { _id = x._id, AlbumName = x.AlbumName }).ToList(); } catch (Exception) { }
-                    var artistFilter = Builders<Artist>.Filter.Eq("ArtistName", artistDoc.ArtistName);
+                    try { artistDoc.Tracks = fullTracks.OrderBy(x=>x.ReleaseDate).ThenBy(x => x.Disc).ThenBy(x => x.Position).Select(x => new DbLink() { _id = x._id, Name = x.TrackName }).ToList(); } catch (Exception) { }
+                    try { artistDoc.Releases = fullReleases.OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.AlbumName }).ToList(); } catch (Exception) { }
+                    try { artistDoc.SeenOn = fullSeenOn.OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.AlbumName }).ToList(); } catch (Exception) { }
+                    var artistFilter = Builders<Artist>.Filter.Eq(x=>x._id, artistDoc._id);
                     ArtistCollection.ReplaceOneAsync(artistFilter, artistDoc);
                     ScannedFiles++;
                 }
@@ -1106,8 +1117,7 @@ namespace Melon.LocalClasses
             var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
             if (input == PositiveConfirmation)
             {
-                ScanProgressView();
-                if (Scanning)
+                if(!Scanning)
                 {
                     Thread scanThread = new Thread(MelonScanner.StartScan);
                     scanThread.Start(true);

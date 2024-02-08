@@ -145,7 +145,7 @@ namespace Melon.LocalClasses
                 return randomBytes;
             }
         }
-        public static string GenerateJwtToken(string username, string role, int ExpireInMinutes = 0)
+        public static string GenerateJwtToken(string username, string role, string id, int ExpireInMinutes = 0)
         {
             if(ExpireInMinutes == 0)
             {
@@ -159,7 +159,8 @@ namespace Melon.LocalClasses
                 Subject = new ClaimsIdentity(new []
                 {
                     new Claim(ClaimTypes.Name, username),
-                    new Claim(ClaimTypes.Role, role)
+                    new Claim(ClaimTypes.Role, role),
+                    new Claim(ClaimTypes.UserData, id)
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(ExpireInMinutes),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
