@@ -251,6 +251,9 @@ namespace MelonWebApi.Controllers
 
             fileMetadata.Save();
 
+            Thread t = new Thread(MelonScanner.UpdateCollections);
+            t.Start();
+
             return new ObjectResult("Track updated") { StatusCode = 200 };
         }
         
@@ -519,6 +522,9 @@ namespace MelonWebApi.Controllers
                 fileMetadata.Save();
             }
 
+            Thread t = new Thread(MelonScanner.UpdateCollections);
+            t.Start();
+
             return new ObjectResult("Track updated") { StatusCode = 200 };
         }
         
@@ -778,6 +784,9 @@ namespace MelonWebApi.Controllers
 
                 }
             }
+
+            Thread t = new Thread(MelonScanner.UpdateCollections);
+            t.Start();
 
             return new ObjectResult("Artist updated") { StatusCode = 200 };
         }

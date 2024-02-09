@@ -37,18 +37,7 @@ namespace Melon.Models
                 string type = filter.Split(";")[1];
                 object value = filter.Split(";")[2];
 
-                if (property.Contains("Date") || property.Contains("Modified"))
-                {
-                    try
-                    {
-                        value = DateTime.Parse(value.ToString());
-                    }
-                    catch (Exception)
-                    {
-                        return null;
-                    }
-                }
-                else if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
                 {
                     if (type == "Contains")
                     {
@@ -78,6 +67,17 @@ namespace Melon.Models
                 }
                 else
                 {
+                    if (property.Contains("Date") || property.Contains("Modified"))
+                    {
+                        try
+                        {
+                            value = DateTime.Parse(value.ToString());
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
                     if (type == "Contains")
                     {
                         AndDefs.Add(Builders<Track>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
@@ -108,18 +108,7 @@ namespace Melon.Models
                 string type = filter.Split(";")[1];
                 object value = filter.Split(";")[2];
 
-                if (property.Contains("Date") || property.Contains("Modified"))
-                {
-                    try
-                    {
-                        value = DateTime.Parse(value.ToString());
-                    }
-                    catch (Exception)
-                    {
-                        return null;
-                    }
-                }
-                else if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
                 {
                     if (type == "Contains")
                     {
@@ -149,6 +138,17 @@ namespace Melon.Models
                 }
                 else
                 {
+                    if (property.Contains("Date") || property.Contains("Modified"))
+                    {
+                        try
+                        {
+                            value = DateTime.Parse(value.ToString());
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
                     if (type == "Contains")
                     {
                         OrDefs.Add(Builders<Track>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
