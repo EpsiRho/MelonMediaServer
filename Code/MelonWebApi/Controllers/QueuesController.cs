@@ -382,7 +382,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("search")]
-        public ObjectResult SearchQueues(int page = 0, int count = 50, string name = "")
+        public ObjectResult SearchQueues(int page = 0, int count = 100, string name = "")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");

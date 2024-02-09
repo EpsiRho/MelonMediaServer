@@ -362,7 +362,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("get-tracks")]
-        public ObjectResult GetTracks(string id, int page = 0, int count = 25)
+        public ObjectResult GetTracks(string id, int page = 0, int count = 100)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)

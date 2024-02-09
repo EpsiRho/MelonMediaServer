@@ -213,7 +213,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album/tracks")]
-        public ObjectResult GetAlbumTracks(string id, int page = 0, int count = 50)
+        public ObjectResult GetAlbumTracks(string id, int page = 0, int count = 100)
         {
             if (page > 100000 || count > 100000)
             {
@@ -374,7 +374,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/tracks")]
-        public ObjectResult GetArtistTracks(string id, uint page = 0, uint count = 50)
+        public ObjectResult GetArtistTracks(string id, uint page = 0, uint count = 100)
         {
             if(page > 100000 || count > 100000)
             {
@@ -445,7 +445,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/releases")]
-        public ObjectResult GetArtistReleases(string id, uint page = 0, uint count = 50)
+        public ObjectResult GetArtistReleases(string id, uint page = 0, uint count = 10)
         {
             if (page > 100000 || count > 100000)
             {
@@ -516,7 +516,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/seen-on")]
-        public ObjectResult GetArtistSeenOn(string id, uint page = 0, uint count = 50)
+        public ObjectResult GetArtistSeenOn(string id, uint page = 0, uint count = 100)
         {
             if (page > 100000 || count > 100000)
             {
@@ -586,7 +586,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/connections")]
-        public ObjectResult GetArtistConnections(string id, uint page = 0, uint count = 50)
+        public ObjectResult GetArtistConnections(string id, uint page = 0, uint count = 100)
         {
             if (page > 100000 || count > 100000)
             {
