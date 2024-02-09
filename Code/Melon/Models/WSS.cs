@@ -11,7 +11,7 @@ namespace Melon.Models
         public System.Net.WebSockets.WebSocket Socket { get; set; }
         public string CurrentQueue { get; set; }
         public string DeviceName { get; set; }
-        public string Username { get; set; }
+        public string UserId { get; set; }
         public bool IsPublic { get; set; }
         public DateTime LastPing { get; set; }
 
