@@ -271,6 +271,41 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult(publishers.OrderBy(x => x)) { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("genres")]
+        public ObjectResult GetGenres()
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+            var TrackFilter = Builders<Track>.Filter.Empty;
+
+            List<Track> Tracks = new List<Track>();
+            HashSet<string> genres = new HashSet<string>();
+            int page = 0;
+            do
+            {
+                Tracks = TracksCollection.Find(TrackFilter)
+                                         .Skip(page * 1000)
+                                         .Limit(1000)
+                                         .ToList();
+                var lists = (from track in Tracks
+                             select track.TrackGenres).Distinct().ToList();
+                foreach (var list in lists)
+                {
+                    foreach (var genre in list)
+                    {
+                        genres.Add(genre);
+                    }
+                }
+                page++;
+            } while (Tracks.Count() == 1000);
+
+            var finalGenres = genres.OrderBy(x => x).Distinct().ToList();
+
+            return new ObjectResult(finalGenres) { StatusCode = 200 };
+        }
 
     }
 }
