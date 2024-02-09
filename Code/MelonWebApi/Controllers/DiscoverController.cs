@@ -26,7 +26,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpGet("tracks")]
-        public ObjectResult DiscoverTracks([FromQuery] List<string> ids, bool orderByFavorites = false, bool orderByDiscovery = false, int count = 25, 
+        public ObjectResult DiscoverTracks([FromQuery] List<string> ids, bool orderByFavorites = false, bool orderByDiscovery = false, int count = 100, 
                                            bool enableTrackLinks = true, bool includeArtists = true, bool includeGenres = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -118,7 +118,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("albums")]
-        public ObjectResult DiscoverAlbums([FromQuery] List<string> ids, bool shuffle = true, int count = 25, int page = 0, bool includeArtists = true, bool includeGenres = true)
+        public ObjectResult DiscoverAlbums([FromQuery] List<string> ids, bool shuffle = true, int count = 100, int page = 0, bool includeArtists = true, bool includeGenres = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -243,7 +243,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("artists")]
-        public ObjectResult DiscoverArtists([FromQuery] List<string> ids, int count = 25, int page = 0, bool shuffle = true)
+        public ObjectResult DiscoverArtists([FromQuery] List<string> ids, int count = 100, int page = 0, bool shuffle = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
