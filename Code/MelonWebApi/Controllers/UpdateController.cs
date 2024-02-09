@@ -478,8 +478,8 @@ namespace MelonWebApi.Controllers
             var artistFilter = Builders<Artist>.Filter.ElemMatch(x => x.Releases, Builders<DbLink>.Filter.Eq(x => x._id, foundAlbum._id));
             var conArtistFilter = Builders<Artist>.Filter.ElemMatch(x => x.SeenOn, Builders<DbLink>.Filter.Eq(x => x._id, foundAlbum._id));
             var trackUpdate = Builders<Track>.Update.Set(x=>x.Album, newShortAlbum);
-            var artistUpdate = Builders<Artist>.Update.AddToSet("Releases.$", newShortAlbum);
-            var conArtistUpdate = Builders<Artist>.Update.AddToSet("SeenOn.$", newShortAlbum);
+            var artistUpdate = Builders<Artist>.Update.Set("Releases.$", newShortAlbum);
+            var conArtistUpdate = Builders<Artist>.Update.Set("SeenOn.$", newShortAlbum);
 
             TracksCollection.UpdateMany(trackFilter, trackUpdate);
             ArtistsCollection.UpdateMany(artistFilter, artistUpdate);
