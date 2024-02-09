@@ -59,7 +59,12 @@ namespace MelonWebApi.Controllers
             foreach (var a in track.TrackArtists)
             {
                 var artistFilter = Builders<Artist>.Filter.Eq(x=>x._id, a._id);
-                var artist = ArtistCollection.Find(artistFilter).ToList()[0];
+                var artist = ArtistCollection.Find(artistFilter).FirstOrDefault();
+                if (artist == null || artists.Contains(artist))
+                {
+                    continue;
+                }
+
                 if (artist.PlayCounts == null)
                 {
                     artist.PlayCounts = new List<UserStat>() { new UserStat() { UserId = user._id, Value = 1 } };
@@ -189,7 +194,12 @@ namespace MelonWebApi.Controllers
             foreach (var a in track.TrackArtists)
             {
                 var artistFilter = Builders<Artist>.Filter.Eq(x => x._id, a._id);
-                var artist = ArtistCollection.Find(artistFilter).ToList()[0];
+                var artist = ArtistCollection.Find(artistFilter).FirstOrDefault();
+                if (artist == null || artists.Contains(artist))
+                {
+                    continue;
+                }
+
                 if (artist.SkipCounts == null)
                 {
                     artist.SkipCounts = new List<UserStat>() { new UserStat() { UserId = user._id, Value = 1 } };

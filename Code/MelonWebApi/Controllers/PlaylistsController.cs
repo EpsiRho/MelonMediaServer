@@ -35,13 +35,15 @@ namespace MelonWebApi.Controllers
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
             Playlist playlist = new Playlist();
             playlist._id = ObjectId.GenerateNewId().ToString();
             playlist.Name = name;
             playlist.TrackCount = 0;
-            playlist.Owner = userName;
+            playlist.Owner = curId;
             playlist.Editors = new List<string>();
             playlist.Viewers = new List<string>();
             playlist.PublicEditing = false;
@@ -84,7 +86,9 @@ namespace MelonWebApi.Controllers
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
 
             //var str = queue._id.ToString();
             var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
@@ -97,7 +101,7 @@ namespace MelonWebApi.Controllers
 
             if(playlist.PublicEditing == false)
             {
-                if(playlist.Owner != userName && !playlist.Editors.Contains(userName))
+                if(playlist.Owner != curId && !playlist.Editors.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -129,7 +133,9 @@ namespace MelonWebApi.Controllers
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
 
             //var str = queue._id.ToString();
             var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
@@ -142,7 +148,7 @@ namespace MelonWebApi.Controllers
 
             if (playlist.PublicEditing == false)
             {
-                if (playlist.Owner != userName && !playlist.Editors.Contains(userName))
+                if (playlist.Owner != curId && !playlist.Editors.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -167,10 +173,11 @@ namespace MelonWebApi.Controllers
             {
                 var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
                 var mongoDatabase = mongoClient.GetDatabase("Melon");
-                var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
                 var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
-                var userName = User.Identity.Name;
+                var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
                 var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
                 var playlists = PCollection.Find(pFilter).ToList();
@@ -182,7 +189,7 @@ namespace MelonWebApi.Controllers
 
                 if (plst.PublicEditing == false)
                 {
-                    if (plst.Owner != userName && !plst.Editors.Contains(userName))
+                    if (plst.Owner != curId && !plst.Editors.Contains(curId))
                     {
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
@@ -231,7 +238,9 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
             var pFilter = Builders<Playlist>.Filter.Eq(x => x._id, id);
             var playlist = PCollection.Find(pFilter).FirstOrDefault();
@@ -242,7 +251,7 @@ namespace MelonWebApi.Controllers
 
             if (playlist.PublicEditing == false)
             {
-                if (playlist.Owner != userName && !playlist.Editors.Contains(userName))
+                if (playlist.Owner != curId && !playlist.Editors.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -262,12 +271,12 @@ namespace MelonWebApi.Controllers
         [HttpGet("get")]
         public ObjectResult GetPlaylistById(string id)
         {
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var pCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
             var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
@@ -282,7 +291,7 @@ namespace MelonWebApi.Controllers
             {
                 if (plst.PublicEditing == false)
                 {
-                    if (plst.Owner != userName && !plst.Editors.Contains(userName) && !plst.Viewers.Contains(userName))
+                    if (plst.Owner != curId && !plst.Editors.Contains(curId) && !plst.Viewers.Contains(curId))
                     {
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
@@ -291,50 +300,6 @@ namespace MelonWebApi.Controllers
             }
 
             return new ObjectResult("Playlist not found") { StatusCode = 404 };
-        }
-
-        [Authorize(Roles = "Admin,User")]
-        [HttpPost("move-track")]
-        public ObjectResult MoveTrack(string id, string trackId, int position)
-        {
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
-
-            var userName = User.Identity.Name;
-
-            var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
-            var playlists = PCollection.Find(pFilter).ToList();
-            if (playlists.Count() == 0)
-            {
-                return new ObjectResult("Playlist not found") { StatusCode = 404 };
-            }
-            var playlist = playlists[0];
-
-            if (playlist.PublicEditing == false)
-            {
-                if (playlist.Owner != userName && !playlist.Editors.Contains(userName))
-                {
-                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
-                }
-            }
-
-            var tracks = (from t in playlist.Tracks
-                          where t._id == trackId
-                          select t).ToList();
-            if (tracks.Count() == 0)
-            {
-                return new ObjectResult("Track not found") { StatusCode = 404 };
-            }
-            var track = tracks[0];
-
-            int curIdx = playlist.Tracks.IndexOf(track);
-            playlist.Tracks.Insert(position, track);
-            playlist.Tracks.RemoveAt(curIdx);
-
-            PCollection.ReplaceOne(pFilter, playlist);
-
-            return new ObjectResult("Track moved") { StatusCode = 200 };
         }
 
         [Authorize(Roles = "Admin,User,Pass")]
@@ -347,12 +312,14 @@ namespace MelonWebApi.Controllers
 
             List<ResponsePlaylist> playlists = new List<ResponsePlaylist>();
 
-            var user = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
-            var ownerFilter = Builders<Playlist>.Filter.Eq(x => x.Owner, user);
-            var viewersFilter = Builders<Playlist>.Filter.AnyEq(x => x.Viewers, user);
+            var ownerFilter = Builders<Playlist>.Filter.Eq(x => x.Owner, curId);
+            var viewersFilter = Builders<Playlist>.Filter.AnyEq(x => x.Viewers, curId);
             var publicViewingFilter = Builders<Playlist>.Filter.Eq(x => x.PublicViewing, true);
-            var EditorsFilter = Builders<Playlist>.Filter.AnyEq(x => x.Editors, user);
+            var EditorsFilter = Builders<Playlist>.Filter.AnyEq(x => x.Editors, curId);
 
             // Combine filters with OR
             var combinedFilter = Builders<Playlist>.Filter.Or(ownerFilter, viewersFilter, publicViewingFilter, EditorsFilter);
@@ -375,6 +342,10 @@ namespace MelonWebApi.Controllers
         [HttpGet("get-tracks")]
         public ObjectResult GetTracks(string id, int page = 0, int count = 25)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
@@ -391,10 +362,9 @@ namespace MelonWebApi.Controllers
             }
             var playlist = Playlists[0];
 
-            var userName = User.Identity.Name;
             if (playlist.PublicEditing == false)
             {
-                if (playlist.Owner != userName && !playlist.Editors.Contains(userName) && !playlist.Viewers.Contains(userName))
+                if (playlist.Owner != curId && !playlist.Editors.Contains(curId) && !playlist.Viewers.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -408,9 +378,6 @@ namespace MelonWebApi.Controllers
             List<ResponseTrack> fullTracks = TracksCollection.Find(Builders<Track>.Filter.In(x => x._id, tracks.Select(x => x._id)))
                                                      .Project(trackProjection).ToList().Select(x => BsonSerializer.Deserialize<ResponseTrack>(x)).ToList();
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 

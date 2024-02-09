@@ -33,15 +33,14 @@ namespace MelonWebApi.Controllers
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var queueDoc = new BsonDocument();
-            PlayQueue queue = new PlayQueue();
-            var UCollection = mongoDatabase.GetCollection<User>("Users");
-            var username = User.Identity.Name;
-            var user = UCollection.Find(Builders<User>.Filter.Eq(x => x.Username, username)).FirstOrDefault();
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
+            PlayQueue queue = new PlayQueue();
             queue._id = ObjectId.GenerateNewId().ToString();
             queue.Name = name;
-            queue.Owner = user._id;
+            queue.Owner = curId;
             queue.PublicViewing = false;
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
@@ -70,25 +69,25 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
                     break;
             }
             
@@ -110,23 +109,20 @@ namespace MelonWebApi.Controllers
             var ACollection = mongoDatabase.GetCollection<Album>("Albums");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var queueDoc = new BsonDocument();
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+
             PlayQueue queue = new PlayQueue();
-
-            var UCollection = mongoDatabase.GetCollection<User>("Users");
-            var username = User.Identity.Name;
-            var user = UCollection.Find(Builders<User>.Filter.Eq(x => x.Username, username)).FirstOrDefault();
-
             queue._id = ObjectId.GenerateNewId().ToString();
             queue.Name = name;
-            queue.Owner = user._id;
+            queue.Owner = curId;
             queue.PublicViewing = false;
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
             queue.Viewers = new List<string>();
             queue.Tracks = new List<DbLink>();
             queue.CurPosition = 0;
-
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, queue._id);
             List<Track> tracks = new List<Track>();
@@ -155,25 +151,25 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
                     break;
             }
 
@@ -195,16 +191,14 @@ namespace MelonWebApi.Controllers
             var ACollection = mongoDatabase.GetCollection<Artist>("Artists");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var queueDoc = new BsonDocument();
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+
             PlayQueue queue = new PlayQueue();
-
-            var UCollection = mongoDatabase.GetCollection<User>("Users");
-            var username = User.Identity.Name;
-            var user = UCollection.Find(Builders<User>.Filter.Eq(x => x.Username, username)).FirstOrDefault();
-
             queue._id = ObjectId.GenerateNewId().ToString();
             queue.Name = name;
-            queue.Owner = user._id;
+            queue.Owner = curId;
             queue.PublicViewing = false;
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
@@ -240,25 +234,25 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
                     break;
             }
 
@@ -280,16 +274,14 @@ namespace MelonWebApi.Controllers
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var queueDoc = new BsonDocument();
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+
             PlayQueue queue = new PlayQueue();
-
-            var UCollection = mongoDatabase.GetCollection<User>("Users");
-            var username = User.Identity.Name;
-            var user = UCollection.Find(Builders<User>.Filter.Eq(x => x.Username, username)).FirstOrDefault();
-
             queue._id = ObjectId.GenerateNewId().ToString();
             queue.Name = name;
-            queue.Owner = user._id;
+            queue.Owner = curId;
             queue.PublicViewing = false;
             queue.PublicEditing = false;
             queue.Editors = new List<string>();
@@ -325,25 +317,25 @@ namespace MelonWebApi.Controllers
                 case "none":
                     break;
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
                     break;
             }
 
@@ -363,7 +355,9 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x._id, id);
             var qProjection = Builders<PlayQueue>.Projection.Exclude(x => x.Tracks)
@@ -375,7 +369,7 @@ namespace MelonWebApi.Controllers
             {
                 if (queue.PublicEditing == false)
                 {
-                    if (queue.Owner != userName && !queue.Editors.Contains(userName) && !queue.Viewers.Contains(userName))
+                    if (queue.Owner != curId && !queue.Editors.Contains(curId) && !queue.Viewers.Contains(curId))
                     {
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
@@ -394,11 +388,13 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var user = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
-            var ownerFilter = Builders<PlayQueue>.Filter.Eq(x => x.Owner, user);
-            var EditorsFilter = Builders<PlayQueue>.Filter.AnyEq(x => x.Editors, user);
-            var viewersFilter = Builders<PlayQueue>.Filter.AnyEq(x => x.Viewers, user);
+            var ownerFilter = Builders<PlayQueue>.Filter.Eq(x => x.Owner, curId);
+            var EditorsFilter = Builders<PlayQueue>.Filter.AnyEq(x => x.Editors, curId);
+            var viewersFilter = Builders<PlayQueue>.Filter.AnyEq(x => x.Viewers, curId);
             var publicViewingFilter = Builders<PlayQueue>.Filter.Eq(x => x.PublicViewing, true);
             var nameFilter = Builders<PlayQueue>.Filter.Regex(x => x.Name, new BsonRegularExpression(name, "i"));
 
@@ -436,10 +432,13 @@ namespace MelonWebApi.Controllers
             }
             var queue = Queues[0];
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+
             if (queue.PublicEditing == false)
             {
-                if (queue.Owner != userName && !queue.Editors.Contains(userName) && !queue.Viewers.Contains(userName))
+                if (queue.Owner != curId && !queue.Editors.Contains(curId) && !queue.Viewers.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -453,9 +452,6 @@ namespace MelonWebApi.Controllers
             List<ResponseTrack> fullTracks = TracksCollection.Find(Builders<Track>.Filter.In(x => x._id, tracks.Select(x => x._id)))
                                                      .Project(trackProjection).ToList().Select(x => BsonSerializer.Deserialize<ResponseTrack>(x)).ToList();
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
@@ -494,7 +490,9 @@ namespace MelonWebApi.Controllers
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
             var queues = QCollection.Find(qFilter).ToList();
@@ -506,7 +504,7 @@ namespace MelonWebApi.Controllers
 
             if (queue.PublicEditing == false)
             {
-                if (queue.Owner != userName && !queue.Editors.Contains(userName))
+                if (queue.Owner != curId && !queue.Editors.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -570,7 +568,9 @@ namespace MelonWebApi.Controllers
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
             var queues = QCollection.Find(qFilter).ToList();
@@ -581,7 +581,7 @@ namespace MelonWebApi.Controllers
             var queue = queues[0];
             if (queue.PublicEditing == false)
             {
-                if (queue.Owner != userName && !queue.Editors.Contains(userName))
+                if (queue.Owner != curId && !queue.Editors.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -616,7 +616,9 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x._id, id);
             var queue = QCollection.Find(qFilter).FirstOrDefault();
@@ -627,7 +629,7 @@ namespace MelonWebApi.Controllers
 
             if (queue.PublicEditing == false)
             {
-                if (queue.Owner != userName && !queue.Editors.Contains(userName))
+                if (queue.Owner != curId && !queue.Editors.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -663,7 +665,9 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x._id, id);
             var oq = QCollection.Find(qFilter).FirstOrDefault();
@@ -674,7 +678,7 @@ namespace MelonWebApi.Controllers
 
             if (oq.PublicEditing == false)
             {
-                if (oq.Owner != userName && !oq.Editors.Contains(userName))
+                if (oq.Owner != curId && !oq.Editors.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -697,7 +701,9 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var userName = User.Identity.Name;
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x._id, id);
             var oq = QCollection.Find(qFilter).FirstOrDefault();
@@ -708,7 +714,7 @@ namespace MelonWebApi.Controllers
 
             if (oq.PublicEditing == false)
             {
-                if (oq.Owner != userName && !oq.Editors.Contains(userName))
+                if (oq.Owner != curId && !oq.Editors.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -744,9 +750,9 @@ namespace MelonWebApi.Controllers
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-            var UCollection = mongoDatabase.GetCollection<User>("Users");
-            var username = User.Identity.Name;
-            var user = UCollection.Find(Builders<User>.Filter.Eq(x => x.Username, username)).FirstOrDefault();
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
             var queues = QCollection.Find(qFilter).ToList();
@@ -758,7 +764,7 @@ namespace MelonWebApi.Controllers
 
             if (queue.PublicEditing == false)
             {
-                if (queue.Owner != user._id && !queue.Editors.Contains(user._id))
+                if (queue.Owner != curId && !queue.Editors.Contains(curId))
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
@@ -792,25 +798,25 @@ namespace MelonWebApi.Controllers
                     QCollection.ReplaceOne(qFilter, queue);
                     return new ObjectResult("Tracks Reset") { StatusCode = 200 };
                 case "TrackRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
                     break;
                 case "TrackFullRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
                     break;
                 case "Album":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
                     break;
                 case "AlbumRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
                     break;
                 case "ArtistRandom":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
                     break;
                 case "TrackFavorites":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
                     break;
                 case "TrackDiscovery":
-                    tracks = MelonAPI.ShuffleTracks(tracks, user._id, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
                     break;
             }
 
