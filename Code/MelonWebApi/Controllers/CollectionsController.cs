@@ -192,7 +192,38 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Tracks removed") { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("delete")]
+        public ObjectResult DeleteCollection(string id)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var CCollection = mongoDatabase.GetCollection<Collection>("Collections");
+
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+
+            //var str = queue._id.ToString();
+            var cFilter = Builders<Collection>.Filter.Eq(x => x._id, id);
+            var collection = CCollection.Find(cFilter).FirstOrDefault();
+            if (collection == null)
+            {
+                return new ObjectResult("Collection Not Found") { StatusCode = 404 };
+            }
+
+            if (collection.Owner != curId)
+            {
+                return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+            }
+
+            CCollection.DeleteOne(cFilter);
+
+            return new ObjectResult("Collection deleted") { StatusCode = 200 };
+        }
         [Authorize(Roles = "Admin, User")]
         [HttpPost("update")]
         public ObjectResult updateCollection(string id, string description = "", string name = "", [FromQuery] List<string> editors = null, [FromQuery] List<string> viewers = null,

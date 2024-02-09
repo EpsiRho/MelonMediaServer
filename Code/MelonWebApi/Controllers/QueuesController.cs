@@ -609,6 +609,38 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Tracks removed") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
+        [HttpPost("delete")]
+        public ObjectResult DeleteQueue(string id)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
+
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+
+            //var str = queue._id.ToString();
+            var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
+            var queue = QCollection.Find(qFilter).FirstOrDefault();
+            if (queue == null)
+            {
+                return new ObjectResult("Queue Not Found") { StatusCode = 404 };
+            }
+
+            if (queue.Owner != curId)
+            {
+                return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+            }
+
+            QCollection.DeleteOne(qFilter);
+
+            return new ObjectResult("Queue deleted") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("move-track")]
         public ObjectResult MoveTrack(string id, int fromPos, int toPos)
         {

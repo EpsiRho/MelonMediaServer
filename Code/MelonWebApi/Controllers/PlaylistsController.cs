@@ -139,12 +139,11 @@ namespace MelonWebApi.Controllers
 
             //var str = queue._id.ToString();
             var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
-            var playlists = PCollection.Find(pFilter).ToList();
-            if (playlists.Count == 0)
+            var playlist = PCollection.Find(pFilter).FirstOrDefault();
+            if (playlist == null)
             {
                 return new ObjectResult("Playlist Not Found") { StatusCode = 404 };
             }
-            var playlist = playlists[0];
 
             if (playlist.PublicEditing == false)
             {
@@ -162,6 +161,38 @@ namespace MelonWebApi.Controllers
             PCollection.ReplaceOne(pFilter, playlist);
 
             return new ObjectResult("Tracks removed") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("delete")]
+        public ObjectResult DeletePlaylist(string id)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+
+            //var str = queue._id.ToString();
+            var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
+            var playlist = PCollection.Find(pFilter).FirstOrDefault();
+            if (playlist == null)
+            {
+                return new ObjectResult("Playlist Not Found") { StatusCode = 404 };
+            }
+
+            if (playlist.Owner != curId)
+            {
+                return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+            }
+
+            PCollection.DeleteOne(pFilter);
+
+            return new ObjectResult("Playlist deleted") { StatusCode = 200 };
         }
 
         [Authorize(Roles = "Admin, User")]
