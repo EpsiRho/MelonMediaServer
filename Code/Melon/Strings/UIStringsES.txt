@@ -127,3 +127,4 @@ CurrentLanguageDefault=El idioma actual está configurado en
 LanguageInstructions=Ingresa un código de idioma válido (en, es) para cambiar el idioma.
 LanguageError=No se encontró soporte para {} en Melón.
 DefaultLanguageOption=Cambiar Idioma Predeterminado
+CollectionStepStatus=Actualización de colecciones

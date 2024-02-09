@@ -79,6 +79,12 @@ namespace Melon.LocalClasses
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentStatus = StateManager.StringsManager.GetString("DeletionStepStatus");
             DeletePass();
+
+            CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
+            CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
+            CurrentStatus = StateManager.StringsManager.GetString("CollectionStepStatus");
+            UpdateCollections();
+
             endDisplay = true;
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentStatus = StateManager.StringsManager.GetString("CompletionStatus");
@@ -909,6 +915,38 @@ namespace Melon.LocalClasses
                             aritst[0].Tracks.Remove(new DbLink(trackDoc));
                         }
                     }
+                }
+            }
+        }
+        public static void UpdateCollections()
+        {
+            var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
+            var ColCollection = NewMelonDB.GetCollection<Collection>("Collections");
+            int page = 0;
+            int count = 100;
+            FoundFiles = ColCollection.Count(Builders<Collection>.Filter.Empty);
+            ScannedFiles = 0;
+            while (true)
+            {
+                var collections = ColCollection.Find(Builders<Collection>.Filter.Empty).Skip(page * count).Limit(count).ToList();
+                // Sort the album's and artist's tracks and releases
+                foreach (var collection in collections)
+                {
+                    var tracks = Collection.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
+                    if (tracks == null)
+                    {
+                        continue;
+                    }
+                    collection.Tracks = tracks;
+                    collection.TrackCount = collection.Tracks.Count();
+                    ColCollection.ReplaceOne(Builders<Collection>.Filter.Eq(x=>x._id, collection._id), collection);
+                    ScannedFiles++;
+                }
+
+                page++;
+                if (collections.Count() != 100)
+                {
+                    break;
                 }
             }
         }
