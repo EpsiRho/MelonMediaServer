@@ -8,6 +8,7 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace MelonWebApi.Controllers
 {
@@ -32,7 +33,10 @@ namespace MelonWebApi.Controllers
             }
 
             var webSocket = HttpContext.WebSockets.AcceptWebSocketAsync().Result;
-            StreamManager.AddSocket(webSocket, User.Identity.Name);
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+            StreamManager.AddSocket(webSocket, curId);
 
             while (webSocket.State == System.Net.WebSockets.WebSocketState.Open)
             {
@@ -43,13 +47,19 @@ namespace MelonWebApi.Controllers
         [HttpGet("get-external")]
         public ObjectResult GetDevices()
         {
-            return new ObjectResult(StreamManager.GetDevices(User.Identity.Name)){ StatusCode = 200 };
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+            return new ObjectResult(StreamManager.GetDevices(curId)){ StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("play-external")]
         public ObjectResult PlayDevice(string deviceName, string queueId)
         {
-            var wss = StreamManager.GetDevice(deviceName, User.Identity.Name);
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+            var wss = StreamManager.GetDevice(deviceName, curId);
             if (wss == null)
             {
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };
@@ -61,7 +71,10 @@ namespace MelonWebApi.Controllers
         [HttpGet("pause-external")]
         public ObjectResult PauseDevice(string deviceName)
         {
-            var wss = StreamManager.GetDevice(deviceName, User.Identity.Name);
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+            var wss = StreamManager.GetDevice(deviceName, curId);
             if (wss == null)
             {
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };
@@ -73,7 +86,10 @@ namespace MelonWebApi.Controllers
         [HttpGet("skip-external")]
         public ObjectResult SkipDevice(string deviceName)
         {
-            var wss = StreamManager.GetDevice(deviceName, User.Identity.Name);
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+            var wss = StreamManager.GetDevice(deviceName, curId);
             if (wss == null)
             {
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };
@@ -85,7 +101,10 @@ namespace MelonWebApi.Controllers
         [HttpGet("rewind-external")]
         public ObjectResult ReturnDevice(string deviceName)
         {
-            var wss = StreamManager.GetDevice(deviceName, User.Identity.Name);
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+            var wss = StreamManager.GetDevice(deviceName, curId);
             if (wss == null)
             {
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };
@@ -97,7 +116,10 @@ namespace MelonWebApi.Controllers
         [HttpGet("volume-external")]
         public ObjectResult SetDeviceVolume(string deviceName, int volume = 50)
         {
-            var wss = StreamManager.GetDevice(deviceName, User.Identity.Name);
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+            var wss = StreamManager.GetDevice(deviceName, curId);
             if (wss == null)
             {
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };

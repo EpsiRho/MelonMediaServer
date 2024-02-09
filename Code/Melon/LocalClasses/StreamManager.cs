@@ -12,7 +12,7 @@ namespace Melon.LocalClasses
     public static class StreamManager
     {
         private static List<WSS> Sockets { get; set; }
-        public static void AddSocket(WebSocket socket, string username)
+        public static void AddSocket(WebSocket socket, string userId)
         {
             if(Sockets == null)
             {
@@ -21,7 +21,7 @@ namespace Melon.LocalClasses
             WSS wss = new WSS();
             wss.Socket = socket;
             wss.CurrentQueue = "";
-            wss.Username = username;
+            wss.UserId = userId;
             wss.IsPublic = false;
             wss.LastPing = DateTime.Now;
             var check = Sockets.Count() == 0;
@@ -33,25 +33,25 @@ namespace Melon.LocalClasses
                 t.Start();
             }
         }
-        public static List<string> GetDevices(string username)
+        public static List<string> GetDevices(string userId)
         {
             var devices = new List<string>();
             foreach(var wss in Sockets)
             {
-                if(wss.Username == username || wss.IsPublic == true)
+                if(wss.UserId == userId || wss.IsPublic == true)
                 {
                     devices.Add(wss.DeviceName);
                 }
             }
             return devices;
         }
-        public static WSS GetDevice(string name, string username)
+        public static WSS GetDevice(string name, string userId)
         {
             foreach(var wss in Sockets)
             {
                 if(wss.DeviceName == name)
                 {
-                    if(username != wss.Username && wss.IsPublic == false)
+                    if(userId != wss.UserId && wss.IsPublic == false)
                     {
                         return null;
                     }
