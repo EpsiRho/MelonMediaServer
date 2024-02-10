@@ -18,12 +18,12 @@ using ATL.Playlist;
 namespace MelonWebApi.Controllers
 {
     [ApiController]
-    [Route("api/upload")]
-    public class UploadController : ControllerBase
+    [Route("api/art/upload")]
+    public class ArtUploadController : ControllerBase
     {
-        private readonly ILogger<UploadController> _logger;
+        private readonly ILogger<ArtUploadController> _logger;
 
-        public UploadController(ILogger<UploadController> logger)
+        public ArtUploadController(ILogger<ArtUploadController> logger)
         {
             _logger = logger;
         }
