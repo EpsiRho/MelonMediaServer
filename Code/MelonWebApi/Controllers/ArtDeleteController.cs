@@ -18,12 +18,12 @@ using ATL.Playlist;
 namespace MelonWebApi.Controllers
 {
     [ApiController]
-    [Route("api/art/upload")]
-    public class ArtUploadController : ControllerBase
+    [Route("api/art/delete")]
+    public class ArtDeleteController : ControllerBase
     {
-        private readonly ILogger<ArtUploadController> _logger;
+        private readonly ILogger<ArtDeleteController> _logger;
 
-        public ArtUploadController(ILogger<ArtUploadController> logger)
+        public ArtDeleteController(ILogger<ArtDeleteController> logger)
         {
             _logger = logger;
         }
@@ -31,8 +31,7 @@ namespace MelonWebApi.Controllers
         // Tracks
         [Authorize(Roles = "Admin")]
         [HttpPost("track-art")]
-        [Consumes("multipart/form-data")]
-        public ObjectResult UploadTrackArt(string id, IFormFile image)
+        public ObjectResult DeleteTrackArt(string id, int pos)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -42,6 +41,11 @@ namespace MelonWebApi.Controllers
             if(track == null)
             {
                 return new ObjectResult("Track not found") { StatusCode = 404 };
+            }
+
+            if(track.TrackArtCount < pos)
+            {
+                return new ObjectResult("Invalid position") { StatusCode = 400 };
             }
 
             ATL.Track file = null;
@@ -54,30 +58,19 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Track file not found") { StatusCode = 404 };
             }
 
-            try
-            {
-                using var fileStream = image.OpenReadStream();
-                byte[] bytes = new byte[image.Length];
-                fileStream.Read(bytes, 0, (int)image.Length);
-                file.EmbeddedPictures.Add(ATL.PictureInfo.fromBinaryData(bytes));
-                file.Save();
-            }
-            catch (Exception)
-            {
-                return new ObjectResult("Image error") { StatusCode = 400 };
-            }
+            file.EmbeddedPictures.RemoveAt(pos);
+            file.Save();
 
-            track.TrackArtCount++;
+            track.TrackArtCount--;
             TracksCollection.ReplaceOne(Builders<Track>.Filter.Eq(x => x._id, id), track);
 
-            return new ObjectResult("Track art uploaded") { StatusCode = 200 };
+            return new ObjectResult("Track art removed") { StatusCode = 200 };
         }
 
         // Albums
         [Authorize(Roles = "Admin")]
         [HttpPost("album-art")]
-        [Consumes("multipart/form-data")]
-        public ObjectResult UploadAlbumArt(string id, IFormFile image)
+        public ObjectResult DeleteAlbumArt(string id, int pos)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -89,42 +82,33 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
 
-            // Save the file
-            var filePath =$"{StateManager.melonPath}/AlbumArts/{album._id}-{album.AlbumArtCount}.jpg";
-            if (!Directory.Exists($"{StateManager.melonPath}/AlbumArts"))
+            if (album.AlbumArtCount < pos)
             {
-                Directory.CreateDirectory($"{StateManager.melonPath}/AlbumArts");
+                return new ObjectResult("Invalid position") { StatusCode = 400 };
             }
+
+            var filePath = $"{StateManager.melonPath}/AlbumArts/{album._id}-{pos}.jpg";
 
             try
             {
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
+                System.IO.File.Delete(filePath);
             }
             catch (Exception)
             {
-                return new ObjectResult("Image error") { StatusCode = 400 };
+                return new ObjectResult("File error") { StatusCode = 404 };
             }
 
-            if (album.AlbumArtPaths == null)
-            {
-                album.AlbumArtPaths = new List<string>();
-            }
-
-            album.AlbumArtPaths.Add($"{album._id}-{album.AlbumArtCount}.jpg");
-            album.AlbumArtCount++;
+            album.AlbumArtPaths.Remove($"{album._id}-{pos}.jpg");
+            album.AlbumArtCount--;
             AlbumsCollection.ReplaceOne(Builders<Album>.Filter.Eq(x => x._id, id), album);
 
-            return new ObjectResult("Album art uploaded") { StatusCode = 200 };
+            return new ObjectResult("Album art removed") { StatusCode = 200 };
         }
 
         // Artists
         [Authorize(Roles = "Admin")]
         [HttpPost("artist-pfp")]
-        [Consumes("multipart/form-data")]
-        public ObjectResult UploadArtistPfp(string id, IFormFile image)
+        public ObjectResult DeleteArtistPfp(string id, int pos)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -136,40 +120,31 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
-            // Save the file
-            var filePath = $"{StateManager.melonPath}/ArtistPfps/{artist._id}-{artist.ArtistPfpArtCount}.jpg";
-            if (!Directory.Exists($"{StateManager.melonPath}/ArtistPfps"))
+            if (artist.ArtistPfpArtCount < pos)
             {
-                Directory.CreateDirectory($"{StateManager.melonPath}/ArtistPfps");
+                return new ObjectResult("Invalid position") { StatusCode = 400 };
             }
+
+            var filePath = $"{StateManager.melonPath}/ArtistPfps/{artist._id}-{pos}.jpg";
 
             try
             {
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
+                System.IO.File.Delete(filePath);
             }
             catch (Exception)
             {
-                return new ObjectResult("Image error") { StatusCode = 400 };
+                return new ObjectResult("File error") { StatusCode = 404 };
             }
 
-            if(artist.ArtistPfpPaths == null)
-            {
-                artist.ArtistPfpPaths = new List<string>();
-            }
-
-            artist.ArtistPfpPaths.Add($"{artist._id}-{artist.ArtistPfpArtCount}.jpg");
-            artist.ArtistPfpArtCount++;
+            artist.ArtistPfpPaths.Remove($"{artist._id}-{pos}.jpg");
+            artist.ArtistPfpArtCount--;
             ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, id), artist);
 
-            return new ObjectResult("Artist pfp uploaded") { StatusCode = 200 };
+            return new ObjectResult("Artist pfp removed") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin")]
         [HttpPost("artist-banner")]
-        [Consumes("multipart/form-data")]
-        public ObjectResult UploadArtistBanner(string id, IFormFile image)
+        public ObjectResult DeleteArtistBanner(string id, int pos)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -181,42 +156,33 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
-            // Save the file
-            var filePath = $"{StateManager.melonPath}/ArtistBanners/{artist._id}-{artist.ArtistBannerArtCount}.jpg";
-            if (!Directory.Exists($"{StateManager.melonPath}/ArtistBanners"))
+            if (artist.ArtistPfpArtCount < pos)
             {
-                Directory.CreateDirectory($"{StateManager.melonPath}/ArtistBanners");
+                return new ObjectResult("Invalid position") { StatusCode = 400 };
             }
+
+            var filePath = $"{StateManager.melonPath}/ArtistBanners/{artist._id}-{pos}.jpg";
 
             try
             {
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
+                System.IO.File.Delete(filePath);
             }
             catch (Exception)
             {
-                return new ObjectResult("Image error") { StatusCode = 400 };
+                return new ObjectResult("File error") { StatusCode = 404 };
             }
 
-            if (artist.ArtistBannerPaths == null)
-            {
-                artist.ArtistBannerPaths = new List<string>();
-            }
-
-            artist.ArtistBannerPaths.Add($"{artist._id}-{artist.ArtistBannerArtCount}.jpg");
-            artist.ArtistBannerArtCount++;
+            artist.ArtistBannerPaths.Remove($"{artist._id}-{pos}.jpg");
+            artist.ArtistBannerArtCount--;
             ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, id), artist);
 
-            return new ObjectResult("Artist banner uploaded") { StatusCode = 200 };
+            return new ObjectResult("Artist banner removed") { StatusCode = 200 };
         }
 
         // Playlists
         [Authorize(Roles = "Admin")]
         [HttpPost("playlist-art")]
-        [Consumes("multipart/form-data")]
-        public ObjectResult UploadPlaylistArt(string id, IFormFile image)
+        public ObjectResult DeletePlaylistArt(string id)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -228,29 +194,21 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Playlist not found") { StatusCode = 404 };
             }
 
-            // Save the file
             var filePath = $"{StateManager.melonPath}/PlaylistArts/{playlist._id}.jpg";
-            if (!Directory.Exists($"{StateManager.melonPath}/PlaylistArts"))
-            {
-                Directory.CreateDirectory($"{StateManager.melonPath}/PlaylistArts");
-            }
 
             try
             {
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
+                System.IO.File.Delete(filePath);
             }
             catch (Exception)
             {
-                return new ObjectResult("Image error") { StatusCode = 400 };
+                return new ObjectResult("File error") { StatusCode = 404 };
             }
 
-            playlist.ArtworkPath = $"{playlist._id}.jpg";
+            playlist.ArtworkPath = "";
             PlaylistsCollection.ReplaceOne(Builders<Playlist>.Filter.Eq(x => x._id, id), playlist);
 
-            return new ObjectResult("Playlist art uploaded") { StatusCode = 200 };
+            return new ObjectResult("Playlist art removed") { StatusCode = 200 };
         }
 
     }
