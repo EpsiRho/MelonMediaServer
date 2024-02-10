@@ -146,7 +146,7 @@ namespace MelonWebApi.Controllers
                 ArtistName = name,
                 Bio = "",
                 Releases = new List<DbLink>(),
-                ArtistArtPaths = new List<string>(),
+                ArtistPfpPaths = new List<string>(),
                 ArtistBannerPaths = new List<string>(),
                 ArtistPfpArtCount = 0,
                 ArtistBannerArtCount = 0,

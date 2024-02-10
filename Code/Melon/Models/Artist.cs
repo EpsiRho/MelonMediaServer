@@ -14,7 +14,7 @@ namespace Melon.Models
         public string ServerURL { get; set; }
         public int ArtistPfpArtCount { get; set; }
         public int ArtistBannerArtCount { get; set; }
-        public List<string> ArtistArtPaths { get; set; }
+        public List<string> ArtistPfpPaths { get; set; }
         public List<string> ArtistBannerPaths { get; set; }
         public List<string> Genres { get; set; }
         public DateTime DateAdded { get; set; }

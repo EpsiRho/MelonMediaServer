@@ -722,7 +722,7 @@ namespace MelonWebApi.Controllers
                 Ratings = foundArtist.Ratings,
                 SkipCounts = new List<UserStat>(),
                 ServerURL = foundArtist.ServerURL,
-                ArtistArtPaths = foundArtist.ArtistArtPaths,
+                ArtistPfpPaths = foundArtist.ArtistPfpPaths,
                 ArtistBannerPaths = foundArtist.ArtistBannerPaths,
                 Genres = artistGenres.ToList(),
                 DateAdded = foundArtist.DateAdded,
