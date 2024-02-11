@@ -235,7 +235,7 @@ namespace Melon.LocalClasses
             var key = MelonSettings.JWTKey;
             set.JWTKey = instance._protector.Protect(key);
 
-            string settingstxt = Newtonsoft.Json.JsonConvert.SerializeObject(set);
+            string settingstxt = Newtonsoft.Json.JsonConvert.SerializeObject(set, Formatting.Indented);
             File.WriteAllText($"{melonPath}/Settings.json", settingstxt);
         }
         public static void LoadFlags()
@@ -245,7 +245,7 @@ namespace Melon.LocalClasses
         }
         public static void SaveFlags()
         {
-            string flagtxt = Newtonsoft.Json.JsonConvert.SerializeObject(MelonFlags);
+            string flagtxt = Newtonsoft.Json.JsonConvert.SerializeObject(MelonFlags, Formatting.Indented);
             File.WriteAllText($"{melonPath}/Flags.json", flagtxt);
         }
         public static bool CheckMongoDB(string connectionString)
