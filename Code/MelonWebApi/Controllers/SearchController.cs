@@ -50,7 +50,7 @@ namespace MelonWebApi.Controllers
             List<FilterDefinition<Track>> filterList = new List<FilterDefinition<Track>>();
             if (trackName != "")
             {
-                filterList.Add(Builders<Track>.Filter.Regex(x=>x.TrackName, new BsonRegularExpression(trackName, "i")));
+                filterList.Add(Builders<Track>.Filter.Regex(x=>x.Name, new BsonRegularExpression(trackName, "i")));
             }
 
             if (format != "")
@@ -166,15 +166,19 @@ namespace MelonWebApi.Controllers
                     }
                 }
             }
+            if(combinedFilter == null)
+            {
+                combinedFilter = Builders<Track>.Filter.Empty;
+            }
 
             SortDefinition<Track> sortDefinition = null;
             switch (sort)
             {
                 case "NameDesc":
-                    sortDefinition = Builders<Track>.Sort.Descending(x=>x.TrackName);
+                    sortDefinition = Builders<Track>.Sort.Descending(x=>x.Name);
                     break;
                 case "NameAsc":
-                    sortDefinition = Builders<Track>.Sort.Ascending(x => x.TrackName);
+                    sortDefinition = Builders<Track>.Sort.Ascending(x => x.Name);
                     break;
                 case "DateAddedDesc":
                     sortDefinition = Builders<Track>.Sort.Descending(x => x.DateAdded);
@@ -204,10 +208,10 @@ namespace MelonWebApi.Controllers
             switch (sort)
             {
                 case "NameDesc":
-                    tracks = tracks.OrderByDescending(x => x.TrackName).ToList();
+                    tracks = tracks.OrderByDescending(x => x.Name).ToList();
                     break;
                 case "NameAsc":
-                    tracks = tracks.OrderBy(x => x.TrackName).ToList();
+                    tracks = tracks.OrderBy(x => x.Name).ToList();
                     break;
                 case "DateAddedDesc":
                     tracks = tracks.OrderByDescending(x => x.DateAdded).ToList();
@@ -263,7 +267,7 @@ namespace MelonWebApi.Controllers
 
             if (albumName != "")
             {
-                filterList.Add(Builders<Album>.Filter.Regex(x=>x.AlbumName, new BsonRegularExpression(albumName, "i")));
+                filterList.Add(Builders<Album>.Filter.Regex(x=>x.Name, new BsonRegularExpression(albumName, "i")));
             }
 
             if (publisher != "")
@@ -352,15 +356,19 @@ namespace MelonWebApi.Controllers
                     }
                 }
             }
+            if (combinedFilter == null)
+            {
+                combinedFilter = Builders<Album>.Filter.Empty;
+            }
 
             SortDefinition<Album> sortDefinition = null;
             switch (sort)
             {
                 case "NameDesc":
-                    sortDefinition = Builders<Album>.Sort.Descending(x => x.AlbumName);
+                    sortDefinition = Builders<Album>.Sort.Descending(x => x.Name);
                     break;
                 case "NameAsc":
-                    sortDefinition = Builders<Album>.Sort.Ascending(x => x.AlbumName);
+                    sortDefinition = Builders<Album>.Sort.Ascending(x => x.Name);
                     break;
                 case "DateAddedDesc":
                     sortDefinition = Builders<Album>.Sort.Descending(x => x.DateAdded);
@@ -391,10 +399,10 @@ namespace MelonWebApi.Controllers
             switch (sort)
             {
                 case "NameDesc":
-                    albums = albums.OrderByDescending(x => x.AlbumName).ToList();
+                    albums = albums.OrderByDescending(x => x.Name).ToList();
                     break;
                 case "NameAsc":
-                    albums = albums.OrderBy(x => x.AlbumName).ToList();
+                    albums = albums.OrderBy(x => x.Name).ToList();
                     break;
                 case "DateAddedDesc":
                     albums = albums.OrderByDescending(x => x.DateAdded).ToList();
@@ -450,7 +458,7 @@ namespace MelonWebApi.Controllers
             List<FilterDefinition<Artist>> filterList = new List<FilterDefinition<Artist>>();
             if (artistName != "")
             {
-                filterList.Add(Builders<Artist>.Filter.Regex(x=>x.ArtistName, new BsonRegularExpression(artistName, "i")));
+                filterList.Add(Builders<Artist>.Filter.Regex(x=>x.Name, new BsonRegularExpression(artistName, "i")));
             }
 
             var curId = ((ClaimsIdentity)User.Identity).Claims
@@ -508,15 +516,19 @@ namespace MelonWebApi.Controllers
                     }
                 }
             }
+            if (combinedFilter == null)
+            {
+                combinedFilter = Builders<Artist>.Filter.Empty;
+            }
 
             SortDefinition<Artist> sortDefinition = null;
             switch (sort)
             {
                 case "NameDesc":
-                    sortDefinition = Builders<Artist>.Sort.Descending(x => x.ArtistName);
+                    sortDefinition = Builders<Artist>.Sort.Descending(x => x.Name);
                     break;
                 case "NameAsc":
-                    sortDefinition = Builders<Artist>.Sort.Ascending(x => x.ArtistName);
+                    sortDefinition = Builders<Artist>.Sort.Ascending(x => x.Name);
                     break;
                 case "DateAddedDesc":
                     sortDefinition = Builders<Artist>.Sort.Descending(x => x.DateAdded);
@@ -545,10 +557,10 @@ namespace MelonWebApi.Controllers
             switch (sort)
             {
                 case "NameDesc":
-                    artists = artists.OrderByDescending(x => x.ArtistName).ToList();
+                    artists = artists.OrderByDescending(x => x.Name).ToList();
                     break;
                 case "NameAsc":
-                    artists = artists.OrderBy(x => x.ArtistName).ToList();
+                    artists = artists.OrderBy(x => x.Name).ToList();
                     break;
                 case "DateAddedDesc":
                     artists = artists.OrderByDescending(x => x.DateAdded).ToList();

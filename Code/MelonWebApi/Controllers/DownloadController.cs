@@ -54,7 +54,7 @@ namespace MelonWebApi.Controllers
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
 
-            var tFilter = Builders<Track>.Filter.Eq("TrackId", id);
+            var tFilter = Builders<Track>.Filter.Eq(x => x._id, id);
             var track = TCollection.Find(tFilter).ToList()[0];
 
             //FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
@@ -102,7 +102,7 @@ namespace MelonWebApi.Controllers
 
             try
             {
-                var aFilter = Builders<Album>.Filter.Eq("AlbumId", id);
+                var aFilter = Builders<Album>.Filter.Eq(x => x._id, id);
                 var album = ACollection.Find(aFilter).ToList()[0];
 
                 // Load image data in MemoryStream

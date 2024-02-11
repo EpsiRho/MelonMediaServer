@@ -8,7 +8,7 @@ namespace Melon.Models
         public string _id { get; set; }
         public int TotalDiscs { get; set; }
         public int TotalTracks { get; set; }
-        public string AlbumName { get; set; }
+        public string Name { get; set; }
         public string Bio { get; set; }
         public string Publisher { get; set; }
         public string ReleaseStatus { get; set; }
@@ -31,7 +31,7 @@ namespace Melon.Models
         public string _id { get; set; }
         public int TotalDiscs { get; set; }
         public int TotalTracks { get; set; }
-        public string AlbumName { get; set; }
+        public string Name { get; set; }
         public string Bio { get; set; }
         public string Publisher { get; set; }
         public string ReleaseStatus { get; set; }

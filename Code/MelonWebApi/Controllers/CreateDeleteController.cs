@@ -38,7 +38,7 @@ namespace MelonWebApi.Controllers
             Album album = new Album()
             {
                 _id = ObjectId.GenerateNewId().ToString(),
-                AlbumName = name,
+                Name = name,
                 Bio = "",
                 AlbumArtCount = 0,
                 AlbumArtists = new List<DbLink>(),
@@ -143,7 +143,7 @@ namespace MelonWebApi.Controllers
             Artist artist = new Artist()
             {
                 _id = ObjectId.GenerateNewId().ToString(),
-                ArtistName = name,
+                Name = name,
                 Bio = "",
                 Releases = new List<DbLink>(),
                 ArtistPfpPaths = new List<string>(),
