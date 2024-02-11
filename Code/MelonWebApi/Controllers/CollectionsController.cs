@@ -38,7 +38,7 @@ namespace MelonWebApi.Controllers
 
             if(andFilters == null)
             {
-                andFilters = new List<string>() { "TrackName;Contains;Dream" };
+                andFilters = new List<string>() { "Name;Contains;Dream" };
             }
             if(orFilters == null)
             {
@@ -218,6 +218,17 @@ namespace MelonWebApi.Controllers
             if (collection.Owner != curId)
             {
                 return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+            }
+
+            var filePath = $"{StateManager.melonPath}/CollectionArts/{collection.ArtworkPath}";
+
+            try
+            {
+                System.IO.File.Delete(filePath);
+            }
+            catch (Exception)
+            {
+
             }
 
             CCollection.DeleteOne(cFilter);

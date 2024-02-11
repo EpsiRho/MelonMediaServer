@@ -580,7 +580,14 @@ namespace Melon.LocalClasses
                     Tracks = new List<DbLink> { sTrack },
                     ConnectedArtists = new List<DbLink>(),
                     ArtistBannerArtCount = 0,
-                    ArtistPfpArtCount = 0
+                    ArtistPfpArtCount = 0,
+                    ArtistBannerArtDefault = 0,
+                    ArtistPfpDefault = 0,
+                    ArtistBannerPaths = new List<string>(),
+                    ArtistPfpPaths = new List<string>(),
+                    PlayCounts = new List<UserStat>(),
+                    SkipCounts = new List<UserStat>(),
+                    ServerURL = ""
                 };
 
                 if (trackArtists.Count() > 1)
@@ -737,6 +744,11 @@ namespace Melon.LocalClasses
                     ContributingArtists = new List<DbLink>(),
                     AlbumGenres = trackGenres ?? new List<string>(),
                     AlbumArtCount = 0,
+                    AlbumArtDefault = 0,
+                    PlayCounts = new List<UserStat>(),
+                    Ratings = new List<UserStat>(),
+                    SkipCounts = new List<UserStat>(),
+                    ServerURL = ""
                 };
 
                 // Get any images from the album and save them to the disk under the album ID
@@ -880,6 +892,7 @@ namespace Melon.LocalClasses
                 PlayCounts = new List<UserStat>(),
                 SkipCounts = new List<UserStat>(),
                 TrackArtCount = fileMetadata.EmbeddedPictures?.Count() ?? 0,
+                TrackArtDefault = 0,
                 Duration = fileMetadata.DurationMs.ToString() ?? "",
                 TrackArtists = new List<DbLink>(),
                 TrackGenres = trackGenres ?? new List<string>(),

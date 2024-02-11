@@ -539,7 +539,7 @@ namespace MelonWebApi.Controllers
             }
 
             var artistProjection = Builders<Artist>.Projection.Exclude(x => x.ArtistBannerPaths)
-                                                              .Exclude(x => x.ArtistArtPaths)
+                                                              .Exclude(x => x.ArtistPfpPaths)
                                                               .Exclude(x => x.Releases)
                                                               .Exclude(x => x.SeenOn)
                                                               .Exclude(x => x.Tracks)

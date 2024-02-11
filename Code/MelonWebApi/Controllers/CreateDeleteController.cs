@@ -73,7 +73,11 @@ namespace MelonWebApi.Controllers
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-            AlbumsCollection.DeleteOne(Builders<Album>.Filter.Eq(x=>x._id, id));
+            var album = AlbumsCollection.Find(Builders<Album>.Filter.Eq(x => x._id, id)).FirstOrDefault();
+            if(album == null)
+            {
+                return new ObjectResult("Album not found") { StatusCode = 404 };
+            }
 
             var page = 0;
             var count = 100;
@@ -128,6 +132,23 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            
+            foreach(var path in album.AlbumArtPaths)
+            {
+                var filePath = $"{StateManager.melonPath}/AlbumArts/{path}";
+
+                try
+                {
+                    System.IO.File.Delete(filePath);
+                }
+                catch (Exception)
+                {
+
+                }
+            }
+
+            AlbumsCollection.DeleteOne(Builders<Album>.Filter.Eq(x=>x._id, id));
+
             return new ObjectResult("Album deleted") { StatusCode = 200 };
         }
 
@@ -146,7 +167,7 @@ namespace MelonWebApi.Controllers
                 Name = name,
                 Bio = "",
                 Releases = new List<DbLink>(),
-                ArtistArtPaths = new List<string>(),
+                ArtistPfpPaths = new List<string>(),
                 ArtistBannerPaths = new List<string>(),
                 ArtistPfpArtCount = 0,
                 ArtistBannerArtCount = 0,
@@ -175,7 +196,11 @@ namespace MelonWebApi.Controllers
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-            ArtistsCollection.DeleteOne(Builders<Artist>.Filter.Eq(x => x._id, id));
+            var artist = ArtistsCollection.Find(Builders<Artist>.Filter.Eq(x => x._id, id)).FirstOrDefault();
+            if(artist == null)
+            {
+                new ObjectResult("Artist not found") { StatusCode = 404 };
+            }
 
             var page = 0;
             var count = 100;
@@ -233,12 +258,12 @@ namespace MelonWebApi.Controllers
             while (true)
             {
                 var artists = ArtistsCollection.Find(Builders<Artist>.Filter.Empty).Skip(page * count).Limit(count).ToList();
-                foreach (var artist in artists)
+                foreach (var a in artists)
                 {
-                    if (artist.ConnectedArtists.Any(x=>x._id == id))
+                    if (a.ConnectedArtists.Any(x=>x._id == id))
                     {
-                        artist.ConnectedArtists.Remove(artist.ConnectedArtists.Where(x => x._id == id).FirstOrDefault());
-                        ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, artist._id), artist);
+                        a.ConnectedArtists.Remove(a.ConnectedArtists.Where(x => x._id == id).FirstOrDefault());
+                        ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, a._id), a);
                     }
                 }
 
@@ -248,6 +273,35 @@ namespace MelonWebApi.Controllers
                     break;
                 }
             }
+
+            foreach (var path in artist.ArtistPfpPaths)
+            {
+                var filePath = $"{StateManager.melonPath}/ArtistPfps/{path}";
+
+                try
+                {
+                    System.IO.File.Delete(filePath);
+                }
+                catch (Exception)
+                {
+
+                }
+            }
+            foreach (var path in artist.ArtistBannerPaths)
+            {
+                var filePath = $"{StateManager.melonPath}/ArtistBanners/{path}";
+
+                try
+                {
+                    System.IO.File.Delete(filePath);
+                }
+                catch (Exception)
+                {
+
+                }
+            }
+
+            ArtistsCollection.DeleteOne(Builders<Artist>.Filter.Eq(x => x._id, id));
 
             return new ObjectResult("Artist deleted") { StatusCode = 200 };
         }

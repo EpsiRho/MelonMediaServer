@@ -20,6 +20,7 @@ namespace Melon.Models
         public DateTime DateAdded { get; set; }
         public DateTime ReleaseDate { get; set; }
         public int AlbumArtCount { get; set; }
+        public int AlbumArtDefault { get; set; }
         public List<string> AlbumArtPaths { get; set; }
         public List<string> AlbumGenres { get; set; }
         public List<DbLink> AlbumArtists { get; set; }
@@ -43,6 +44,7 @@ namespace Melon.Models
         public DateTime DateAdded { get; set; }
         public DateTime ReleaseDate { get; set; }
         public int AlbumArtCount { get; set; }
+        public int AlbumArtDefault { get; set; }
         public List<string> AlbumGenres { get; set; }
         public List<DbLink> AlbumArtists { get; set; }
         public List<DbLink> ContributingArtists { get; set; }
