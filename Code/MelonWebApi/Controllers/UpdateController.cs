@@ -30,7 +30,7 @@ namespace MelonWebApi.Controllers
         [HttpPatch("track")]
         public ObjectResult UpdateTrack(string trackId, string disc = "", string isrc = "", string releaseDate = "", string position = "",
                                         [FromQuery] string[] trackGenres = null, string trackName = "", string year = "", string nextTrack = "",
-                                        string albumId = "", [FromQuery] string[] artistIds = null)
+                                        string albumId = "", int defaultTrackArt = -1, [FromQuery] string[] artistIds = null)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -52,6 +52,7 @@ namespace MelonWebApi.Controllers
             trackName = trackName == "" ? foundTrack.Name.ToString() : trackName;
             year = year == "" ? foundTrack.Year : year;
             nextTrack = nextTrack == "" ? foundTrack.nextTrack : nextTrack;
+            defaultTrackArt = defaultTrackArt == -1 ? foundTrack.TrackArtDefault : defaultTrackArt;
 
             if (trackGenres == null)
             {
@@ -170,6 +171,7 @@ namespace MelonWebApi.Controllers
                 SkipCounts = foundTrack.SkipCounts,
                 TrackArtCount = foundTrack.TrackArtCount,
                 nextTrack = nextTrack,
+                TrackArtDefault = defaultTrackArt
             };
 
             var newShortTrack = new DbLink()
@@ -260,7 +262,7 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPatch("album")]
         public ObjectResult UpdateAlbum(string albumId, [FromQuery] string[] trackIds = null, string totalDiscs = "", string totalTracks = "", string releaseDate = "", string albumName = "",
-                                        [FromQuery] string[] albumGenres = null, string bio = "", string publisher = "", string releaseStatus = "", string releaseType = "",
+                                        [FromQuery] string[] albumGenres = null, string bio = "", string publisher = "", string releaseStatus = "", string releaseType = "", int defaultAlbumArt = -1,
                                         [FromQuery] string[] contributingAristsIds = null, [FromQuery] string[] albumArtistIds = null)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -384,6 +386,7 @@ namespace MelonWebApi.Controllers
             releaseStatus = releaseStatus == "" ? foundAlbum.ReleaseStatus : releaseStatus;
             releaseType = releaseType == "" ? foundAlbum.ReleaseType : releaseType;
             releaseDate = releaseDate == "" ? foundAlbum.ReleaseDate.ToString() : releaseDate;
+            defaultAlbumArt = defaultAlbumArt == -1 ? foundAlbum.AlbumArtDefault : defaultAlbumArt;
 
             var newShortAlbum = new DbLink()
             {
@@ -466,7 +469,9 @@ namespace MelonWebApi.Controllers
                 ServerURL = foundAlbum.ServerURL,
                 TotalDiscs = Convert.ToInt32(totalDiscs),
                 TotalTracks = Convert.ToInt32(totalTracks),
-                Tracks = newShortTracks.ToList()
+                Tracks = newShortTracks.ToList(),
+                AlbumArtDefault = defaultAlbumArt,
+                AlbumArtCount = foundAlbum.AlbumArtCount
             };
 
             
@@ -486,41 +491,44 @@ namespace MelonWebApi.Controllers
             ArtistsCollection.UpdateMany(conArtistFilter, conArtistUpdate);
 
             // Update File
-            var ftFilter = Builders<Track>.Filter.In(a => a._id, newAlbum.Tracks.Select(x => x._id));
-            var fullTracks = TracksCollection.Find(ftFilter).ToList();
-            foreach (var track in fullTracks)
+            Task.Run(() =>
             {
-                var fileMetadata = new ATL.Track(track.Path);
+                var ftFilter = Builders<Track>.Filter.In(a => a._id, newAlbum.Tracks.Select(x => x._id));
+                var fullTracks = TracksCollection.Find(ftFilter).ToList();
+                foreach (var track in fullTracks)
+                {
+                    var fileMetadata = new ATL.Track(track.Path);
 
-                fileMetadata.DiscTotal = totalDiscs == "" ? fileMetadata.DiscTotal : Convert.ToInt32(totalDiscs);
-                fileMetadata.TrackTotal = totalTracks == "" ? fileMetadata.TrackTotal : Convert.ToInt32(totalTracks);
-                fileMetadata.Album = albumName == "" ? fileMetadata.Album : albumName;
-                fileMetadata.Publisher = publisher == "" ? fileMetadata.Publisher : publisher;
-                
-                if (!fileMetadata.AdditionalFields.ContainsKey("RELEASETYPE"))
-                {
-                    fileMetadata.AdditionalFields.Add("RELEASETYPE", releaseType);
-                }
-                fileMetadata.AdditionalFields["RELEASETYPE"] = releaseType == "" ? fileMetadata.AdditionalFields["RELEASETYPE"] : releaseType;
-                if (!fileMetadata.AdditionalFields.ContainsKey("RELEASESTATUS"))
-                {
-                    fileMetadata.AdditionalFields.Add("RELEASESTATUS", releaseType);
-                }
-                fileMetadata.AdditionalFields["RELEASESTATUS"] = releaseStatus == "" ? fileMetadata.AdditionalFields["RELEASESTATUS"] : releaseStatus;
-                
-                if (newAlbumArtists.Count() != 0)
-                {
-                    string artistStr = "";
-                    foreach (var artist in newAlbumArtists)
+                    fileMetadata.DiscTotal = totalDiscs == "" ? fileMetadata.DiscTotal : Convert.ToInt32(totalDiscs);
+                    fileMetadata.TrackTotal = totalTracks == "" ? fileMetadata.TrackTotal : Convert.ToInt32(totalTracks);
+                    fileMetadata.Album = albumName == "" ? fileMetadata.Album : albumName;
+                    fileMetadata.Publisher = publisher == "" ? fileMetadata.Publisher : publisher;
+
+                    if (!fileMetadata.AdditionalFields.ContainsKey("RELEASETYPE"))
                     {
-                        artistStr += $"{artist.Name};";
+                        fileMetadata.AdditionalFields.Add("RELEASETYPE", releaseType);
                     }
-                    artistStr = artistStr.Substring(0, artistStr.Length - 1);
-                    fileMetadata.AlbumArtist = artistStr;
-                }
+                    fileMetadata.AdditionalFields["RELEASETYPE"] = releaseType == "" ? fileMetadata.AdditionalFields["RELEASETYPE"] : releaseType;
+                    if (!fileMetadata.AdditionalFields.ContainsKey("RELEASESTATUS"))
+                    {
+                        fileMetadata.AdditionalFields.Add("RELEASESTATUS", releaseType);
+                    }
+                    fileMetadata.AdditionalFields["RELEASESTATUS"] = releaseStatus == "" ? fileMetadata.AdditionalFields["RELEASESTATUS"] : releaseStatus;
 
-                fileMetadata.Save();
-            }
+                    if (newAlbumArtists.Count() != 0)
+                    {
+                        string artistStr = "";
+                        foreach (var artist in newAlbumArtists)
+                        {
+                            artistStr += $"{artist.Name};";
+                        }
+                        artistStr = artistStr.Substring(0, artistStr.Length - 1);
+                        fileMetadata.AlbumArtist = artistStr;
+                    }
+
+                    fileMetadata.Save();
+                }
+            });
 
             Thread t = new Thread(MelonScanner.UpdateCollections);
             t.Start();
@@ -531,7 +539,7 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPatch("artist")]
         public ObjectResult UpdateArtist(string artistId, [FromQuery] string[] trackIds = null, [FromQuery] string[] releaseIds = null, [FromQuery] string[] seenOnIds = null,
-                                         string artistName = "", string bio = "", [FromQuery] string[] artistGenres = null)
+                                         string artistName = "", string bio = "", [FromQuery] string[] artistGenres = null, int defaultArtistPfp = -1, int defaultArtistBanner = -1)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -705,6 +713,8 @@ namespace MelonWebApi.Controllers
 
             artistName = artistName == "" ? foundArtist.Name : artistName;
             bio = bio == "" ? foundArtist.Bio : bio;
+            defaultArtistPfp = defaultArtistPfp == -1 ? foundArtist.ArtistPfpDefault : defaultArtistPfp;
+            defaultArtistBanner = defaultArtistBanner == -1 ? foundArtist.ArtistBannerArtDefault : defaultArtistBanner;
 
             if (artistGenres == null)
             {
@@ -729,8 +739,12 @@ namespace MelonWebApi.Controllers
                 Releases = newReleases,
                 SeenOn = newSeenOns,
                 Tracks = newTracks,
-                ConnectedArtists = ConnectedArtists.ToList()
-        };
+                ConnectedArtists = ConnectedArtists.ToList(),
+                ArtistBannerArtCount = foundArtist.ArtistBannerArtCount,
+                ArtistPfpArtCount = foundArtist.ArtistPfpArtCount,
+                ArtistBannerArtDefault = defaultArtistBanner,
+                ArtistPfpDefault = defaultArtistPfp
+            };
 
             var newShortArtist = new DbLink()
             {
@@ -753,71 +767,80 @@ namespace MelonWebApi.Controllers
             AlbumsCollection.UpdateMany(conArtistFilter, conArtistUpdate);
 
             // Update File
-            var ftFilter = Builders<Track>.Filter.In(a => a._id, newArtist.Tracks.Select(x => x._id));
-            var fullTracks = TracksCollection.Find(ftFilter).ToList();
-            foreach (var track in fullTracks)
+            Task.Run(() =>
             {
-                var fileMetadata = new ATL.Track(track.Path);
-                string artistStr = fileMetadata.Artist;
-
-                if (!artistStr.Contains(newArtist.Name))
+                if (foundArtist.Name != newArtist.Name)
                 {
-                    artistStr += $";{newArtist.Name}";
-                }
-                else
-                {
-                    artistStr = artistStr.Replace(foundArtist.Name, newArtist.Name);
-                }
-                fileMetadata.Artist = artistStr;
-                fileMetadata.Save();
-                
-            }
-
-            foreach (var item in missingTracks)
-            {
-                var fileMetadata = new ATL.Track(item.Path);
-                string artistStr = fileMetadata.Artist;
-
-                artistStr = artistStr.Replace(foundArtist.Name, "").Replace(";;", ";");
-                fileMetadata.Artist = artistStr;
-
-                fileMetadata.Save();
-            }
-
-            foreach (var item in missingReleases)
-            {
-                var fFilter = Builders<Track>.Filter.In(a => a._id, item.Tracks.Select(x => x._id));
-                var fTracks = TracksCollection.Find(fFilter).ToList();
-                foreach (var track in fTracks)
-                {
-                    var fileMetadata = new ATL.Track(track.Path);
-                    string artistStr = fileMetadata.AlbumArtist;
-
-                    artistStr = artistStr.Replace(foundArtist.Name, "").Replace(";;", ";");
-                    fileMetadata.AlbumArtist = artistStr;
-
-                    fileMetadata.Save();
-                }
-            }
-
-            foreach (var item in newFullReleases)
-            {
-                var fFilter = Builders<Track>.Filter.In(a => a._id, item.Tracks.Select(x => x._id));
-                var fTracks = TracksCollection.Find(fFilter).ToList();
-                foreach (var track in fTracks)
-                {
-                    var fileMetadata = new ATL.Track(track.Path);
-                    string artistStr = fileMetadata.AlbumArtist;
-
-                    if (!artistStr.Contains(newArtist.Name))
+                    var ftFilter = Builders<Track>.Filter.In(a => a._id, newArtist.Tracks.Select(x => x._id));
+                    var fullTracks = TracksCollection.Find(ftFilter).ToList();
+                    foreach (var track in fullTracks)
                     {
-                        artistStr += $";{newArtist.Name}";
-                        fileMetadata.AlbumArtist = artistStr;
+                        var fileMetadata = new ATL.Track(track.Path);
+                        string artistStr = fileMetadata.Artist;
+
+                        if (!artistStr.Contains(newArtist.Name))
+                        {
+                            artistStr += $";{newArtist.Name}";
+                        }
+                        else
+                        {
+                            artistStr = artistStr.Replace(foundArtist.Name, newArtist.Name);
+                        }
+                        fileMetadata.Artist = artistStr;
                         fileMetadata.Save();
+
                     }
 
+                    foreach (var item in missingTracks)
+                    {
+                        var fileMetadata = new ATL.Track(item.Path);
+                        string artistStr = fileMetadata.Artist;
+
+                        artistStr = artistStr.Replace(foundArtist.Name, "").Replace(";;", ";");
+                        fileMetadata.Artist = artistStr;
+
+                        fileMetadata.Save();
+                    }
                 }
-            }
+
+                if (foundArtist.Releases != newArtist.Releases)
+                {
+                    foreach (var item in missingReleases)
+                    {
+                        var fFilter = Builders<Track>.Filter.In(a => a._id, item.Tracks.Select(x => x._id));
+                        var fTracks = TracksCollection.Find(fFilter).ToList();
+                        foreach (var track in fTracks)
+                        {
+                            var fileMetadata = new ATL.Track(track.Path);
+                            string artistStr = fileMetadata.AlbumArtist;
+
+                            artistStr = artistStr.Replace(foundArtist.Name, "").Replace(";;", ";");
+                            fileMetadata.AlbumArtist = artistStr;
+
+                            fileMetadata.Save();
+                        }
+                    }
+
+                    foreach (var item in newFullReleases)
+                    {
+                        var fFilter = Builders<Track>.Filter.In(a => a._id, item.Tracks.Select(x => x._id));
+                        var fTracks = TracksCollection.Find(fFilter).ToList();
+                        foreach (var track in fTracks)
+                        {
+                            var fileMetadata = new ATL.Track(track.Path);
+                            string artistStr = fileMetadata.AlbumArtist;
+
+                            if (!artistStr.Contains(newArtist.Name))
+                            {
+                                artistStr += $";{newArtist.Name}";
+                                fileMetadata.AlbumArtist = artistStr;
+                                fileMetadata.Save();
+                            }
+
+                        }
+                    }
+                }
+            });
 
             Thread t = new Thread(MelonScanner.UpdateCollections);
             t.Start();

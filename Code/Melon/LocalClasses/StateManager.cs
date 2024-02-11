@@ -294,5 +294,14 @@ namespace Melon.LocalClasses
                 serverProcess.Dispose();
             }
         }
+        public static byte[] GetDefaultImage()
+        {
+            var stream = typeof(Program).Assembly.GetManifestResourceStream("Melon.Assets.defaultArtwork.png");
+            using (MemoryStream ms = new MemoryStream())
+            {
+                stream.CopyTo(ms);
+                return ms.ToArray();
+            }
+        }
     }
 }

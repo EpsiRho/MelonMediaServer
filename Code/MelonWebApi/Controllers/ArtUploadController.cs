@@ -252,6 +252,45 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Playlist art uploaded") { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin")]
+        [HttpPost("collection-art")]
+        [Consumes("multipart/form-data")]
+        public ObjectResult UploadCollectionArt(string id, IFormFile image)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var CollectionsCollection = mongoDatabase.GetCollection<Collection>("Collections");
+
+            var collection = CollectionsCollection.Find(Builders<Collection>.Filter.Eq(x => x._id, id)).FirstOrDefault();
+            if (collection == null)
+            {
+                return new ObjectResult("Collection not found") { StatusCode = 404 };
+            }
+
+            // Save the file
+            var filePath = $"{StateManager.melonPath}/CollectionArts/{collection._id}.jpg";
+            if (!Directory.Exists($"{StateManager.melonPath}/CollectionArts"))
+            {
+                Directory.CreateDirectory($"{StateManager.melonPath}/CollectionArts");
+            }
+
+            try
+            {
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    image.CopyTo(stream);
+                }
+            }
+            catch (Exception)
+            {
+                return new ObjectResult("Image error") { StatusCode = 400 };
+            }
+
+            collection.ArtworkPath = $"{collection._id}.jpg";
+            CollectionsCollection.ReplaceOne(Builders<Collection>.Filter.Eq(x => x._id, id), collection);
+
+            return new ObjectResult("Collection art uploaded") { StatusCode = 200 };
+        }
 
     }
 }

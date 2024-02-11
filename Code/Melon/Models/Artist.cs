@@ -14,6 +14,8 @@ namespace Melon.Models
         public string ServerURL { get; set; }
         public int ArtistPfpArtCount { get; set; }
         public int ArtistBannerArtCount { get; set; }
+        public int ArtistPfpDefault { get; set; }
+        public int ArtistBannerArtDefault { get; set; }
         public List<string> ArtistPfpPaths { get; set; }
         public List<string> ArtistBannerPaths { get; set; }
         public List<string> Genres { get; set; }
@@ -30,6 +32,8 @@ namespace Melon.Models
         public string Bio { get; set; }
         public int ArtistPfpArtCount { get; set; }
         public int ArtistBannerArtCount { get; set; }
+        public int ArtistPfpDefault { get; set; }
+        public int ArtistBannerArtDefault { get; set; }
         public List<UserStat> PlayCounts { get; set; }
         public List<UserStat> SkipCounts { get; set; }
         public List<UserStat> Ratings { get; set; }

@@ -210,6 +210,36 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Playlist art removed") { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin")]
+        [HttpPost("collection-art")]
+        public ObjectResult DeleteCollectionArt(string id)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var CollectionsCollection = mongoDatabase.GetCollection<Collection>("Collections");
+
+            var collection = CollectionsCollection.Find(Builders<Collection>.Filter.Eq(x => x._id, id)).FirstOrDefault();
+            if (collection == null)
+            {
+                return new ObjectResult("Collection not found") { StatusCode = 404 };
+            }
+
+            var filePath = $"{StateManager.melonPath}/CollectionArts/{collection._id}.jpg";
+
+            try
+            {
+                System.IO.File.Delete(filePath);
+            }
+            catch (Exception)
+            {
+                return new ObjectResult("File error") { StatusCode = 404 };
+            }
+
+            collection.ArtworkPath = "";
+            CollectionsCollection.ReplaceOne(Builders<Collection>.Filter.Eq(x => x._id, id), collection);
+
+            return new ObjectResult("Collection art removed") { StatusCode = 200 };
+        }
 
     }
 }

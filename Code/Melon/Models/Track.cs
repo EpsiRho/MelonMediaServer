@@ -26,6 +26,7 @@ namespace Melon.Models
         public List<UserStat> SkipCounts { get; set; }
         public List<UserStat> Ratings { get; set; }
         public int TrackArtCount { get; set; }
+        public int TrackArtDefault { get; set; }
         public string LyricsPath { get; set; }
         public string ServerURL { get; set; }
         public DateTime LastModified { get; set; }
@@ -55,6 +56,7 @@ namespace Melon.Models
         public List<UserStat> SkipCounts { get; set; }
         public List<UserStat> Ratings { get; set; }
         public int TrackArtCount { get; set; }
+        public int TrackArtDefault { get; set; }
         public string ServerURL { get; set; }
         public DateTime LastModified { get; set; }
         public DateTime DateAdded { get; set; }
