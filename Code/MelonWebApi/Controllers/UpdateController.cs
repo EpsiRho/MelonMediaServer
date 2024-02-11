@@ -49,7 +49,7 @@ namespace MelonWebApi.Controllers
             isrc = isrc == "" ? foundTrack.ISRC : isrc;
             releaseDate = releaseDate == "" ? foundTrack.ReleaseDate.ToString() : releaseDate;
             position = position == "" ? foundTrack.Position.ToString() : position;
-            trackName = trackName == "" ? foundTrack.TrackName.ToString() : trackName;
+            trackName = trackName == "" ? foundTrack.Name.ToString() : trackName;
             year = year == "" ? foundTrack.Year : year;
             nextTrack = nextTrack == "" ? foundTrack.nextTrack : nextTrack;
 
@@ -73,7 +73,7 @@ namespace MelonWebApi.Controllers
                 newAlbum.Tracks.Add(new DbLink(foundTrack));
                 var tFilter = Builders<Track>.Filter.In(a => a._id, newAlbum.Tracks.Select(x => x._id));
                 var fullTracks = TracksCollection.Find(tFilter).ToList();
-                newAlbum.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x=>new DbLink() { _id = x._id, Name = x.TrackName}).ToList();
+                newAlbum.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x=>new DbLink() { _id = x._id, Name = x.Name }).ToList();
                 newShortAlbum = new DbLink(newAlbum);
                 AlbumsCollection.ReplaceOne(aFilter, newAlbum);
 
@@ -160,7 +160,7 @@ namespace MelonWebApi.Controllers
                 Position = Convert.ToInt32(position),
                 TrackArtists = newShortArtists,
                 TrackGenres = trackGenres.ToList(),
-                TrackName = trackName,
+                Name = trackName,
                 Year = year,
                 Duration = foundTrack.Duration,
                 DateAdded = foundTrack.DateAdded,
@@ -215,7 +215,7 @@ namespace MelonWebApi.Controllers
 
             if(newAlbum != null)
             {
-                fileMetadata.Album = newAlbum.AlbumName;
+                fileMetadata.Album = newAlbum.Name;
                 fileMetadata.DiscTotal = newAlbum.TotalDiscs;
                 fileMetadata.TrackTotal = newAlbum.TotalDiscs;
                 fileMetadata.Publisher = newAlbum.Publisher;
@@ -243,7 +243,7 @@ namespace MelonWebApi.Controllers
                 string artistStr = "";
                 foreach (var artist in newArtists)
                 {
-                    artistStr += $"{artist.ArtistName};";
+                    artistStr += $"{artist.Name};";
                 }
                 artistStr = artistStr.Substring(0, artistStr.Length - 1);
                 fileMetadata.Artist = artistStr;
@@ -378,7 +378,7 @@ namespace MelonWebApi.Controllers
 
             totalDiscs = totalDiscs == "" ? foundAlbum.TotalDiscs.ToString() : totalDiscs;
             totalTracks = totalTracks == "" ? foundAlbum.TotalTracks.ToString() : totalTracks;
-            albumName = albumName == "" ? foundAlbum.AlbumName : albumName;
+            albumName = albumName == "" ? foundAlbum.Name : albumName;
             bio = bio == "" ? foundAlbum.Bio : bio;
             publisher = publisher == "" ? foundAlbum.Publisher : publisher;
             releaseStatus = releaseStatus == "" ? foundAlbum.ReleaseStatus : releaseStatus;
@@ -452,7 +452,7 @@ namespace MelonWebApi.Controllers
                 AlbumGenres = albumGenres.ToList(),
                 AlbumArtists = newAlbumShortArtists,
                 AlbumArtPaths = foundAlbum.AlbumArtPaths,
-                AlbumName = albumName,
+                Name = albumName,
                 ContributingArtists = newConShortArtists,
                 PlayCounts = foundAlbum.PlayCounts,
                 DateAdded = foundAlbum.DateAdded,
@@ -513,7 +513,7 @@ namespace MelonWebApi.Controllers
                     string artistStr = "";
                     foreach (var artist in newAlbumArtists)
                     {
-                        artistStr += $"{artist.ArtistName};";
+                        artistStr += $"{artist.Name};";
                     }
                     artistStr = artistStr.Substring(0, artistStr.Length - 1);
                     fileMetadata.AlbumArtist = artistStr;
@@ -703,7 +703,7 @@ namespace MelonWebApi.Controllers
                 newTracks.AddRange(foundArtist.Tracks);
             }
 
-            artistName = artistName == "" ? foundArtist.ArtistName : artistName;
+            artistName = artistName == "" ? foundArtist.Name : artistName;
             bio = bio == "" ? foundArtist.Bio : bio;
 
             if (artistGenres == null)
@@ -716,7 +716,7 @@ namespace MelonWebApi.Controllers
             var newArtist = new Artist()
             {
                 _id = foundArtist._id,
-                ArtistName = artistName,
+                Name = artistName,
                 Bio = bio,
                 PlayCounts = foundArtist.PlayCounts,
                 Ratings = foundArtist.Ratings,
@@ -760,13 +760,13 @@ namespace MelonWebApi.Controllers
                 var fileMetadata = new ATL.Track(track.Path);
                 string artistStr = fileMetadata.Artist;
 
-                if (!artistStr.Contains(newArtist.ArtistName))
+                if (!artistStr.Contains(newArtist.Name))
                 {
-                    artistStr += $";{newArtist.ArtistName}";
+                    artistStr += $";{newArtist.Name}";
                 }
                 else
                 {
-                    artistStr = artistStr.Replace(foundArtist.ArtistName, newArtist.ArtistName);
+                    artistStr = artistStr.Replace(foundArtist.Name, newArtist.Name);
                 }
                 fileMetadata.Artist = artistStr;
                 fileMetadata.Save();
@@ -778,7 +778,7 @@ namespace MelonWebApi.Controllers
                 var fileMetadata = new ATL.Track(item.Path);
                 string artistStr = fileMetadata.Artist;
 
-                artistStr = artistStr.Replace(foundArtist.ArtistName, "").Replace(";;", ";");
+                artistStr = artistStr.Replace(foundArtist.Name, "").Replace(";;", ";");
                 fileMetadata.Artist = artistStr;
 
                 fileMetadata.Save();
@@ -793,7 +793,7 @@ namespace MelonWebApi.Controllers
                     var fileMetadata = new ATL.Track(track.Path);
                     string artistStr = fileMetadata.AlbumArtist;
 
-                    artistStr = artistStr.Replace(foundArtist.ArtistName, "").Replace(";;", ";");
+                    artistStr = artistStr.Replace(foundArtist.Name, "").Replace(";;", ";");
                     fileMetadata.AlbumArtist = artistStr;
 
                     fileMetadata.Save();
@@ -809,9 +809,9 @@ namespace MelonWebApi.Controllers
                     var fileMetadata = new ATL.Track(track.Path);
                     string artistStr = fileMetadata.AlbumArtist;
 
-                    if (!artistStr.Contains(newArtist.ArtistName))
+                    if (!artistStr.Contains(newArtist.Name))
                     {
-                        artistStr += $";{newArtist.ArtistName}";
+                        artistStr += $";{newArtist.Name}";
                         fileMetadata.AlbumArtist = artistStr;
                         fileMetadata.Save();
                     }

@@ -203,7 +203,7 @@ namespace Melon.Models
                 var trackDocs = TracksCollection.Find(combinedFilter)
                                                 .Project(trackProjection)
                                                 .ToList()
-                                                .Select(x => new DbLink() { _id = x["_id"].ToString(), Name = x["TrackName"].ToString() })
+                                                .Select(x => new DbLink() { _id = x["_id"].ToString(), Name = x["Name"].ToString() })
                                                 .ToList();
                 return trackDocs;
             }
