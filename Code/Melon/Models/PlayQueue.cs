@@ -22,6 +22,7 @@ namespace Melon.Models
         public int CurPosition { get; set; }
         public string Name { get; set; }
         public string Owner { get; set; }
+        public int TrackCount { get; set; }
         public List<string> Editors { get; set; }
         public List<string> Viewers { get; set; }
         public bool PublicViewing { get; set; }
