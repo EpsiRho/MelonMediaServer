@@ -292,5 +292,33 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Collection art uploaded") { StatusCode = 200 };
         }
 
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("default-art")]
+        [Consumes("multipart/form-data")]
+        public ObjectResult UploadDefaultArt(IFormFile image)
+        {
+            // Save the file
+            var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.jpg";
+            if (!Directory.Exists($"{StateManager.melonPath}/Assets"))
+            {
+                Directory.CreateDirectory($"{StateManager.melonPath}/Assets");
+            }
+
+            try
+            {
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    image.CopyTo(stream);
+                }
+            }
+            catch (Exception)
+            {
+                return new ObjectResult("Image error") { StatusCode = 400 };
+            }
+
+            return new ObjectResult("Default art uploaded") { StatusCode = 200 };
+        }
+
     }
 }

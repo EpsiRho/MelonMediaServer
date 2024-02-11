@@ -18,6 +18,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Resources;
 using Amazon.Util.Internal;
 using Microsoft.IdentityModel.Tokens;
+using Melon.Models;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Melon.LocalClasses
 {
@@ -296,6 +298,18 @@ namespace Melon.LocalClasses
         }
         public static byte[] GetDefaultImage()
         {
+            var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.jpg";
+            if (File.Exists(filePath))
+            {
+                FileStream file = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    file.CopyTo(ms);
+                    file.Close();
+                    return ms.ToArray();
+                }
+            }
+
             var stream = typeof(Program).Assembly.GetManifestResourceStream("Melon.Assets.defaultArtwork.png");
             using (MemoryStream ms = new MemoryStream())
             {

@@ -240,6 +240,24 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Collection art removed") { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin")]
+        [HttpPost("default-art")]
+        public ObjectResult DeleteDefaultArt()
+        {
+
+            var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.jpg";
+
+            try
+            {
+                System.IO.File.Delete(filePath);
+            }
+            catch (Exception)
+            {
+                return new ObjectResult("File error") { StatusCode = 404 };
+            }
+
+            return new ObjectResult("Default art removed") { StatusCode = 200 };
+        }
 
     }
 }
