@@ -10,8 +10,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.DataProtection;
-using Amazon.Util;
-using Newtonsoft.Json;
 
 namespace Melon.LocalClasses
 {
@@ -40,7 +38,7 @@ namespace Melon.LocalClasses
                 var instance = ActivatorUtilities.CreateInstance<Security>(services);
 
                 string txt = File.ReadAllText($"{StateManager.melonPath}/Connections.json");
-                Connections = JsonConvert.DeserializeObject<List<Connection>>(txt);
+                Connections = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Connection>>(txt);
                 foreach (var con in Connections)
                 {
                     con.URL = instance._protector.Unprotect(con.URL);
@@ -72,7 +70,7 @@ namespace Melon.LocalClasses
                 conns.Add(newCon);
             }
 
-            string txt = JsonConvert.SerializeObject(conns, Formatting.Indented);
+            string txt = Newtonsoft.Json.JsonConvert.SerializeObject(conns);
             File.WriteAllText($"{StateManager.melonPath}/Connections.json", txt);
         }
         public static void LoadSSLConfig()
@@ -82,7 +80,7 @@ namespace Melon.LocalClasses
             var services = serviceCollection.BuildServiceProvider();
 
             string txt = File.ReadAllText($"{StateManager.melonPath}/SSLConfig.json");
-            sslConfig = JsonConvert.DeserializeObject<SSLConfig>(txt);
+            sslConfig = Newtonsoft.Json.JsonConvert.DeserializeObject<SSLConfig>(txt);
 
             var instance = ActivatorUtilities.CreateInstance<Security>(services);
             sslConfig.PathToCert = sslConfig.PathToCert;
@@ -97,7 +95,7 @@ namespace Melon.LocalClasses
             var instance = ActivatorUtilities.CreateInstance<Security>(services);
             sslConfig.Password = instance._protector.Protect(sslConfig.Password);
 
-            string txt = JsonConvert.SerializeObject(sslConfig, Formatting.Indented);
+            string txt = Newtonsoft.Json.JsonConvert.SerializeObject(sslConfig);
             File.WriteAllText($"{StateManager.melonPath}/SSLConfig.json", txt);
         }
         public static void SetSSLConfig(string path, string pass)
