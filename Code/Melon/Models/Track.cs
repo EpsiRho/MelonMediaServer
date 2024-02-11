@@ -18,7 +18,7 @@ namespace Melon.Models
         public string MusicBrainzID { get; set; }
         public string ISRC { get; set; }
         public string Year { get; set; }
-        public string TrackName { get; set; }
+        public string Name { get; set; }
         public string Path { get; set; }
         public string Duration { get; set; }
         public string nextTrack { get; set; }
@@ -48,7 +48,7 @@ namespace Melon.Models
         public string MusicBrainzID { get; set; }
         public string ISRC { get; set; }
         public string Year { get; set; }
-        public string TrackName { get; set; }
+        public string Name { get; set; }
         public string Duration { get; set; }
         public string nextTrack { get; set; }
         public List<UserStat> PlayCounts { get; set; }
@@ -75,7 +75,7 @@ namespace Melon.Models
             MusicBrainzID = t.MusicBrainzID;
             ISRC = t.ISRC;
             Year = t.Year;
-            TrackName = t.TrackName;
+            Name = t.Name;
             Duration = t.Duration;
             nextTrack = t.nextTrack;
             PlayCounts = t.PlayCounts;

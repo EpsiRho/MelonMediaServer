@@ -6,7 +6,7 @@ namespace Melon.Models
     public class Artist
     {
         public string _id { get; set; }
-        public string ArtistName { get; set; }
+        public string Name { get; set; }
         public string Bio { get; set; }
         public List<UserStat> PlayCounts { get; set; }
         public List<UserStat> SkipCounts { get; set; }
@@ -26,7 +26,7 @@ namespace Melon.Models
     public class ResponseArtist
     {
         public string _id { get; set; }
-        public string ArtistName { get; set; }
+        public string Name { get; set; }
         public string Bio { get; set; }
         public int ArtistPfpArtCount { get; set; }
         public int ArtistBannerArtCount { get; set; }

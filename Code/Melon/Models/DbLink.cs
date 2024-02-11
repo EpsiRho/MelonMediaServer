@@ -14,17 +14,17 @@ namespace Melon.Models
         public DbLink(Track t)
         {
             _id = t._id;
-            Name = t.TrackName;
+            Name = t.Name;
         }
         public DbLink(Album a)
         {
             _id = a._id;
-            Name = a.AlbumName;
+            Name = a.Name;
         }
         public DbLink(Artist a)
         {
             _id = a._id;
-            Name = a.ArtistName;
+            Name = a.Name;
         }
     }
 }

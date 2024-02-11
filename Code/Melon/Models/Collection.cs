@@ -199,7 +199,7 @@ namespace Melon.Models
             try
             {
                 var trackProjection = Builders<Track>.Projection.Include(x => x._id)
-                                                                .Include(x => x.TrackName);
+                                                                .Include(x => x.Name);
                 var trackDocs = TracksCollection.Find(combinedFilter)
                                                 .Project(trackProjection)
                                                 .ToList()

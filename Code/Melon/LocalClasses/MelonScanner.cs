@@ -537,7 +537,7 @@ namespace Melon.LocalClasses
                 artistDoc = new Artist()
                 {
                     _id = aId,
-                    ArtistName = artist,
+                    Name = artist,
                     Bio = "",
                     Ratings = new List<UserStat>(),
                     DateAdded = DateTime.Now.ToUniversalTime(),
@@ -681,7 +681,7 @@ namespace Melon.LocalClasses
                 albumDoc = new Album
                 {
                     _id = AlbumId,
-                    AlbumName = albumName,
+                    Name = albumName,
                     DateAdded = DateTime.Now.ToUniversalTime(),
                     Bio = "",
                     TotalDiscs = fileMetadata.DiscTotal ?? 1,
@@ -815,7 +815,7 @@ namespace Melon.LocalClasses
                 _id = TrackId,
                 LastModified = File.GetLastWriteTime(fileMetadata.Path).ToUniversalTime(),
                 DateAdded = DateTime.UtcNow,
-                TrackName = fileMetadata.Title ?? StateManager.StringsManager.GetString("UnknownStatus"),
+                Name = fileMetadata.Title ?? StateManager.StringsManager.GetString("UnknownStatus"),
                 Album = sAlbum,
                 Path = fileMetadata.Path,
                 Position = fileMetadata.TrackNumber ?? 0,
@@ -841,7 +841,7 @@ namespace Melon.LocalClasses
                 ServerURL = "",
             };
 
-            MelonScanner.CurrentStatus = $"{StateManager.StringsManager.GetString("AdditionProcess")} / {StateManager.StringsManager.GetString("UpdateProcess")} {track.TrackName}";
+            MelonScanner.CurrentStatus = $"{StateManager.StringsManager.GetString("AdditionProcess")} / {StateManager.StringsManager.GetString("UpdateProcess")} {track.Name}";
 
             // Check if any of the found lyric files match with the new track
             for (int i = 0; i < MelonScanner.LyricFiles.Count(); i++)
@@ -968,7 +968,7 @@ namespace Melon.LocalClasses
                 {
                     var filter = Builders<Track>.Filter.In(a => a._id, albumDoc.Tracks.Select(x=>x._id));
                     var fullTracks = TracksCollection.Find(filter).ToList();
-                    albumDoc.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x=>new DbLink() { _id = x._id, Name = x.TrackName }).ToList();
+                    albumDoc.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x=>new DbLink() { _id = x._id, Name = x.Name }).ToList();
                     albumDoc.TotalTracks = albumDoc.Tracks.Count();
                     var albumFilter = Builders<Album>.Filter.Eq(x=>x._id, albumDoc._id);
                     AlbumCollection.ReplaceOneAsync(albumFilter, albumDoc);
@@ -996,9 +996,9 @@ namespace Melon.LocalClasses
                     var fullReleases = AlbumCollection.Find(rAlbumFilter).ToList();
                     var sAlbumFilter = Builders<Album>.Filter.In(a => a._id, artistDoc.SeenOn.Select(x => x._id));
                     var fullSeenOn = AlbumCollection.Find(sAlbumFilter).ToList();
-                    try { artistDoc.Tracks = fullTracks.OrderBy(x=>x.ReleaseDate).ThenBy(x => x.Disc).ThenBy(x => x.Position).Select(x => new DbLink() { _id = x._id, Name = x.TrackName }).ToList(); } catch (Exception) { }
-                    try { artistDoc.Releases = fullReleases.OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.AlbumName }).ToList(); } catch (Exception) { }
-                    try { artistDoc.SeenOn = fullSeenOn.OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.AlbumName }).ToList(); } catch (Exception) { }
+                    try { artistDoc.Tracks = fullTracks.OrderBy(x=>x.ReleaseDate).ThenBy(x => x.Disc).ThenBy(x => x.Position).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList(); } catch (Exception) { }
+                    try { artistDoc.Releases = fullReleases.OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList(); } catch (Exception) { }
+                    try { artistDoc.SeenOn = fullSeenOn.OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList(); } catch (Exception) { }
                     var artistFilter = Builders<Artist>.Filter.Eq(x=>x._id, artistDoc._id);
                     ArtistCollection.ReplaceOneAsync(artistFilter, artistDoc);
                     ScannedFiles++;
