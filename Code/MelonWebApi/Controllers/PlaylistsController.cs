@@ -190,6 +190,17 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Invalid Auth") { StatusCode = 401 };
             }
 
+            var filePath = $"{StateManager.melonPath}/PlaylistArts/{playlist.ArtworkPath}";
+
+            try
+            {
+                System.IO.File.Delete(filePath);
+            }
+            catch (Exception)
+            {
+
+            }
+
             PCollection.DeleteOne(pFilter);
 
             return new ObjectResult("Playlist deleted") { StatusCode = 200 };
