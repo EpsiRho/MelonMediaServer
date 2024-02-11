@@ -166,6 +166,10 @@ namespace MelonWebApi.Controllers
                     }
                 }
             }
+            if(combinedFilter == null)
+            {
+                combinedFilter = Builders<Track>.Filter.Empty;
+            }
 
             SortDefinition<Track> sortDefinition = null;
             switch (sort)
@@ -352,6 +356,10 @@ namespace MelonWebApi.Controllers
                     }
                 }
             }
+            if (combinedFilter == null)
+            {
+                combinedFilter = Builders<Album>.Filter.Empty;
+            }
 
             SortDefinition<Album> sortDefinition = null;
             switch (sort)
@@ -507,6 +515,10 @@ namespace MelonWebApi.Controllers
                         combinedFilter = Builders<Artist>.Filter.And(combinedFilter, filter);
                     }
                 }
+            }
+            if (combinedFilter == null)
+            {
+                combinedFilter = Builders<Artist>.Filter.Empty;
             }
 
             SortDefinition<Artist> sortDefinition = null;
