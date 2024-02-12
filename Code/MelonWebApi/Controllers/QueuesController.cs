@@ -691,7 +691,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("update-position")]
-        public ObjectResult UpdateQueuePosition(string id, int pos)
+        public ObjectResult UpdateQueuePosition(string id, int pos, string device = "")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -720,7 +720,7 @@ namespace MelonWebApi.Controllers
 
             QCollection.ReplaceOne(qFilter, oq);
 
-            StreamManager.AlertQueueUpdate(id);
+            StreamManager.AlertQueueUpdate(id, skipDevice:device);
 
             return new ObjectResult("Queue updated") { StatusCode = 200 };
         }

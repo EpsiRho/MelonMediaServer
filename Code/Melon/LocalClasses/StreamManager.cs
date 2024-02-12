@@ -142,7 +142,7 @@ namespace Melon.LocalClasses
 
             RemoveSocket(wss);
         }
-        public static void AlertQueueUpdate(string id, string msg = "UPDATE QUEUE")
+        public static void AlertQueueUpdate(string id, string msg = "UPDATE QUEUE", string skipDevice = "")
         {
             if(Sockets == null)
             {
@@ -150,7 +150,7 @@ namespace Melon.LocalClasses
             }
             foreach(var wss in Sockets)
             {
-                if(wss.CurrentQueue == id)
+                if(wss.CurrentQueue == id && wss.DeviceName != skipDevice)
                 {
                     WriteToSocket(wss, msg);
                 }
