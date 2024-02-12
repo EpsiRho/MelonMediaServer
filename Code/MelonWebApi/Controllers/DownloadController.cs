@@ -33,13 +33,19 @@ namespace MelonWebApi.Controllers
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
 
-            var tFilter = Builders<Track>.Filter.Eq("TrackId", id);
-            var track = TCollection.Find(tFilter).ToList()[0];
+            var tFilter = Builders<Track>.Filter.Eq(x=>x._id, id);
+            var track = TCollection.Find(tFilter).FirstOrDefault();
+            if (track == null)
+            {
+                return NotFound();
+            }
 
             FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
 
             if (fileStream == null)
-                return NotFound(); 
+            {
+                return NotFound();
+            }
 
             string filename = Path.GetFileName(track.Path);
             return File(fileStream, "application/octet-stream", $"{filename}"); 
