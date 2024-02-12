@@ -9,6 +9,8 @@ using System.Drawing;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using ATL.Playlist;
+using NAudio.Wave;
+using System.Diagnostics;
 
 namespace MelonWebApi.Controllers
 {
@@ -49,6 +51,53 @@ namespace MelonWebApi.Controllers
 
             string filename = Path.GetFileName(track.Path);
             return File(fileStream, "application/octet-stream", $"{filename}"); 
+        }
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet("track-wave")]
+        public ObjectResult DownloadTrackWaveform(string id, float width)
+        {
+            var w = (int)width;
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+            if(width == 0)
+            {
+                return new ObjectResult("Width parameter is required") { StatusCode = 400 };
+            }
+
+            var tFilter = Builders<Track>.Filter.Eq(x=>x._id, id);
+            var track = TCollection.Find(tFilter).FirstOrDefault();
+            if (track == null)
+            {
+                return new ObjectResult("Track not found") { StatusCode = 404 };
+            }
+
+            using (var reader = new AudioFileReader(track.Path))
+            {
+                // Number of samples to process
+                var sampleCount = (int)(reader.Length / (reader.WaveFormat.BitsPerSample / 8));
+                // The number of samples per point in the final waveform
+                var samplesPerPixel = sampleCount / w;
+                var waveform = new float[w];
+                var buffer = new float[samplesPerPixel];
+                int waveformIndex = 0;
+
+                int samplesRead;
+                int count = track.Path.Contains(".wav") ? (reader.WaveFormat.BlockAlign / reader.WaveFormat.Channels) : buffer.Length;
+                while ((samplesRead = reader.Read(buffer, 0, count)) > 0)
+                {
+                    float max = buffer.Take(samplesRead).Select(v => Math.Abs(v)).Max();
+                    waveform[waveformIndex++] = max;
+                    if (waveformIndex >= w) break;
+                    if(max == 0)
+                    {
+                        Debug.WriteLine("penis");
+                    }
+                }
+
+                return new ObjectResult(waveform) { StatusCode = 200 };
+            }
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("track-art")]
