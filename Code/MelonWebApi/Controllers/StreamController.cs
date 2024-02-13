@@ -10,6 +10,14 @@ using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.IO;
+using Concentus.Enums;
+using Concentus.Oggfile;
+using Concentus.Structs;
+using NAudio.Lame;
+using NAudio.Wave.SampleProviders;
+using NAudio.Wave;
+using Microsoft.Net.Http.Headers;
+using Microsoft.Extensions.Primitives;
 
 namespace MelonWebApi.Controllers
 {
@@ -18,6 +26,7 @@ namespace MelonWebApi.Controllers
     public class StreamController : ControllerBase
     {
         private readonly ILogger<StreamController> _logger;
+        public Dictionary<string, MemoryStream> OpusCache { get; set; } = new Dictionary<string, MemoryStream>();
 
         public StreamController(ILogger<StreamController> logger)
         {
@@ -43,34 +52,6 @@ namespace MelonWebApi.Controllers
             {
 
             }
-        }
-        [Route("track")]
-        public async Task<IActionResult> StreamTrack(string id)
-        {
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
-
-            var tFilter = Builders<Track>.Filter.Eq(x => x._id, id);
-            var track = TCollection.Find(tFilter).FirstOrDefault();
-            if (track == null)
-            {
-                return NotFound();
-            }
-
-            FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
-
-            if (fileStream == null)
-            {
-                return NotFound();
-            }
-
-            string filename = Path.GetFileName(track.Path);
-
-            return new FileStreamResult(fileStream, $"audio/{track.Format.Replace(".","")}")
-            {
-                EnableRangeProcessing = true
-            };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get-external")]

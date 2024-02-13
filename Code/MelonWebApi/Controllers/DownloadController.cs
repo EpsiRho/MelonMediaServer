@@ -21,6 +21,8 @@ using NAudio.Wave.SampleProviders;
 using Microsoft.Net.Http.Headers;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Azure;
+using System;
+using MongoDB.Driver.Core.Events;
 
 namespace MelonWebApi.Controllers
 {
@@ -36,7 +38,7 @@ namespace MelonWebApi.Controllers
         }
         //[Authorize(Roles = "Admin,User")]
         [HttpGet("track")]
-        public async Task DownloadTrack(string id, string transcodeFormat = "", int transcodeBitrate = 256, int frameDurationMs = 20)
+        public async Task<IActionResult> DownloadTrack(string id)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -46,97 +48,93 @@ namespace MelonWebApi.Controllers
             var track = TCollection.Find(tFilter).FirstOrDefault();
             if (track == null)
             {
-                HttpContext.Response.StatusCode = 404;
-                return;
+                return NotFound();
             }
 
             FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
 
             if (fileStream == null)
             {
-                HttpContext.Response.StatusCode = 404;
-                return;
+                return NotFound();
             }
 
             string filename = Path.GetFileName(track.Path);
-            if (transcodeFormat != "")
+            return new FileStreamResult(fileStream, $"audio/{track.Format.Replace(".", "")}")
             {
-                using (var reader = new AudioFileReader(track.Path)) 
-                {
-                    WaveFormat targetFormat = null;
-                    if (transcodeFormat == "mp3")
-                    {
-                        targetFormat = new Mp3WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.Channels, 0, transcodeBitrate);
+                EnableRangeProcessing = true,
+                FileDownloadName = filename
+            };
+        }
+        [HttpGet("track-transcode")]
+        public async Task<IActionResult> DownloadTrackTranscode(string id, int transcodeBitrate = 256)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-                        LameConfig config = new LameConfig()
-                        {
-                            BitRate = transcodeBitrate
-                        };
-
-                        var split = filename.Split(".");
-                        filename = filename.Replace(split[split.Length - 1], ".mp3");
-                        HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
-                        HttpContext.Response.StatusCode = 200;
-                        HttpContext.Response.ContentType = "audio/mpeg";
-
-                        using (var writer = new LameMP3FileWriter(HttpContext.Response.Body, reader.WaveFormat, config))
-                        {
-                            reader.CopyTo(writer);
-                        }
-                        return;
-                    }
-                    else if (transcodeFormat == "opus")
-                    {
-                        int channels = reader.WaveFormat.Channels;
-                        int outputSampleRate = 48000;
-                        int frameSize = outputSampleRate * frameDurationMs / 1000;
-                        var opusEncoder = new OpusEncoder(outputSampleRate, channels, OpusApplication.OPUS_APPLICATION_AUDIO)
-                        {
-                            Bitrate = transcodeBitrate * 1000
-                        };
-
-                        var split = filename.Split(".");
-                        filename = filename.Replace(split[split.Length - 1], ".opus");
-                        HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
-                        HttpContext.Response.StatusCode = 200;
-                        HttpContext.Response.ContentType = "audio/opus";
-
-                        var oggStream = new OpusOggWriteStream(opusEncoder, HttpContext.Response.Body);
-                        int totalSamples = frameSize * channels;
-                        float[] buffer = new float[totalSamples]; 
-                        short[] shortBuffer = new short[totalSamples];
-                        byte[] opusBuffer = new byte[4096];
-
-                        var resampler = new WdlResamplingSampleProvider(reader, outputSampleRate);
-
-                        int bytesRead;
-                        try
-                        {
-                            while ((bytesRead = resampler.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                // Convert float to short
-                                for (int i = 0; i < bytesRead; i++)
-                                {
-                                    shortBuffer[i] = (short)(buffer[i] * short.MaxValue);
-                                }
-                                oggStream.WriteSamples(shortBuffer, 0, bytesRead);
-                            }
-                        }
-                        catch(Exception)
-                        {
-
-                        }
-                        return;
-                    }
-                }
+            var tFilter = Builders<Track>.Filter.Eq(x => x._id, id);
+            var track = TCollection.Find(tFilter).FirstOrDefault();
+            if (track == null)
+            {
+                return NotFound();
             }
 
-            HttpContext.Response.ContentType = $"audio/{track.Format.Replace(".", "")}";
-            HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
-            HttpContext.Response.StatusCode = 200;
-            HttpContext.Response.ContentLength = fileStream.Length;
+            FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
 
-            fileStream.CopyTo(HttpContext.Response.Body);
+            if (fileStream == null)
+            {
+                return NotFound();
+            }
+
+            string filename = Path.GetFileName(track.Path);
+            var split = filename.Split(".");
+            filename = filename.Replace(split[split.Length - 1], "mp3");
+
+            using (var reader = new AudioFileReader(track.Path))
+            {
+                // Wave format to convert to
+                WaveFormat targetFormat = new Mp3WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.Channels, 0, transcodeBitrate);
+                LameConfig config = new LameConfig()
+                {
+                    BitRate = transcodeBitrate
+                };
+
+
+                // If the request has a range header, send the file through FileStreamResult to manage it
+                var rangeHeader = Request.Headers[HeaderNames.Range];
+                if (!string.IsNullOrEmpty(rangeHeader))
+                {
+                    MemoryStream ms = new MemoryStream();
+                    using (var writer = new LameMP3FileWriter(ms, reader.WaveFormat, config))
+                    {
+                        reader.CopyTo(writer);
+                        writer.Flush();
+                    }
+                    ms.Position = 0;
+                    return new FileStreamResult(ms, "audio/mpeg")
+                    {
+                        EnableRangeProcessing = true,
+                        FileDownloadName = filename
+                    };
+                }
+
+                // Otherwise, send file as it's transcoded (faster, but no ability for seek)
+                using (var writer = new LameMP3FileWriter(HttpContext.Response.Body, reader.WaveFormat, config))
+                {
+                    byte[] buffer = new byte[4096];
+                    HttpContext.Response.Headers["Accept-Ranges"] = "bytes";
+                    HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
+                    HttpContext.Response.StatusCode = 200;
+                    HttpContext.Response.ContentType = "audio/mpeg";
+                    int bytesRead;
+                    while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        writer.Write(buffer, 0, buffer.Length);
+                    }
+                    writer.Flush();
+                }
+                return ControllerBase.Empty;
+            }
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("track-wave")]
