@@ -14,6 +14,13 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Components.Forms;
 using Humanizer.Bytes;
 using NAudio.Lame;
+using Concentus.Structs;
+using Concentus.Enums;
+using Concentus.Oggfile;
+using NAudio.Wave.SampleProviders;
+using Microsoft.Net.Http.Headers;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Azure;
 
 namespace MelonWebApi.Controllers
 {
@@ -29,7 +36,7 @@ namespace MelonWebApi.Controllers
         }
         //[Authorize(Roles = "Admin,User")]
         [HttpGet("track")]
-        public async Task<IActionResult> DownloadTrack(string id, string transcode = "")
+        public async Task DownloadTrack(string id, string transcodeFormat = "", int transcodeBitrate = 256, int frameDurationMs = 20)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -41,63 +48,102 @@ namespace MelonWebApi.Controllers
             var track = TCollection.Find(tFilter).FirstOrDefault();
             if (track == null)
             {
-                return NotFound();
+                //return NotFound();
             }
 
             FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
 
             if (fileStream == null)
             {
-                return NotFound();
+                //return NotFound();
             }
 
             string filename = Path.GetFileName(track.Path);
-            if (transcode != "")
+            if (transcodeFormat != "")
             {
-                int bitrate = 0;
                 using (var reader = new AudioFileReader(track.Path)) 
                 {
                     WaveFormat targetFormat = null;
-                        if (transcode.Contains("mp3"))
-                        {
-                        try
-                        {
-                            var bitrateStr = transcode.Split(":")[1];
-                            bitrate = int.Parse(bitrateStr);
-                        }
-                        catch (Exception)
-                        {
-                            return new ObjectResult("Invalid transcode parameter");
-                        }
-                        targetFormat = new Mp3WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.Channels, 0, bitrate);
-                            
-                    }
-
-                    if (transcode.Contains("mp3"))
+                    if (transcodeFormat == "mp3")
                     {
-                        // For MP3, using LameMP3FileWriter to encode
+                        targetFormat = new Mp3WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.Channels, 0, transcodeBitrate);
+
                         LameConfig config = new LameConfig()
                         {
-                            BitRate = bitrate
+                            BitRate = transcodeBitrate
                         };
                         MemoryStream transcodedFile = new MemoryStream();
-                        using (var writer = new LameMP3FileWriter(transcodedFile, reader.WaveFormat, config))
+                        using (var writer = new LameMP3FileWriter(HttpContext.Response.Body, reader.WaveFormat, config))
                         {
                             reader.CopyTo(writer);
                         }
                         var split = filename.Split(".");
-                        filename = filename.Replace(split[split.Length-1], ".mp3");
-                        return File(transcodedFile.ToArray(), "application/octet-stream", $"{filename}");
+                        filename = filename.Replace(split[split.Length - 1], ".mp3");
+                        //return File(transcodedFile, "application/octet-stream", $"{filename}");
                     }
-                    else
+                    else if (transcodeFormat == "opus")
                     {
-                        // For OPUS or other formats, you would encode here using the appropriate encoder
-                        // This part of the code is left as an exercise due to the lack of direct OPUS support in NAudio.
+                        int channels = reader.WaveFormat.Channels;
+                        int outputSampleRate = 48000; // Opus uses 48kHz
+                        int frameSize = outputSampleRate * frameDurationMs / 1000; // Samples per frame
+                        var opusEncoder = new OpusEncoder(outputSampleRate, channels, OpusApplication.OPUS_APPLICATION_AUDIO)
+                        {
+                            Bitrate = transcodeBitrate * 1000
+                        };
+
+                        //MemoryStream transcodedFile = new MemoryStream();
+                        var response = HttpContext.Response;
+                        response.ContentType = "audio/mpeg";
+                        var split = filename.Split(".");
+                        filename = filename.Replace(split[split.Length - 1], ".opus");
+                        response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
+                        Response.StatusCode = 200;
+
+                        var oggStream = new OpusOggWriteStream(opusEncoder, response.Body);
+                        int totalSamples = frameSize * channels;
+                        float[] buffer = new float[totalSamples]; 
+                        short[] shortBuffer = new short[totalSamples];
+                        byte[] opusBuffer = new byte[4096];
+
+                        var resampler = new WdlResamplingSampleProvider(reader, outputSampleRate);
+
+                        int bytesRead;
+                        try
+                        {
+                            while ((bytesRead = resampler.Read(buffer, 0, buffer.Length)) > 0)
+                            {
+                                // Convert float to short
+                                for (int i = 0; i < bytesRead; i++)
+                                {
+                                    shortBuffer[i] = (short)(buffer[i] * short.MaxValue);
+                                }
+                                oggStream.WriteSamples(shortBuffer, 0, bytesRead);
+                            }
+                        }
+                        catch(Exception)
+                        {
+
+                        }
+                        return;
                     }
                 }
             }
 
-            return File(fileStream, "application/octet-stream", $"{filename}"); 
+            //FileStreamHttpResult result = FileStreamHttpResult;
+
+            //var result = new FileStreamResult(fileStream, new MediaTypeHeaderValue("audio/mpeg"))
+            //{
+            //    FileDownloadName = filename
+            //};
+            //
+            //result.ExecuteResult(HttpContext);
+
+            HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
+            HttpContext.Response.StatusCode = 200;
+
+            fileStream.CopyTo(HttpContext.Response.Body);
+
+            //return File(fileStream, "application/octet-stream", $"{filename}"); 
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("track-wave")]
