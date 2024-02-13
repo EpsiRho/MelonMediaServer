@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Authorization;
 using ATL.Playlist;
 using NAudio.Wave;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Components.Forms;
+using Humanizer.Bytes;
+using NAudio.Lame;
 
 namespace MelonWebApi.Controllers
 {
@@ -24,16 +27,15 @@ namespace MelonWebApi.Controllers
         {
             _logger = logger;
         }
-        [Authorize(Roles = "Admin,User")]
+        //[Authorize(Roles = "Admin,User")]
         [HttpGet("track")]
-        public async Task<IActionResult> DownloadTrack(string id)
+        public async Task<IActionResult> DownloadTrack(string id, string transcode = "")
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
+            var user = User.Identity;
 
             var tFilter = Builders<Track>.Filter.Eq(x=>x._id, id);
             var track = TCollection.Find(tFilter).FirstOrDefault();
@@ -50,6 +52,51 @@ namespace MelonWebApi.Controllers
             }
 
             string filename = Path.GetFileName(track.Path);
+            if (transcode != "")
+            {
+                int bitrate = 0;
+                using (var reader = new AudioFileReader(track.Path)) 
+                {
+                    WaveFormat targetFormat = null;
+                        if (transcode.Contains("mp3"))
+                        {
+                        try
+                        {
+                            var bitrateStr = transcode.Split(":")[1];
+                            bitrate = int.Parse(bitrateStr);
+                        }
+                        catch (Exception)
+                        {
+                            return new ObjectResult("Invalid transcode parameter");
+                        }
+                        targetFormat = new Mp3WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.Channels, 0, bitrate);
+                            
+                    }
+
+                    if (transcode.Contains("mp3"))
+                    {
+                        // For MP3, using LameMP3FileWriter to encode
+                        LameConfig config = new LameConfig()
+                        {
+                            BitRate = bitrate
+                        };
+                        MemoryStream transcodedFile = new MemoryStream();
+                        using (var writer = new LameMP3FileWriter(transcodedFile, reader.WaveFormat, config))
+                        {
+                            reader.CopyTo(writer);
+                        }
+                        var split = filename.Split(".");
+                        filename = filename.Replace(split[split.Length-1], ".mp3");
+                        return File(transcodedFile.ToArray(), "application/octet-stream", $"{filename}");
+                    }
+                    else
+                    {
+                        // For OPUS or other formats, you would encode here using the appropriate encoder
+                        // This part of the code is left as an exercise due to the lack of direct OPUS support in NAudio.
+                    }
+                }
+            }
+
             return File(fileStream, "application/octet-stream", $"{filename}"); 
         }
         [Authorize(Roles = "Admin,User")]
