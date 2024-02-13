@@ -90,7 +90,7 @@ namespace MelonWebApi.Controllers
 
                 foreach (var track in genreBasedTracks)
                 {
-                    NewTrackIds.Add(track["TrackId"].AsString);
+                    NewTrackIds.Add(track["_id"].AsString);
                 }
             }
 
@@ -198,7 +198,7 @@ namespace MelonWebApi.Controllers
 
                 foreach (var album in genreBasedAlbums)
                 {
-                    NewAlbumIds.Add(album["AlbumId"].AsString);
+                    NewAlbumIds.Add(album["_id"].AsString);
                 }
             }
 
