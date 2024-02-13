@@ -61,6 +61,7 @@ namespace Melon.LocalClasses
 
 
             // Title
+            MelonColor.SetDefaults();
             MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("InitializationStatus") });
             if (!headless)
             {
@@ -71,8 +72,11 @@ namespace Melon.LocalClasses
                 StringsManager.GetString("MongoDBConnectStatus")
             });
             }
-            
-            ChecklistUI.ShowChecklist();
+
+            if (!headless)
+            {
+                ChecklistUI.ShowChecklist();
+            }
 
 
             // Load Settings
@@ -161,7 +165,7 @@ namespace Melon.LocalClasses
                         JWTExpireInMinutes = 60,
                         UseMenuColor = true,
                     };
-                    MelonColor.SetDefaults();
+                   
                     DisplayManager.UIExtensions.Add(SetupUI.Display);
                 }
 
@@ -176,7 +180,10 @@ namespace Melon.LocalClasses
                 Security.SetSSLConfig("", "");
             }
 
-            ChecklistUI.UpdateChecklist(0, true);
+            if (!headless)
+            {
+                ChecklistUI.UpdateChecklist(0, true);
+            }
 
             // Connect to mongodb
             try
@@ -194,11 +201,18 @@ namespace Melon.LocalClasses
                 Thread.Sleep(200);
                 MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
                 Console.WriteLine(StringsManager.GetString("MongoDBConnectionError").Pastel(MelonColor.Error));
-                Console.WriteLine(StringsManager.GetString("ReturnPrompt").Pastel(MelonColor.BackgroundText));
-                Console.ReadKey(intercept: true);
-                DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
-                DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
-                return;
+                if (!headless)
+                {
+                    Console.WriteLine(StringsManager.GetString("ReturnPrompt").Pastel(MelonColor.BackgroundText));
+                    Console.ReadKey(intercept: true);
+                    DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
+                    DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
+                    return;
+                }
+                else
+                {
+                    Environment.Exit(1);
+                }
             }
 
             // Setup Menu
@@ -207,8 +221,11 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDB);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
-            ChecklistUI.UpdateChecklist(1, true);
-            ChecklistUI.end = true;
+            if (!headless)
+            {
+                ChecklistUI.UpdateChecklist(1, true);
+                ChecklistUI.end = true;
+            }
             Thread.Sleep(200);
 
         }

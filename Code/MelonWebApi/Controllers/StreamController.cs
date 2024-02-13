@@ -9,6 +9,15 @@ using System.Drawing;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using System.IO;
+using Concentus.Enums;
+using Concentus.Oggfile;
+using Concentus.Structs;
+using NAudio.Lame;
+using NAudio.Wave.SampleProviders;
+using NAudio.Wave;
+using Microsoft.Net.Http.Headers;
+using Microsoft.Extensions.Primitives;
 
 namespace MelonWebApi.Controllers
 {
@@ -17,6 +26,7 @@ namespace MelonWebApi.Controllers
     public class StreamController : ControllerBase
     {
         private readonly ILogger<StreamController> _logger;
+        public Dictionary<string, MemoryStream> OpusCache { get; set; } = new Dictionary<string, MemoryStream>();
 
         public StreamController(ILogger<StreamController> logger)
         {
