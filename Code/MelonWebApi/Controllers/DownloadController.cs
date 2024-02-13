@@ -42,20 +42,20 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-            var user = User.Identity;
-
             var tFilter = Builders<Track>.Filter.Eq(x=>x._id, id);
             var track = TCollection.Find(tFilter).FirstOrDefault();
             if (track == null)
             {
-                //return NotFound();
+                HttpContext.Response.StatusCode = 404;
+                return;
             }
 
             FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
 
             if (fileStream == null)
             {
-                //return NotFound();
+                HttpContext.Response.StatusCode = 404;
+                return;
             }
 
             string filename = Path.GetFileName(track.Path);
@@ -77,6 +77,7 @@ namespace MelonWebApi.Controllers
                         filename = filename.Replace(split[split.Length - 1], ".mp3");
                         HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
                         HttpContext.Response.StatusCode = 200;
+                        HttpContext.Response.ContentType = "audio/mpeg";
 
                         using (var writer = new LameMP3FileWriter(HttpContext.Response.Body, reader.WaveFormat, config))
                         {
@@ -87,19 +88,18 @@ namespace MelonWebApi.Controllers
                     else if (transcodeFormat == "opus")
                     {
                         int channels = reader.WaveFormat.Channels;
-                        int outputSampleRate = 48000; // Opus uses 48kHz
-                        int frameSize = outputSampleRate * frameDurationMs / 1000; // Samples per frame
+                        int outputSampleRate = 48000;
+                        int frameSize = outputSampleRate * frameDurationMs / 1000;
                         var opusEncoder = new OpusEncoder(outputSampleRate, channels, OpusApplication.OPUS_APPLICATION_AUDIO)
                         {
                             Bitrate = transcodeBitrate * 1000
                         };
 
-                        //MemoryStream transcodedFile = new MemoryStream();
-                        HttpContext.Response.ContentType = "audio/mpeg";
                         var split = filename.Split(".");
                         filename = filename.Replace(split[split.Length - 1], ".opus");
                         HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
                         HttpContext.Response.StatusCode = 200;
+                        HttpContext.Response.ContentType = "audio/mpeg";
 
                         var oggStream = new OpusOggWriteStream(opusEncoder, HttpContext.Response.Body);
                         int totalSamples = frameSize * channels;
@@ -131,6 +131,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            HttpContext.Response.ContentType = "audio/mpeg";
             HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
             HttpContext.Response.StatusCode = 200;
             HttpContext.Response.ContentLength = fileStream.Length;
