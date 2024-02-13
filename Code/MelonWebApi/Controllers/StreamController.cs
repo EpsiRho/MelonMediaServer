@@ -9,6 +9,7 @@ using System.Drawing;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using System.IO;
 
 namespace MelonWebApi.Controllers
 {
@@ -42,6 +43,34 @@ namespace MelonWebApi.Controllers
             {
 
             }
+        }
+        [Route("track")]
+        public async Task<IActionResult> StreamTrack(string id)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+            var tFilter = Builders<Track>.Filter.Eq(x => x._id, id);
+            var track = TCollection.Find(tFilter).FirstOrDefault();
+            if (track == null)
+            {
+                return NotFound();
+            }
+
+            FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
+
+            if (fileStream == null)
+            {
+                return NotFound();
+            }
+
+            string filename = Path.GetFileName(track.Path);
+
+            return new FileStreamResult(fileStream, $"audio/{track.Format.Replace(".","")}")
+            {
+                EnableRangeProcessing = true
+            };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get-external")]

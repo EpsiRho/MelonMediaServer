@@ -34,7 +34,7 @@ namespace MelonWebApi.Controllers
         {
             _logger = logger;
         }
-        [Authorize(Roles = "Admin,User")]
+        //[Authorize(Roles = "Admin,User")]
         [HttpGet("track")]
         public async Task DownloadTrack(string id, string transcodeFormat = "", int transcodeBitrate = 256, int frameDurationMs = 20)
         {
@@ -99,7 +99,7 @@ namespace MelonWebApi.Controllers
                         filename = filename.Replace(split[split.Length - 1], ".opus");
                         HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
                         HttpContext.Response.StatusCode = 200;
-                        HttpContext.Response.ContentType = "audio/mpeg";
+                        HttpContext.Response.ContentType = "audio/opus";
 
                         var oggStream = new OpusOggWriteStream(opusEncoder, HttpContext.Response.Body);
                         int totalSamples = frameSize * channels;
@@ -131,7 +131,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            HttpContext.Response.ContentType = "audio/mpeg";
+            HttpContext.Response.ContentType = $"audio/{track.Format.Replace(".", "")}";
             HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
             HttpContext.Response.StatusCode = 200;
             HttpContext.Response.ContentLength = fileStream.Length;
