@@ -72,14 +72,17 @@ namespace MelonWebApi.Controllers
                         {
                             BitRate = transcodeBitrate
                         };
-                        MemoryStream transcodedFile = new MemoryStream();
+
+                        var split = filename.Split(".");
+                        filename = filename.Replace(split[split.Length - 1], ".mp3");
+                        HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
+                        HttpContext.Response.StatusCode = 200;
+
                         using (var writer = new LameMP3FileWriter(HttpContext.Response.Body, reader.WaveFormat, config))
                         {
                             reader.CopyTo(writer);
                         }
-                        var split = filename.Split(".");
-                        filename = filename.Replace(split[split.Length - 1], ".mp3");
-                        //return File(transcodedFile, "application/octet-stream", $"{filename}");
+                        return;
                     }
                     else if (transcodeFormat == "opus")
                     {
@@ -92,14 +95,13 @@ namespace MelonWebApi.Controllers
                         };
 
                         //MemoryStream transcodedFile = new MemoryStream();
-                        var response = HttpContext.Response;
-                        response.ContentType = "audio/mpeg";
+                        HttpContext.Response.ContentType = "audio/mpeg";
                         var split = filename.Split(".");
                         filename = filename.Replace(split[split.Length - 1], ".opus");
-                        response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
-                        Response.StatusCode = 200;
+                        HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
+                        HttpContext.Response.StatusCode = 200;
 
-                        var oggStream = new OpusOggWriteStream(opusEncoder, response.Body);
+                        var oggStream = new OpusOggWriteStream(opusEncoder, HttpContext.Response.Body);
                         int totalSamples = frameSize * channels;
                         float[] buffer = new float[totalSamples]; 
                         short[] shortBuffer = new short[totalSamples];
@@ -129,21 +131,11 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            //FileStreamHttpResult result = FileStreamHttpResult;
-
-            //var result = new FileStreamResult(fileStream, new MediaTypeHeaderValue("audio/mpeg"))
-            //{
-            //    FileDownloadName = filename
-            //};
-            //
-            //result.ExecuteResult(HttpContext);
-
             HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
             HttpContext.Response.StatusCode = 200;
+            HttpContext.Response.ContentLength = fileStream.Length;
 
             fileStream.CopyTo(HttpContext.Response.Body);
-
-            //return File(fileStream, "application/octet-stream", $"{filename}"); 
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("track-wave")]
