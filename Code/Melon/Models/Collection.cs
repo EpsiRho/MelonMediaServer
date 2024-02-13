@@ -29,6 +29,7 @@ namespace Melon.Models
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var PlaylistsCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
             List<FilterDefinition<Track>> AndDefs = new List<FilterDefinition<Track>>();
             foreach (var filter in AndFilters)
@@ -63,6 +64,20 @@ namespace Melon.Models
                     {
                         var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
                         AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                }
+                else if (property.Contains("Playlist"))
+                {
+                    if (type == "Contains")
+                    {
+                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                        if(playlist == null)
+                        {
+                            continue;
+                        }
+
+                        var tracks = playlist.Tracks.Select(x=>x._id).ToList();
+                        AndDefs.Add(Builders<Track>.Filter.In(x=>x._id, tracks));
                     }
                 }
                 else
@@ -134,6 +149,20 @@ namespace Melon.Models
                     {
                         var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
                         OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                }
+                else if (property.Contains("Playlist"))
+                {
+                    if (type == "Contains")
+                    {
+                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                        if (playlist == null)
+                        {
+                            continue;
+                        }
+
+                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                        OrDefs.Add(Builders<Track>.Filter.In(x => x._id, tracks));
                     }
                 }
                 else
