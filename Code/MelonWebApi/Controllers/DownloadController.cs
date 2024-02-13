@@ -36,7 +36,7 @@ namespace MelonWebApi.Controllers
         {
             _logger = logger;
         }
-        //[Authorize(Roles = "Admin,User")]
+        [Authorize(Roles = "Admin,User")]
         [HttpGet("track")]
         public async Task<IActionResult> DownloadTrack(string id)
         {
@@ -65,6 +65,7 @@ namespace MelonWebApi.Controllers
                 FileDownloadName = filename
             };
         }
+        [Authorize(Roles = "Admin,User")]
         [HttpGet("track-transcode")]
         public async Task<IActionResult> DownloadTrackTranscode(string id, int transcodeBitrate = 256)
         {
