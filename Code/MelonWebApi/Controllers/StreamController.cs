@@ -33,7 +33,8 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
-        [Route("connect")]
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("connect")]
         public async Task ConnectWebSocket()
         {
             if (!HttpContext.WebSockets.IsWebSocketRequest)

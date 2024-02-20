@@ -14,6 +14,7 @@ using MongoDB.Bson.Serialization;
 using System.Security.Claims;
 using System.Net;
 using ATL.Playlist;
+using System.ComponentModel.DataAnnotations;
 
 namespace MelonWebApi.Controllers
 {
@@ -29,9 +30,24 @@ namespace MelonWebApi.Controllers
         }
 
         // Tracks
+        /// <summary>
+        /// Deletes the artwork associated with a specific track.
+        /// </summary>
+        /// <param name="id">The unique identifier of the track.</param>
+        /// <param name="pos">The position of the artwork to be deleted.</param>
+        /// <remarks>
+        /// Authorization: This endpoint requires a JWT token
+        /// - `Valid roles`: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully deleted.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the track is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("track-art")]
-        public ObjectResult DeleteTrackArt(string id, int pos)
+        public ObjectResult DeleteTrackArt([Required(ErrorMessage = "Track ID is required")] string id, 
+                                           [Required(ErrorMessage = "Position is required")] [Range(0, int.MaxValue, ErrorMessage = "Position must be positive")] int pos)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
