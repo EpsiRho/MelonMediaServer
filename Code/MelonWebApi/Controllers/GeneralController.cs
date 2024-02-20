@@ -51,8 +51,12 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Track not found") { StatusCode = 404 };
             }
 
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+
             var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
-            usernames.Add(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.Username, User.Identity.Name)).ToList().Select(x => x._id).FirstOrDefault());
+            usernames.Add(curId);
 
             if (track.PlayCounts != null)
             {
