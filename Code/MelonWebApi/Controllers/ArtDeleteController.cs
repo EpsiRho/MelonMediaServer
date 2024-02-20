@@ -29,12 +29,11 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
-        // Tracks
         /// <summary>
         /// Deletes the artwork associated with a specific track.
         /// </summary>
         /// <param name="id">The unique identifier of the track.</param>
-        /// <param name="pos">The position of the artwork to be deleted.</param>
+        /// <param name="pos">The position of the artwork to be deleted, starting at 0.</param>
         /// <remarks>
         /// Authorization: This endpoint requires a JWT token
         /// - `Valid roles`: Admin
@@ -43,7 +42,7 @@ namespace MelonWebApi.Controllers
         /// <response code="200">If the artwork is successfully deleted.</response>
         /// <response code="400">If the input parameters are invalid.</response>
         /// <response code="401">If the user does not have permission to perform this action.</response>
-        /// <response code="404">If the track is not found.</response>
+        /// <response code="404">If the track or track file is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("track-art")]
         public ObjectResult DeleteTrackArt([Required(ErrorMessage = "Track ID is required")] string id, 
@@ -83,10 +82,24 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Track art removed") { StatusCode = 200 };
         }
 
-        // Albums
+        /// <summary>
+        /// Deletes the artwork associated with a specific album.
+        /// </summary>
+        /// <param name="id">The unique identifier of the album.</param>
+        /// <param name="pos">The position of the artwork to be deleted, starting at 0.</param>
+        /// <remarks>
+        /// Authorization: This endpoint requires a JWT token
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully deleted.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the album or artwork file is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("album-art")]
-        public ObjectResult DeleteAlbumArt(string id, int pos)
+        public ObjectResult DeleteAlbumArt([Required(ErrorMessage = "Album ID is required")] string id,
+                                           [Required(ErrorMessage = "Position is required")] [Range(0, int.MaxValue, ErrorMessage = "Position must be positive")] int pos)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -121,10 +134,24 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Album art removed") { StatusCode = 200 };
         }
 
-        // Artists
+        /// <summary>
+        /// Deletes the profile picture associated with a specific artist.
+        /// </summary>
+        /// <param name="id">The unique identifier of the artist.</param>
+        /// <param name="pos">The position of the artwork to be deleted, starting at 0.</param>
+        /// <remarks>
+        /// Authorization: This endpoint requires a JWT token
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully deleted.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the artist or artwork file is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("artist-pfp")]
-        public ObjectResult DeleteArtistPfp(string id, int pos)
+        public ObjectResult DeleteArtistPfp([Required(ErrorMessage = "Artist ID is required")] string id,
+                                            [Required(ErrorMessage = "Position is required")] [Range(0, int.MaxValue, ErrorMessage = "Position must be positive")] int pos)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -158,9 +185,25 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Artist pfp removed") { StatusCode = 200 };
         }
+
+        /// <summary>
+        /// Deletes the banner artwork associated with a specific artist.
+        /// </summary>
+        /// <param name="id">The unique identifier of the artist.</param>
+        /// <param name="pos">The position of the artwork to be deleted, starting at 0.</param>
+        /// <remarks>
+        /// Authorization: This endpoint requires a JWT token
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully deleted.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the artist or artwork file is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("artist-banner")]
-        public ObjectResult DeleteArtistBanner(string id, int pos)
+        public ObjectResult DeleteArtistBanner([Required(ErrorMessage = "Artist ID is required")] string id,
+                                               [Required(ErrorMessage = "Position is required")] [Range(0, int.MaxValue, ErrorMessage = "Position must be positive")] int pos)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -195,10 +238,21 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Artist banner removed") { StatusCode = 200 };
         }
 
-        // Playlists
+        /// <summary>
+        /// Deletes the artwork associated with a specific playlist.
+        /// </summary>
+        /// <param name="id">The unique identifier of the playlist.</param>
+        /// <remarks>
+        /// Authorization: This endpoint requires a JWT token
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully deleted.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the playlist or artwork file is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("playlist-art")]
-        public ObjectResult DeletePlaylistArt(string id)
+        public ObjectResult DeletePlaylistArt([Required(ErrorMessage = "Playlist ID is required")] string id)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -226,9 +280,22 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Playlist art removed") { StatusCode = 200 };
         }
+
+        /// <summary>
+        /// Deletes the artwork associated with a specific collection.
+        /// </summary>
+        /// <param name="id">The unique identifier of the collection.</param>
+        /// <remarks>
+        /// Authorization: This endpoint requires a JWT token
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully deleted.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the collection or artwork file is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("collection-art")]
-        public ObjectResult DeleteCollectionArt(string id)
+        public ObjectResult DeleteCollectionArt([Required(ErrorMessage = "Collection ID is required")] string id)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -256,6 +323,18 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Collection art removed") { StatusCode = 200 };
         }
+
+        /// <summary>
+        /// Deletes the custom artwork used when no artwork is found.
+        /// </summary>
+        /// <remarks>
+        /// Authorization: This endpoint requires a JWT token
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully deleted.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the collection or artwork file is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("default-art")]
         public ObjectResult DeleteDefaultArt()
