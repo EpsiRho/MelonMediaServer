@@ -288,7 +288,8 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("time")]
-        public ObjectResult DiscoverTimeBasedTracks(string time, int count = 100, bool enableTrackLinks = true, bool includeArtists = true, bool includeGenres = true)
+        public ObjectResult DiscoverTimeBasedTracks(string time, int span = 5, int count = 100, bool enableTrackLinks = true, bool includeArtists = true, bool includeGenres = true,
+                                                    bool includeRecent = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -306,7 +307,7 @@ namespace MelonWebApi.Controllers
             DateTime tsEnd = ts.Add(TimeSpan.FromMinutes(30));
 
             var stats = StatsCollection.AsQueryable()
-                                       .Where(x => x.LogDate >= ts.AddDays(-3) &&
+                                       .Where(x => x.LogDate >= ts.AddDays(-span) &&
                                               x.LogDate.TimeOfDay >= tsStart.TimeOfDay && x.LogDate.TimeOfDay < tsEnd.TimeOfDay)
                                        .ToList();
             foreach (var stat in stats)
@@ -373,8 +374,11 @@ namespace MelonWebApi.Controllers
 
             string username = User.Identity.Name;
 
-            Dictionary<Track, int> tracks = firstTracks.Select(x => KeyValuePair.Create(x, 1)).ToDictionary();
-            tracks.AddRange(finalTracks.Select(x => KeyValuePair.Create(x, 2)).ToDictionary());
+            Dictionary<Track, int> tracks = finalTracks.Select(x => KeyValuePair.Create(x, 3)).ToDictionary();
+            if (includeRecent)
+            {
+                tracks.AddRange(firstTracks.Select(x => KeyValuePair.Create(x, 1)).ToDictionary());
+            }
 
             Random rng = new Random();
             List<Track> shuffledList = tracks.OrderBy(item => rng.Next())
