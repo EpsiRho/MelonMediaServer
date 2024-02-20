@@ -129,3 +129,4 @@ LanguageError=No support for {} found in Melon.
 DefaultLanguageOption=Change Default Language
 CollectionStepStatus=Updating Collections
 CheckDbVersioningStatus=Checking Database Compatibility
+LoadPluginsStatus=Load Plugins

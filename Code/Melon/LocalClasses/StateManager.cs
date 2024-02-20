@@ -72,7 +72,8 @@ namespace Melon.LocalClasses
                 ChecklistUI.CreateChecklist(new List<string>()
             {
                 StringsManager.GetString("SettingsLoadStatus"),
-                StringsManager.GetString("MongoDBConnectStatus")
+                StringsManager.GetString("MongoDBConnectStatus"),
+                StringsManager.GetString("LoadPluginsStatus")
             });
             }
 
@@ -110,12 +111,6 @@ namespace Melon.LocalClasses
             if ((MelonFlags.ForceOOBE || runSetup) && !headless)
             {
                 DisplayManager.UIExtensions.Add(SetupUI.Display);
-            }
-
-            // Plugins
-            if (!MelonFlags.DisablePlugins || loadPlugins)
-            {
-                LoadPlugins();
             }
 
             if (!File.Exists($"{melonPath}/Settings.json"))
@@ -225,6 +220,13 @@ namespace Melon.LocalClasses
                 }
             }
 
+            // Plugins
+            if (!MelonFlags.DisablePlugins || loadPlugins)
+            {
+                ChecklistUI.UpdateChecklist(1, true);
+                LoadPlugins();
+            }
+
             // Setup Menu
             DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);
@@ -233,10 +235,10 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
             if (!headless)
             {
-                ChecklistUI.UpdateChecklist(1, true);
-                ChecklistUI.end = true;
+                ChecklistUI.UpdateChecklist(2, true);
             }
             Thread.Sleep(200);
+            ChecklistUI.end = true;
 
         }
         public static void LoadSettings()
@@ -356,7 +358,6 @@ namespace Melon.LocalClasses
                                 Path.GetDirectoryName(typeof(Program).Assembly.Location)))))));
 
             string pluginLocation = Path.GetFullPath(Path.Combine(root, relativePath.Replace('\\', Path.DirectorySeparatorChar)));
-            Console.WriteLine($"Loading commands from: {pluginLocation}");
             PluginLoadContext loadContext = new PluginLoadContext(pluginLocation);
             return loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(pluginLocation)));
         }

@@ -1,6 +1,4 @@
-﻿using Melon.LocalClasses;
-
-namespace Melon.Models
+﻿namespace Melon.Models
 {
     public class Collection
     {
