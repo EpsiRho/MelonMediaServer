@@ -128,3 +128,4 @@ LanguageInstructions=Ingresa un código de idioma válido (en, es) para cambiar 
 LanguageError=No se encontró soporte para {} en Melón.
 DefaultLanguageOption=Cambiar Idioma Predeterminado
 CollectionStepStatus=Actualización de colecciones
+CheckDbVersioningStatus=Comprobando compatibilidad con la base de datos

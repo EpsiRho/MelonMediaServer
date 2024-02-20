@@ -128,3 +128,4 @@ LanguageInstructions=Enter a valid language code (en,es) to swap language.
 LanguageError=No support for {} found in Melon.
 DefaultLanguageOption=Change Default Language
 CollectionStepStatus=Updating Collections
+CheckDbVersioningStatus=Checking Database Compatibility

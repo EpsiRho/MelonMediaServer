@@ -239,9 +239,10 @@ namespace Melon.DisplayClasses
             // We'll also save all the settings set during the OOBE
             var databaseNames = StateManager.DbClient.ListDatabaseNames().ToList();
             var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
-            var collection = NewMelonDB.GetCollection<User>("Users");
+            var userCollection = NewMelonDB.GetCollection<User>("Users");
+            var metadataCollection = NewMelonDB.GetCollection<DbMetadata>("Metadata");
 
-            var document = new User
+            var user = new User
             {
                 _id = ObjectId.GenerateNewId().ToString(),
                 Username = tempUsername,
@@ -256,7 +257,20 @@ namespace Melon.DisplayClasses
                 Bio = ""
             };
 
-            collection.InsertOne(document);
+            var checkMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "UserCollection").FirstOrDefault();
+            if(checkMetadata == null)
+            {
+                var userMetadata = new DbMetadata
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Name = "UserCollection",
+                    Version = "1.0.0",
+                    Info = $""
+                };
+                metadataCollection.InsertOne(userMetadata);
+            }
+
+            userCollection.InsertOne(user);
             StateManager.SaveSettings();
             DisplayManager.UIExtensions.Remove(Display);
             Console.CursorVisible = false;

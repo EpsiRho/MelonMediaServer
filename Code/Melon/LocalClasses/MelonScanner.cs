@@ -1,4 +1,5 @@
-﻿using Melon.Classes;
+﻿using ATL.Logging;
+using Melon.Classes;
 using Melon.DisplayClasses;
 using Melon.Models;
 using MongoDB.Bson;
@@ -25,8 +26,7 @@ namespace Melon.LocalClasses
         public static bool Indexed { get; set; }
         public static bool endDisplay { get; set; }
         public static bool Scanning { get; set; }
-        private static List<string> FoundPaths { get; set; }
-        public static List<string> LyricFiles { get; set; }
+        private static List<string> LyricFiles { get; set; }
         private static Stopwatch watch { get; set; }
         private static IMongoDatabase NewMelonDB { get; set; }
         private static IMongoCollection<Artist> ArtistCollection { get; set; }
@@ -49,13 +49,20 @@ namespace Melon.LocalClasses
             AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");
             TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
 
+
             bool skip = (bool)skipBool;
             LyricFiles = new List<string>();
             watch = new Stopwatch();
-            ScannedFiles = 0;
-            FoundFiles = 0;
-            averageMilliseconds = 0;
+            ScannedFiles = 1;
+            FoundFiles = 1;
+            averageMilliseconds = 1;
             Indexed = false;
+
+            CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
+            CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
+            CurrentStatus = StateManager.StringsManager.GetString("CheckDbVersioningStatus");
+            CheckAndFix();
+
             if(StateManager.MelonSettings.LibraryPaths.Count() == 0)
             {
                 MelonUI.ClearConsole();
@@ -100,7 +107,158 @@ namespace Melon.LocalClasses
             CurrentStatus = StateManager.StringsManager.GetString("CompletionStatus");
             IndexCollections();
             DisplayManager.UIExtensions.Clear();
+            LyricFiles = null;
             Scanning = false;
+        }
+        private static void CheckAndFix()
+        {
+            var metadataCollection = NewMelonDB.GetCollection<DbMetadata>("Metadata");
+            var artistMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "ArtistsCollection").FirstOrDefault();
+            var albumMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "AlbumsCollection").FirstOrDefault();
+            var trackMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "TracksCollection").FirstOrDefault();
+            var failedFilesMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "FailedFilesCollection").FirstOrDefault();
+            var playlistsMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "PlaylistsCollection").FirstOrDefault();
+            var collectionsMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "CollectionsCollection").FirstOrDefault();
+            var queuesMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "QueuesCollection").FirstOrDefault();
+            if (artistMetadata != null)
+            {
+                if (artistMetadata.Version != "1.0.0")
+                {
+                    // Add code needed for upgrading db objects here
+                    Serilog.Log.Error("Unsupported Artist Database Version");
+                }
+            }
+            else
+            {
+                var metadata = new DbMetadata
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Name = "ArtistsCollection",
+                    Version = "1.0.0",
+                    Info = $""
+                };
+                metadataCollection.InsertOne(metadata);
+            }
+
+            if (albumMetadata != null)
+            {
+                if (albumMetadata.Version != "1.0.0")
+                {
+                    // Add code needed for upgrading db objects here
+                    Serilog.Log.Error("Unsupported Album Database Version");
+                }
+            }
+            else
+            {
+                var metadata = new DbMetadata
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Name = "AlbumsCollection",
+                    Version = "1.0.0",
+                    Info = $""
+                };
+                metadataCollection.InsertOne(metadata);
+            }
+
+            if (trackMetadata != null)
+            {
+                if (trackMetadata.Version != "1.0.0")
+                {
+                    // Add code needed for upgrading db objects here
+                    Serilog.Log.Error("Unsupported Track Database Version");
+                }
+            }
+            else
+            {
+                var metadata = new DbMetadata
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Name = "TracksCollection",
+                    Version = "1.0.0",
+                    Info = $""
+                };
+                metadataCollection.InsertOne(metadata);
+            }
+
+            if (failedFilesMetadata != null)
+            {
+                if (failedFilesMetadata.Version != "1.0.0")
+                {
+                    // Add code needed for upgrading db objects here
+                    Serilog.Log.Error("Unsupported FailedFiles Database Version");
+                }
+            }
+            else
+            {
+                var metadata = new DbMetadata
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Name = "FailedFilesCollection",
+                    Version = "1.0.0",
+                    Info = $""
+                };
+                metadataCollection.InsertOne(metadata);
+            }
+
+            if (playlistsMetadata != null)
+            {
+                if (playlistsMetadata.Version != "1.0.0")
+                {
+                    // Add code needed for upgrading db objects here
+                    Serilog.Log.Error("Unsupported Playlists Database Version");
+                }
+            }
+            else
+            {
+                var metadata = new DbMetadata
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Name = "PlaylistsCollection",
+                    Version = "1.0.0",
+                    Info = $""
+                };
+                metadataCollection.InsertOne(metadata);
+            }
+
+            if (collectionsMetadata != null)
+            {
+                if (collectionsMetadata.Version != "1.0.0")
+                {
+                    // Add code needed for upgrading db objects here
+                    Serilog.Log.Error("Unsupported Collections Database Version");
+                }
+            }
+            else
+            {
+                var metadata = new DbMetadata
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Name = "CollectionsCollection",
+                    Version = "1.0.0",
+                    Info = $""
+                };
+                metadataCollection.InsertOne(metadata);
+            }
+
+            if (queuesMetadata != null)
+            {
+                if (queuesMetadata.Version != "1.0.0")
+                {
+                    // Add code needed for upgrading db objects here
+                    Serilog.Log.Error("Unsupported Queues Database Version");
+                }
+            }
+            else
+            {
+                var metadata = new DbMetadata
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Name = "QueuesCollection",
+                    Version = "1.0.0",
+                    Info = $""
+                };
+                metadataCollection.InsertOne(metadata);
+            }
         }
         private static void DeletePass()
         {
@@ -412,7 +570,7 @@ namespace Melon.LocalClasses
         }
 
         // Scanning Section Functions
-        public static void TryMatchLRC(string file)
+        private static void TryMatchLRC(string file)
         {
             // Try to find a track with the same filename as the lrc file (- the extension)
             var filename = Path.GetFileName(file);
@@ -431,7 +589,7 @@ namespace Melon.LocalClasses
             }
         }
 
-        public static bool IsAudioFile(string path)
+        private static bool IsAudioFile(string path)
         {
             var filename = Path.GetFileName(path);
             if (!filename.EndsWith(".flac") && !filename.EndsWith(".aac") && !filename.EndsWith(".wma") &&
@@ -442,7 +600,7 @@ namespace Melon.LocalClasses
 
             return true;
         }
-        public static List<string> SplitArtists(string artistsStr)
+        private static List<string> SplitArtists(string artistsStr)
         {
             // TODO: Allow changing the list of delimiters
             List<string> artists = new List<string>();
@@ -462,7 +620,7 @@ namespace Melon.LocalClasses
 
             return artists;
         }
-        public static List<string> SplitGenres(string genresStr)
+        private static List<string> SplitGenres(string genresStr)
         {
             // TODO: Allow changing the list of delimiters
             List<string> genres = new List<string>();
@@ -483,7 +641,7 @@ namespace Melon.LocalClasses
 
             return genres;
         }
-        public static void GenerateArtistIDs(List<string> trackArtists, List<string> albumArtists, out List<string> AlbumArtistIds, out List<string> TrackArtistIds)
+        private static void GenerateArtistIDs(List<string> trackArtists, List<string> albumArtists, out List<string> AlbumArtistIds, out List<string> TrackArtistIds)
         {
             TrackArtistIds = new List<string>();
             AlbumArtistIds = new List<string>();
@@ -520,7 +678,7 @@ namespace Melon.LocalClasses
                 }
             }
         }
-        public static DbLink CreateShortAlbum(string AlbumId, string name)
+        private static DbLink CreateShortAlbum(string AlbumId, string name)
         {
             if(name == "")
             {
@@ -536,7 +694,7 @@ namespace Melon.LocalClasses
             return sAlbum;
         }
 
-        public static DbLink CreateShortTrack(ATL.Track fileMetadata, string TrackId)
+        private static DbLink CreateShortTrack(ATL.Track fileMetadata, string TrackId)
         {
             DbLink sTrack = new DbLink()
             {
@@ -547,7 +705,7 @@ namespace Melon.LocalClasses
             return sTrack;
         }
 
-        public static (Artist, bool) CreateOrUpdateArtist(ATL.Track fileMetadata, string artistName, string aId, DbLink sAlbum,
+        private static (Artist, bool) CreateOrUpdateArtist(ATL.Track fileMetadata, string artistName, string aId, DbLink sAlbum,
                                                           DbLink sTrack, Track trackDoc, List<string> albumArtists, List<string> trackArtists, 
                                                           List<string> AlbumArtistIds, List<string> TrackArtistIds, List<string> trackGenres)
         {
@@ -707,7 +865,7 @@ namespace Melon.LocalClasses
                 return (artistDoc, false);
             }
         }
-        public static void CreateOrUpdateAlbum(ref Album albumDoc, Track trackDoc, string AlbumId, ATL.Track fileMetadata, List<string> albumArtists,
+        private static void CreateOrUpdateAlbum(ref Album albumDoc, Track trackDoc, string AlbumId, ATL.Track fileMetadata, List<string> albumArtists,
                                                List<string> AlbumArtistIds, List<string> trackArtists, List<string> TrackArtistIds,
                                                List<string> trackGenres, DbLink sTrack)
         {
@@ -861,7 +1019,7 @@ namespace Melon.LocalClasses
 
             }
         }
-        public static void CreateOrUpdateTrack(string TrackId, ATL.Track fileMetadata, DbLink sAlbum, List<string> albumArtists,
+        private static void CreateOrUpdateTrack(string TrackId, ATL.Track fileMetadata, DbLink sAlbum, List<string> albumArtists,
                                                List<string> trackArtists, List<string> AlbumArtistIds, List<string> TrackArtistIds, int count,
                                                List<string> trackGenres, Track trackDoc)
         {
@@ -1015,7 +1173,7 @@ namespace Melon.LocalClasses
                 }
             }
         }
-        public static void Sort()
+        private static void Sort()
         {
             var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
             var ArtistCollection = NewMelonDB.GetCollection<Artist>("Artists");
@@ -1076,7 +1234,7 @@ namespace Melon.LocalClasses
                 }
             }
         }
-        public static void IndexCollections()
+        private static void IndexCollections()
         {
             var indexOptions = new CreateIndexOptions { Background = true  }; 
 
@@ -1126,8 +1284,14 @@ namespace Melon.LocalClasses
                 var PlaylistCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
                 PlaylistCollection.DeleteMany(Builders<Playlist>.Filter.Empty);
 
+                var collectionCollection = NewMelonDB.GetCollection<Collection>("Collections");
+                collectionCollection.DeleteMany(Builders<Collection>.Filter.Empty);
+
                 var failedCollection = NewMelonDB.GetCollection<FailedFile>("FailedFiles");
                 failedCollection.DeleteMany(Builders<FailedFile>.Filter.Empty);
+
+                var metadataCollection = NewMelonDB.GetCollection<DbMetadata>("Metadata");
+                metadataCollection.DeleteMany(Builders<DbMetadata>.Filter.Empty);
 
                 var statsCollection = NewMelonDB.GetCollection<PlayStat>("Stats");
                 statsCollection.DeleteMany(Builders<PlayStat>.Filter.Empty);
