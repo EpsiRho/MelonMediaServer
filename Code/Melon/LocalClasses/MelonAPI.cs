@@ -227,14 +227,6 @@ namespace Melon.LocalClasses
                     var mongoDatabase = mongoClient.GetDatabase("Melon");
                     var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-                    //List<Track> fullTracks = new List<Track>();
-                    //foreach (var track in tracks)
-                    //{
-                    //    var trackFilter = Builders<Track>.Filter.Eq(x=>x.TrackId, track.TrackId);
-                    //    var t = TracksCollection.Find(trackFilter).FirstOrDefault();
-                    //    fullTracks.Add(t);
-                    //}
-
                     Random rand = new Random();
 
                     // Sort with a bias towards PlayCount and Rating
@@ -242,15 +234,6 @@ namespace Melon.LocalClasses
                                                                    x.Ratings.Where(x => x.UserId == UserId).Select(x => x.Value).FirstOrDefault() - 
                                                                    x.SkipCounts.Where(x => x.UserId == UserId).Select(x => x.Value).FirstOrDefault() + 
                                                                    rand.NextDouble()).ToList();
-
-                    //int num = fullTracks.Count;
-                    //for (int i = 0; i < num; i++)
-                    //{
-                    //    int r = i + rand.Next(num - i);
-                    //    var temp = fullTracks[i];
-                    //    fullTracks[i] = fullTracks[r];
-                    //    fullTracks[r] = temp;
-                    //}
 
                     List<Track> finalTracks = new List<Track>(fullTracks);
 
@@ -298,15 +281,6 @@ namespace Melon.LocalClasses
                                                    x.Ratings.Where(x => x.UserId == UserId).Select(x => x.Value).FirstOrDefault() -
                                                    x.SkipCounts.Where(x => x.UserId == UserId).Select(x => x.Value).FirstOrDefault() +
                                                    r.NextDouble()).ToList();
-
-                    //int num = fullTracks.Count;
-                    //for (int i = 0; i < num; i++)
-                    //{
-                    //    int r = i + rand.Next(num - i);
-                    //    var temp = fullTracks[i];
-                    //    fullTracks[i] = fullTracks[r];
-                    //    fullTracks[r] = temp;
-                    //}
 
                     List<Track> outTracks = new List<Track>(fTracks);
 

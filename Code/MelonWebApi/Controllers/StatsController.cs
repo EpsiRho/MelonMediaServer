@@ -384,17 +384,18 @@ namespace MelonWebApi.Controllers
             }
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device,"i"));
+            statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if(userId != curId)
             {
                 if (!user.PublicStats)
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
 
 
@@ -441,6 +442,7 @@ namespace MelonWebApi.Controllers
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
                 return new ObjectResult("User not found") { StatusCode = 404 };
@@ -452,11 +454,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
 
             if (ltDateTime != "")
@@ -502,6 +504,7 @@ namespace MelonWebApi.Controllers
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
                 return new ObjectResult("User not found") { StatusCode = 404 };
@@ -513,11 +516,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
 
             if (ltDateTime != "")
@@ -564,6 +567,7 @@ namespace MelonWebApi.Controllers
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
             var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
                 return new ObjectResult("User not found") { StatusCode = 404 };
@@ -575,11 +579,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
 
             if (ltDateTime != "")
@@ -608,7 +612,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("recent-tracks")]
-        public ObjectResult RecentTracks(string userId = "", int page = 0, int count = 100)
+        public ObjectResult RecentTracks(string userId = "", string device = "", int page = 0, int count = 100)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -625,7 +629,8 @@ namespace MelonWebApi.Controllers
             var uFilter = Builders<User>.Filter.Eq(x => x._id, userId);
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
-            var statFilter = Builders<PlayStat>.Filter.Empty;
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
                 return new ObjectResult("User not found") { StatusCode = 404 };
@@ -637,11 +642,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
 
             var recentStats = StatsCollection.Find(statFilter)
@@ -657,7 +662,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("recent-albums")]
-        public ObjectResult RecentAlbums(string userId = "", int page = 0, int count = 100)
+        public ObjectResult RecentAlbums(string userId = "", string device = "", int page = 0, int count = 100)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -674,7 +679,8 @@ namespace MelonWebApi.Controllers
             var uFilter = Builders<User>.Filter.Eq(x => x._id, userId);
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
-            var statFilter = Builders<PlayStat>.Filter.Empty;
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
                 return new ObjectResult("User not found") { StatusCode = 404 };
@@ -686,11 +692,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
 
             var recentStats = StatsCollection.Find(statFilter)
@@ -707,7 +713,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("recent-artists")]
-        public ObjectResult RecentArtists(string userId = "", int page = 0, int count = 100)
+        public ObjectResult RecentArtists(string userId = "", string device = "", int page = 0, int count = 100)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
 
@@ -724,7 +730,8 @@ namespace MelonWebApi.Controllers
             var uFilter = Builders<User>.Filter.Eq(x => x._id, userId);
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
-            var statFilter = Builders<PlayStat>.Filter.Empty;
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
                 return new ObjectResult("User not found") { StatusCode = 404 };
@@ -736,11 +743,11 @@ namespace MelonWebApi.Controllers
                 {
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
             else
             {
-                statFilter = Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
+                statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.UserId, userId);
             }
 
             var recentStats = StatsCollection.Find(statFilter)

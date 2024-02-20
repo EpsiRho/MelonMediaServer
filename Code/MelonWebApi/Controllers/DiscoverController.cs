@@ -10,6 +10,7 @@ using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using NuGet.Packaging.Signing;
 using MongoDB.Bson.Serialization;
+using NuGet.Packaging;
 
 namespace MelonWebApi.Controllers
 {
@@ -284,6 +285,125 @@ namespace MelonWebApi.Controllers
             count = count <= genreBasedArtists.Count ? count : genreBasedArtists.Count;
             var end = (count * page) + count <= genreBasedArtists.Count ? (count * page) + count : genreBasedArtists.Count;
             return new ObjectResult(genreBasedArtists.Take(new Range(count * page, end)).Select(x => new DbLink(x))) { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet("time")]
+        public ObjectResult DiscoverTimeBasedTracks(string time, int count = 100, bool enableTrackLinks = true, bool includeArtists = true, bool includeGenres = true)
+        {
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
+            var StatsCollection = mongoDatabase.GetCollection<PlayStat>("Stats");
+
+            HashSet<string> Genres = new HashSet<string>();
+            HashSet<string> Artists = new HashSet<string>();
+            HashSet<string> TrackIds = new HashSet<string>();
+            HashSet<string> NewTrackIds = new HashSet<string>();
+
+            DateTime ts = DateTime.Parse(time);
+            DateTime tsStart = ts.Subtract(TimeSpan.FromMinutes(30));
+            DateTime tsEnd = ts.Add(TimeSpan.FromMinutes(30));
+
+            var stats = StatsCollection.AsQueryable()
+                                       .Where(x => x.LogDate >= ts.AddDays(-3) &&
+                                              x.LogDate.TimeOfDay >= tsStart.TimeOfDay && x.LogDate.TimeOfDay < tsEnd.TimeOfDay)
+                                       .ToList();
+            foreach (var stat in stats)
+            {
+                foreach (var genre in stat.Genres) { Genres.Add(genre); }
+                foreach (var artist in stat.ArtistIds) { Artists.Add(artist); }
+                TrackIds.Add(stat.TrackId);
+            }
+            Genres.Remove("");
+            Artists.Remove("");
+
+
+            if (includeArtists)
+            {
+                var artistFilter = Builders<Artist>.Filter.In(x => x._id, Artists);
+                var artists = ArtistsCollection.Find(artistFilter).ToList();
+
+                HashSet<string> artistIds = new HashSet<string>();
+                foreach (var artist in artists)
+                {
+                    foreach (var a in artist.ConnectedArtists.Select(x => x._id))
+                    {
+                        artistIds.Add(a);
+                    }
+                }
+
+                var artistConnectionsFilter = Builders<Artist>.Filter.In(x => x._id, artistIds);
+                var connections = ArtistsCollection.Find(artistConnectionsFilter).ToList();
+
+                foreach (var artist in connections)
+                {
+                    if (!artists.Where(x => x._id == artist._id).Any())
+                    {
+                        artists.Add(artist);
+                    }
+                }
+
+                foreach (var artist in artists)
+                {
+                    foreach (var track in artist.Tracks)
+                    {
+                        NewTrackIds.Add(track._id);
+                    }
+                }
+            }
+
+            if (includeGenres)
+            {
+                var projection = Builders<Track>.Projection.Include(x => x._id);
+                var genrefilter = Builders<Track>.Filter.AnyIn(x => x.TrackGenres, Genres);
+                var genreBasedTracks = TracksCollection.Find(genrefilter).Project(projection).ToList();
+
+                foreach (var track in genreBasedTracks)
+                {
+                    NewTrackIds.Add(track["_id"].AsString);
+                }
+            }
+
+            var firstFilter = Builders<Track>.Filter.In(x => x._id, TrackIds);
+            var firstTracks = TracksCollection.Find(firstFilter).ToList();
+
+            var finalFilter = Builders<Track>.Filter.In(x => x._id, NewTrackIds);
+            var finalTracks = TracksCollection.Find(finalFilter).ToList();
+
+            string username = User.Identity.Name;
+
+            Dictionary<Track, int> tracks = firstTracks.Select(x => KeyValuePair.Create(x, 1)).ToDictionary();
+            tracks.AddRange(finalTracks.Select(x => KeyValuePair.Create(x, 2)).ToDictionary());
+
+            Random rng = new Random();
+            List<Track> shuffledList = tracks.OrderBy(item => rng.Next())
+                                             .ThenBy(item => item.Value)
+                                             .Select(item => item.Key)
+                                             .ToList();
+
+            if (enableTrackLinks)
+            {
+                for (int i = 0; i < shuffledList.Count() - 1; i++)
+                {
+                    if (shuffledList[i].nextTrack != "")
+                    {
+                        for (int j = 0; j < shuffledList.Count(); j++)
+                        {
+                            if (shuffledList[j]._id == shuffledList[i].nextTrack)
+                            {
+                                var temp = shuffledList[i + 1];
+                                shuffledList[i + 1] = shuffledList[j];
+                                shuffledList[j] = temp;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            count = count <= shuffledList.Count ? count : shuffledList.Count;
+            return new ObjectResult(shuffledList.Slice(0, count).Select(x => new DbLink(x))) { StatusCode = 200 };
         }
     }
 }
