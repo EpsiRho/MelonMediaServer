@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using NuGet.Packaging.Signing;
 using MongoDB.Bson.Serialization;
 using NuGet.Packaging;
+using System.Collections.Generic;
 
 namespace MelonWebApi.Controllers
 {
@@ -244,47 +245,53 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("artists")]
-        public ObjectResult DiscoverArtists([FromQuery] List<string> ids, int count = 100, int page = 0, bool shuffle = true)
+        public ObjectResult DiscoverArtists([FromQuery] List<string> ids, int count = 100, int page = 0, bool shuffle = true, bool includeConnections = true, bool includeGenres = true)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
 
             HashSet<string> Genres = new HashSet<string>();
+            HashSet<DbLink> Artists = new HashSet<DbLink>();
 
             var filter = Builders<Artist>.Filter.In(x => x._id, ids);
             var artists = ArtistsCollection.Find(filter).ToList();
             foreach (var artist in artists)
             {
                 foreach (var genre in artist.Genres) { Genres.Add(genre); }
+                foreach (var conn in artist.ConnectedArtists) { Artists.Add(conn); }
             }
             Genres.Remove("");
 
-
-            var genrefilter = Builders<Artist>.Filter.AnyIn(x => x.Genres, Genres);
-            var genreBasedArtists = ArtistsCollection.Find(genrefilter).ToList();
-
-
-            genreBasedArtists = genreBasedArtists.Where(x => ids.Contains(x._id) == false).ToList();
-
-            string username = User.Identity.Name;
-            if (shuffle)
+            Random rng = new Random();
+            Dictionary<DbLink, double> finalArtists = new Dictionary<DbLink, double>();
+            if (includeConnections)
             {
-                Random rng = new Random();
-                int n = genreBasedArtists.Count;
-                while (n > 1)
-                {
-                    n--;
-                    int k = rng.Next(n + 1);
-                    Artist value = genreBasedArtists[k];
-                    genreBasedArtists[k] = genreBasedArtists[n];
-                    genreBasedArtists[n] = value;
-                }
+                finalArtists.AddRange(Artists.Select(x=>KeyValuePair.Create(x,0.2)));
             }
 
-            count = count <= genreBasedArtists.Count ? count : genreBasedArtists.Count;
-            var end = (count * page) + count <= genreBasedArtists.Count ? (count * page) + count : genreBasedArtists.Count;
-            return new ObjectResult(genreBasedArtists.Take(new Range(count * page, end)).Select(x => new DbLink(x))) { StatusCode = 200 };
+            if (includeGenres)
+            {
+                var genrefilter = Builders<Artist>.Filter.AnyIn(x => x.Genres, Genres);
+                var genreBasedArtists = ArtistsCollection.Find(genrefilter).ToList();
+
+                genreBasedArtists = genreBasedArtists.Where(x => ids.Contains(x._id) == false).ToList();
+                finalArtists.AddRange(genreBasedArtists.Select(x=> KeyValuePair.Create(new DbLink(x), 0.0)));
+            }
+
+            string username = User.Identity.Name;
+            count = count <= finalArtists.Count ? count : finalArtists.Count;
+            var end = (count * page) + count <= finalArtists.Count ? (count * page) + count : finalArtists.Count;
+            if (shuffle)
+            {
+                var shuffledArtists = finalArtists.OrderByDescending(item => item.Value + rng.NextDouble())
+                                           .Select(item => item)
+                                           .ToList();
+
+                return new ObjectResult(shuffledArtists.Take(new Range(count * page, end)).Select(x=>x.Key)) { StatusCode = 200 };
+            }
+
+            return new ObjectResult(finalArtists.Take(new Range(count * page, end)).Select(x => x.Key)) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("time")]
@@ -374,15 +381,14 @@ namespace MelonWebApi.Controllers
 
             string username = User.Identity.Name;
 
-            Dictionary<Track, int> tracks = finalTracks.Select(x => KeyValuePair.Create(x, 3)).ToDictionary();
+            Dictionary<Track, double> tracks = finalTracks.Select(x => KeyValuePair.Create(x, 0.2)).ToDictionary();
             if (includeRecent)
             {
-                tracks.AddRange(firstTracks.Select(x => KeyValuePair.Create(x, 1)).ToDictionary());
+                tracks.AddRange(firstTracks.Select(x => KeyValuePair.Create(x, 0.0)).ToDictionary());
             }
 
             Random rng = new Random();
-            List<Track> shuffledList = tracks.OrderBy(item => rng.Next())
-                                             .ThenBy(item => item.Value)
+            List<Track> shuffledList = tracks.OrderBy(item => rng.NextDouble() + item.Value)
                                              .Select(item => item.Key)
                                              .ToList();
 
