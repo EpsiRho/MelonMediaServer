@@ -1,4 +1,5 @@
-﻿using Melon.Classes;
+﻿using Amazon.Runtime.Internal.Transform;
+using Melon.Classes;
 using Melon.LocalClasses;
 using Melon.Models;
 using Microsoft.IdentityModel.Tokens;
@@ -7,6 +8,7 @@ using MongoDB.Driver;
 using Pastel;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Drawing;
 using System.Linq;
 using System.Resources;
@@ -23,6 +25,15 @@ namespace Melon.DisplayClasses
     /// </summary>
     public static class SettingsUI
     {
+        public static OrderedDictionary MenuOptions = new OrderedDictionary()
+                {
+                    { StringsManager.GetString("MongoDBConnectionEditOption"), MongoDBSettings },
+                    { StringsManager.GetString("LibraryPathEditOption") , LibraryPathSettings },
+                    { StringsManager.GetString("ListeningURLEditOption"), ChangeListeningURL },
+                    { StringsManager.GetString("HTTPSConfigOption"), HTTPSSetup },
+                    { StringsManager.GetString("DefaultLanguageOption"), ChangeDeafultLanguage },
+                    { StringsManager.GetString("ColorEditOption") , ChangeMelonColors }
+                };
         public static void Settings()
         {
             // Used to stay in settings until back is selected
@@ -62,19 +73,21 @@ namespace Melon.DisplayClasses
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption") });
 
                 // Input
-                Dictionary<string, Action> MenuOptions = new Dictionary<string, Action>()
+                try
                 {
-                    { StringsManager.GetString("BackNavigation") , () => { LockUI = false; } },
-                    //{ "Edit Users", UserSettings },
-                    { StringsManager.GetString("MongoDBConnectionEditOption"), MongoDBSettings },
-                    { StringsManager.GetString("LibraryPathEditOption") , LibraryPathSettings },
-                    { StringsManager.GetString("ListeningURLEditOption"), ChangeListeningURL },
-                    { StringsManager.GetString("HTTPSConfigOption"), HTTPSSetup },
-                    { StringsManager.GetString("DefaultLanguageOption"), ChangeDeafultLanguage },
-                    { StringsManager.GetString("ColorEditOption") , ChangeMelonColors }
-                };
-                var choice = MelonUI.OptionPicker(MenuOptions.Keys.ToList());
-                MenuOptions[choice]();
+                    MenuOptions.Insert(0, StringsManager.GetString("BackNavigation"), () => { LockUI = false; });
+                }
+                catch (Exception)
+                {
+
+                }
+                var commands = new List<string>();
+                foreach(var key in MenuOptions.Keys)
+                {
+                    commands.Add((string)key);
+                }
+                var choice = MelonUI.OptionPicker(commands);
+                ((Action)MenuOptions[choice])();
             }
         }
         private static void HTTPSSetup()

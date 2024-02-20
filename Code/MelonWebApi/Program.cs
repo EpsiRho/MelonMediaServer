@@ -33,10 +33,11 @@ namespace MelonWebApi
             Console.OutputEncoding = Encoding.UTF8;
             bool headless = args.Contains("--headless") || args.Contains("-h");
             bool setup = args.Contains("--setup");
+            bool disablePlugins = args.Contains("--disablePlugins");
             string lang = args.Where(x => x.Contains("--lang")).FirstOrDefault() != null ? args.Where(x=>x.Contains("--lang")).FirstOrDefault().Split("=")[1] : "";
             if (!started)
             {
-                StateManager.Init(headless, setup, lang);
+                StateManager.Init(headless, setup, disablePlugins, lang);
             }
 
             if (headless && DisplayManager.UIExtensions.Count() != 0)

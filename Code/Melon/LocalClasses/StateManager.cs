@@ -20,6 +20,10 @@ using Amazon.Util.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Melon.Models;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Reflection;
+using System.Windows.Input;
+using Melon.Interface;
+using Melon.PluginModels;
 
 namespace Melon.LocalClasses
 {
@@ -32,9 +36,8 @@ namespace Melon.LocalClasses
         public static MongoClient DbClient;
         public static Settings MelonSettings { get; set; }
         public static Flags MelonFlags { get; set; }
-        private static Process serverProcess;
         public static ResourceManager StringsManager { get; set; }
-        public static void Init(bool headless, bool runSetup, string language)
+        public static void Init(bool headless, bool runSetup, bool loadPlugins, string language)
         {
             if (language == "")
             {
@@ -103,9 +106,16 @@ namespace Melon.LocalClasses
             {
                 LoadFlags();
             }
+
             if ((MelonFlags.ForceOOBE || runSetup) && !headless)
             {
                 DisplayManager.UIExtensions.Add(SetupUI.Display);
+            }
+
+            // Plugins
+            if (!MelonFlags.DisablePlugins || loadPlugins)
+            {
+                LoadPlugins();
             }
 
             if (!File.Exists($"{melonPath}/Settings.json"))
@@ -257,12 +267,12 @@ namespace Melon.LocalClasses
             string settingstxt = Newtonsoft.Json.JsonConvert.SerializeObject(set, Formatting.Indented);
             File.WriteAllText($"{melonPath}/Settings.json", settingstxt);
         }
-        public static void LoadFlags()
+        private static void LoadFlags()
         {
             string flagstxt = File.ReadAllText($"{melonPath}/Flags.json");
             MelonFlags = Newtonsoft.Json.JsonConvert.DeserializeObject<Flags>(flagstxt);
         }
-        public static void SaveFlags()
+        private static void SaveFlags()
         {
             string flagtxt = Newtonsoft.Json.JsonConvert.SerializeObject(MelonFlags, Formatting.Indented);
             File.WriteAllText($"{melonPath}/Flags.json", flagtxt);
@@ -294,25 +304,6 @@ namespace Melon.LocalClasses
             }
             return false;
         }
-        public static void StartServer()
-        {
-            serverProcess = new Process();
-            serverProcess.StartInfo.FileName = $"";
-
-            serverProcess.Start();
-
-            // Wait for the server to start
-            Thread.Sleep(2000);
-        }
-        public static void StopServer()
-        {
-            if (serverProcess != null && !serverProcess.HasExited)
-            {
-                serverProcess.CloseMainWindow();
-                serverProcess.WaitForExit();
-                serverProcess.Dispose();
-            }
-        }
         public static byte[] GetDefaultImage()
         {
             var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.jpg";
@@ -332,6 +323,70 @@ namespace Melon.LocalClasses
             {
                 stream.CopyTo(ms);
                 return ms.ToArray();
+            }
+        }
+        private static void LoadPlugins()
+        {
+            if (!Directory.Exists($"{melonPath}/Plugins"))
+            {
+                Directory.CreateDirectory($"{melonPath}/Plugins");
+            }
+
+            var files = Directory.GetFiles($"{melonPath}/Plugins");
+            IEnumerable<IPlugin> commands = files.SelectMany(pluginPath =>
+            {
+                Assembly pluginAssembly = LoadPlugin(pluginPath);
+                return CreateCommands(pluginAssembly);
+            }).ToList();
+            var host = new MelonHost();
+            foreach (var command in commands)
+            {
+                command.LoadMelonCommands(host);
+                command.Execute();
+            }
+        }
+        private static Assembly LoadPlugin(string relativePath)
+        {
+            // Navigate up to the solution root
+            string root = Path.GetFullPath(Path.Combine(
+                Path.GetDirectoryName(
+                    Path.GetDirectoryName(
+                        Path.GetDirectoryName(
+                            Path.GetDirectoryName(
+                                Path.GetDirectoryName(typeof(Program).Assembly.Location)))))));
+
+            string pluginLocation = Path.GetFullPath(Path.Combine(root, relativePath.Replace('\\', Path.DirectorySeparatorChar)));
+            Console.WriteLine($"Loading commands from: {pluginLocation}");
+            PluginLoadContext loadContext = new PluginLoadContext(pluginLocation);
+            return loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(pluginLocation)));
+        }
+        private static IEnumerable<IPlugin> CreateCommands(Assembly assembly)
+        {
+            int count = 0;
+
+            foreach (Type type in assembly.GetTypes())
+            {
+                if (type.Name.Contains("IPlugin"))
+                {
+                    bool check = true;
+                }
+                if (typeof(IPlugin).IsAssignableFrom(type))
+                {
+                    IPlugin result = Activator.CreateInstance(type) as IPlugin;
+                    if (result != null)
+                    {
+                        count++;
+                        yield return result;
+                    }
+                }
+            }
+
+            if (count == 0)
+            {
+                string availableTypes = string.Join(",", assembly.GetTypes().Select(t => t.FullName));
+                throw new ApplicationException(
+                    $"Can't find any type which implements IPlugin in {assembly} from {assembly.Location}.\n" +
+                    $"Available types: {availableTypes}");
             }
         }
     }

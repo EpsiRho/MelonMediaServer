@@ -57,7 +57,7 @@ namespace MelonWebApi.Controllers
             col.PublicViewing = false;
             col.PublicEditing = false;
             col.ArtworkPath = "";
-            col.Tracks = Collection.FindTracks(andFilters, orFilters, curId);
+            col.Tracks = MelonAPI.FindTracks(andFilters, orFilters, curId);
             col.TrackCount = col.Tracks.Count();
 
             if(col.Tracks == null)
@@ -122,7 +122,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            var tracks = Collection.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
+            var tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
             if (tracks == null)
             {
                 return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
@@ -181,7 +181,7 @@ namespace MelonWebApi.Controllers
                 collection.OrFilters.Remove(filter);
             }
 
-            collection.Tracks = Collection.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
+            collection.Tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
             if (collection.Tracks == null)
             {
                 return new ObjectResult("Invalid Parameters") { StatusCode = 400 };

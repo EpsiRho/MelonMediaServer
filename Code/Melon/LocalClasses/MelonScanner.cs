@@ -1155,7 +1155,7 @@ namespace Melon.LocalClasses
                 // Sort the album's and artist's tracks and releases
                 foreach (var collection in collections)
                 {
-                    var tracks = Collection.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
+                    var tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
                     if (tracks == null)
                     {
                         continue;
