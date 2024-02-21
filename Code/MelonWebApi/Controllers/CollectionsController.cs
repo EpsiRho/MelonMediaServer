@@ -24,6 +24,21 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Create a new Collection.
+        /// </summary>
+        /// <param name="name">The name of the collection.</param>
+        /// <param name="description">The description of the collection.</param>
+        /// <param name="andFilters">Filters where each must match for a track to be included in the collection.</param>
+        /// <param name="orFilters">Filters where at least one must match for a track to be included in the collection.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">On successful creation of the collection.</response>
+        /// <response code="400">Invalid filters.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create")]
         public ObjectResult CreateCollection(string name, string description = "", [FromQuery] List<string> andFilters = null, [FromQuery] List<string> orFilters = null)
@@ -69,7 +84,23 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult(col._id) { StatusCode = 200 };
         }
-        
+
+        /// <summary>
+        /// Add filters to a collection.
+        /// </summary>
+        /// <param name="id">The unique identifier of the collection.</param>
+        /// <param name="andFilters">Filters where each must match for a track to be included in the collection.</param>
+        /// <param name="orFilters">Filters where at least one must match for a track to be included in the collection.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User
+        /// - **User Specific**: Collections can only be edited by the owner of the collection and any editors set, unless the collection's 'PublicEditing' parameter is true.
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">On successfully adding the filters and updating the collection.</response>
+        /// <response code="400">Invalid filters.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If Collection cannot be found.</response>
         [Authorize(Roles = "Admin,User")]
         [HttpPost("add-filters")]
         public ObjectResult AddFilter(string id, [FromQuery] List<string> andFilters = null, [FromQuery] List<string> orFilters = null)
@@ -135,6 +166,22 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Filters added") { StatusCode = 200 };
         }
 
+        /// <summary>
+        /// Remove filters from a collection.
+        /// </summary>
+        /// <param name="id">The unique identifier of the collection.</param>
+        /// <param name="andFilters">Filters to be removed from the andFilters list.</param>
+        /// <param name="orFilters">Filters to be removed from the orFilters list.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User
+        /// - **User Specific**: Collections are can only be edited by the owner of the collection and any editors set, unless the collection's 'PublicEditing' parameter is true.
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">On successfully removing the filters and updating the collection.</response>
+        /// <response code="400">Invalid filters.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If Collection cannot be found.</response>
         [Authorize(Roles = "Admin,User")]
         [HttpPost("remove-filters")]
         public ObjectResult RemoveFilter(string id, [FromQuery] List<string> andFilters = null, [FromQuery] List<string> orFilters = null)
@@ -192,6 +239,20 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Tracks removed") { StatusCode = 200 };
         }
+
+        /// <summary>
+        /// Delete a collection.
+        /// </summary>
+        /// <param name="id">The unique identifier of the collection.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User
+        /// - **User Specific**: Collections can only be deleted by the owner of the collection.
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">On successfully deleting the collection.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If Collection cannot be found.</response>
         [Authorize(Roles = "Admin,User")]
         [HttpPost("delete")]
         public ObjectResult DeleteCollection(string id)
@@ -235,6 +296,26 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Collection deleted") { StatusCode = 200 };
         }
+
+        /// <summary>
+        /// Update info about a collection.
+        /// </summary>
+        /// <param name="id">The unique identifier of the collection.</param>
+        /// <param name="name">The name of the collection.</param>
+        /// <param name="description">The description of the collection.</param>
+        /// <param name="editors">A list of ids of users that are allowed to edit this playlist.</param>
+        /// <param name="viewers">A list of ids of users that are allowed to view this playlist.</param>
+        /// <param name="publicEditing">If the playlist allows any user to edit it.</param>
+        /// <param name="publicViewing">If the playlist allows any user to view it.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User
+        /// - **User Specific**: Collections are can only be edited by the owner of the collection and any editors set, unless the collection's 'PublicEditing' parameter is true.
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">On successfully updating the collection info.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If Collection cannot be found.</response>
         [Authorize(Roles = "Admin, User")]
         [HttpPost("update")]
         public ObjectResult updateCollection(string id, string description = "", string name = "", [FromQuery] List<string> editors = null, [FromQuery] List<string> viewers = null,
@@ -300,6 +381,20 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Playlist updated") { StatusCode = 404 };
         }
+
+        /// <summary>
+        /// Get info about a collection.
+        /// </summary>
+        /// <param name="id">The unique identifier of the collection.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User, Pass
+        /// - **User Specific**: Collections can only be viewed by the owner of the collection and any viewers set, unless the collection's 'PublicViewing' parameter is true.
+        /// </remarks>
+        /// <returns>The collection info.</returns>
+        /// <response code="200">On successfully getting the collection info.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If Collection cannot be found.</response>
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("get")]
         public ObjectResult GetCollectionById(string id)
@@ -322,9 +417,9 @@ namespace MelonWebApi.Controllers
 
             if (collection != null)
             {
-                if (collection.PublicEditing == false)
+                if (collection.PublicViewing == false)
                 {
-                    if (collection.Owner != curId && !collection.Editors.Contains(curId) && !collection.Viewers.Contains(curId))
+                    if (collection.Owner != curId && !collection.Viewers.Contains(curId))
                     {
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
@@ -335,6 +430,21 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Collection not found") { StatusCode = 404 };
         }
 
+        /// <summary>
+        /// Search for collections.
+        /// </summary>
+        /// <param name="page">The page of results to get, based on count.</param>
+        /// <param name="count">The number of results to get.</param>
+        /// <param name="name">The name of the collection.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User, Pass
+        /// - **User Specific**: Collections can only be viewed by the owner of the collection and any viewers set, unless the collection's 'PublicViewing' parameter is true.
+        /// </remarks>
+        /// <returns>A list of collections.</returns>
+        /// <response code="200">On successfully getting the collection info.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If Collection cannot be found.</response>
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("search")]
         public ObjectResult SearchCollections(int page, int count, string name="")
@@ -371,6 +481,22 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult(Collections) { StatusCode = 200 };
         }
+
+        /// <summary>
+        /// Get the tracks from a collection.
+        /// </summary>
+        /// <param name="id">The unique identifier of the collection.</param>
+        /// <param name="page">The page of results to get, based on count.</param>
+        /// <param name="count">The number of results to get.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User, Pass
+        /// - **User Specific**: Collections can only be viewed by the owner of the collection and any viewers set, unless the collection's 'PublicViewing' parameter is true.
+        /// </remarks>
+        /// <returns>A list of Tracks.</returns>
+        /// <response code="200">On successfully getting the collection tracks.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If Collection cannot be found.</response>
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("get-tracks")]
         public ObjectResult GetTracks(string id, int page = 0, int count = 100)

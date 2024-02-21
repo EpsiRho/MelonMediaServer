@@ -28,7 +28,20 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
-        // Tracks
+        /// <summary>
+        /// Uploads artwork for a specific track.
+        /// </summary>
+        /// <param name="id">The unique identifier of the track.</param>
+        /// <param name="image">The artwork to be uploaded.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully uploaded.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the track or track file is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("track-art")]
         [Consumes("multipart/form-data")]
@@ -73,7 +86,20 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Track art uploaded") { StatusCode = 200 };
         }
 
-        // Albums
+        /// <summary>
+        /// Uploads artwork for a specific album.
+        /// </summary>
+        /// <param name="id">The unique identifier of the album.</param>
+        /// <param name="image">The artwork to be uploaded.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully uploaded.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the album is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("album-art")]
         [Consumes("multipart/form-data")]
@@ -120,7 +146,20 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Album art uploaded") { StatusCode = 200 };
         }
 
-        // Artists
+        /// <summary>
+        /// Uploads a profile picture for a specific artist.
+        /// </summary>
+        /// <param name="id">The unique identifier of the artist.</param>
+        /// <param name="image">The artwork to be uploaded.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully uploaded.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the artist is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("artist-pfp")]
         [Consumes("multipart/form-data")]
@@ -166,6 +205,21 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Artist pfp uploaded") { StatusCode = 200 };
         }
+
+        /// <summary>
+        /// Uploads an artist banner for a specific artist.
+        /// </summary>
+        /// <param name="id">The unique identifier of the artist.</param>
+        /// <param name="image">The artwork to be uploaded.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully uploaded.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the artist is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("artist-banner")]
         [Consumes("multipart/form-data")]
@@ -212,7 +266,20 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Artist banner uploaded") { StatusCode = 200 };
         }
 
-        // Playlists
+        /// <summary>
+        /// Uploads the artwork for a specific playlist, replaces the current one if any.
+        /// </summary>
+        /// <param name="id">The unique identifier of the playlist.</param>
+        /// <param name="image">The artwork to be uploaded.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully uploaded.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the playlist is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("playlist-art")]
         [Consumes("multipart/form-data")]
@@ -252,6 +319,21 @@ namespace MelonWebApi.Controllers
 
             return new ObjectResult("Playlist art uploaded") { StatusCode = 200 };
         }
+
+        /// <summary>
+        /// Uploads the artwork for a specific collection, replaces the current one if any.
+        /// </summary>
+        /// <param name="id">The unique identifier of the collection.</param>
+        /// <param name="image">The artwork to be uploaded.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully uploaded.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the collection is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("collection-art")]
         [Consumes("multipart/form-data")]
@@ -292,7 +374,19 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Collection art uploaded") { StatusCode = 200 };
         }
 
-
+        /// <summary>
+        /// Uploads artwork to replace the default artwork.
+        /// </summary>
+        /// <param name="image">The artwork to be uploaded.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully uploaded.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the collection is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("default-art")]
         [Consumes("multipart/form-data")]

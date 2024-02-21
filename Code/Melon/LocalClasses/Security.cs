@@ -194,8 +194,17 @@ namespace Melon.LocalClasses
 
             Thread timer = new Thread(() =>
             {
-                Thread.Sleep(new TimeSpan(0, 10, 0));
-                InviteCodes.Remove(code);
+                int count = 0;
+                while (count < 6000)
+                {
+                    Thread.Sleep(new TimeSpan(0, 0, 10));
+                    count+=10;
+                    if (!InviteCodes.Contains(code))
+                    {
+                        return;
+                    }
+                }
+                InvalidateInviteCode(code);
             });
 
             return new string(stringChars);
@@ -206,6 +215,17 @@ namespace Melon.LocalClasses
                 return true;
             }
             return false;
+        }
+        public static void InvalidateInviteCode(string code)
+        {
+            try
+            {
+                InviteCodes.Remove(code);
+            }
+            catch (Exception)
+            {
+
+            }
         }
     }
 }

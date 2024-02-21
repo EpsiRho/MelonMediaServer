@@ -35,8 +35,8 @@ namespace MelonWebApi.Controllers
         /// <param name="id">The unique identifier of the track.</param>
         /// <param name="pos">The position of the artwork to be deleted, starting at 0.</param>
         /// <remarks>
-        /// Authorization: This endpoint requires a JWT token
-        /// - `Valid roles`: Admin
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
         /// </remarks>
         /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
         /// <response code="200">If the artwork is successfully deleted.</response>
@@ -88,7 +88,7 @@ namespace MelonWebApi.Controllers
         /// <param name="id">The unique identifier of the album.</param>
         /// <param name="pos">The position of the artwork to be deleted, starting at 0.</param>
         /// <remarks>
-        /// Authorization: This endpoint requires a JWT token
+        /// ### Authorization: JWT
         /// - **Valid roles**: Admin
         /// </remarks>
         /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
@@ -140,7 +140,7 @@ namespace MelonWebApi.Controllers
         /// <param name="id">The unique identifier of the artist.</param>
         /// <param name="pos">The position of the artwork to be deleted, starting at 0.</param>
         /// <remarks>
-        /// Authorization: This endpoint requires a JWT token
+        /// ### Authorization: JWT
         /// - **Valid roles**: Admin
         /// </remarks>
         /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
@@ -192,7 +192,7 @@ namespace MelonWebApi.Controllers
         /// <param name="id">The unique identifier of the artist.</param>
         /// <param name="pos">The position of the artwork to be deleted, starting at 0.</param>
         /// <remarks>
-        /// Authorization: This endpoint requires a JWT token
+        /// ### Authorization: JWT
         /// - **Valid roles**: Admin
         /// </remarks>
         /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
@@ -243,7 +243,7 @@ namespace MelonWebApi.Controllers
         /// </summary>
         /// <param name="id">The unique identifier of the playlist.</param>
         /// <remarks>
-        /// Authorization: This endpoint requires a JWT token
+        /// ### Authorization: JWT
         /// - **Valid roles**: Admin
         /// </remarks>
         /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
@@ -286,7 +286,7 @@ namespace MelonWebApi.Controllers
         /// </summary>
         /// <param name="id">The unique identifier of the collection.</param>
         /// <remarks>
-        /// Authorization: This endpoint requires a JWT token
+        /// ### Authorization: JWT
         /// - **Valid roles**: Admin
         /// </remarks>
         /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
@@ -328,7 +328,7 @@ namespace MelonWebApi.Controllers
         /// Deletes the custom artwork used when no artwork is found.
         /// </summary>
         /// <remarks>
-        /// Authorization: This endpoint requires a JWT token
+        /// ### Authorization: JWT
         /// - **Valid roles**: Admin
         /// </remarks>
         /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
