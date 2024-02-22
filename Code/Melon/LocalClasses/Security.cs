@@ -21,83 +21,10 @@ namespace Melon.LocalClasses
         private static HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
         private static SSLConfig sslConfig;
         private static List<string> InviteCodes;
-        public static List<Connection> Connections;
         public IDataProtector _protector;
         public Security(IDataProtectionProvider provider)
         {
             _protector = provider.CreateProtector("Melon.SSLConfig.v1");
-        }
-        public static void LoadConnections()
-        {
-            Connections = new List<Connection>();
-            try
-            {
-                var serviceCollection = new ServiceCollection();
-                serviceCollection.AddDataProtection();
-                var services = serviceCollection.BuildServiceProvider();
-
-                var instance = ActivatorUtilities.CreateInstance<Security>(services);
-
-                string txt = File.ReadAllText($"{StateManager.melonPath}/Connections.json");
-                Connections = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Connection>>(txt);
-                foreach (var con in Connections)
-                {
-                    con.URL = instance._protector.Unprotect(con.URL);
-                    con.Username = instance._protector.Unprotect(con.Username);
-                    con.Password = instance._protector.Unprotect(con.Password);
-                    con.JWT = instance._protector.Unprotect(con.JWT);
-                }
-            }
-            catch (Exception)
-            {
-
-            }
-        }
-        public static void SaveConnections()
-        {
-            var serviceCollection = new ServiceCollection();
-            serviceCollection.AddDataProtection();
-            var services = serviceCollection.BuildServiceProvider();
-
-            var instance = ActivatorUtilities.CreateInstance<Security>(services);
-            List<Connection> conns = new List<Connection>();
-            foreach(var con in Connections)
-            {
-                var newCon = new Connection();
-                newCon.URL = instance._protector.Protect(con.URL);
-                newCon.Username = instance._protector.Protect(con.Username);
-                newCon.Password = instance._protector.Protect(con.Password);
-                newCon.JWT = instance._protector.Protect(con.JWT);
-                conns.Add(newCon);
-            }
-
-            string txt = Newtonsoft.Json.JsonConvert.SerializeObject(conns);
-            File.WriteAllText($"{StateManager.melonPath}/Connections.json", txt);
-        }
-        public static void LoadSSLConfig()
-        {
-            var serviceCollection = new ServiceCollection();
-            serviceCollection.AddDataProtection();
-            var services = serviceCollection.BuildServiceProvider();
-
-            string txt = File.ReadAllText($"{StateManager.melonPath}/SSLConfig.json");
-            sslConfig = Newtonsoft.Json.JsonConvert.DeserializeObject<SSLConfig>(txt);
-
-            var instance = ActivatorUtilities.CreateInstance<Security>(services);
-            sslConfig.PathToCert = sslConfig.PathToCert;
-            sslConfig.Password = instance._protector.Unprotect(sslConfig.Password);
-        }
-        public static void SaveSSLConfig()
-        {
-            var serviceCollection = new ServiceCollection();
-            serviceCollection.AddDataProtection();
-            var services = serviceCollection.BuildServiceProvider();
-
-            var instance = ActivatorUtilities.CreateInstance<Security>(services);
-            sslConfig.Password = instance._protector.Protect(sslConfig.Password);
-
-            string txt = Newtonsoft.Json.JsonConvert.SerializeObject(sslConfig);
-            File.WriteAllText($"{StateManager.melonPath}/SSLConfig.json", txt);
         }
         public static void SetSSLConfig(string path, string pass)
         {
@@ -105,9 +32,13 @@ namespace Melon.LocalClasses
             sslConfig.PathToCert = path;
             sslConfig.Password = pass;
         }
-        public static KeyValuePair<string, string> GetSSLConfig()
+        public static void SetSSLConfig(SSLConfig config)
         {
-            return new KeyValuePair<string, string>(sslConfig.PathToCert, sslConfig.Password);
+            sslConfig = config;
+        }
+        public static SSLConfig GetSSLConfig()
+        {
+            return sslConfig;
         }
         public static string HashPassword(string password, out byte[] salt)
         {

@@ -40,34 +40,6 @@ namespace Melon.DisplayClasses
             // Used to stay in settings until back is selected
             bool LockUI = true;
 
-            // Check if settings are loaded and if not load them in. 
-            if (StateManager.MelonSettings == null)
-            {
-                MelonUI.ClearConsole();
-                Console.WriteLine(StringsManager.GetString("SettingsLoadingProcess").Pastel(MelonColor.Text));
-                if (!Directory.Exists(melonPath))
-                {
-                    Directory.CreateDirectory(melonPath);
-                }
-
-                if (!System.IO.File.Exists($"{melonPath}/Settings.mln"))
-                {
-                    // If Settings don't exist, add default values.
-                    MelonSettings = new Settings()
-                    {
-                        MongoDbConnectionString = "mongodb://localhost:27017",
-                        LibraryPaths = new List<string>()
-                    };
-                    SaveSettings();
-                    DisplayManager.UIExtensions.Add(SetupUI.Display);
-                }
-                else
-                {
-                    LoadSettings();
-                }
-            }
-
-
             while (LockUI)
             {
                 // Title
@@ -88,6 +60,13 @@ namespace Melon.DisplayClasses
                     commands.Add((string)key);
                 }
                 var choice = MelonUI.OptionPicker(commands);
+
+                if(choice == StringsManager.GetString("BackNavigation"))
+                {
+                    LockUI = false;
+                    break;
+                }
+
                 ((Action)MenuOptions[choice])();
             }
         }
@@ -107,7 +86,7 @@ namespace Melon.DisplayClasses
         {
             // Check if ssl is setup already
             var config = Security.GetSSLConfig();
-            if(config.Key != "")
+            if(config.PathToCert != "")
             {
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
                 Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
@@ -120,8 +99,8 @@ namespace Melon.DisplayClasses
                 else if(opt == StringsManager.GetString("SSLDisableOption"))
                 {
                     Security.SetSSLConfig("", "");
-                    Security.SaveSSLConfig();
-                    return;
+                    Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
+                    Environment.Exit(0);
                 }
 
             }
@@ -174,8 +153,8 @@ namespace Melon.DisplayClasses
                 {
                     // Set and Save new conn string
                     Security.SetSSLConfig(pathToCert, password);
-                    Security.SaveSSLConfig();
-                    break;
+                    Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
+                    Environment.Exit(0);
                 }
 
             }
@@ -222,8 +201,8 @@ namespace Melon.DisplayClasses
                 {
                     // Set and Save new conn string
                     StateManager.MelonSettings.ListeningURL = input;
-                    StateManager.SaveSettings();
-                    break;
+                    Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
+                    Environment.Exit(0);
                 }
 
             }
@@ -259,13 +238,13 @@ namespace Melon.DisplayClasses
                 {
                     // Set and Save new conn string
                     MelonSettings.MongoDbConnectionString = input;
-                    SaveSettings();
+                    Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
                     if (DisplayManager.MenuOptions.Count < 5)
                     {
                         DisplayManager.MenuOptions.Clear();
                         DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
                         DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);
-                        DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDB);
+                        DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDBUI);
                         DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
                         DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
                     }
@@ -285,6 +264,7 @@ namespace Melon.DisplayClasses
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("DefaultLanguageOption") });
 
                 // Description
+                Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
                 Console.WriteLine($"{StringsManager.GetString("CurrentLanguageDefault")}: {MelonSettings.DefaultLanguage.Pastel(MelonColor.Melon)}".Pastel(MelonColor.Text));
                 Console.WriteLine($"({StringsManager.GetString("LanguageInstructions")})".Pastel(MelonColor.Text));
                 if (!check)
@@ -306,13 +286,8 @@ namespace Melon.DisplayClasses
                 {
                     MelonSettings.DefaultLanguage = input;
                     StringsManager = StringsManager = new ResourceManager($"Melon.Strings.UIStrings{input.ToUpper()}", typeof(Program).Assembly);
-                    SaveSettings();
-                    DisplayManager.MenuOptions.Clear();
-                    DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
-                    DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);
-                    DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDB);
-                    DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
-                    DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
+                    Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
+                    Environment.Exit(0);
                     break;
                 }
             }
@@ -369,7 +344,7 @@ namespace Melon.DisplayClasses
                         else
                         {
                             StateManager.MelonSettings.LibraryPaths.Add(path);
-                            StateManager.SaveSettings();
+                            Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
                             break;
                         }
                     }
@@ -383,7 +358,7 @@ namespace Melon.DisplayClasses
                 {
                     // Remove selected library path
                     StateManager.MelonSettings.LibraryPaths.Remove(input);
-                    StateManager.SaveSettings();
+                    Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
                 }
             }
         }
@@ -393,7 +368,7 @@ namespace Melon.DisplayClasses
             {
                 Dictionary<string, int> ColorMenuOptions = new Dictionary<string, int>()
                 {
-                    { $"Back" , 7 },
+                    { $"{StringsManager.GetString("BackNavigation")}" , 7 },
                     { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("NormalTextColorSetting").Pastel(MelonColor.Text)}", 0 },
                     { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("ShadedTextColorSetting").Pastel(MelonColor.ShadedText)}", 1 },
                     { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("BackgroundTextColorSetting").Pastel(MelonColor.BackgroundText)}", 2 },
@@ -448,7 +423,7 @@ namespace Melon.DisplayClasses
                     case 7:
                         return;
                 }
-                StateManager.SaveSettings();
+                Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
             }
         }
     }

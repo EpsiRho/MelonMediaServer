@@ -1173,7 +1173,7 @@ namespace Melon.LocalClasses
                 }
             }
         }
-        private static void Sort()
+        public static void Sort()
         {
             var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
             var ArtistCollection = NewMelonDB.GetCollection<Artist>("Artists");
@@ -1250,9 +1250,87 @@ namespace Melon.LocalClasses
             var trackIndexModel = new CreateIndexModel<Track>(trackIndexKeysDefinition, indexOptions);
             TracksCollection.Indexes.CreateOne(trackIndexModel);
         }
+        public static void ResetDb()
+        {
+            MelonUI.ShowIndeterminateProgress();
+            var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
+
+            var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
+            TracksCollection.DeleteMany(Builders<Track>.Filter.Empty);
+
+            var ArtistCollection = NewMelonDB.GetCollection<Artist>("Artists");
+            ArtistCollection.DeleteMany(Builders<Artist>.Filter.Empty);
+
+            var AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");
+            AlbumCollection.DeleteMany(Builders<Album>.Filter.Empty);
+
+            var QueueCollection = NewMelonDB.GetCollection<PlayQueue>("Queues");
+            QueueCollection.DeleteMany(Builders<PlayQueue>.Filter.Empty);
+
+            var PlaylistCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
+            PlaylistCollection.DeleteMany(Builders<Playlist>.Filter.Empty);
+
+            var collectionCollection = NewMelonDB.GetCollection<Collection>("Collections");
+            collectionCollection.DeleteMany(Builders<Collection>.Filter.Empty);
+
+            var failedCollection = NewMelonDB.GetCollection<FailedFile>("FailedFiles");
+            failedCollection.DeleteMany(Builders<FailedFile>.Filter.Empty);
+
+            var metadataCollection = NewMelonDB.GetCollection<DbMetadata>("Metadata");
+            metadataCollection.DeleteMany(Builders<DbMetadata>.Filter.Empty);
+
+            var statsCollection = NewMelonDB.GetCollection<PlayStat>("Stats");
+            statsCollection.DeleteMany(Builders<PlayStat>.Filter.Empty);
+
+            if (Directory.Exists($"{StateManager.melonPath}/AlbumArts/"))
+            {
+                foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/AlbumArts/"))
+                {
+                    File.Delete(file);
+                }
+            }
+            if (Directory.Exists($"{StateManager.melonPath}/ArtistBanners/"))
+            {
+                foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/ArtistBanners/"))
+                {
+                    File.Delete(file);
+                }
+            }
+            if (Directory.Exists($"{StateManager.melonPath}/ArtistPfps/"))
+            {
+                foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/ArtistPfps/"))
+                {
+                    File.Delete(file);
+                }
+            }
+            if (Directory.Exists($"{StateManager.melonPath}/Assets/"))
+            {
+                foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/Assets/"))
+                {
+                    File.Delete(file);
+                }
+            }
+            if (Directory.Exists($"{StateManager.melonPath}/CollectionArts/"))
+            {
+                foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/CollectionArts/"))
+                {
+                    File.Delete(file);
+                }
+            }
+            if (Directory.Exists($"{StateManager.melonPath}/PlaylistArts/"))
+            {
+                foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/PlaylistArts/"))
+                {
+                    File.Delete(file);
+                }
+            }
+
+            MelonUI.HideIndeterminateProgress();
+        }
+
 
         // UI
-        public static void ResetDB()
+        public static void ResetDBUI()
         {
             // Title
             MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("DatabaseResetOption") });
@@ -1266,43 +1344,7 @@ namespace Melon.LocalClasses
             var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
             if (input == PositiveConfirmation) 
             {
-
-                var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
-
-                var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
-                TracksCollection.DeleteMany(Builders<Track>.Filter.Empty);
-
-                var ArtistCollection = NewMelonDB.GetCollection<Artist>("Artists");
-                ArtistCollection.DeleteMany(Builders<Artist>.Filter.Empty);
-
-                var AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");
-                AlbumCollection.DeleteMany(Builders<Album>.Filter.Empty);
-
-                var QueueCollection = NewMelonDB.GetCollection<PlayQueue>("Queues");
-                QueueCollection.DeleteMany(Builders<PlayQueue>.Filter.Empty);
-
-                var PlaylistCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
-                PlaylistCollection.DeleteMany(Builders<Playlist>.Filter.Empty);
-
-                var collectionCollection = NewMelonDB.GetCollection<Collection>("Collections");
-                collectionCollection.DeleteMany(Builders<Collection>.Filter.Empty);
-
-                var failedCollection = NewMelonDB.GetCollection<FailedFile>("FailedFiles");
-                failedCollection.DeleteMany(Builders<FailedFile>.Filter.Empty);
-
-                var metadataCollection = NewMelonDB.GetCollection<DbMetadata>("Metadata");
-                metadataCollection.DeleteMany(Builders<DbMetadata>.Filter.Empty);
-
-                var statsCollection = NewMelonDB.GetCollection<PlayStat>("Stats");
-                statsCollection.DeleteMany(Builders<PlayStat>.Filter.Empty);
-
-                if (Directory.Exists($"{StateManager.melonPath}/AlbumArts/"))
-                {
-                    foreach (var file in Directory.GetFiles($"{StateManager.melonPath}/AlbumArts/"))
-                    {
-                        File.Delete(file);
-                    }
-                }
+                ResetDb();
             }
             else 
             {

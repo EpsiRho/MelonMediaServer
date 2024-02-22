@@ -2,6 +2,7 @@
 using Melon.Classes;
 using Melon.LocalClasses;
 using Melon.Models;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -155,9 +156,9 @@ namespace Melon.DisplayClasses
                 }
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
                 Console.WriteLine(StringsManager.GetString("ConnectionCheckStatus").Pastel(MelonColor.Text));
-                MelonUI.IndeterminateProgressToggle();
+                MelonUI.ShowIndeterminateProgress();
                 var check = CheckMongoDB(connInput);
-                MelonUI.IndeterminateProgressToggle();
+                MelonUI.HideIndeterminateProgress();
                 Thread.Sleep(100);
                 if (check)
                 {
@@ -271,7 +272,7 @@ namespace Melon.DisplayClasses
             }
 
             userCollection.InsertOne(user);
-            StateManager.SaveSettings();
+            Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
             DisplayManager.UIExtensions.Remove(Display);
             Console.CursorVisible = false;
         }
