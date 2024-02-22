@@ -17,6 +17,7 @@ namespace Melon.Interface
     {
         public string Version { get; }
         IMelonAPI MelonAPI { get; }
+        IStorageAPI Storage { get; }
         IMelonScanner MelonScanner { get; }
         IStateManager StateManager { get; }
         IDisplayManager DisplayManager { get; }
@@ -27,6 +28,11 @@ namespace Melon.Interface
     public interface IMelonAPI
     {
         public List<Track> ShuffleTracks(List<Track> tracks, string UserId, ShuffleType type, bool fullRandom = false, bool enableTrackLinks = true);
+    }
+    public interface IStorageAPI
+    {
+        public T LoadConfigFile<T>(string filename, string[] protectedProperties);
+        public void SaveConfigFile<T>(string filename, T config, string[] protectedProperties);
     }
     public interface IMelonScanner
     {
@@ -42,9 +48,7 @@ namespace Melon.Interface
         public void StartScan(bool skip);
         public void UpdateCollections();
         public void ResetDB();
-        public void Scan();
-        public void ScanShort();
-        public void ScanProgressView();
+        public void Sort();
     }
     public interface IStateManager
     {
@@ -68,9 +72,14 @@ namespace Melon.Interface
         public Color ColorPicker(Color CurColor);
         public string HiddenInput();
         public void DisplayProgressBar(double count, double max, char foreground, char background);
-        public void IndeterminateProgressToggle();
+        public void ShowIndeterminateProgress();
+        public void HideIndeterminateProgress();
         public string OptionPicker(List<string> Choices);
         public string StringInput(bool UsePred, bool AutoCorrect, bool FreeInput, bool ShowChoices, List<string> Choices = null);
+        public void ChecklistDisplayToggle();
+        public void SetChecklistItems(string[] list);
+        public void InsertInChecklist(string item, int place, bool check);
+        public void UpdateChecklist(int place, bool check);
     }
     public interface ISettingsUI
     {

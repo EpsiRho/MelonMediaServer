@@ -83,7 +83,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("tracks")]
-        public ObjectResult GetTracks([FromQuery] string[] ids)
+        public ObjectResult GetTracks([FromQuery] List<string> ids)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -193,7 +193,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("albums")]
-        public ObjectResult GetAlbums([FromQuery] string[] ids)
+        public ObjectResult GetAlbums([FromQuery] List<string> ids)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -356,7 +356,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artists")]
-        public ObjectResult GetArtists([FromQuery] string[] ids)
+        public ObjectResult GetArtists([FromQuery] List<string> ids)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)

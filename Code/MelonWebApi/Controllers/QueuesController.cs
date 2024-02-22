@@ -921,7 +921,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("update")]
-        public ObjectResult UpdateQueue(string id, string name = "", [FromQuery] string[] editors = null, [FromQuery] string[] viewers = null, 
+        public ObjectResult UpdateQueue(string id, string name = "", [FromQuery] List<string> editors = null, [FromQuery] List<string> viewers = null, 
                                         string publicEditing = "", string publicViewing = "")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims

@@ -61,9 +61,9 @@ namespace MelonWebApi
             // Load SSL Certificate
             var sslConfig = Security.GetSSLConfig();
 
-            if (sslConfig.Key != "")
+            if (sslConfig.PathToCert != "")
             {
-                var certificate = new X509Certificate2(sslConfig.Key, sslConfig.Value);
+                var certificate = new X509Certificate2(sslConfig.PathToCert, sslConfig.Password);
 
                 // Configure Kestrel to use SSL
                 builder.WebHost.ConfigureKestrel(serverOptions =>

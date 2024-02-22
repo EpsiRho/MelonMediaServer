@@ -23,6 +23,7 @@ namespace Melon.PluginModels
         public string Version => "1.0.0";
 
         public IMelonAPI MelonAPI => new API();
+        public IStorageAPI Storage => new StorageAPI();
 
         public IMelonScanner MelonScanner => new Scanner();
 
@@ -54,6 +55,17 @@ namespace Melon.PluginModels
         public List<Track> ShuffleTracks(List<Track> tracks, string UserId, ShuffleType type, bool fullRandom = false, bool enableTrackLinks = true)
         {
             return MelonAPI.ShuffleTracks(tracks, UserId, type, fullRandom, enableTrackLinks);
+        }
+    }
+    public class StorageAPI : IStorageAPI
+    {
+        public T LoadConfigFile<T>(string filename, string[] protectedProperties)
+        {
+            return Storage.LoadConfigFile<T>(filename, protectedProperties);
+        }
+        public void SaveConfigFile<T>(string filename, T config, string[] protectedProperties)
+        {
+            Storage.SaveConfigFile(filename, config, protectedProperties);
         }
     }
     public class Scanner : IMelonScanner
@@ -194,19 +206,11 @@ namespace Melon.PluginModels
         }
         public void ResetDB()
         {
-            MelonScanner.ResetDB();
+            MelonScanner.ResetDb();
         }
-        public void Scan()
+        public void Sort()
         {
-            MelonScanner.Scan();
-        }
-        public void ScanShort()
-        {
-            MelonScanner.ScanShort();
-        }
-        public void ScanProgressView()
-        {
-            MelonScanner.ScanProgressView();
+            MelonScanner.Sort();
         }
     }
     public class State : IStateManager
@@ -316,9 +320,13 @@ namespace Melon.PluginModels
         {
             MelonUI.DisplayProgressBar(count, max, foreground, background);
         }
-        public void IndeterminateProgressToggle()
+        public void ShowIndeterminateProgress()
         {
-            MelonUI.IndeterminateProgressToggle();
+            MelonUI.ShowIndeterminateProgress();
+        }
+        public void HideIndeterminateProgress()
+        {
+            MelonUI.HideIndeterminateProgress();
         }
         public string OptionPicker(List<string> Choices)
         {
@@ -327,6 +335,26 @@ namespace Melon.PluginModels
         public string StringInput(bool UsePred, bool AutoCorrect, bool FreeInput, bool ShowChoices, List<string> Choices = null)
         {
             return MelonUI.StringInput(UsePred, AutoCorrect, FreeInput, ShowChoices, Choices);
+        }
+
+        public void ChecklistDisplayToggle()
+        {
+            ChecklistUI.ChecklistDislayToggle();
+        }
+
+        public void SetChecklistItems(string[] list)
+        {
+            ChecklistUI.SetChecklistItems(list);
+        }
+
+        public void InsertInChecklist(string item, int place, bool check)
+        {
+            ChecklistUI.InsertInChecklist(item, place, check);
+        }
+
+        public void UpdateChecklist(int place, bool check)
+        {
+            ChecklistUI.UpdateChecklist(place, check);
         }
     }
     public class SettingsMenu : ISettingsUI
