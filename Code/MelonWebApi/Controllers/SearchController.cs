@@ -26,7 +26,7 @@ namespace MelonWebApi.Controllers
         public ObjectResult SearchTracks(int page = 0, int count = 100, string trackName = "", string format = "", string bitrate = "", 
                                          string sampleRate = "", string channels = "", string bitsPerSample = "", string year = "", 
                                          long ltPlayCount = -1, long gtPlayCount = -1, long ltSkipCount = -1, long gtSkipCount = -1, int ltYear = -1, int ltMonth = -1, int ltDay = -1,
-                                         int gtYear = -1, int gtMonth = -1, int gtDay = -1, long ltRating = -1, long gtRating = -1, [FromQuery] string[] genres = null, 
+                                         int gtYear = -1, int gtMonth = -1, int gtDay = -1, long ltRating = -1, long gtRating = -1, [FromQuery] List<string> genres = null, 
                                          bool searchOr = false, string sort = "NameAsc")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
@@ -221,28 +221,6 @@ namespace MelonWebApi.Controllers
                                             .Select(x=>BsonSerializer.Deserialize<ResponseTrack>(x));
             tracks.AddRange(trackDocs);
 
-            switch (sort)
-            {
-                case "NameDesc":
-                    tracks = tracks.OrderByDescending(x => x.Name).ToList();
-                    break;
-                case "NameAsc":
-                    tracks = tracks.OrderBy(x => x.Name).ToList();
-                    break;
-                case "DateAddedDesc":
-                    tracks = tracks.OrderByDescending(x => x.DateAdded).ToList();
-                    break;
-                case "DateAddedAsc":
-                    tracks = tracks.OrderBy(x => x.DateAdded).ToList();
-                    break;
-                case "ReleaseDateDesc":
-                    tracks = tracks.OrderByDescending(x => x.ReleaseDate).ToList();
-                    break;
-                case "ReleaseDateAsc":
-                    tracks = tracks.OrderBy(x => x.ReleaseDate).ToList();
-                    break;
-            }
-
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
@@ -272,7 +250,7 @@ namespace MelonWebApi.Controllers
         [HttpGet("albums")]
         public ObjectResult SearchAlbums (int page = 0, int count = 100, string albumName = "", string publisher = "", string releaseType = "", string releaseStatus = "",
                                           long ltPlayCount = -1, long gtPlayCount = -1, long ltRating = -1, long gtRating = -1, int ltYear = -1, int ltMonth = -1, int ltDay = -1,
-                                          int gtYear = -1, int gtMonth = -1, int gtDay = -1, [FromQuery] string[] genres = null, bool searchOr = false, string sort = "NameAsc")
+                                          int gtYear = -1, int gtMonth = -1, int gtDay = -1, [FromQuery] List<string> genres = null, bool searchOr = false, string sort = "NameAsc")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -434,28 +412,6 @@ namespace MelonWebApi.Controllers
 
             albums.AddRange(albumDocs);
 
-            switch (sort)
-            {
-                case "NameDesc":
-                    albums = albums.OrderByDescending(x => x.Name).ToList();
-                    break;
-                case "NameAsc":
-                    albums = albums.OrderBy(x => x.Name).ToList();
-                    break;
-                case "DateAddedDesc":
-                    albums = albums.OrderByDescending(x => x.DateAdded).ToList();
-                    break;
-                case "DateAddedAsc":
-                    albums = albums.OrderBy(x => x.DateAdded).ToList();
-                    break;
-                case "ReleaseDateDesc":
-                    albums = albums.OrderByDescending(x => x.ReleaseDate).ToList();
-                    break;
-                case "ReleaseDateAsc":
-                    albums = albums.OrderBy(x => x.ReleaseDate).ToList();
-                    break;
-            }
-
             // Initialize usernames as a HashSet for better performance
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
@@ -485,7 +441,7 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artists")]
         public ObjectResult SearchArtists(int page = 0, int count = 100, string artistName = "", long ltPlayCount = -1, long gtPlayCount = -1, long ltRating = -1, 
-                                          long gtRating = -1, [FromQuery] string[] genres = null, bool searchOr = false, string sort = "NameAsc")
+                                          long gtRating = -1, [FromQuery] List<string> genres = null, bool searchOr = false, string sort = "NameAsc")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -605,22 +561,6 @@ namespace MelonWebApi.Controllers
                                              .Select(x => BsonSerializer.Deserialize<ResponseArtist>(x));
 
             artists.AddRange(ArtistDocs);
-
-            switch (sort)
-            {
-                case "NameDesc":
-                    artists = artists.OrderByDescending(x => x.Name).ToList();
-                    break;
-                case "NameAsc":
-                    artists = artists.OrderBy(x => x.Name).ToList();
-                    break;
-                case "DateAddedDesc":
-                    artists = artists.OrderByDescending(x => x.DateAdded).ToList();
-                    break;
-                case "DateAddedAsc":
-                    artists = artists.OrderBy(x => x.DateAdded).ToList();
-                    break;
-            }
 
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
