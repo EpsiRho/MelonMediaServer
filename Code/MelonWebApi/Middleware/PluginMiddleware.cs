@@ -24,7 +24,7 @@ namespace MelonWebApi.Middleware
                 var parmameters = new Dictionary<string, object>();
                 foreach(var p in queryParameters)
                 {
-                    parmameters.Add(p.Key, p.Value.ToList());
+                    parmameters.Add(p.Key, p.Value.Select(x=>x).ToArray());
                 }
                 var args = new WebApiEventArgs(context.Request.Path.Value, userId, role, parmameters);
 
