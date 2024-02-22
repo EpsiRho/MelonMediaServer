@@ -32,7 +32,8 @@ namespace Melon.DisplayClasses
                     { StringsManager.GetString("ListeningURLEditOption"), ChangeListeningURL },
                     { StringsManager.GetString("HTTPSConfigOption"), HTTPSSetup },
                     { StringsManager.GetString("DefaultLanguageOption"), ChangeDeafultLanguage },
-                    { StringsManager.GetString("ColorEditOption") , ChangeMelonColors }
+                    { StringsManager.GetString("ColorEditOption") , ChangeMelonColors },
+                    { StringsManager.GetString("PluginsOption") , ViewPlugins }
                 };
         public static void Settings()
         {
@@ -89,6 +90,18 @@ namespace Melon.DisplayClasses
                 var choice = MelonUI.OptionPicker(commands);
                 ((Action)MenuOptions[choice])();
             }
+        }
+        private static void ViewPlugins()
+        {
+            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption") });
+            foreach(var plugin in StateManager.Plugins)
+            {
+                Console.WriteLine($"{plugin.Name} [{plugin.Version}]");
+                Console.WriteLine($" - {plugin.Description}");
+                Console.WriteLine($"");
+            }
+            Console.WriteLine(StringsManager.GetString("ContinuationPrompt"));
+            Console.ReadKey();
         }
         private static void HTTPSSetup()
         {

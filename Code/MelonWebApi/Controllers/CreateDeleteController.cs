@@ -31,6 +31,14 @@ namespace MelonWebApi.Controllers
         [HttpPost("album/create")]
         public ObjectResult CreateAlbum(string name)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/album/create", curId, new Dictionary<string, object>()
+            {
+                { "name", name }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -56,17 +64,27 @@ namespace MelonWebApi.Controllers
                 ReleaseType = "",
                 TotalDiscs = 0,
                 TotalTracks = 0,
-                Tracks = new List<DbLink>()
+                Tracks = new List<DbLink>(),
+                AlbumArtDefault = 0
             };
 
             AlbumsCollection.InsertOne(album);
 
+            args.SendEvent($"Album created {album._id}", 200, Program.mWebApi);
             return new ObjectResult(album._id) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin")]
         [HttpPost("album/delete")]
         public ObjectResult DeleteAlbum(string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/album/delete", curId, new Dictionary<string, object>()
+            {
+                { "id", id }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -76,6 +94,7 @@ namespace MelonWebApi.Controllers
             var album = AlbumsCollection.Find(Builders<Album>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if(album == null)
             {
+                args.SendEvent($"Album not found", 404, Program.mWebApi);
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
 
@@ -149,6 +168,7 @@ namespace MelonWebApi.Controllers
 
             AlbumsCollection.DeleteOne(Builders<Album>.Filter.Eq(x=>x._id, id));
 
+            args.SendEvent($"Album deleted {album._id}", 200, Program.mWebApi);
             return new ObjectResult("Album deleted") { StatusCode = 200 };
         }
 
@@ -157,6 +177,14 @@ namespace MelonWebApi.Controllers
         [HttpPost("artist/create")]
         public ObjectResult CreateArtist(string name)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/artist/create", curId, new Dictionary<string, object>()
+            {
+                { "name", name }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -179,17 +207,28 @@ namespace MelonWebApi.Controllers
                 Ratings = new List<UserStat>(),
                 ServerURL = "",
                 DateAdded = DateTime.UtcNow,
-                Tracks = new List<DbLink>()
+                Tracks = new List<DbLink>(),
+                ArtistBannerArtDefault = 0,
+                ArtistPfpDefault = 0,
             };
 
             ArtistsCollection.InsertOne(artist);
 
+            args.SendEvent($"Artist created {artist._id}", 200, Program.mWebApi);
             return new ObjectResult(artist._id) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin")]
         [HttpPost("artist/delete")]
         public ObjectResult DeleteArtist(string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/artist/delete", curId, new Dictionary<string, object>()
+            {
+                { "id", id }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -303,6 +342,7 @@ namespace MelonWebApi.Controllers
 
             ArtistsCollection.DeleteOne(Builders<Artist>.Filter.Eq(x => x._id, id));
 
+            args.SendEvent($"Artist deleted {artist._id}", 200, Program.mWebApi);
             return new ObjectResult("Artist deleted") { StatusCode = 200 };
         }
 

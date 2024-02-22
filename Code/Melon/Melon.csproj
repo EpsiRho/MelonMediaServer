@@ -42,7 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MelonModelBase\MelonModelBase.csproj" />
+    <ProjectReference Include="..\MelonLib\MelonLib.csproj" />
   </ItemGroup>
 
 </Project>

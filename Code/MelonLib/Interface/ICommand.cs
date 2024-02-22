@@ -9,6 +9,7 @@ namespace Melon.Interface
     public interface IPlugin
     {
         public string Name { get; }
+        public string Version { get; }
         public string Description { get; }
         public IHost Host { get; set; }
         public void LoadMelonCommands(IHost host);

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Melon", "Melon\Melon.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MelonWebApi", "MelonWebApi\MelonWebApi.csproj", "{F8E2BD33-6FAF-477C-BEB5-28B877CFB619}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MelonModelBase", "MelonModelBase\MelonModelBase.csproj", "{F3D8B878-AA11-40DC-87CC-32243BBC2F16}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MelonLib", "MelonLib\MelonLib.csproj", "{35DED3BA-1966-4CED-B255-C6F88E1390A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{F8E2BD33-6FAF-477C-BEB5-28B877CFB619}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8E2BD33-6FAF-477C-BEB5-28B877CFB619}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8E2BD33-6FAF-477C-BEB5-28B877CFB619}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F3D8B878-AA11-40DC-87CC-32243BBC2F16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F3D8B878-AA11-40DC-87CC-32243BBC2F16}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F3D8B878-AA11-40DC-87CC-32243BBC2F16}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F3D8B878-AA11-40DC-87CC-32243BBC2F16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35DED3BA-1966-4CED-B255-C6F88E1390A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35DED3BA-1966-4CED-B255-C6F88E1390A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35DED3BA-1966-4CED-B255-C6F88E1390A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35DED3BA-1966-4CED-B255-C6F88E1390A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

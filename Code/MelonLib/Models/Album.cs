@@ -1,6 +1,4 @@
-﻿using Melon.Models;
-
-namespace Melon.Models
+﻿namespace Melon.Models
 {
     public class Album
     {

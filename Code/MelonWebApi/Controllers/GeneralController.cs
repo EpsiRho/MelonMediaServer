@@ -31,6 +31,14 @@ namespace MelonWebApi.Controllers
         [HttpGet("track")]
         public ObjectResult GetTrack(string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/track", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -48,12 +56,9 @@ namespace MelonWebApi.Controllers
             var track = docs.FirstOrDefault();
             if(track == null)
             {
+                args.SendEvent("Track not found", 404, Program.mWebApi);
                 return new ObjectResult("Track not found") { StatusCode = 404 };
             }
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
 
             var usernames = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             usernames.Add(curId);
@@ -73,20 +78,26 @@ namespace MelonWebApi.Controllers
                 track.Ratings = track.Ratings.Where(x => usernames.Contains(x.UserId)).ToList();
             }
 
+            args.SendEvent("Track Sent", 200, Program.mWebApi);
             return new ObjectResult(track) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("tracks")]
         public ObjectResult GetTracks([FromQuery] string[] ids)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/tracks", curId, new Dictionary<string, object>()
+                {
+                    { "ids", ids }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
@@ -122,7 +133,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-
+            args.SendEvent("Tracks sent", 200, Program.mWebApi);
             return new ObjectResult(tracks) { StatusCode = 200 };
         }
 
@@ -131,6 +142,14 @@ namespace MelonWebApi.Controllers
         [HttpGet("album")]
         public ObjectResult GetAlbum(string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/album", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -147,12 +166,9 @@ namespace MelonWebApi.Controllers
             var album = docs.FirstOrDefault();
             if (album == null)
             {
+                args.SendEvent("Album not found", 200, Program.mWebApi);
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
@@ -172,20 +188,26 @@ namespace MelonWebApi.Controllers
                 album.Ratings = album.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
             }
 
+            args.SendEvent("Album sent", 200, Program.mWebApi);
             return new ObjectResult(album) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("albums")]
         public ObjectResult GetAlbums([FromQuery] string[] ids)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/albums", curId, new Dictionary<string, object>()
+                {
+                    { "ids", ids }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                    .Where(c => c.Type == ClaimTypes.UserData)
-                    .Select(c => c.Value).FirstOrDefault();
             List<string> userIds =
             [
                 curId,
@@ -212,17 +234,23 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-
+            args.SendEvent("Albums sent", 200, Program.mWebApi);
             return new ObjectResult(albums) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album/tracks")]
         public ObjectResult GetAlbumTracks(string id, int page = 0, int count = 100)
         {
-            if (page > 100000 || count > 100000)
-            {
-                return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
-            }
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/album/tracks", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "page", page },
+                    { "count", count }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -237,6 +265,7 @@ namespace MelonWebApi.Controllers
             var album = albumDocs.FirstOrDefault();
             if (album == null)
             {
+                args.SendEvent("Album not found", 200, Program.mWebApi);
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
 
@@ -252,17 +281,11 @@ namespace MelonWebApi.Controllers
 
             var tracks = trackDocs.Select(x => BsonSerializer.Deserialize<ResponseTrack>(x)).ToList();
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
-
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
             foreach (var track in tracks)
             {
-
-
                 if (track.PlayCounts != null)
                 {
                     track.PlayCounts = track.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
@@ -280,6 +303,7 @@ namespace MelonWebApi.Controllers
 
             }
 
+            args.SendEvent("album tracks sent", 200, Program.mWebApi);
             return new ObjectResult(tracks) { StatusCode = 200 };
         }
 
@@ -288,6 +312,14 @@ namespace MelonWebApi.Controllers
         [HttpGet("artist")]
         public ObjectResult GetArtist(string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/artist", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -306,11 +338,10 @@ namespace MelonWebApi.Controllers
             var artist = artistDocs.Select(x => BsonSerializer.Deserialize<ResponseArtist>(x)).FirstOrDefault();
             if (artist == null)
             {
+                args.SendEvent("Artist not found", 404, Program.mWebApi);
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
+
             List<string> userIds =
             [
                 curId,
@@ -320,20 +351,26 @@ namespace MelonWebApi.Controllers
             try { artist.SkipCounts = artist.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList(); } catch (Exception) { }
             try { artist.Ratings = artist.Ratings.Where(x => userIds.Contains(x.UserId)).ToList(); } catch (Exception) { }
 
+            args.SendEvent("Artist sent", 200, Program.mWebApi);
             return new ObjectResult(artist) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artists")]
         public ObjectResult GetArtists([FromQuery] string[] ids)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/artists", curId, new Dictionary<string, object>()
+                {
+                    { "ids", ids }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistCollection = mongoDatabase.GetCollection<Artist>("Artists");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
@@ -373,17 +410,22 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-
+            args.SendEvent("Artists sent", 200, Program.mWebApi);
             return new ObjectResult(artists) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/tracks")]
         public ObjectResult GetArtistTracks(string id, uint page = 0, uint count = 100)
         {
-            if(page > 100000 || count > 100000)
-            {
-                return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
-            }
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/artist", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "page", page },
+                    { "count", count }
+                });
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -399,12 +441,10 @@ namespace MelonWebApi.Controllers
             var artist = artistDocs.FirstOrDefault();
             if (artist == null)
             {
+                args.SendEvent("Artist not found", 404, Program.mWebApi);
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
@@ -445,16 +485,23 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            args.SendEvent("Artist tracks sent", 200, Program.mWebApi);
             return new ObjectResult(tracks) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/releases")]
-        public ObjectResult GetArtistReleases(string id, uint page = 0, uint count = 10)
+        public ObjectResult GetArtistReleases(string id, uint page = 0, uint count = 100)
         {
-            if (page > 100000 || count > 100000)
-            {
-                return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
-            }
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/artist", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "page", page },
+                    { "count", count }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -469,13 +516,10 @@ namespace MelonWebApi.Controllers
             var artist = artistDocs.FirstOrDefault();
             if (artist == null)
             {
+                args.SendEvent("Artist not found", 404, Program.mWebApi);
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
@@ -516,16 +560,23 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            args.SendEvent("Artist releases sent", 200, Program.mWebApi);
             return new ObjectResult(albums) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/seen-on")]
         public ObjectResult GetArtistSeenOn(string id, uint page = 0, uint count = 100)
         {
-            if (page > 100000 || count > 100000)
-            {
-                return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
-            }
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/artist", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "page", page },
+                    { "count", count }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -540,12 +591,10 @@ namespace MelonWebApi.Controllers
             var artist = artistDocs.FirstOrDefault();
             if (artist == null)
             {
+                args.SendEvent("Artist not found", 404, Program.mWebApi);
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
@@ -586,16 +635,23 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            args.SendEvent("Artist seen-on sent", 200, Program.mWebApi);
             return new ObjectResult(albums) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/connections")]
         public ObjectResult GetArtistConnections(string id, uint page = 0, uint count = 100)
         {
-            if (page > 100000 || count > 100000)
-            {
-                return new ObjectResult("Page / Count must be below 100000") { StatusCode = 400 };
-            }
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/artist", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "page", page },
+                    { "count", count }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -610,17 +666,15 @@ namespace MelonWebApi.Controllers
             var artist = artistDocs.FirstOrDefault();
             if (artist == null)
             {
+                args.SendEvent("Artist Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
 
-            List<ResponseArtist> albums = new List<ResponseArtist>();
+            List<ResponseArtist> artists = new List<ResponseArtist>();
             for (uint i = (page * count); i < ((page * count) + count); i++)
             {
                 try
@@ -653,7 +707,7 @@ namespace MelonWebApi.Controllers
                         fullArtist.Ratings = fullArtist.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
                     }
 
-                    albums.Add(fullArtist);
+                    artists.Add(fullArtist);
                 }
                 catch (Exception)
                 {
@@ -661,7 +715,8 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            return new ObjectResult(albums) { StatusCode = 200 };
+            args.SendEvent("Artist connections sent", 200, Program.mWebApi);
+            return new ObjectResult(artists) { StatusCode = 200 };
         }
 
         // Lyrics
@@ -669,26 +724,35 @@ namespace MelonWebApi.Controllers
         [HttpGet("lyrics")]
         public ObjectResult GetLyrics(string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/lyrics", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var trackFilter = Builders<Track>.Filter.Eq("_id", id);
             var track = TracksCollection.Find(trackFilter).FirstOrDefault();
 
             if(track == null)
             {
+                args.SendEvent("Track Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Track Not Found") { StatusCode = 404 };
             }
 
             if(track.LyricsPath == "")
             {
+                args.SendEvent("Track Does Not Have Lyrics", 404, Program.mWebApi);
                 return new ObjectResult("Track Does Not Have Lyrics") { StatusCode = 404 };
             }
 
             string txt = System.IO.File.ReadAllText(track.LyricsPath);
 
+            args.SendEvent("Lyrics sent", 200, Program.mWebApi);
             return new ObjectResult(txt) { StatusCode = 200 };
         }
     }

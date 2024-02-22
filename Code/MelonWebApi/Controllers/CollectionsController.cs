@@ -44,8 +44,15 @@ namespace MelonWebApi.Controllers
         public ObjectResult CreateCollection(string name, string description = "", [FromQuery] List<string> andFilters = null, [FromQuery] List<string> orFilters = null)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/collections/create", curId, new Dictionary<string, object>()
+            {
+                { "name", name },
+                { "description", description },
+                { "andFilters", andFilters },
+                { "orFilters", orFilters }
+            });
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -77,11 +84,14 @@ namespace MelonWebApi.Controllers
 
             if(col.Tracks == null)
             {
+                args.SendEvent("Invalid Parameters", 400, Program.mWebApi);
                 return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
             }
 
             CollectionsCollection.InsertOne(col);
 
+            args.Args.Add("CollectionId", col._id);
+            args.SendEvent("Created a collection", 200, Program.mWebApi);
             return new ObjectResult(col._id) { StatusCode = 200 };
         }
 
@@ -105,18 +115,25 @@ namespace MelonWebApi.Controllers
         [HttpPost("add-filters")]
         public ObjectResult AddFilter(string id, [FromQuery] List<string> andFilters = null, [FromQuery] List<string> orFilters = null)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/collections/add-filters", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "andFilters", andFilters },
+                { "orFilters", orFilters }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ColCollection = mongoDatabase.GetCollection<Collection>("Collections");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             var cFilter = Builders<Collection>.Filter.Eq(x=>x._id, id);
             var collection = ColCollection.Find(cFilter).FirstOrDefault();
             if(collection == null)
             {
+                args.SendEvent("Collection Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Collection Not Found") { StatusCode = 404 };
             }
 
@@ -124,6 +141,7 @@ namespace MelonWebApi.Controllers
             {
                 if(collection.Owner != curId && !collection.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -156,6 +174,7 @@ namespace MelonWebApi.Controllers
             var tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
             if (tracks == null)
             {
+                args.SendEvent("Invalid Parameters", 400, Program.mWebApi);
                 return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
             }
             collection.Tracks = tracks;
@@ -163,6 +182,7 @@ namespace MelonWebApi.Controllers
 
             ColCollection.ReplaceOne(cFilter, collection);
 
+            args.SendEvent("Filters added", 200, Program.mWebApi);
             return new ObjectResult("Filters added") { StatusCode = 200 };
         }
 
@@ -186,18 +206,25 @@ namespace MelonWebApi.Controllers
         [HttpPost("remove-filters")]
         public ObjectResult RemoveFilter(string id, [FromQuery] List<string> andFilters = null, [FromQuery] List<string> orFilters = null)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/collections/remove-filters", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "andFilters", andFilters },
+                { "orFilters", orFilters }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ColCollection = mongoDatabase.GetCollection<Collection>("Collections");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             var cFilter = Builders<Collection>.Filter.Eq(x => x._id, id);
             var collection = ColCollection.Find(cFilter).FirstOrDefault();
             if (collection == null)
             {
+                args.SendEvent("Collection Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Collection Not Found") { StatusCode = 404 };
             }
 
@@ -205,6 +232,7 @@ namespace MelonWebApi.Controllers
             {
                 if (collection.Owner != curId && !collection.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -231,12 +259,14 @@ namespace MelonWebApi.Controllers
             collection.Tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
             if (collection.Tracks == null)
             {
+                args.SendEvent("Invalid Parameters", 400, Program.mWebApi);
                 return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
             }
             collection.TrackCount = collection.Tracks.Count();
 
             ColCollection.ReplaceOne(cFilter, collection);
 
+            args.SendEvent("Tracks removed", 200, Program.mWebApi);
             return new ObjectResult("Tracks removed") { StatusCode = 200 };
         }
 
@@ -257,27 +287,31 @@ namespace MelonWebApi.Controllers
         [HttpPost("delete")]
         public ObjectResult DeleteCollection(string id)
         {
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-
-            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
-            var CCollection = mongoDatabase.GetCollection<Collection>("Collections");
-
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/collections/delete", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+            });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var CCollection = mongoDatabase.GetCollection<Collection>("Collections");
 
             //var str = queue._id.ToString();
             var cFilter = Builders<Collection>.Filter.Eq(x => x._id, id);
             var collection = CCollection.Find(cFilter).FirstOrDefault();
             if (collection == null)
             {
+                args.SendEvent("Collection Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Collection Not Found") { StatusCode = 404 };
             }
 
             if (collection.Owner != curId)
             {
+                args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                 return new ObjectResult("Invalid Auth") { StatusCode = 401 };
             }
 
@@ -294,6 +328,7 @@ namespace MelonWebApi.Controllers
 
             CCollection.DeleteOne(cFilter);
 
+            args.SendEvent("Collection deleted", 200, Program.mWebApi);
             return new ObjectResult("Collection deleted") { StatusCode = 200 };
         }
 
@@ -321,20 +356,30 @@ namespace MelonWebApi.Controllers
         public ObjectResult updateCollection(string id, string description = "", string name = "", [FromQuery] List<string> editors = null, [FromQuery] List<string> viewers = null,
                                            string publicEditing = "", string publicViewing = "")
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/collections/update", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "description", description },
+                { "editors", editors },
+                { "viewers", viewers },
+                { "publicEditing", publicEditing },
+                { "publicViewing", publicViewing }
+            });
+
             try
             {
                 var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
                 var mongoDatabase = mongoClient.GetDatabase("Melon");
                 var ColCollection = mongoDatabase.GetCollection<Collection>("Collections");
 
-                var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
-
                 var cFilter = Builders<Collection>.Filter.Eq(x=>x._id, id);
                 var collection = ColCollection.Find(cFilter).FirstOrDefault();
                 if (collection == null)
                 {
+                    args.SendEvent("Collection not found", 404, Program.mWebApi);
                     return new ObjectResult("Collection not found") { StatusCode = 404 };
                 }
 
@@ -342,6 +387,7 @@ namespace MelonWebApi.Controllers
                 {
                     if (collection.Owner != curId && !collection.Editors.Contains(curId))
                     {
+                        args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
                 }
@@ -358,7 +404,7 @@ namespace MelonWebApi.Controllers
                     pubViewing = publicViewing == "" ? collection.PublicViewing : bool.Parse(publicViewing);
                 }
                 catch (Exception)
-                {
+                {args.SendEvent("Invalid Parameters", 400, Program.mWebApi);
                     return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
                 }
                 
@@ -378,8 +424,8 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult(e.Message) { StatusCode = 500 };
             }
 
-
-            return new ObjectResult("Playlist updated") { StatusCode = 404 };
+            args.SendEvent("Collection updated", 200, Program.mWebApi);
+            return new ObjectResult("Collection updated") { StatusCode = 404 };
         }
 
         /// <summary>
@@ -402,6 +448,10 @@ namespace MelonWebApi.Controllers
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/collections/get", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+            });
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -421,12 +471,15 @@ namespace MelonWebApi.Controllers
                 {
                     if (collection.Owner != curId && !collection.Viewers.Contains(curId))
                     {
+                        args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
                 }
+                args.SendEvent("Collection Info Sent", 200, Program.mWebApi);
                 return new ObjectResult(collection) { StatusCode = 200 };
             }
 
+            args.SendEvent("Collection not found", 404, Program.mWebApi);
             return new ObjectResult("Collection not found") { StatusCode = 404 };
         }
 
@@ -449,15 +502,21 @@ namespace MelonWebApi.Controllers
         [HttpGet("search")]
         public ObjectResult SearchCollections(int page, int count, string name="")
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/collections/search", curId, new Dictionary<string, object>()
+            {
+                { "page", page },
+                { "count", count },
+                { "name", name }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ColCollection = mongoDatabase.GetCollection<Collection>("Collections");
 
             List<ResponseCollection> Collections = new List<ResponseCollection>();
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
 
             var ownerFilter = Builders<Collection>.Filter.Eq(x => x.Owner, curId);
             var viewersFilter = Builders<Collection>.Filter.AnyEq(x => x.Viewers, curId);
@@ -477,8 +536,8 @@ namespace MelonWebApi.Controllers
                                           .ToList()
                                           .Select(x => BsonSerializer.Deserialize<ResponseCollection>(x)));
 
-            
 
+            args.SendEvent("List of Collections sent", 200, Program.mWebApi);
             return new ObjectResult(Collections) { StatusCode = 200 };
         }
 
@@ -504,6 +563,12 @@ namespace MelonWebApi.Controllers
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/collections/get-tracks", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "page", page },
+                { "count", count },
+            });
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -515,6 +580,7 @@ namespace MelonWebApi.Controllers
             var collection = ColCollection.Find(cFilter).FirstOrDefault();
             if (collection == null)
             {
+                args.SendEvent("Collection not found", 404, Program.mWebApi);
                 return new ObjectResult("Collection not found") { StatusCode = 404 };
             }
 
@@ -522,6 +588,7 @@ namespace MelonWebApi.Controllers
             {
                 if (collection.Owner != curId && !collection.Editors.Contains(curId) && !collection.Viewers.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -561,6 +628,7 @@ namespace MelonWebApi.Controllers
                 orderedTracks.Add(track);
             }
 
+            args.SendEvent("Collection Tracks Sent", 200, Program.mWebApi);
             return new ObjectResult(orderedTracks) { StatusCode = 200 };
         }
     }

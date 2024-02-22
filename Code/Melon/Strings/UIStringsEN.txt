@@ -130,3 +130,4 @@ DefaultLanguageOption=Change Default Language
 CollectionStepStatus=Updating Collections
 CheckDbVersioningStatus=Checking Database Compatibility
 LoadPluginsStatus=Load Plugins
+PluginsOption=View Plugins

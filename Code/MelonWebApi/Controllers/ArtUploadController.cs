@@ -47,6 +47,14 @@ namespace MelonWebApi.Controllers
         [Consumes("multipart/form-data")]
         public ObjectResult UploadTrackArt(string id, IFormFile image)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/upload/track-art", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -54,6 +62,7 @@ namespace MelonWebApi.Controllers
             var track = TracksCollection.Find(Builders<Track>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if(track == null)
             {
+                args.SendEvent("Track not found", 404, Program.mWebApi);
                 return new ObjectResult("Track not found") { StatusCode = 404 };
             }
 
@@ -64,6 +73,7 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("Track file not found", 404, Program.mWebApi);
                 return new ObjectResult("Track file not found") { StatusCode = 404 };
             }
 
@@ -77,12 +87,14 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("Image error", 400, Program.mWebApi);
                 return new ObjectResult("Image error") { StatusCode = 400 };
             }
 
             track.TrackArtCount++;
             TracksCollection.ReplaceOne(Builders<Track>.Filter.Eq(x => x._id, id), track);
 
+            args.SendEvent("Track art uploaded", 200, Program.mWebApi);
             return new ObjectResult("Track art uploaded") { StatusCode = 200 };
         }
 
@@ -105,6 +117,14 @@ namespace MelonWebApi.Controllers
         [Consumes("multipart/form-data")]
         public ObjectResult UploadAlbumArt(string id, IFormFile image)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/upload/album-art", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -112,6 +132,7 @@ namespace MelonWebApi.Controllers
             var album = AlbumsCollection.Find(Builders<Album>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if (album == null)
             {
+                args.SendEvent("Album not found", 404, Program.mWebApi);
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
 
@@ -131,6 +152,7 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("Image error", 400, Program.mWebApi);
                 return new ObjectResult("Image error") { StatusCode = 400 };
             }
 
@@ -143,6 +165,7 @@ namespace MelonWebApi.Controllers
             album.AlbumArtCount++;
             AlbumsCollection.ReplaceOne(Builders<Album>.Filter.Eq(x => x._id, id), album);
 
+            args.SendEvent("Album art uploaded", 200, Program.mWebApi);
             return new ObjectResult("Album art uploaded") { StatusCode = 200 };
         }
 
@@ -165,6 +188,14 @@ namespace MelonWebApi.Controllers
         [Consumes("multipart/form-data")]
         public ObjectResult UploadArtistPfp(string id, IFormFile image)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/upload/artist-pfp", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -172,6 +203,7 @@ namespace MelonWebApi.Controllers
             var artist = ArtistsCollection.Find(Builders<Artist>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if (artist == null)
             {
+                args.SendEvent("Artist not found", 404, Program.mWebApi);
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
@@ -191,6 +223,7 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("Image error", 400, Program.mWebApi);
                 return new ObjectResult("Image error") { StatusCode = 400 };
             }
 
@@ -203,6 +236,7 @@ namespace MelonWebApi.Controllers
             artist.ArtistPfpArtCount++;
             ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, id), artist);
 
+            args.SendEvent("Artist pfp uploaded", 200, Program.mWebApi);
             return new ObjectResult("Artist pfp uploaded") { StatusCode = 200 };
         }
 
@@ -225,6 +259,14 @@ namespace MelonWebApi.Controllers
         [Consumes("multipart/form-data")]
         public ObjectResult UploadArtistBanner(string id, IFormFile image)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/upload/artist-banner", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -232,6 +274,7 @@ namespace MelonWebApi.Controllers
             var artist = ArtistsCollection.Find(Builders<Artist>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if (artist == null)
             {
+                args.SendEvent("Artist not found", 404, Program.mWebApi);
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
@@ -251,6 +294,7 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("Image error", 400, Program.mWebApi);
                 return new ObjectResult("Image error") { StatusCode = 400 };
             }
 
@@ -263,6 +307,7 @@ namespace MelonWebApi.Controllers
             artist.ArtistBannerArtCount++;
             ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, id), artist);
 
+            args.SendEvent("Artist banner uploaded", 200, Program.mWebApi);
             return new ObjectResult("Artist banner uploaded") { StatusCode = 200 };
         }
 
@@ -285,6 +330,14 @@ namespace MelonWebApi.Controllers
         [Consumes("multipart/form-data")]
         public ObjectResult UploadPlaylistArt(string id, IFormFile image)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/upload/playlist-art", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PlaylistsCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
@@ -292,6 +345,7 @@ namespace MelonWebApi.Controllers
             var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if (playlist == null)
             {
+                args.SendEvent("Playlist not found", 404, Program.mWebApi);
                 return new ObjectResult("Playlist not found") { StatusCode = 404 };
             }
 
@@ -311,12 +365,14 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("Image error", 400, Program.mWebApi);
                 return new ObjectResult("Image error") { StatusCode = 400 };
             }
 
             playlist.ArtworkPath = $"{playlist._id}.jpg";
             PlaylistsCollection.ReplaceOne(Builders<Playlist>.Filter.Eq(x => x._id, id), playlist);
 
+            args.SendEvent("Playlist art uploaded", 200, Program.mWebApi);
             return new ObjectResult("Playlist art uploaded") { StatusCode = 200 };
         }
 
@@ -339,6 +395,14 @@ namespace MelonWebApi.Controllers
         [Consumes("multipart/form-data")]
         public ObjectResult UploadCollectionArt(string id, IFormFile image)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/upload/collection-art", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var CollectionsCollection = mongoDatabase.GetCollection<Collection>("Collections");
@@ -346,6 +410,7 @@ namespace MelonWebApi.Controllers
             var collection = CollectionsCollection.Find(Builders<Collection>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if (collection == null)
             {
+                args.SendEvent("Collection not found", 404, Program.mWebApi);
                 return new ObjectResult("Collection not found") { StatusCode = 404 };
             }
 
@@ -365,12 +430,14 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("Image error", 400, Program.mWebApi);
                 return new ObjectResult("Image error") { StatusCode = 400 };
             }
 
             collection.ArtworkPath = $"{collection._id}.jpg";
             CollectionsCollection.ReplaceOne(Builders<Collection>.Filter.Eq(x => x._id, id), collection);
 
+            args.SendEvent("Collection art uploaded", 200, Program.mWebApi);
             return new ObjectResult("Collection art uploaded") { StatusCode = 200 };
         }
 
@@ -386,12 +453,16 @@ namespace MelonWebApi.Controllers
         /// <response code="200">If the artwork is successfully uploaded.</response>
         /// <response code="400">If the input parameters are invalid.</response>
         /// <response code="401">If the user does not have permission to perform this action.</response>
-        /// <response code="404">If the collection is not found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("default-art")]
         [Consumes("multipart/form-data")]
         public ObjectResult UploadDefaultArt(IFormFile image)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/upload/default-art", curId, new Dictionary<string, object>());
+
             // Save the file
             var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.jpg";
             if (!Directory.Exists($"{StateManager.melonPath}/Assets"))
@@ -408,9 +479,11 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("Image error", 400, Program.mWebApi);
                 return new ObjectResult("Image error") { StatusCode = 400 };
             }
 
+            args.SendEvent("Default art uploaded", 404, Program.mWebApi);
             return new ObjectResult("Default art uploaded") { StatusCode = 200 };
         }
 

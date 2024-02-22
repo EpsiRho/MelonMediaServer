@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 
 namespace MelonWebApi.Controllers
@@ -29,6 +30,8 @@ namespace MelonWebApi.Controllers
         [HttpGet("login")]
         public ObjectResult Login(string username, string password)
         {
+            var args = new WebApiEventArgs("auth/login", "No Auth", new Dictionary<string, object>());
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
@@ -38,6 +41,7 @@ namespace MelonWebApi.Controllers
             
             if(users.Count == 0) 
             {
+                args.SendEvent("Invalid username or password", 401, Program.mWebApi);
                 return new ObjectResult("Invalid username or password") { StatusCode = 401 };
             }
             var user = users[0];
@@ -48,10 +52,13 @@ namespace MelonWebApi.Controllers
             {
                 user.LastLogin = DateTime.Now;
                 UserCollection.ReplaceOne(userFilter, user);
+                args.User = user._id;
+                args.SendEvent("User Logged In", 200, Program.mWebApi);
                 return new ObjectResult(Security.GenerateJwtToken(username, user.Type, user._id)) { StatusCode = 200 };
             }
             else
             {
+                args.SendEvent("Invalid username or password", 401, Program.mWebApi);
                 return new ObjectResult("Invalid username or password") { StatusCode = 401 };
             }
         }
@@ -75,11 +82,19 @@ namespace MelonWebApi.Controllers
         [HttpGet("invite")]
         public ObjectResult Invite()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("auth/invite", curId, new Dictionary<string, object>());
+
             var code = Security.CreateInviteCode();
             if(code == "Timeout")
             {
+                args.SendEvent("Timeout, too many invite codes active", 408, Program.mWebApi);
                 return new ObjectResult("Timeout, too many invite codes active") { StatusCode = 408 };
             }
+
+            args.SendEvent("Created invite code", 200, Program.mWebApi);
             return new ObjectResult(code){ StatusCode = 200 };
         }
 
@@ -98,12 +113,17 @@ namespace MelonWebApi.Controllers
         [HttpGet("code-authenticate")]
         public ObjectResult CodeAuth(string code)
         {
+            var args = new WebApiEventArgs("auth/code-authenticate", "No Auth", new Dictionary<string, object>());
+
             var check = Security.ValidateInviteCode(code);
             if (!check)
             {
-                return new ObjectResult("Invalid Invite code") { StatusCode = 401 };
+                args.SendEvent("Invalid Invite code", 200, Program.mWebApi);
+                return new ObjectResult("Invalid invite code") { StatusCode = 401 };
             }
             Security.InvalidateInviteCode(code);
+
+            args.SendEvent("Created Server JWT", 200, Program.mWebApi);
             return new ObjectResult(Security.GenerateJwtToken("NA", "Server", "NA", 10)) { StatusCode = 200 };
         }
 

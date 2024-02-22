@@ -34,7 +34,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MelonModelBase\MelonModelBase.csproj" />
     <ProjectReference Include="..\Melon\Melon.csproj" />
   </ItemGroup>
 

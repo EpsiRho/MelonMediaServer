@@ -22,12 +22,14 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.RateLimiting;
+using Melon.Models;
 namespace MelonWebApi
 {
     public static class Program
     {
         public static bool started = false;
         public static WebApplication app;
+        public static MWebApi mWebApi;
         public static int Main(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.White;
@@ -38,7 +40,8 @@ namespace MelonWebApi
             string lang = args.Where(x => x.Contains("--lang")).FirstOrDefault() != null ? args.Where(x=>x.Contains("--lang")).FirstOrDefault().Split("=")[1] : "";
             if (!started)
             {
-                StateManager.Init(headless, setup, disablePlugins, lang);
+                mWebApi = new MWebApi();
+                StateManager.Init(headless, setup, disablePlugins, lang, mWebApi);
             }
 
             if (headless && DisplayManager.UIExtensions.Count() != 0)

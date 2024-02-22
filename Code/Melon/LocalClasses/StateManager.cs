@@ -24,6 +24,7 @@ using System.Reflection;
 using System.Windows.Input;
 using Melon.Interface;
 using Melon.PluginModels;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Melon.LocalClasses
 {
@@ -37,7 +38,8 @@ namespace Melon.LocalClasses
         public static Settings MelonSettings { get; set; }
         public static Flags MelonFlags { get; set; }
         public static ResourceManager StringsManager { get; set; }
-        public static void Init(bool headless, bool runSetup, bool loadPlugins, string language)
+        public static List<IPlugin> Plugins { get; set; }
+        public static void Init(bool headless, bool runSetup, bool loadPlugins, string language, IWebApi mWebApi)
         {
             if (language == "")
             {
@@ -220,19 +222,20 @@ namespace Melon.LocalClasses
                 }
             }
 
-            // Plugins
-            if (!MelonFlags.DisablePlugins || loadPlugins)
-            {
-                ChecklistUI.UpdateChecklist(1, true);
-                LoadPlugins();
-            }
-
             // Setup Menu
             DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDB);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
+
+            // Plugins
+            if (!MelonFlags.DisablePlugins || loadPlugins)
+            {
+                ChecklistUI.UpdateChecklist(1, true);
+                LoadPlugins(mWebApi);
+            }
+
             if (!headless)
             {
                 ChecklistUI.UpdateChecklist(2, true);
@@ -327,7 +330,7 @@ namespace Melon.LocalClasses
                 return ms.ToArray();
             }
         }
-        private static void LoadPlugins()
+        private static void LoadPlugins(IWebApi mWebApi)
         {
             if (!Directory.Exists($"{melonPath}/Plugins"))
             {
@@ -335,16 +338,25 @@ namespace Melon.LocalClasses
             }
 
             var files = Directory.GetFiles($"{melonPath}/Plugins");
-            IEnumerable<IPlugin> commands = files.SelectMany(pluginPath =>
+            Plugins = files.SelectMany(pluginPath =>
             {
                 Assembly pluginAssembly = LoadPlugin(pluginPath);
-                return CreateCommands(pluginAssembly);
+                return CreatePlugins(pluginAssembly);
             }).ToList();
-            var host = new MelonHost();
-            foreach (var command in commands)
+            var host = new MelonHost() { WebApi = mWebApi };
+            foreach (var plugin in Plugins)
             {
-                command.LoadMelonCommands(host);
-                command.Execute();
+                if (plugin == null)
+                {
+                    continue;
+                }
+
+                plugin.LoadMelonCommands(host);
+                var check = plugin.Execute();
+                if(check != 0)
+                {
+                    Serilog.Log.Error($"Plugin Execute failed: {plugin.Name}");
+                }
             }
         }
         private static Assembly LoadPlugin(string relativePath)
@@ -361,33 +373,32 @@ namespace Melon.LocalClasses
             PluginLoadContext loadContext = new PluginLoadContext(pluginLocation);
             return loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(pluginLocation)));
         }
-        private static IEnumerable<IPlugin> CreateCommands(Assembly assembly)
+        private static List<IPlugin> CreatePlugins(Assembly assembly)
         {
-            int count = 0;
-
-            foreach (Type type in assembly.GetTypes())
+            List<IPlugin> plugins = new List<IPlugin>();
+            try
             {
-                if (type.Name.Contains("IPlugin"))
+                foreach (Type type in assembly.GetTypes())
                 {
-                    bool check = true;
-                }
-                if (typeof(IPlugin).IsAssignableFrom(type))
-                {
-                    IPlugin result = Activator.CreateInstance(type) as IPlugin;
-                    if (result != null)
+                    if (type.Name.Contains("IPlugin"))
                     {
-                        count++;
-                        yield return result;
+                        bool check = true;
+                    }
+                    if (typeof(IPlugin).IsAssignableFrom(type))
+                    {
+                        IPlugin result = Activator.CreateInstance(type) as IPlugin;
+                        if (result != null)
+                        {
+                            plugins.Add(result);
+                        }
                     }
                 }
+                return plugins;
             }
-
-            if (count == 0)
+            catch (Exception)
             {
-                string availableTypes = string.Join(",", assembly.GetTypes().Select(t => t.FullName));
-                throw new ApplicationException(
-                    $"Can't find any type which implements IPlugin in {assembly} from {assembly.Location}.\n" +
-                    $"Available types: {availableTypes}");
+                Serilog.Log.Error($"Plugin Load failed: {assembly.FullName}");
+                return plugins;
             }
         }
     }

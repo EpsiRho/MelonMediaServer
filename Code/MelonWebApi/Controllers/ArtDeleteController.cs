@@ -48,6 +48,15 @@ namespace MelonWebApi.Controllers
         public ObjectResult DeleteTrackArt([Required(ErrorMessage = "Track ID is required")] string id, 
                                            [Required(ErrorMessage = "Position is required")] [Range(0, int.MaxValue, ErrorMessage = "Position must be positive")] int pos)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/delete/track-art", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "pos", pos }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -55,11 +64,13 @@ namespace MelonWebApi.Controllers
             var track = TracksCollection.Find(Builders<Track>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if(track == null)
             {
+                args.SendEvent("Track not found", 404, Program.mWebApi);
                 return new ObjectResult("Track not found") { StatusCode = 404 };
             }
 
             if(track.TrackArtCount < pos)
             {
+                args.SendEvent("Invalid position", 400, Program.mWebApi);
                 return new ObjectResult("Invalid position") { StatusCode = 400 };
             }
 
@@ -70,6 +81,7 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("Track file not found", 404, Program.mWebApi);
                 return new ObjectResult("Track file not found") { StatusCode = 404 };
             }
 
@@ -79,6 +91,7 @@ namespace MelonWebApi.Controllers
             track.TrackArtCount--;
             TracksCollection.ReplaceOne(Builders<Track>.Filter.Eq(x => x._id, id), track);
 
+            args.SendEvent("Track art removed", 200, Program.mWebApi);
             return new ObjectResult("Track art removed") { StatusCode = 200 };
         }
 
@@ -101,6 +114,15 @@ namespace MelonWebApi.Controllers
         public ObjectResult DeleteAlbumArt([Required(ErrorMessage = "Album ID is required")] string id,
                                            [Required(ErrorMessage = "Position is required")] [Range(0, int.MaxValue, ErrorMessage = "Position must be positive")] int pos)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/delete/album-art", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "pos", pos }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -108,11 +130,13 @@ namespace MelonWebApi.Controllers
             var album = AlbumsCollection.Find(Builders<Album>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if (album == null)
             {
+                args.SendEvent("Album not found", 404, Program.mWebApi);
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
 
             if (album.AlbumArtCount < pos)
             {
+                args.SendEvent("Invalid position", 400, Program.mWebApi);
                 return new ObjectResult("Invalid position") { StatusCode = 400 };
             }
 
@@ -124,6 +148,7 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("File error", 404, Program.mWebApi);
                 return new ObjectResult("File error") { StatusCode = 404 };
             }
 
@@ -131,6 +156,7 @@ namespace MelonWebApi.Controllers
             album.AlbumArtCount--;
             AlbumsCollection.ReplaceOne(Builders<Album>.Filter.Eq(x => x._id, id), album);
 
+            args.SendEvent("Album art removed", 200, Program.mWebApi);
             return new ObjectResult("Album art removed") { StatusCode = 200 };
         }
 
@@ -153,6 +179,15 @@ namespace MelonWebApi.Controllers
         public ObjectResult DeleteArtistPfp([Required(ErrorMessage = "Artist ID is required")] string id,
                                             [Required(ErrorMessage = "Position is required")] [Range(0, int.MaxValue, ErrorMessage = "Position must be positive")] int pos)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/delete/artist-pfp", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "pos", pos }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -160,11 +195,13 @@ namespace MelonWebApi.Controllers
             var artist = ArtistsCollection.Find(Builders<Artist>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if (artist == null)
             {
+                args.SendEvent("Artist not found", 404, Program.mWebApi);
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
             if (artist.ArtistPfpArtCount < pos)
             {
+                args.SendEvent("Invalid position", 400, Program.mWebApi);
                 return new ObjectResult("Invalid position") { StatusCode = 400 };
             }
 
@@ -176,6 +213,7 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("File error", 404, Program.mWebApi);
                 return new ObjectResult("File error") { StatusCode = 404 };
             }
 
@@ -183,6 +221,7 @@ namespace MelonWebApi.Controllers
             artist.ArtistPfpArtCount--;
             ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, id), artist);
 
+            args.SendEvent("Artist pfp removed", 200, Program.mWebApi);
             return new ObjectResult("Artist pfp removed") { StatusCode = 200 };
         }
 
@@ -205,6 +244,15 @@ namespace MelonWebApi.Controllers
         public ObjectResult DeleteArtistBanner([Required(ErrorMessage = "Artist ID is required")] string id,
                                                [Required(ErrorMessage = "Position is required")] [Range(0, int.MaxValue, ErrorMessage = "Position must be positive")] int pos)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/delete/artist-banner", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "pos", pos }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -212,11 +260,13 @@ namespace MelonWebApi.Controllers
             var artist = ArtistsCollection.Find(Builders<Artist>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if (artist == null)
             {
+                args.SendEvent("Artist not found", 404, Program.mWebApi);
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
             if (artist.ArtistPfpArtCount < pos)
             {
+                args.SendEvent("Invalid position", 400, Program.mWebApi);
                 return new ObjectResult("Invalid position") { StatusCode = 400 };
             }
 
@@ -228,6 +278,8 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+
+                args.SendEvent("File error", 404, Program.mWebApi);
                 return new ObjectResult("File error") { StatusCode = 404 };
             }
 
@@ -235,6 +287,7 @@ namespace MelonWebApi.Controllers
             artist.ArtistBannerArtCount--;
             ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, id), artist);
 
+            args.SendEvent("Artist banner removed", 200, Program.mWebApi);
             return new ObjectResult("Artist banner removed") { StatusCode = 200 };
         }
 
@@ -254,6 +307,14 @@ namespace MelonWebApi.Controllers
         [HttpPost("playlist-art")]
         public ObjectResult DeletePlaylistArt([Required(ErrorMessage = "Playlist ID is required")] string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/delete/playlist-art", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PlaylistsCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
@@ -261,6 +322,7 @@ namespace MelonWebApi.Controllers
             var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if (playlist == null)
             {
+                args.SendEvent("Playlist not found", 404, Program.mWebApi);
                 return new ObjectResult("Playlist not found") { StatusCode = 404 };
             }
 
@@ -272,12 +334,14 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("File error", 404, Program.mWebApi);
                 return new ObjectResult("File error") { StatusCode = 404 };
             }
 
             playlist.ArtworkPath = "";
             PlaylistsCollection.ReplaceOne(Builders<Playlist>.Filter.Eq(x => x._id, id), playlist);
 
+            args.SendEvent("Playlist art removed", 200, Program.mWebApi);
             return new ObjectResult("Playlist art removed") { StatusCode = 200 };
         }
 
@@ -297,6 +361,14 @@ namespace MelonWebApi.Controllers
         [HttpPost("collection-art")]
         public ObjectResult DeleteCollectionArt([Required(ErrorMessage = "Collection ID is required")] string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/delete/collection-art", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var CollectionsCollection = mongoDatabase.GetCollection<Collection>("Collections");
@@ -304,6 +376,7 @@ namespace MelonWebApi.Controllers
             var collection = CollectionsCollection.Find(Builders<Collection>.Filter.Eq(x => x._id, id)).FirstOrDefault();
             if (collection == null)
             {
+                args.SendEvent("Collection not found", 404, Program.mWebApi);
                 return new ObjectResult("Collection not found") { StatusCode = 404 };
             }
 
@@ -315,12 +388,14 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("File error", 404, Program.mWebApi);
                 return new ObjectResult("File error") { StatusCode = 404 };
             }
 
             collection.ArtworkPath = "";
             CollectionsCollection.ReplaceOne(Builders<Collection>.Filter.Eq(x => x._id, id), collection);
 
+            args.SendEvent("Collection art removed", 200, Program.mWebApi);
             return new ObjectResult("Collection art removed") { StatusCode = 200 };
         }
 
@@ -339,6 +414,10 @@ namespace MelonWebApi.Controllers
         [HttpPost("default-art")]
         public ObjectResult DeleteDefaultArt()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/delete/default-art", curId, new Dictionary<string, object>());
 
             var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.jpg";
 
@@ -348,9 +427,11 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
-                return new ObjectResult("File error") { StatusCode = 404 };
+                args.SendEvent("File Not Found", 404, Program.mWebApi);
+                return new ObjectResult("File Not Found") { StatusCode = 404 };
             }
 
+            args.SendEvent("Default art removed", 200, Program.mWebApi);
             return new ObjectResult("Default art removed") { StatusCode = 200 };
         }
 

@@ -18,21 +18,36 @@ namespace Melon.PluginModels
 {
     public class MelonHost : IHost
     {
-        public IMelonAPI API => new API();
+        public IMelonAPI Api => new API();
 
-        string IHost.Version => "1.0.0";
+        public string Version => "1.0.0";
 
-        IMelonAPI IHost.MelonAPI => new API();
+        public IMelonAPI MelonAPI => new API();
 
-        IMelonScanner IHost.MelonScanner => new Scanner();
+        public IMelonScanner MelonScanner => new Scanner();
 
-        IStateManager IHost.StateManager => new State();
+        public IStateManager StateManager => new State();
 
-        IDisplayManager IHost.DisplayManager => new Display();
+        public IDisplayManager DisplayManager => new Display();
 
-        IMelonUI IHost.MelonUI => new UI();
+        public IMelonUI MelonUI => new UI();
 
-        ISettingsUI IHost.SettingsUI => new SettingsMenu();
+        public ISettingsUI SettingsUI => new SettingsMenu();
+        private IWebApi _WebApi;
+        public IWebApi WebApi 
+        {
+            get
+            {
+                return _WebApi;
+            }
+            set
+            {
+                if (_WebApi != value)
+                {
+                    _WebApi = value;
+                }
+            }
+        }
     }
     public class API : IMelonAPI
     {
@@ -229,6 +244,13 @@ namespace Melon.PluginModels
             get
             {
                 return StateManager.StringsManager;
+            }
+        }
+        public List<IPlugin> Plugins
+        {
+            get
+            {
+                return StateManager.Plugins;
             }
         }
 

@@ -12,6 +12,7 @@ using NuGet.Packaging.Signing;
 using MongoDB.Bson.Serialization;
 using NuGet.Packaging;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace MelonWebApi.Controllers
 {
@@ -31,6 +32,20 @@ namespace MelonWebApi.Controllers
         public ObjectResult DiscoverTracks([FromQuery] List<string> ids, bool orderByFavorites = false, bool orderByDiscovery = false, int count = 100, 
                                            bool enableTrackLinks = true, bool includeArtists = true, bool includeGenres = true)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/discover/tracks", curId, new Dictionary<string, object>()
+            {
+                { "ids", ids },
+                { "orderByFavorites", orderByFavorites },
+                { "orderByDiscovery", orderByDiscovery },
+                { "count", count },
+                { "enableTrackLinks", enableTrackLinks },
+                { "includeArtists", includeArtists },
+                { "includeGenres", includeGenres }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -116,12 +131,28 @@ namespace MelonWebApi.Controllers
             }
 
             count = count <= finalTracks.Count ? count : finalTracks.Count;
+
+            args.SendEvent("Sent a List of DbLinks", 200, Program.mWebApi);
             return new ObjectResult(finalTracks.Slice(0,count).Select(x=>new DbLink(x))) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("albums")]
-        public ObjectResult DiscoverAlbums([FromQuery] List<string> ids, bool shuffle = true, int count = 100, int page = 0, bool includeArtists = true, bool includeGenres = true)
+        public ObjectResult DiscoverAlbums([FromQuery] List<string> ids, bool shuffle = true, int count = 100, int page = 0, 
+                                           bool includeArtists = true, bool includeGenres = true)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/discover/albums", curId, new Dictionary<string, object>()
+            {
+                { "ids", ids },
+                { "shuffle", shuffle },
+                { "page", page },
+                { "count", count },
+                { "includeArtists", includeArtists },
+                { "includeGenres", includeGenres }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -241,12 +272,27 @@ namespace MelonWebApi.Controllers
 
             count = count <= finalAlbums.Count ? count : finalAlbums.Count;
             var end = (count * page) + count <= finalAlbums.Count ? (count * page) + count : finalAlbums.Count;
+            args.SendEvent("Sent a List of DbLinks", 200, Program.mWebApi);
             return new ObjectResult(finalAlbums.Take(new Range(count*page, end)).Select(x=>new DbLink(x))) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("artists")]
-        public ObjectResult DiscoverArtists([FromQuery] List<string> ids, int count = 100, int page = 0, bool shuffle = true, bool includeConnections = true, bool includeGenres = true)
+        public ObjectResult DiscoverArtists([FromQuery] List<string> ids, int count = 100, int page = 0, bool shuffle = true, 
+                                            bool includeConnections = true, bool includeGenres = true)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/discover/artists", curId, new Dictionary<string, object>()
+            {
+                { "ids", ids },
+                { "shuffle", shuffle },
+                { "page", page },
+                { "count", count },
+                { "includeConnections", includeConnections },
+                { "includeGenres", includeGenres }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
@@ -291,6 +337,7 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult(shuffledArtists.Take(new Range(count * page, end)).Select(x=>x.Key)) { StatusCode = 200 };
             }
 
+            args.SendEvent("Sent a List of DbLinks", 200, Program.mWebApi);
             return new ObjectResult(finalArtists.Take(new Range(count * page, end)).Select(x => x.Key)) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
@@ -298,6 +345,20 @@ namespace MelonWebApi.Controllers
         public ObjectResult DiscoverTimeBasedTracks(string time, int span = 5, int count = 100, bool enableTrackLinks = true, bool includeArtists = true, bool includeGenres = true,
                                                     bool includeRecent = true)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/discover/artists", curId, new Dictionary<string, object>()
+            {
+                { "time", time },
+                { "span", span },
+                { "count", count },
+                { "enableTrackLinks", enableTrackLinks },
+                { "includeArtists", includeArtists },
+                { "includeGenres", includeGenres },
+                { "includeRecent", includeRecent }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -413,6 +474,7 @@ namespace MelonWebApi.Controllers
             }
 
             count = count <= shuffledList.Count ? count : shuffledList.Count;
+            args.SendEvent("Sent a List of DbLinks", 200, Program.mWebApi);
             return new ObjectResult(shuffledList.Slice(0, count).Select(x => new DbLink(x))) { StatusCode = 200 };
         }
     }
