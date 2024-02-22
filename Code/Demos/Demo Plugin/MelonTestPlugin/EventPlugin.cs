@@ -1,23 +1,104 @@
 ﻿using Melon.Interface;
 using Melon.Models;
+using MelonTestPlugin.Models;
+using Pastel;
 using System;
+using System.Drawing;
 using System.Net.Http;
 using System.Windows.Input;
 
 namespace MelonPlugin
 {
-    public class TestPlugin : IPlugin
+    public class EventPlugin : IPlugin
     {
         public string Name => "Event Plugin";
-        public string Version => "v1.0.0";
+        public string Version => "v1.1.0";
         public string Description => "Demo plugin that displays api events";
         public IHost Host { get; set; }
         public bool Display;
         public List<string> Messages;
+        public EventConfig Config;
         public int Execute()
         {
+            LoadConfig();
+            SetupEventHandlers();
             Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Events", EventMenu);
+            Host.SettingsUI.MenuOptions.Add("Events Settings", SettingsMenu);
             return 0;
+        }
+
+        private void LoadConfig()
+        {
+            Config = Host.Storage.LoadConfigFile<EventConfig>("EventConfig", null);
+
+            if(Config == null)
+            {
+                Config = new EventConfig()
+                {
+                    Format = "[api] (user): msg",
+                    TextColor = Color.FromArgb(255, 255, 255, 255)
+                };
+            }
+        }
+
+        public void SettingsMenu()
+        {
+            Display = true;
+            while (Display)
+            {
+                Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Events Settings" });
+                string args = Config.ShowArgs ? "Hide Args (Currently Shown)" : "Show Args (Currently Hidden)";
+                var choice = Host.MelonUI.OptionPicker(new List<string>()
+                {
+                    "Back",
+                    "Change Format",
+                    "Change Color",
+                    args
+                });
+
+                switch (choice)
+                {
+                    case "Back":
+                        return;
+                    case "Change Format":
+                        ChangeFormatMenu();
+                        break;
+                    case "Change Color":
+                        ChangeColorMenu();
+                        break;
+                    case "Hide Args (Currently Shown)":
+                        Config.ShowArgs = !Config.ShowArgs;
+                        Host.Storage.SaveConfigFile("EventConfig", Config, null);
+                        break;
+                    case "Show Args (Currently Hidden)":
+                        Config.ShowArgs = !Config.ShowArgs;
+                        Host.Storage.SaveConfigFile("EventConfig", Config, null);
+                        break;
+                }
+            }
+        }
+        public void ChangeFormatMenu()
+        {
+            Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Events Settings", "Change Format" });
+            Console.WriteLine("Format markers: api, statuscode, msg, user".Pastel(Config.TextColor));
+            Console.WriteLine($"Current format: {Config.Format}".Pastel(Config.TextColor));
+            Console.WriteLine($"(Enter nothing to go back)".Pastel(Config.TextColor));
+            Console.Write("> ");
+            var input = Console.ReadLine();
+            if(input == "")
+            {
+                return;
+            }
+
+            Config.Format = input;
+            Host.Storage.SaveConfigFile("EventConfig", Config, null);
+        }
+        public void ChangeColorMenu()
+        {
+            Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Events Settings", "Change Color" });
+            var newColor = Host.MelonUI.ColorPicker(Config.TextColor);
+            Config.TextColor = newColor;
+            Host.Storage.SaveConfigFile("EventConfig", Config, null);
         }
 
         private void EventMenu()
@@ -26,21 +107,62 @@ namespace MelonPlugin
             Thread t = new Thread(Controller);
             t.Start();
             Messages = new List<string>();
-            SetupEventHandlers();
             Host.MelonUI.BreadCrumbBar(new List<string>(){"Melon", "Events"});
+            Host.MelonUI.ShowIndeterminateProgress();
             while (Display)
             {
                 if(Messages.Count != 0)
                 {
+                    Host.MelonUI.HideIndeterminateProgress();
+                    Thread.Sleep(20);
+                    Console.CursorLeft = 0;
                     Console.WriteLine(Messages.First());
                     Messages.RemoveAt(0);
+                    Host.MelonUI.ShowIndeterminateProgress();
                 }
             }
+            Host.MelonUI.HideIndeterminateProgress();
         }
 
         private void MessageHandler(object sender, WebApiEventArgs e)
         {
-            Messages.Add($"[{e.Api}] ({e.User}): {e.Message}");
+            string msg = Config.Format;
+            msg = msg.Replace("api", e.Api).Replace("user", e.User).Replace("statuscode", $"{e.StatusCode}").Replace("msg", e.Message);
+            if (Config.ShowArgs)
+            {
+                foreach(var arg in e.Args)
+                {
+                    try
+                    {
+                        if (arg.Value.GetType() == typeof(List<string>))
+                        {
+                            var lst = (List<string>)arg.Value;
+                            msg += $"\n    {arg.Key}: ";
+                            foreach (var item in lst)
+                            {
+                                msg += $"\n        - {item}";
+                            }
+                        }
+                        else
+                        {
+                            msg += $"\n    {arg.Key}: {arg.Value}";
+                        }
+                    }
+                    catch(Exception)
+                    {
+                        
+                    }
+                }
+            }
+
+            try
+            {
+                Messages.Add(msg.Pastel(Config.TextColor));
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
         private void Controller()
