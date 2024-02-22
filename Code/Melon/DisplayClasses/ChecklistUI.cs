@@ -14,17 +14,16 @@ namespace Melon.DisplayClasses
     /// </summary>
     public static class ChecklistUI
     {
-        public static ConcurrentDictionary<int, KeyValuePair<string, bool>> Checklist;
-        public static bool end;
-        public static void ShowChecklist()
+        private static ConcurrentDictionary<int, KeyValuePair<string, bool>> Checklist;
+        private static bool display;
+        public static void ChecklistDislayToggle()
         {
-            // Starts the thread
-            MelonUI.ClearConsole();
-            Thread.Sleep(50);
-            Console.Write("\x1b[3J"); // required for linux
-            Console.SetCursorPosition(0, 0);
-            Thread ChThread = new Thread(ShowChecklistThread);
-            ChThread.Start();
+            display = !display;
+            if (display)
+            {
+                Thread ChThread = new Thread(ShowChecklistThread);
+                ChThread.Start();
+            }
         }
         private static void ShowChecklistThread()
         {
@@ -34,10 +33,11 @@ namespace Melon.DisplayClasses
 
             // Set Encoding for checkmark
             Console.CursorVisible = false;
-            while (!end)
+            while (display)
             {
                 Console.CursorLeft = x;
                 Console.CursorTop = y;
+                Thread.Sleep(100);
                 try
                 {
                     // Show all items
@@ -60,7 +60,7 @@ namespace Melon.DisplayClasses
                 }
             }
         }
-        public static void CreateChecklist(List<string> list)
+        public static void SetChecklistItems(string[] list)
         {
             // Creates the checklist from a list of strings
             ConcurrentDictionary<int, KeyValuePair<string, bool>> checklist = new ConcurrentDictionary<int, KeyValuePair<string, bool>>();

@@ -83,7 +83,8 @@ namespace Melon.Classes
         }
         public static Color ColorPicker(Color CurColor)
         {
-            MelonUI.ClearConsole(Console.CursorLeft, Console.CursorTop, Console.WindowWidth, Console.WindowHeight - Console.CursorTop);
+            int y = Console.CursorTop;
+            MelonUI.ClearConsole(Console.CursorLeft, y, Console.WindowWidth, Console.WindowHeight - Console.CursorTop);
             Console.CursorTop = 0;
             Color NewColor = CurColor;
             int place = 0;
@@ -93,7 +94,7 @@ namespace Melon.Classes
             Stopwatch watch = new Stopwatch();
             while (true)
             {
-                Console.SetCursorPosition(0, 1);
+                Console.SetCursorPosition(0, y);
                 double RedPercent = (double)NewColor.R / (double)256;
                 double GreenPercent = (double)NewColor.G / (double)256;
                 double BluePercent = (double)NewColor.B / (double)256;
@@ -306,14 +307,23 @@ namespace Melon.Classes
 
         }
         private static bool IndeterminateProgress { get; set; }
-        public static void IndeterminateProgressToggle()
+        private static bool NeedsShutdown { get; set; }
+        public static void ShowIndeterminateProgress()
         {
-            IndeterminateProgress = !IndeterminateProgress;
-            if (IndeterminateProgress)
+            if (!IndeterminateProgress)
             {
+                while(NeedsShutdown)
+                {
+
+                }
+                IndeterminateProgress = true;
                 Thread display = new Thread(IndeterminateProgressDisplay);
                 display.Start();
             }
+        }
+        public static void HideIndeterminateProgress()
+        {
+            IndeterminateProgress = false;
         }
         private static void IndeterminateProgressDisplay()
         {
@@ -321,28 +331,48 @@ namespace Melon.Classes
             int count = 0;
             int x = Console.CursorLeft;
             int y = Console.CursorTop;
+            bool negative = false;
             while (IndeterminateProgress)
             {
+                NeedsShutdown = true;
                 Console.SetCursorPosition(x, y);
                 double percent = (double)count / (double)10;
                 percent = percent == 0 ? 0.001 : percent;
 
+                if(percent == double.NaN)
+                {
+                    percent = 0;
+                }
+
                 int width = 10;
 
-                double LineFront = (width) * percent;
-                double LineBack = (width) - LineFront;
+                int LineFront = (int)((width) * percent);
+                int LineBack = (width) - LineFront;
 
-                string Bar = $"{new string('-', (int)LineFront)}{"#".Pastel(MelonColor.Highlight)}{new string('-', (int)LineBack)}".Pastel(MelonColor.Text);
+                string Bar = $"[{new string('-', LineFront)}{"#".Pastel(MelonColor.Highlight)}{new string('-', LineBack)}]".Pastel(MelonColor.Text);
 
                 Console.Write(Bar);
-                count++;
-                if(count >= 10)
+                if(negative)
                 {
-                    count = 0;
+                    count--;
                 }
-                Thread.Sleep(100);
+                else
+                {
+                    count++;
+                }
+
+                if (count == 0)
+                {
+                    negative = false;
+                }
+                else if (count == width)
+                {
+                    negative = true;
+                }
+
+                Thread.Sleep(75);
             }
-            Console.CursorVisible = true;
+            NeedsShutdown = false;
         }
 
         // Input
