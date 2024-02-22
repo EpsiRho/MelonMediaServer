@@ -24,7 +24,7 @@ namespace Melon.LocalClasses
     /// </summary>
     public static class MelonAPI
     {
-        public static List<Track> ShuffleTracks(List<Track> tracks, string UserId, ShuffleType type, bool FullRandom = false, bool enableTrackLinks = true)
+        public static List<Track> ShuffleTracks(List<Track> tracks, string UserId, ShuffleType type, bool fullRandom = false, bool enableTrackLinks = true)
         {
             Random rng = new Random();
             // Shuffle the list.
@@ -43,7 +43,7 @@ namespace Melon.LocalClasses
                     }
 
                     // Remove any consecutive tracks from the same artist or album.
-                    if (!FullRandom)
+                    if (!fullRandom)
                     {
                         for (int l = 0; l < 5; l++)
                         {
@@ -121,7 +121,7 @@ namespace Melon.LocalClasses
                     foreach(var album in albumDic)
                     {
                         var tks = album.Value;
-                        if (FullRandom)
+                        if (fullRandom)
                         {
                             int number = tks.Count;
                             while (number > 1)
@@ -140,7 +140,7 @@ namespace Melon.LocalClasses
                         newTracks.AddRange(tks);
                     }
 
-                    if (FullRandom && enableTrackLinks)
+                    if (fullRandom && enableTrackLinks)
                     {
                         // Find track links and connect them
                         for (int i = 0; i < newTracks.Count() - 1; i++)
@@ -310,6 +310,229 @@ namespace Melon.LocalClasses
                     return outTracks;
             }
 
+            return null;
+        }
+        public static List<DbLink> FindTracks(List<string> AndFilters, List<string> OrFilters, string UserId)
+        {
+            if (AndFilters.Count() == 0 && OrFilters.Count() == 0)
+            {
+                return new List<DbLink>();
+            }
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var PlaylistsCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+
+            List<FilterDefinition<Track>> AndDefs = new List<FilterDefinition<Track>>();
+            foreach (var filter in AndFilters)
+            {
+                string property = filter.Split(";")[0];
+                string type = filter.Split(";")[1];
+                object value = filter.Split(";")[2];
+
+                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                {
+                    if (type == "Contains")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Eq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
+                        AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Lt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
+                        AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Gt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
+                        AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                }
+                else if (property.Contains("Playlist"))
+                {
+                    if (type == "Contains")
+                    {
+                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                        if (playlist == null)
+                        {
+                            continue;
+                        }
+
+                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                        AndDefs.Add(Builders<Track>.Filter.In(x => x._id, tracks));
+                    }
+                }
+                else
+                {
+                    if (property.Contains("Date") || property.Contains("Modified"))
+                    {
+                        try
+                        {
+                            value = DateTime.Parse(value.ToString());
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
+                    if (type == "Contains")
+                    {
+                        AndDefs.Add(Builders<Track>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                    }
+                    else if (type == "Eq")
+                    {
+                        AndDefs.Add(Builders<Track>.Filter.Eq(property, value));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        AndDefs.Add(Builders<Track>.Filter.Ne(property, value));
+                    }
+                    else if (type == "Lt")
+                    {
+                        AndDefs.Add(Builders<Track>.Filter.Lt(property, value));
+                    }
+                    else if (type == "Gt")
+                    {
+                        AndDefs.Add(Builders<Track>.Filter.Gt(property, value));
+                    }
+                }
+            }
+
+            List<FilterDefinition<Track>> OrDefs = new List<FilterDefinition<Track>>();
+            foreach (var filter in OrFilters)
+            {
+                string property = filter.Split(";")[0];
+                string type = filter.Split(";")[1];
+                object value = filter.Split(";")[2];
+
+                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                {
+                    if (type == "Contains")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Eq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
+                        OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Lt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
+                        OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Gt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
+                        OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                    }
+                }
+                else if (property.Contains("Playlist"))
+                {
+                    if (type == "Contains")
+                    {
+                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                        if (playlist == null)
+                        {
+                            continue;
+                        }
+
+                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                        OrDefs.Add(Builders<Track>.Filter.In(x => x._id, tracks));
+                    }
+                }
+                else
+                {
+                    if (property.Contains("Date") || property.Contains("Modified"))
+                    {
+                        try
+                        {
+                            value = DateTime.Parse(value.ToString());
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
+                    if (type == "Contains")
+                    {
+                        OrDefs.Add(Builders<Track>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                    }
+                    else if (type == "Eq")
+                    {
+                        OrDefs.Add(Builders<Track>.Filter.Eq(property, value));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        OrDefs.Add(Builders<Track>.Filter.Ne(property, value));
+                    }
+                    else if (type == "Lt")
+                    {
+                        OrDefs.Add(Builders<Track>.Filter.Lt(property, value));
+                    }
+                    else if (type == "Gt")
+                    {
+                        OrDefs.Add(Builders<Track>.Filter.Gt(property, value));
+                    }
+                }
+            }
+
+            FilterDefinition<Track> combinedFilter = null;
+            foreach (var filter in AndDefs)
+            {
+                if (combinedFilter == null)
+                {
+                    combinedFilter = filter;
+                }
+                else
+                {
+                    combinedFilter = Builders<Track>.Filter.And(combinedFilter, filter);
+                }
+            }
+            foreach (var filter in OrDefs)
+            {
+                if (combinedFilter == null)
+                {
+                    combinedFilter = filter;
+                }
+                else
+                {
+                    combinedFilter = Builders<Track>.Filter.Or(combinedFilter, filter);
+                }
+            }
+
+            try
+            {
+                var trackProjection = Builders<Track>.Projection.Include(x => x._id)
+                                                                .Include(x => x.Name);
+                var trackDocs = TracksCollection.Find(combinedFilter)
+                                                .Project(trackProjection)
+                                                .ToList()
+                                                .Select(x => new DbLink() { _id = x["_id"].ToString(), Name = x["Name"].ToString() })
+                                                .ToList();
+                return trackDocs;
+            }
+            catch (Exception)
+            {
+
+            }
             return null;
         }
     }

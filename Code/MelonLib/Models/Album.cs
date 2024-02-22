@@ -1,7 +1,4 @@
-﻿using Melon.Models;
-using MongoDB.Bson;
-
-namespace Melon.Models
+﻿namespace Melon.Models
 {
     public class Album
     {

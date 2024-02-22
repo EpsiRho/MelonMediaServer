@@ -1,6 +1,4 @@
-﻿using MongoDB.Bson;
-
-namespace Melon.Models
+﻿namespace Melon.Models
 {
     public class DbLink
     {

@@ -129,3 +129,5 @@ LanguageError=No se encontró soporte para {} en Melón.
 DefaultLanguageOption=Cambiar Idioma Predeterminado
 CollectionStepStatus=Actualización de colecciones
 CheckDbVersioningStatus=Comprobando compatibilidad con la base de datos
+LoadPluginsStatus=Cargar complementos
+PluginsOption=Ver complementos

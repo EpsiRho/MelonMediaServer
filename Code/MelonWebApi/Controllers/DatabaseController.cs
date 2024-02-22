@@ -9,6 +9,7 @@ using System.Drawing;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using DnsClient;
+using System.Security.Claims;
 
 namespace MelonWebApi.Controllers
 {
@@ -27,6 +28,11 @@ namespace MelonWebApi.Controllers
         [HttpGet("format")]
         public ObjectResult GetFormat()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/db/format", curId, new Dictionary<string, object>());
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -51,13 +57,18 @@ namespace MelonWebApi.Controllers
                 page++;
             } while (Tracks.Count() == 1000);
 
-
+            args.SendEvent("Sent db formats", 200, Program.mWebApi);
             return new ObjectResult(formats.OrderBy(x=>x)) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("bitrate")]
         public ObjectResult GetBitrate()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/db/bitrate", curId, new Dictionary<string, object>());
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -82,13 +93,18 @@ namespace MelonWebApi.Controllers
                 page++;
             } while (Tracks.Count() == 1000);
 
-
+            args.SendEvent("Sent db bitrates", 200, Program.mWebApi);
             return new ObjectResult(bitrates.OrderBy(x => Convert.ToInt32(x))) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("sample-rate")]
         public ObjectResult GetSampleRate()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/db/sample-rate", curId, new Dictionary<string, object>());
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -113,13 +129,18 @@ namespace MelonWebApi.Controllers
                 page++;
             } while (Tracks.Count() == 1000);
 
-
+            args.SendEvent("Sent db sample-rates", 200, Program.mWebApi);
             return new ObjectResult(sampleRates.OrderBy(x => Convert.ToInt32(x))) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("bits-per-sample")]
         public ObjectResult GetBitsPerSample()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/db/bits-per-sample", curId, new Dictionary<string, object>());
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -144,13 +165,18 @@ namespace MelonWebApi.Controllers
                 page++;
             } while (Tracks.Count() == 1000);
 
-
+            args.SendEvent("Sent db bits-per-samples", 200, Program.mWebApi);
             return new ObjectResult(bitsPerSample.OrderBy(x => x)) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("channel")]
         public ObjectResult GetChannel()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/db/channel", curId, new Dictionary<string, object>());
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -175,13 +201,18 @@ namespace MelonWebApi.Controllers
                 page++;
             } while (Tracks.Count() == 1000);
 
-
+            args.SendEvent("Sent db channels", 200, Program.mWebApi);
             return new ObjectResult(channels.OrderBy(x => x)) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("release-status")]
         public ObjectResult GetReleaseStatus()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/db/release-status", curId, new Dictionary<string, object>());
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -206,13 +237,18 @@ namespace MelonWebApi.Controllers
                 page++;
             } while (Albums.Count() == 1000);
 
-
+            args.SendEvent("Sent db release-status", 200, Program.mWebApi);
             return new ObjectResult(rleaseStatuses.OrderBy(x => x)) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("release-type")]
         public ObjectResult GetReleaseType()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/db/release-type", curId, new Dictionary<string, object>());
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -237,13 +273,18 @@ namespace MelonWebApi.Controllers
                 page++;
             } while (Albums.Count() == 1000);
 
-
+            args.SendEvent("Sent db release-type", 200, Program.mWebApi);
             return new ObjectResult(releaseTypes.OrderBy(x => x)) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("publisher")]
         public ObjectResult GetPublisher()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/db/publisher", curId, new Dictionary<string, object>());
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
@@ -268,13 +309,18 @@ namespace MelonWebApi.Controllers
                 page++;
             } while (Albums.Count() == 1000);
 
-
+            args.SendEvent("Sent db publisher", 200, Program.mWebApi);
             return new ObjectResult(publishers.OrderBy(x => x)) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("genres")]
         public ObjectResult GetGenres()
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/db/genres", curId, new Dictionary<string, object>());
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -304,6 +350,7 @@ namespace MelonWebApi.Controllers
 
             var finalGenres = genres.OrderBy(x => x).Distinct().ToList();
 
+            args.SendEvent("Sent db genres", 200, Program.mWebApi);
             return new ObjectResult(finalGenres) { StatusCode = 200 };
         }
 

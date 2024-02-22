@@ -20,6 +20,11 @@ using Amazon.Util.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Melon.Models;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Reflection;
+using System.Windows.Input;
+using Melon.Interface;
+using Melon.PluginModels;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Melon.LocalClasses
 {
@@ -32,9 +37,9 @@ namespace Melon.LocalClasses
         public static MongoClient DbClient;
         public static Settings MelonSettings { get; set; }
         public static Flags MelonFlags { get; set; }
-        private static Process serverProcess;
         public static ResourceManager StringsManager { get; set; }
-        public static void Init(bool headless, bool runSetup, string language)
+        public static List<IPlugin> Plugins { get; set; }
+        public static void Init(bool headless, bool runSetup, bool loadPlugins, string language, IWebApi mWebApi)
         {
             if (language == "")
             {
@@ -69,7 +74,8 @@ namespace Melon.LocalClasses
                 ChecklistUI.CreateChecklist(new List<string>()
             {
                 StringsManager.GetString("SettingsLoadStatus"),
-                StringsManager.GetString("MongoDBConnectStatus")
+                StringsManager.GetString("MongoDBConnectStatus"),
+                StringsManager.GetString("LoadPluginsStatus")
             });
             }
 
@@ -103,6 +109,7 @@ namespace Melon.LocalClasses
             {
                 LoadFlags();
             }
+
             if ((MelonFlags.ForceOOBE || runSetup) && !headless)
             {
                 DisplayManager.UIExtensions.Add(SetupUI.Display);
@@ -221,12 +228,20 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDB);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
-            if (!headless)
+
+            // Plugins
+            if (!MelonFlags.DisablePlugins || loadPlugins)
             {
                 ChecklistUI.UpdateChecklist(1, true);
-                ChecklistUI.end = true;
+                LoadPlugins(mWebApi);
+            }
+
+            if (!headless)
+            {
+                ChecklistUI.UpdateChecklist(2, true);
             }
             Thread.Sleep(200);
+            ChecklistUI.end = true;
 
         }
         public static void LoadSettings()
@@ -257,12 +272,12 @@ namespace Melon.LocalClasses
             string settingstxt = Newtonsoft.Json.JsonConvert.SerializeObject(set, Formatting.Indented);
             File.WriteAllText($"{melonPath}/Settings.json", settingstxt);
         }
-        public static void LoadFlags()
+        private static void LoadFlags()
         {
             string flagstxt = File.ReadAllText($"{melonPath}/Flags.json");
             MelonFlags = Newtonsoft.Json.JsonConvert.DeserializeObject<Flags>(flagstxt);
         }
-        public static void SaveFlags()
+        private static void SaveFlags()
         {
             string flagtxt = Newtonsoft.Json.JsonConvert.SerializeObject(MelonFlags, Formatting.Indented);
             File.WriteAllText($"{melonPath}/Flags.json", flagtxt);
@@ -294,25 +309,6 @@ namespace Melon.LocalClasses
             }
             return false;
         }
-        public static void StartServer()
-        {
-            serverProcess = new Process();
-            serverProcess.StartInfo.FileName = $"";
-
-            serverProcess.Start();
-
-            // Wait for the server to start
-            Thread.Sleep(2000);
-        }
-        public static void StopServer()
-        {
-            if (serverProcess != null && !serverProcess.HasExited)
-            {
-                serverProcess.CloseMainWindow();
-                serverProcess.WaitForExit();
-                serverProcess.Dispose();
-            }
-        }
         public static byte[] GetDefaultImage()
         {
             var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.jpg";
@@ -332,6 +328,77 @@ namespace Melon.LocalClasses
             {
                 stream.CopyTo(ms);
                 return ms.ToArray();
+            }
+        }
+        private static void LoadPlugins(IWebApi mWebApi)
+        {
+            if (!Directory.Exists($"{melonPath}/Plugins"))
+            {
+                Directory.CreateDirectory($"{melonPath}/Plugins");
+            }
+
+            var files = Directory.GetFiles($"{melonPath}/Plugins");
+            Plugins = files.SelectMany(pluginPath =>
+            {
+                Assembly pluginAssembly = LoadPlugin(pluginPath);
+                return CreatePlugins(pluginAssembly);
+            }).ToList();
+            var host = new MelonHost() { WebApi = mWebApi };
+            foreach (var plugin in Plugins)
+            {
+                if (plugin == null)
+                {
+                    continue;
+                }
+
+                plugin.LoadMelonCommands(host);
+                var check = plugin.Execute();
+                if(check != 0)
+                {
+                    Serilog.Log.Error($"Plugin Execute failed: {plugin.Name}");
+                }
+            }
+        }
+        private static Assembly LoadPlugin(string relativePath)
+        {
+            // Navigate up to the solution root
+            string root = Path.GetFullPath(Path.Combine(
+                Path.GetDirectoryName(
+                    Path.GetDirectoryName(
+                        Path.GetDirectoryName(
+                            Path.GetDirectoryName(
+                                Path.GetDirectoryName(typeof(Program).Assembly.Location)))))));
+
+            string pluginLocation = Path.GetFullPath(Path.Combine(root, relativePath.Replace('\\', Path.DirectorySeparatorChar)));
+            PluginLoadContext loadContext = new PluginLoadContext(pluginLocation);
+            return loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(pluginLocation)));
+        }
+        private static List<IPlugin> CreatePlugins(Assembly assembly)
+        {
+            List<IPlugin> plugins = new List<IPlugin>();
+            try
+            {
+                foreach (Type type in assembly.GetTypes())
+                {
+                    if (type.Name.Contains("IPlugin"))
+                    {
+                        bool check = true;
+                    }
+                    if (typeof(IPlugin).IsAssignableFrom(type))
+                    {
+                        IPlugin result = Activator.CreateInstance(type) as IPlugin;
+                        if (result != null)
+                        {
+                            plugins.Add(result);
+                        }
+                    }
+                }
+                return plugins;
+            }
+            catch (Exception)
+            {
+                Serilog.Log.Error($"Plugin Load failed: {assembly.FullName}");
+                return plugins;
             }
         }
     }

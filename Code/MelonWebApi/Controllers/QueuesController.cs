@@ -10,6 +10,8 @@ using Melon.Models;
 using System.Security.Cryptography;
 using System.Web.Http.Filters;
 using System.Security.Claims;
+using NuGet.Packaging.Signing;
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 namespace MelonWebApi.Controllers
 {
@@ -28,14 +30,21 @@ namespace MelonWebApi.Controllers
         [HttpPost("create")]
         public ObjectResult CreateQueueFromIDs(string name, [FromQuery] List<string> ids, string shuffle = "none", bool enableTrackLinks = true)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/create", curId, new Dictionary<string, object>()
+                {
+                    { "ids", ids },
+                    { "name", name },
+                    { "shuffle", shuffle },
+                    { "enableTrackLinks", enableTrackLinks }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             PlayQueue queue = new PlayQueue();
             queue._id = ObjectId.GenerateNewId().ToString();
@@ -53,6 +62,7 @@ namespace MelonWebApi.Controllers
             List<Track> fullTracks = TCollection.Find(Builders<Track>.Filter.In(x => x._id, ids)).ToList();
             if(fullTracks.Count() == 0)
             {
+                args.SendEvent("No tracks found.", 404, Program.mWebApi);
                 return new ObjectResult("No tracks found.") { StatusCode = 404 };
             }
 
@@ -97,21 +107,29 @@ namespace MelonWebApi.Controllers
                                         select track._id).ToList();
             QCollection.InsertOne(queue);
 
+            args.SendEvent("Queue Created", 200, Program.mWebApi);
             return new ObjectResult(queue._id) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-albums")]
         public ObjectResult CreateQueueAlbums(string name, [FromQuery] List<string> ids, string shuffle = "none", bool enableTrackLinks = true)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/create-from-albums", curId, new Dictionary<string, object>()
+                {
+                    { "ids", ids },
+                    { "name", name },
+                    { "shuffle", shuffle },
+                    { "enableTrackLinks", enableTrackLinks }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var ACollection = mongoDatabase.GetCollection<Album>("Albums");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             PlayQueue queue = new PlayQueue();
             queue._id = ObjectId.GenerateNewId().ToString();
@@ -142,6 +160,7 @@ namespace MelonWebApi.Controllers
                 }
                 else
                 {
+                    args.SendEvent("One or more Albums not found.", 404, Program.mWebApi);
                     return new ObjectResult("One or more Albums not found.") { StatusCode = 404 };
                 }
             }
@@ -179,21 +198,29 @@ namespace MelonWebApi.Controllers
                                         select track._id).ToList();
             QCollection.InsertOne(queue);
 
+            args.SendEvent("Queue Created", 200, Program.mWebApi);
             return new ObjectResult(queue._id) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-artists")]
         public ObjectResult CreateQueueArtists(string name, [FromQuery] List<string> ids, string shuffle = "none", bool enableTrackLinks = true)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/create-from-artists", curId, new Dictionary<string, object>()
+                {
+                    { "ids", ids },
+                    { "name", name },
+                    { "shuffle", shuffle },
+                    { "enableTrackLinks", enableTrackLinks }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var ACollection = mongoDatabase.GetCollection<Artist>("Artists");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             PlayQueue queue = new PlayQueue();
             queue._id = ObjectId.GenerateNewId().ToString();
@@ -225,6 +252,7 @@ namespace MelonWebApi.Controllers
                 }
                 else
                 {
+                    args.SendEvent("One or more Artists not found.", 404, Program.mWebApi);
                     return new ObjectResult("One or more Artists not found.") { StatusCode = 404 };
                 }
             }
@@ -262,21 +290,29 @@ namespace MelonWebApi.Controllers
                                         select track._id).ToList();
             QCollection.InsertOne(queue);
 
+            args.SendEvent("Queue Created", 200, Program.mWebApi);
             return new ObjectResult(queue._id) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create-from-playlists")]
         public ObjectResult CreateQueuePlaylists(string name, [FromQuery] List<string> ids, string shuffle = "none", bool enableTrackLinks = true)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/create-from-playlists", curId, new Dictionary<string, object>()
+                {
+                    { "ids", ids },
+                    { "name", name },
+                    { "shuffle", shuffle },
+                    { "enableTrackLinks", enableTrackLinks }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             PlayQueue queue = new PlayQueue();
             queue._id = ObjectId.GenerateNewId().ToString();
@@ -308,6 +344,7 @@ namespace MelonWebApi.Controllers
                 }
                 else
                 {
+                    args.SendEvent("One or more Playlists not found.", 404, Program.mWebApi);
                     return new ObjectResult("One or more Playlists not found.") { StatusCode = 404 };
                 }
             }
@@ -345,19 +382,117 @@ namespace MelonWebApi.Controllers
                                         select track._id).ToList();
             QCollection.InsertOne(queue);
 
+            args.SendEvent("Queue Created", 200, Program.mWebApi);
             return new ObjectResult(queue._id) { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("create-from-collections")]
+        public ObjectResult CreateQueueCollections(string name, [FromQuery] List<string> ids, string shuffle = "none", bool enableTrackLinks = true)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/create-from-collections", curId, new Dictionary<string, object>()
+                {
+                    { "ids", ids },
+                    { "name", name },
+                    { "shuffle", shuffle },
+                    { "enableTrackLinks", enableTrackLinks }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var CCollection = mongoDatabase.GetCollection<Collection>("Collections");
+            var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
+
+            PlayQueue queue = new PlayQueue();
+            queue._id = ObjectId.GenerateNewId().ToString();
+            queue.Name = name;
+            queue.Owner = curId;
+            queue.PublicViewing = false;
+            queue.PublicEditing = false;
+            queue.Editors = new List<string>();
+            queue.Viewers = new List<string>();
+            queue.Tracks = new List<DbLink>();
+            queue.CurPosition = 0;
+
+
+            var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, queue._id);
+            List<Track> tracks = new List<Track>();
+            foreach (var id in ids)
+            {
+                var cFilter = Builders<Collection>.Filter.Eq(x=>x._id, id);
+                var collection = CCollection.Find(cFilter).FirstOrDefault();
+                if (collection != null)
+                {
+                    var fFilter = Builders<Track>.Filter.In(a => a._id, collection.Tracks.Select(x => x._id));
+                    var fTracks = TCollection.Find(fFilter).ToList();
+                    foreach(var t in collection.Tracks)
+                    {
+                        Track track = fTracks.Where(x => x._id == t._id).FirstOrDefault();
+                        tracks.Add(track);
+                    }
+                }
+                else
+                {
+                    args.SendEvent("One or more Collections not found.", 404, Program.mWebApi);
+                    return new ObjectResult("One or more Collections not found.") { StatusCode = 404 };
+                }
+            }
+
+            switch (shuffle)
+            {
+                case "none":
+                    break;
+                case "TrackRandom":
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
+                    break;
+                case "TrackFullRandom":
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, true, enableTrackLinks);
+                    break;
+                case "Album":
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, false, enableTrackLinks);
+                    break;
+                case "AlbumRandom":
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByAlbum, true, enableTrackLinks);
+                    break;
+                case "ArtistRandom":
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByArtistRandom, true, enableTrackLinks);
+                    break;
+                case "TrackFavorites":
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackFavorites, false, enableTrackLinks);
+                    break;
+                case "TrackDiscovery":
+                    tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrackDiscovery, false, enableTrackLinks);
+                    break;
+            }
+
+            queue.Tracks = tracks.Select(x => new DbLink(x)).ToList();
+            queue.TrackCount = tracks.Count;
+            queue.OriginalTrackOrder = (from track in queue.Tracks
+                                        select track._id).ToList();
+            QCollection.InsertOne(queue);
+
+            args.SendEvent("Queue Created", 200, Program.mWebApi);
+            return new ObjectResult(queue._id) { StatusCode = 200 };
+        }
+        
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get")]
         public ObjectResult GetQueueFromIDs(string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/get", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x._id, id);
             var qProjection = Builders<PlayQueue>.Projection.Exclude(x => x.Tracks)
@@ -371,26 +506,35 @@ namespace MelonWebApi.Controllers
                 {
                     if (queue.Owner != curId && !queue.Editors.Contains(curId) && !queue.Viewers.Contains(curId))
                     {
+                        args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
                 }
 
+                args.SendEvent("Queue sent", 404, Program.mWebApi);
                 return new ObjectResult(queue) { StatusCode = 200 };
             }
 
+            args.SendEvent("Queue not found", 404, Program.mWebApi);
             return new ObjectResult($"Queue not found") { StatusCode = 404 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("search")]
         public ObjectResult SearchQueues(int page = 0, int count = 100, string name = "")
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/search", curId, new Dictionary<string, object>()
+                {
+                    { "page", page },
+                    { "count", count },
+                    { "name", name }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             var ownerFilter = Builders<PlayQueue>.Filter.Eq(x => x.Owner, curId);
             var EditorsFilter = Builders<PlayQueue>.Filter.AnyEq(x => x.Editors, curId);
@@ -411,12 +555,23 @@ namespace MelonWebApi.Controllers
                                     .ToList()
                                     .Select(x => BsonSerializer.Deserialize<ResponseQueue>(x));
 
+            args.SendEvent("Queues sent", 200, Program.mWebApi);
             return new ObjectResult(Queues) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get-tracks")]
         public ObjectResult GetTracks(string id, int page = 0, int count = 100)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/get-tracks", curId, new Dictionary<string, object>()
+                {
+                    { "page", page },
+                    { "count", count },
+                    { "id", id }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
@@ -428,18 +583,16 @@ namespace MelonWebApi.Controllers
             var Queues = QCollection.Find(qFilter).ToList();
             if (Queues.Count() == 0)
             {
+                args.SendEvent("Queue not found", 404, Program.mWebApi);
                 return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
             var queue = Queues[0];
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             if (queue.PublicEditing == false)
             {
                 if (queue.Owner != curId && !queue.Editors.Contains(curId) && !queue.Viewers.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -479,25 +632,34 @@ namespace MelonWebApi.Controllers
                 orderedTracks.Add(track);
             }
 
+            args.SendEvent("Tracks sent", 200, Program.mWebApi);
             return new ObjectResult(orderedTracks) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("add-tracks")]
         public ObjectResult AddToQueue(string id, [FromQuery] List<string> trackIds, string position = "end", int place = 0)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/add-tracks", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "trackIds", trackIds },
+                    { "position", position },
+                    { "place", place }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
-
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
             var queues = QCollection.Find(qFilter).ToList();
             if(queues.Count() == 0)
             {
+                args.SendEvent("Queue not found", 404, Program.mWebApi);
                 return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
             var queue = queues[0];
@@ -506,6 +668,7 @@ namespace MelonWebApi.Controllers
             {
                 if (queue.Owner != curId && !queue.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -557,25 +720,32 @@ namespace MelonWebApi.Controllers
 
             StreamManager.AlertQueueUpdate(queue._id);
 
+            args.SendEvent("Tracks added", 200, Program.mWebApi);
             return new ObjectResult("Tracks added") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("remove-tracks")]
         public ObjectResult RemoveFromQueue(string id, [FromQuery] List<int> positions)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/remove-tracks", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "positions", positions }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
-
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
             var queues = QCollection.Find(qFilter).ToList();
             if (queues.Count() == 0)
             {
+                args.SendEvent("Queue not found", 404, Program.mWebApi);
                 return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
             var queue = queues[0];
@@ -583,6 +753,7 @@ namespace MelonWebApi.Controllers
             {
                 if (queue.Owner != curId && !queue.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -606,56 +777,69 @@ namespace MelonWebApi.Controllers
 
             StreamManager.AlertQueueUpdate(queue._id);
 
+            args.SendEvent("Tracks removed", 200, Program.mWebApi);
             return new ObjectResult("Tracks removed") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("delete")]
         public ObjectResult DeleteQueue(string id)
         {
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-
-            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
-            var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
-
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/delete", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
             //var str = queue._id.ToString();
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
             var queue = QCollection.Find(qFilter).FirstOrDefault();
             if (queue == null)
             {
+                args.SendEvent("Queue Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Queue Not Found") { StatusCode = 404 };
             }
 
             if (queue.Owner != curId)
             {
+                args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                 return new ObjectResult("Invalid Auth") { StatusCode = 401 };
             }
 
             QCollection.DeleteOne(qFilter);
 
+            args.SendEvent("Queue deleted", 200, Program.mWebApi);
             return new ObjectResult("Queue deleted") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("move-track")]
         public ObjectResult MoveTrack(string id, int fromPos, int toPos)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/move-track", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "fromPos", fromPos },
+                    { "toPos", toPos }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x._id, id);
             var queue = QCollection.Find(qFilter).FirstOrDefault();
             if (queue == null)
             {
+                args.SendEvent("Queue not found", 404, Program.mWebApi);
                 return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
 
@@ -663,6 +847,7 @@ namespace MelonWebApi.Controllers
             {
                 if (queue.Owner != curId && !queue.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -687,24 +872,32 @@ namespace MelonWebApi.Controllers
 
             StreamManager.AlertQueueUpdate(queue._id);
 
+            args.SendEvent("Track Moved", 200, Program.mWebApi);
             return new ObjectResult("Track moved") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("update-position")]
         public ObjectResult UpdateQueuePosition(string id, int pos, string device = "")
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/remove-tracks", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "pos", pos },
+                    { "device", device }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x._id, id);
             var oq = QCollection.Find(qFilter).FirstOrDefault();
             if (oq == null)
             {
+                args.SendEvent("Queue not found", 404, Program.mWebApi);
                 return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
 
@@ -712,6 +905,7 @@ namespace MelonWebApi.Controllers
             {
                 if (oq.Owner != curId && !oq.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -722,6 +916,7 @@ namespace MelonWebApi.Controllers
 
             StreamManager.AlertQueueUpdate(id, skipDevice:device);
 
+            args.SendEvent("Queue updated", 200, Program.mWebApi);
             return new ObjectResult("Queue updated") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
@@ -729,18 +924,28 @@ namespace MelonWebApi.Controllers
         public ObjectResult UpdateQueue(string id, string name = "", [FromQuery] string[] editors = null, [FromQuery] string[] viewers = null, 
                                         string publicEditing = "", string publicViewing = "")
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/remove-tracks", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "name", name },
+                    { "editors", editors },
+                    { "viewers", viewers },
+                    { "publicEditing", publicEditing },
+                    { "publicViewing", publicViewing }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x._id, id);
             var oq = QCollection.Find(qFilter).FirstOrDefault();
             if (oq == null)
             {
+                args.SendEvent("Queue not found", 404, Program.mWebApi);
                 return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
 
@@ -748,6 +953,7 @@ namespace MelonWebApi.Controllers
             {
                 if (oq.Owner != curId && !oq.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -760,6 +966,7 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception)
             {
+                args.SendEvent("Invalid Parameters", 400, Program.mWebApi);
                 return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
             }
 
@@ -771,25 +978,33 @@ namespace MelonWebApi.Controllers
 
             StreamManager.AlertQueueUpdate(oq._id);
 
+            args.SendEvent("Queue updated", 200, Program.mWebApi);
             return new ObjectResult("Queue updated") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("shuffle")]
         public ObjectResult ShuffleQueue(string id, string shuffle = "None", bool enableTrackLinks = true)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/shuffle", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "shuffle", shuffle },
+                    { "enableTrackLinks", enableTrackLinks }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
-
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
             var queues = QCollection.Find(qFilter).ToList();
             if(queues.Count() == 0)
             {
+                args.SendEvent("Queue not found", 404, Program.mWebApi);
                 return new ObjectResult("Queue not found") { StatusCode = 404 };
             }
             var queue = queues[0];
@@ -798,6 +1013,7 @@ namespace MelonWebApi.Controllers
             {
                 if (queue.Owner != curId && !queue.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -828,6 +1044,7 @@ namespace MelonWebApi.Controllers
                     queue.Tracks.Add(new DbLink(currentTrack));
                     queue.Tracks.AddRange(sTracks);
                     QCollection.ReplaceOne(qFilter, queue);
+                    args.SendEvent("Tracks Reset", 200, Program.mWebApi);
                     return new ObjectResult("Tracks Reset") { StatusCode = 200 };
                 case "TrackRandom":
                     tracks = MelonAPI.ShuffleTracks(tracks, curId, Melon.Types.ShuffleType.ByTrack, false, enableTrackLinks);
@@ -860,6 +1077,7 @@ namespace MelonWebApi.Controllers
 
             StreamManager.AlertQueueUpdate(queue._id);
 
+            args.SendEvent("Tracks Shuffled", 200, Program.mWebApi);
             return new ObjectResult("Tracks Shuffled") { StatusCode = 200 };
         }
     }

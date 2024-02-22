@@ -5,18 +5,7 @@ using MongoDB.Bson;
 using System.Data;
 using MongoDB.Driver;
 using Melon.LocalClasses;
-using System.Diagnostics;
 using Melon.Models;
-using RestSharp;
-using ATL.Logging;
-using System.Text.Json;
-using Azure.Core;
-using Newtonsoft.Json;
-using System;
-using Humanizer.Localisation;
-using Humanizer.Bytes;
-using System.Security.Policy;
-using static Azure.Core.HttpHeader;
 using System.Security.Claims;
 
 namespace MelonWebApi.Controllers
@@ -40,6 +29,37 @@ namespace MelonWebApi.Controllers
                                          int gtYear = -1, int gtMonth = -1, int gtDay = -1, long ltRating = -1, long gtRating = -1, [FromQuery] string[] genres = null, 
                                          bool searchOr = false, string sort = "NameAsc")
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/search/tracks", curId, new Dictionary<string, object>()
+                {
+                    { "page", page },
+                    { "count", count },
+                    { "trackName", trackName },
+                    { "format", format },
+                    { "bitrate", bitrate },
+                    { "sampleRate", sampleRate },
+                    { "channels", channels },
+                    { "bitsPerSample", bitsPerSample },
+                    { "year", year },
+                    { "ltPlayCount", ltPlayCount },
+                    { "gtPlayCount", gtPlayCount },
+                    { "ltSkipCount", ltSkipCount },
+                    { "gtSkipCount", gtSkipCount },
+                    { "ltYear", ltYear },
+                    { "ltMonth", ltMonth },
+                    { "ltDay", ltDay },
+                    { "gtYear", gtYear },
+                    { "gtMonth", gtMonth },
+                    { "gtDay", gtDay },
+                    { "ltRating", ltRating },
+                    { "gtRating", gtRating },
+                    { "genres", genres },
+                    { "searchOr", searchOr },
+                    { "sort", sort },
+                });
+
             List<ResponseTrack> tracks = new List<ResponseTrack>();
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -82,10 +102,6 @@ namespace MelonWebApi.Controllers
             {
                 filterList.Add(Builders<Track>.Filter.Regex(x => x.Year, new BsonRegularExpression(year, "i")));
             }
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
 
             // Play Count
             if (gtPlayCount >= 0)
@@ -249,6 +265,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            args.SendEvent("Tracks sent", 200, Program.mWebApi);
             return new ObjectResult(tracks) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
@@ -257,6 +274,32 @@ namespace MelonWebApi.Controllers
                                           long ltPlayCount = -1, long gtPlayCount = -1, long ltRating = -1, long gtRating = -1, int ltYear = -1, int ltMonth = -1, int ltDay = -1,
                                           int gtYear = -1, int gtMonth = -1, int gtDay = -1, [FromQuery] string[] genres = null, bool searchOr = false, string sort = "NameAsc")
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/search/albums", curId, new Dictionary<string, object>()
+                {
+                    { "page", page },
+                    { "count", count },
+                    { "albumName", albumName },
+                    { "publisher", publisher },
+                    { "releaseType", releaseType },
+                    { "releaseStatus", releaseStatus },
+                    { "ltPlayCount", ltPlayCount },
+                    { "gtPlayCount", gtPlayCount },
+                    { "ltYear", ltYear },
+                    { "ltMonth", ltMonth },
+                    { "ltDay", ltDay },
+                    { "gtYear", gtYear },
+                    { "gtMonth", gtMonth },
+                    { "gtDay", gtDay },
+                    { "ltRating", ltRating },
+                    { "gtRating", gtRating },
+                    { "genres", genres },
+                    { "searchOr", searchOr },
+                    { "sort", sort },
+                });
+
             List<ResponseAlbum> albums = new List<ResponseAlbum>();
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -284,11 +327,6 @@ namespace MelonWebApi.Controllers
             {
                 filterList.Add(Builders<Album>.Filter.Regex(x=>x.ReleaseStatus, new BsonRegularExpression(releaseStatus, "i")));
             }
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
-
 
             // Play Count
             if (gtPlayCount >= 0)
@@ -441,6 +479,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            args.SendEvent("Albums sent", 200, Program.mWebApi);
             return new ObjectResult(albums) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
@@ -448,6 +487,23 @@ namespace MelonWebApi.Controllers
         public ObjectResult SearchArtists(int page = 0, int count = 100, string artistName = "", long ltPlayCount = -1, long gtPlayCount = -1, long ltRating = -1, 
                                           long gtRating = -1, [FromQuery] string[] genres = null, bool searchOr = false, string sort = "NameAsc")
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/search/artists", curId, new Dictionary<string, object>()
+                {
+                    { "page", page },
+                    { "count", count },
+                    { "artistName", artistName },
+                    { "ltPlayCount", ltPlayCount },
+                    { "gtPlayCount", gtPlayCount },
+                    { "ltRating", ltRating },
+                    { "gtRating", gtRating },
+                    { "genres", genres },
+                    { "searchOr", searchOr },
+                    { "sort", sort },
+                });
+
             List<ResponseArtist> artists = new List<ResponseArtist>();
             
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -460,10 +516,6 @@ namespace MelonWebApi.Controllers
             {
                 filterList.Add(Builders<Artist>.Filter.Regex(x=>x.Name, new BsonRegularExpression(artistName, "i")));
             }
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                      .Where(c => c.Type == ClaimTypes.UserData)
-                      .Select(c => c.Value).FirstOrDefault();
 
             if (gtPlayCount >= 0)
             {
@@ -592,6 +644,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            args.SendEvent("Artists sent", 200, Program.mWebApi);
             return new ObjectResult(artists) { StatusCode = 200 };
         }
 

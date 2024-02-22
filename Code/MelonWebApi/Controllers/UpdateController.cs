@@ -10,11 +10,14 @@ using Melon.LocalClasses;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using System.Web.Http.Filters;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Security.Claims;
+using System.Security.Policy;
 
 namespace MelonWebApi.Controllers
 {
     [ApiController]
-    [Route("api/update")]
+    [Route("api/")]
     public class UpdateController : ControllerBase
     {
         private readonly ILogger<GeneralController> _logger;
@@ -27,11 +30,30 @@ namespace MelonWebApi.Controllers
         // Tracks
         
         [Authorize(Roles = "Admin")]
-        [HttpPatch("track")]
+        [HttpPatch("track/update")]
         public ObjectResult UpdateTrack(string trackId, string disc = "", string isrc = "", string releaseDate = "", string position = "",
                                         [FromQuery] string[] trackGenres = null, string trackName = "", string year = "", string nextTrack = "",
                                         string albumId = "", int defaultTrackArt = -1, [FromQuery] string[] artistIds = null)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                        .Where(c => c.Type == ClaimTypes.UserData)
+                        .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/track/update", curId, new Dictionary<string, object>()
+            {
+                { "trackId", trackId },
+                { "disc", disc },
+                { "isrc", isrc },
+                { "releaseDate", releaseDate },
+                { "position", position },
+                { "trackGenres", trackGenres },
+                { "trackName", trackName },
+                { "year", year },
+                { "nextTrack", nextTrack },
+                { "albumId", albumId },
+                { "defaultTrackArt", defaultTrackArt },
+                { "artistIds", artistIds },
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -42,6 +64,7 @@ namespace MelonWebApi.Controllers
             var foundTrack = TracksCollection.Find(trackFilter).FirstOrDefault();
             if(foundTrack == null)
             {
+                args.SendEvent("Track Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Track Not Found") { StatusCode = 404 };
             }
 
@@ -69,6 +92,7 @@ namespace MelonWebApi.Controllers
                 newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
                 if (newAlbum == null)
                 {
+                    args.SendEvent("Album Not Found", 404, Program.mWebApi);
                     return new ObjectResult("Album Not Found") { StatusCode = 404 };
                 }
                 newAlbum.Tracks.Add(new DbLink(foundTrack));
@@ -103,6 +127,7 @@ namespace MelonWebApi.Controllers
                     var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
                     if (newArtist == null)
                     {
+                        args.SendEvent("Artist Not Found", 404, Program.mWebApi);
                         return new ObjectResult("Artist Not Found") { StatusCode = 404 };
                     }
 
@@ -256,15 +281,37 @@ namespace MelonWebApi.Controllers
             Thread t = new Thread(MelonScanner.UpdateCollections);
             t.Start();
 
+            args.SendEvent("Track updated", 200, Program.mWebApi);
             return new ObjectResult("Track updated") { StatusCode = 200 };
         }
         
         [Authorize(Roles = "Admin")]
-        [HttpPatch("album")]
+        [HttpPatch("album/update")]
         public ObjectResult UpdateAlbum(string albumId, [FromQuery] string[] trackIds = null, string totalDiscs = "", string totalTracks = "", string releaseDate = "", string albumName = "",
                                         [FromQuery] string[] albumGenres = null, string bio = "", string publisher = "", string releaseStatus = "", string releaseType = "", int defaultAlbumArt = -1,
                                         [FromQuery] string[] contributingAristsIds = null, [FromQuery] string[] albumArtistIds = null)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                        .Where(c => c.Type == ClaimTypes.UserData)
+                        .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/album/update", curId, new Dictionary<string, object>()
+            {
+                { "albumId", albumId },
+                { "trackIds", trackIds },
+                { "totalDiscs", totalDiscs },
+                { "totalTracks", totalTracks },
+                { "releaseDate", releaseDate },
+                { "albumName", albumName },
+                { "albumGenres", albumGenres },
+                { "bio", bio },
+                { "publisher", publisher },
+                { "releaseStatus", releaseStatus },
+                { "releaseType", releaseType },
+                { "defaultAlbumArt", defaultAlbumArt },
+                { "contributingAristsIds", contributingAristsIds },
+                { "albumArtistIds", albumArtistIds },
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -275,6 +322,7 @@ namespace MelonWebApi.Controllers
             var foundAlbum = AlbumsCollection.Find(albumFilter).FirstOrDefault();
             if (foundAlbum == null)
             {
+                args.SendEvent("Album Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Album Not Found") { StatusCode = 404 };
             }
 
@@ -294,6 +342,7 @@ namespace MelonWebApi.Controllers
                     var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
                     if (newArtist == null)
                     {
+                        args.SendEvent("Artist Not Found", 404, Program.mWebApi);
                         return new ObjectResult("Artist Not Found") { StatusCode = 404 };
                     }
 
@@ -340,6 +389,7 @@ namespace MelonWebApi.Controllers
                     var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
                     if (newArtist == null)
                     {
+                        args.SendEvent("Artist Not Found", 404, Program.mWebApi);
                         return new ObjectResult("Artist Not Found") { StatusCode = 404 };
                     }
 
@@ -402,6 +452,7 @@ namespace MelonWebApi.Controllers
                     var newTrack = TracksCollection.Find(tFilter).FirstOrDefault();
                     if (newTrack == null)
                     {
+                        args.SendEvent("Track Not Found", 404, Program.mWebApi);
                         return new ObjectResult("Track Not Found") { StatusCode = 404 };
                     }
 
@@ -533,14 +584,31 @@ namespace MelonWebApi.Controllers
             Thread t = new Thread(MelonScanner.UpdateCollections);
             t.Start();
 
-            return new ObjectResult("Track updated") { StatusCode = 200 };
+            args.SendEvent("Album updated", 200, Program.mWebApi);
+            return new ObjectResult("Album updated") { StatusCode = 200 };
         }
         
         [Authorize(Roles = "Admin")]
-        [HttpPatch("artist")]
+        [HttpPatch("artist/update")]
         public ObjectResult UpdateArtist(string artistId, [FromQuery] string[] trackIds = null, [FromQuery] string[] releaseIds = null, [FromQuery] string[] seenOnIds = null,
                                          string artistName = "", string bio = "", [FromQuery] string[] artistGenres = null, int defaultArtistPfp = -1, int defaultArtistBanner = -1)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                        .Where(c => c.Type == ClaimTypes.UserData)
+                        .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/artist/update", curId, new Dictionary<string, object>()
+            {
+                { "artistId", artistId },
+                { "trackIds", trackIds },
+                { "releaseIds", releaseIds },
+                { "seenOnIds", seenOnIds },
+                { "artistName", artistName },
+                { "bio", bio },
+                { "artistGenres", artistGenres },
+                { "defaultArtistPfp", defaultArtistPfp },
+                { "defaultArtistBanner", defaultArtistBanner }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -551,6 +619,7 @@ namespace MelonWebApi.Controllers
             var foundArtist = ArtistsCollection.Find(artistFilter).FirstOrDefault();
             if (foundArtist == null)
             {
+                args.SendEvent("Artist Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Artist Not Found") { StatusCode = 404 };
             }
 
@@ -576,6 +645,7 @@ namespace MelonWebApi.Controllers
                     var newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
                     if (newAlbum == null)
                     {
+                        args.SendEvent("Album Not Found", 404, Program.mWebApi);
                         return new ObjectResult("Album Not Found") { StatusCode = 404 };
                     }
 
@@ -631,6 +701,7 @@ namespace MelonWebApi.Controllers
                     var newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
                     if (newAlbum == null)
                     {
+                        args.SendEvent("Album Not Found", 404, Program.mWebApi);
                         return new ObjectResult("Album Not Found") { StatusCode = 404 };
                     }
 
@@ -684,6 +755,7 @@ namespace MelonWebApi.Controllers
                     var newTrack = TracksCollection.Find(tFilter).FirstOrDefault();
                     if (newTrack == null)
                     {
+                        args.SendEvent("Track Not Found", 404, Program.mWebApi);
                         return new ObjectResult("Track Not Found") { StatusCode = 404 };
                     }
 
@@ -845,6 +917,7 @@ namespace MelonWebApi.Controllers
             Thread t = new Thread(MelonScanner.UpdateCollections);
             t.Start();
 
+            args.SendEvent("Artist updated", 200, Program.mWebApi);
             return new ObjectResult("Artist updated") { StatusCode = 200 };
         }
 

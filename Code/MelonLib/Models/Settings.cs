@@ -1,13 +1,11 @@
-﻿using Microsoft.AspNetCore.DataProtection;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Melon.LocalClasses
+namespace Melon.Models
 {
     /// <summary>
     /// All of Melon's Settings.
@@ -51,5 +49,6 @@ namespace Melon.LocalClasses
     public class Flags
     {
         public bool ForceOOBE { get; set; }
+        public bool DisablePlugins { get; set; }
     }
 }

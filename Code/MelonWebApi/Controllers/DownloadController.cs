@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Azure;
 using System;
 using MongoDB.Driver.Core.Events;
+using System.Security.Claims;
 
 namespace MelonWebApi.Controllers
 {
@@ -40,6 +41,14 @@ namespace MelonWebApi.Controllers
         [HttpGet("track")]
         public async Task<IActionResult> DownloadTrack(string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/download/track", curId, new Dictionary<string, object>()
+            {
+                { "id", id }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -48,6 +57,7 @@ namespace MelonWebApi.Controllers
             var track = TCollection.Find(tFilter).FirstOrDefault();
             if (track == null)
             {
+                args.SendEvent("Track not found", 404, Program.mWebApi);
                 return NotFound();
             }
 
@@ -55,10 +65,12 @@ namespace MelonWebApi.Controllers
 
             if (fileStream == null)
             {
+                args.SendEvent("Track file not found", 404, Program.mWebApi);
                 return NotFound();
             }
 
             string filename = Path.GetFileName(track.Path);
+            args.SendEvent("Sent track file", 200, Program.mWebApi);
             return new FileStreamResult(fileStream, $"audio/{track.Format.Replace(".", "")}")
             {
                 EnableRangeProcessing = true,
@@ -69,6 +81,14 @@ namespace MelonWebApi.Controllers
         [HttpGet("track-transcode")]
         public async Task<IActionResult> DownloadTrackTranscode(string id, int transcodeBitrate = 256)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/download/track-transcode", curId, new Dictionary<string, object>()
+            {
+                { "id", id }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
@@ -77,6 +97,7 @@ namespace MelonWebApi.Controllers
             var track = TCollection.Find(tFilter).FirstOrDefault();
             if (track == null)
             {
+                args.SendEvent("Track not found", 404, Program.mWebApi);
                 return NotFound();
             }
 
@@ -84,6 +105,7 @@ namespace MelonWebApi.Controllers
 
             if (fileStream == null)
             {
+                args.SendEvent("Track file not found", 404, Program.mWebApi);
                 return NotFound();
             }
 
@@ -112,6 +134,7 @@ namespace MelonWebApi.Controllers
                         writer.Flush();
                     }
                     ms.Position = 0;
+                    args.SendEvent("Track file sent", 200, Program.mWebApi);
                     return new FileStreamResult(ms, "audio/mpeg")
                     {
                         EnableRangeProcessing = true,
@@ -133,6 +156,7 @@ namespace MelonWebApi.Controllers
                         writer.Write(buffer, 0, buffer.Length);
                     }
                     writer.Flush();
+                    args.SendEvent("Track file sent", 200, Program.mWebApi);
                 }
                 return ControllerBase.Empty;
             }
@@ -141,6 +165,15 @@ namespace MelonWebApi.Controllers
         [HttpGet("track-wave")]
         public ObjectResult DownloadTrackWaveform(string id, float width)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/download/track", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "width", width }
+            });
+
             var w = (int)width;
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -148,6 +181,7 @@ namespace MelonWebApi.Controllers
 
             if(width == 0)
             {
+                args.SendEvent("Width parameter is required", 400, Program.mWebApi);
                 return new ObjectResult("Width parameter is required") { StatusCode = 400 };
             }
 
@@ -155,6 +189,7 @@ namespace MelonWebApi.Controllers
             var track = TCollection.Find(tFilter).FirstOrDefault();
             if (track == null)
             {
+                args.SendEvent("Track not found", 404, Program.mWebApi);
                 return new ObjectResult("Track not found") { StatusCode = 404 };
             }
 
@@ -181,6 +216,7 @@ namespace MelonWebApi.Controllers
                     }
                 }
 
+                args.SendEvent("Track waveform sent", 200, Program.mWebApi);
                 return new ObjectResult(waveform) { StatusCode = 200 };
             }
         }
@@ -188,40 +224,37 @@ namespace MelonWebApi.Controllers
         [HttpGet("track-art")]
         public async Task<IActionResult> DownloadTrackArt(string id, int index = -1)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/download/track-art", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "index", index }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
 
-
             var tFilter = Builders<Track>.Filter.Eq(x => x._id, id);
-            var track = TCollection.Find(tFilter).ToList()[0];
+            var track = TCollection.Find(tFilter).FirstOrDefault();
 
 
             ATL.Track file = null;
             try
             {
                 file = new ATL.Track(track.Path);
-            }
-            catch (Exception)
-            {
-                return NotFound();
-            }
-
-            try 
-            { 
                 index = index == -1 ? track.TrackArtDefault : index;
                 var pic = file.EmbeddedPictures[index];
                 MemoryStream ms = new MemoryStream(pic.PictureData);
                 ms.Seek(0, SeekOrigin.Begin);
-
+                args.SendEvent("Track artwork sent", 200, Program.mWebApi);
                 return File(ms, $"image/jpeg");
-                
-
             }
             catch(Exception)
             {
+                args.SendEvent("Default artwork sent", 200, Program.mWebApi);
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
             
@@ -230,27 +263,34 @@ namespace MelonWebApi.Controllers
         [HttpGet("album-art")]
         public async Task<IActionResult> DownloadAlbumArt(string id, int index = -1)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/download/album-art", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "index", index }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var ACollection = mongoDatabase.GetCollection<Album>("Albums");
-
 
             try
             {
                 var aFilter = Builders<Album>.Filter.Eq(x => x._id, id);
-                var album = ACollection.Find(aFilter).ToList()[0];
+                var album = ACollection.Find(aFilter).FirstOrDefault();
 
                 index = index == -1 ? album.AlbumArtDefault : index;
                 FileStream file = new FileStream($"{StateManager.melonPath}/AlbumArts/{album.AlbumArtPaths[index]}", FileMode.Open, FileAccess.Read);
                 byte[] bytes = new byte[file.Length];
                 file.Read(bytes, 0, (int)file.Length);
-                //ms.Write(bytes, 0, (int)file.Length);
+                args.SendEvent("Album artwork sent", 200, Program.mWebApi);
                 return File(bytes, "image/jpeg");
             }
             catch (Exception)
             {
+                args.SendEvent("Default artwork sent", 200, Program.mWebApi);
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
         }
@@ -258,27 +298,34 @@ namespace MelonWebApi.Controllers
         [HttpGet("artist-pfp")]
         public async Task<IActionResult> DownloadArtistPfp(string id, int index = -1)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/download/artist-pfp", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "index", index }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var ACollection = mongoDatabase.GetCollection<Artist>("Artists");
-
 
             try
             {
                 var aFilter = Builders<Artist>.Filter.Eq(x => x._id, id);
-                var artist = ACollection.Find(aFilter).ToList()[0];
+                var artist = ACollection.Find(aFilter).FirstOrDefault();
 
                 index = index == -1 ? artist.ArtistPfpDefault : index;
                 FileStream file = new FileStream($"{StateManager.melonPath}/ArtistPfps/{artist.ArtistPfpPaths[index]}", FileMode.Open, FileAccess.Read);
                 byte[] bytes = new byte[file.Length];
                 file.Read(bytes, 0, (int)file.Length);
-                //ms.Write(bytes, 0, (int)file.Length);
+                args.SendEvent("Artist pfp sent", 200, Program.mWebApi);
                 return File(bytes, "image/jpeg");
             }
             catch (Exception)
             {
+                args.SendEvent("Default artwork sent", 200, Program.mWebApi);
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
         }
@@ -286,27 +333,34 @@ namespace MelonWebApi.Controllers
         [HttpGet("artist-banner")]
         public async Task<IActionResult> DownloadArtistBanner(string id, int index = -1)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/download/artist-banner", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "index", index }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var ACollection = mongoDatabase.GetCollection<Artist>("Artists");
-
 
             try
             {
                 var aFilter = Builders<Artist>.Filter.Eq(x => x._id, id);
-                var artist = ACollection.Find(aFilter).ToList()[0];
+                var artist = ACollection.Find(aFilter).FirstOrDefault();
 
                 index = index == -1 ? artist.ArtistBannerArtDefault : index;
                 FileStream file = new FileStream($"{StateManager.melonPath}/ArtistBanners/{artist.ArtistBannerPaths[index]}", FileMode.Open, FileAccess.Read);
                 byte[] bytes = new byte[file.Length];
                 file.Read(bytes, 0, (int)file.Length);
-                //ms.Write(bytes, 0, (int)file.Length);
+                args.SendEvent("Artist banner sent", 200, Program.mWebApi);
                 return File(bytes, "image/jpeg");
             }
             catch (Exception)
             {
+                args.SendEvent("Default artwork sent", 200, Program.mWebApi);
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
         }
@@ -314,28 +368,32 @@ namespace MelonWebApi.Controllers
         [HttpGet("playlist-art")]
         public async Task<IActionResult> DownloadPlaylistArt(string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/download/playlist-art", curId, new Dictionary<string, object>()
+            {
+                { "id", id }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
-
 
             try
             {
                 var pFilter = Builders<Playlist>.Filter.Eq(x => x._id, id);
-                var playlist = PCollection.Find(pFilter).ToList()[0];
+                var playlist = PCollection.Find(pFilter).FirstOrDefault();
 
-                // Load image data in MemoryStream
-                //MemoryStream ms = new MemoryStream();
                 FileStream file = new FileStream($"{StateManager.melonPath}/PlaylistArts/{playlist.ArtworkPath}", FileMode.Open, FileAccess.Read);
                 byte[] bytes = new byte[file.Length];
                 file.Read(bytes, 0, (int)file.Length);
-                //ms.Write(bytes, 0, (int)file.Length);
+                args.SendEvent("Playlist artwork sent", 200, Program.mWebApi);
                 return File(bytes, "image/jpeg");
             }
             catch (Exception)
             {
+                args.SendEvent("Default artwork sent", 200, Program.mWebApi);
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
         }
@@ -343,28 +401,32 @@ namespace MelonWebApi.Controllers
         [HttpGet("collection-art")]
         public async Task<IActionResult> DownloadCollectionArt(string id)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/download/collection-art", curId, new Dictionary<string, object>()
+            {
+                { "id", id }
+            });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
             var mongoDatabase = mongoClient.GetDatabase("Melon");
-
             var CCollection = mongoDatabase.GetCollection<Collection>("Collections");
-
 
             try
             {
                 var cFilter = Builders<Collection>.Filter.Eq(x => x._id, id);
-                var collection = CCollection.Find(cFilter).ToList()[0];
+                var collection = CCollection.Find(cFilter).FirstOrDefault();
 
-                // Load image data in MemoryStream
-                //MemoryStream ms = new MemoryStream();
                 FileStream file = new FileStream($"{StateManager.melonPath}/CollectionArts/{collection.ArtworkPath}", FileMode.Open, FileAccess.Read);
                 byte[] bytes = new byte[file.Length];
                 file.Read(bytes, 0, (int)file.Length);
-                //ms.Write(bytes, 0, (int)file.Length);
+                args.SendEvent("Collection artwork sent", 200, Program.mWebApi);
                 return File(bytes, "image/jpeg");
             }
             catch (Exception)
             {
+                args.SendEvent("Default artwork sent", 200, Program.mWebApi);
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
         }

@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Collections.Specialized;
@@ -21,22 +22,26 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.RateLimiting;
+using Melon.Models;
 namespace MelonWebApi
 {
     public static class Program
     {
         public static bool started = false;
         public static WebApplication app;
+        public static MWebApi mWebApi;
         public static int Main(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.OutputEncoding = Encoding.UTF8;
             bool headless = args.Contains("--headless") || args.Contains("-h");
             bool setup = args.Contains("--setup");
+            bool disablePlugins = args.Contains("--disablePlugins");
             string lang = args.Where(x => x.Contains("--lang")).FirstOrDefault() != null ? args.Where(x=>x.Contains("--lang")).FirstOrDefault().Split("=")[1] : "";
             if (!started)
             {
-                StateManager.Init(headless, setup, lang);
+                mWebApi = new MWebApi();
+                StateManager.Init(headless, setup, disablePlugins, lang, mWebApi);
             }
 
             if (headless && DisplayManager.UIExtensions.Count() != 0)
@@ -106,9 +111,38 @@ namespace MelonWebApi
             builder.Services.AddSwaggerGen(c =>
             {
                 // Use method name as operationId
-                c.CustomOperationIds(apiDesc =>
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Melon Web API", Version = "v1.0.0" });
+
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo) ? methodInfo.Name : null;
+                    Description = @"JWT Authorization header using the Bearer scheme.",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            },
+                            Scheme = "oauth2",
+                            Name = "Bearer",
+                            In = ParameterLocation.Header,
+
+                        },
+                        new List<string>()
+                    }
                 });
             });
 

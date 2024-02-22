@@ -10,6 +10,7 @@ using Melon.Models;
 using System.Security.Claims;
 using ATL.Playlist;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 namespace MelonWebApi.Controllers
 {
@@ -26,18 +27,22 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create")]
-        public ObjectResult CreatePlaylist(string name, string description = "", [FromQuery] List<string> trackIds = null)
+        public ObjectResult CreatePlaylist(string name, string description = "", [FromQuery] List<string> ids = null)
         {
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/playlists/create", curId, new Dictionary<string, object>()
+                {
+                    { "name", name },
+                    { "description", description },
+                    { "ids", ids }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);            
+            var mongoDatabase = mongoClient.GetDatabase("Melon");            
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             Playlist playlist = new Playlist();
             playlist._id = ObjectId.GenerateNewId().ToString();
@@ -53,12 +58,13 @@ namespace MelonWebApi.Controllers
             playlist.Tracks = new List<DbLink>();
             //var str = queue._id.ToString();
             var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, playlist._id);
-            if(trackIds == null)
+            if(ids == null)
             {
                 PCollection.InsertOne(playlist);
+                args.SendEvent("Playlist created", 200, Program.mWebApi);
                 return new ObjectResult(playlist._id.ToString()) { StatusCode = 200 };
             }
-            foreach(var id in trackIds)
+            foreach(var id in ids)
             {
                 var trackFilter = Builders<Track>.Filter.Eq(x=>x._id, id);
                 var trackDoc = TCollection.Find(trackFilter).ToList();
@@ -71,7 +77,7 @@ namespace MelonWebApi.Controllers
             }
             PCollection.InsertOne(playlist);
 
-
+            args.SendEvent("Playlist created", 200, Program.mWebApi);
             return new ObjectResult(playlist._id) { StatusCode = 200 };
         }
 
@@ -79,22 +85,26 @@ namespace MelonWebApi.Controllers
         [HttpPost("add-tracks")]
         public ObjectResult AddToPlaylist(string id, [FromQuery] List<string> trackIds)
         {
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-
-            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
-            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
-
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/playlists/add-tracks", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "trackIds", trackIds }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
             //var str = queue._id.ToString();
             var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
             var playlists = PCollection.Find(pFilter).ToList();
             if(playlists.Count == 0)
             {
+                args.SendEvent("Playlist not found", 404, Program.mWebApi);
                 return new ObjectResult("Playlist Not Found") { StatusCode = 404 };
             }
             var playlist = playlists[0];
@@ -103,6 +113,7 @@ namespace MelonWebApi.Controllers
             {
                 if(playlist.Owner != curId && !playlist.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -119,6 +130,7 @@ namespace MelonWebApi.Controllers
             }
             PCollection.ReplaceOne(pFilter, playlist);
 
+            args.SendEvent("Tracks added", 200, Program.mWebApi);
             return new ObjectResult("Tracks added") { StatusCode = 200 };
         }
 
@@ -126,22 +138,26 @@ namespace MelonWebApi.Controllers
         [HttpPost("remove-tracks")]
         public ObjectResult RemoveFromPlaylist(string id, [FromQuery] List<int> positions)
         {
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-
-            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
-            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
-
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/playlists/remove-tracks", curId, new Dictionary<string, object>()
+                {
+                    { "id", id },
+                    { "positions", positions }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
             //var str = queue._id.ToString();
             var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
             var playlist = PCollection.Find(pFilter).FirstOrDefault();
             if (playlist == null)
             {
+                args.SendEvent("Playlist not found", 404, Program.mWebApi);
                 return new ObjectResult("Playlist Not Found") { StatusCode = 404 };
             }
 
@@ -149,6 +165,7 @@ namespace MelonWebApi.Controllers
             {
                 if (playlist.Owner != curId && !playlist.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -160,33 +177,38 @@ namespace MelonWebApi.Controllers
             }
             PCollection.ReplaceOne(pFilter, playlist);
 
+            args.SendEvent("Tracks removed", 200, Program.mWebApi);
             return new ObjectResult("Tracks removed") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("delete")]
         public ObjectResult DeletePlaylist(string id)
         {
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-
-            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
-            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
-
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/playlists/delete", curId, new Dictionary<string, object>()
+                {
+                        { "id", id }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
             //var str = queue._id.ToString();
             var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
             var playlist = PCollection.Find(pFilter).FirstOrDefault();
             if (playlist == null)
             {
+                args.SendEvent("Playlist not found", 404, Program.mWebApi);
                 return new ObjectResult("Playlist Not Found") { StatusCode = 404 };
             }
 
             if (playlist.Owner != curId)
             {
+                args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                 return new ObjectResult("Invalid Auth") { StatusCode = 401 };
             }
 
@@ -203,6 +225,7 @@ namespace MelonWebApi.Controllers
 
             PCollection.DeleteOne(pFilter);
 
+            args.SendEvent("Playlist deleted", 200, Program.mWebApi);
             return new ObjectResult("Playlist deleted") { StatusCode = 200 };
         }
 
@@ -211,20 +234,31 @@ namespace MelonWebApi.Controllers
         public ObjectResult updatePlaylist(string id, string description = "", string name = "", [FromQuery] List<string> editors = null, [FromQuery] List<string> viewers = null,
                                            string publicEditing = "", string publicViewing = "")
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                    .Where(c => c.Type == ClaimTypes.UserData)
+                    .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/playlists/update", curId, new Dictionary<string, object>()
+            {
+                    { "id", id },
+                    { "description", description },
+                    { "name", name },
+                    { "editors", editors },
+                    { "viewers", viewers },
+                    { "publicEditing", publicEditing },
+                    { "publicViewing", publicViewing }
+            });
             try
             {
+
                 var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
                 var mongoDatabase = mongoClient.GetDatabase("Melon");
                 var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
-
-                var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
                 var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, id);
                 var playlists = PCollection.Find(pFilter).ToList();
                 if (playlists.Count == 0)
                 {
+                    args.SendEvent("Playlist not found", 404, Program.mWebApi);
                     return new ObjectResult("Playlist not found") { StatusCode = 404 };
                 }
                 var plst = playlists[0];
@@ -233,6 +267,7 @@ namespace MelonWebApi.Controllers
                 {
                     if (plst.Owner != curId && !plst.Editors.Contains(curId))
                     {
+                        args.SendEvent("Invalid Auth", 404, Program.mWebApi);
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
                 }
@@ -250,6 +285,7 @@ namespace MelonWebApi.Controllers
                 }
                 catch (Exception)
                 {
+                    args.SendEvent("Invalid Parameters", 400, Program.mWebApi);
                     return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
                 }
                 
@@ -266,28 +302,36 @@ namespace MelonWebApi.Controllers
             }
             catch (Exception e)
             {
+                args.SendEvent(e.Message, 500, Program.mWebApi);
                 return new ObjectResult(e.Message) { StatusCode = 500 };
             }
 
-
+            args.SendEvent("Playlist updated", 200, Program.mWebApi);
             return new ObjectResult("Playlist updated") { StatusCode = 404 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("move-track")]
         public ObjectResult MoveTrack(string id, int fromPos, int toPos)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/playlists/move-track", curId, new Dictionary<string, object>()
+                {
+                        { "id", id },
+                        { "fromPos", fromPos },
+                        { "toPos", toPos }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             var pFilter = Builders<Playlist>.Filter.Eq(x => x._id, id);
             var playlist = PCollection.Find(pFilter).FirstOrDefault();
             if (playlist == null)
             {
+                args.SendEvent("Playlist not found", 404, Program.mWebApi);
                 return new ObjectResult("Playlist not found") { StatusCode = 404 };
             }
 
@@ -295,6 +339,7 @@ namespace MelonWebApi.Controllers
             {
                 if (playlist.Owner != curId && !playlist.Editors.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -307,6 +352,7 @@ namespace MelonWebApi.Controllers
 
             StreamManager.AlertQueueUpdate(playlist._id);
 
+            args.SendEvent("Track moved", 200, Program.mWebApi);
             return new ObjectResult("Track moved") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
@@ -314,8 +360,12 @@ namespace MelonWebApi.Controllers
         public ObjectResult GetPlaylistById(string id)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/playlists/get", curId, new Dictionary<string, object>()
+                {
+                        { "id", id },
+                });
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -335,12 +385,15 @@ namespace MelonWebApi.Controllers
                 {
                     if (plst.Owner != curId && !plst.Editors.Contains(curId) && !plst.Viewers.Contains(curId))
                     {
+                        args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                     }
                 }
+                args.SendEvent("Playlist sent", 200, Program.mWebApi);
                 return new ObjectResult(plst) { StatusCode = 200 };
             }
 
+            args.SendEvent("Playlist not found", 404, Program.mWebApi);
             return new ObjectResult("Playlist not found") { StatusCode = 404 };
         }
 
@@ -348,15 +401,21 @@ namespace MelonWebApi.Controllers
         [HttpGet("search")]
         public ObjectResult SearchPlaylists(int page, int count, string name="")
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/playlists/search", curId, new Dictionary<string, object>()
+                {
+                        { "page", page },
+                        { "count", count },
+                        { "name", name }
+                });
+
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
 
             List<ResponsePlaylist> playlists = new List<ResponsePlaylist>();
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
 
             var ownerFilter = Builders<Playlist>.Filter.Eq(x => x.Owner, curId);
             var viewersFilter = Builders<Playlist>.Filter.AnyEq(x => x.Viewers, curId);
@@ -376,8 +435,7 @@ namespace MelonWebApi.Controllers
                                           .ToList()
                                           .Select(x => BsonSerializer.Deserialize<ResponsePlaylist>(x)));
 
-            
-
+            args.SendEvent("Playlists sent", 200, Program.mWebApi);
             return new ObjectResult(playlists) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
@@ -385,8 +443,14 @@ namespace MelonWebApi.Controllers
         public ObjectResult GetTracks(string id, int page = 0, int count = 100)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/palylists/get-tracks", curId, new Dictionary<string, object>()
+                {
+                        { "id", id },
+                        { "page", page },
+                        { "count", count }
+                });
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
@@ -400,6 +464,7 @@ namespace MelonWebApi.Controllers
             var Playlists = PCollection.Find(pFilter).ToList();
             if (Playlists.Count() == 0)
             {
+                args.SendEvent("Playlist not found", 404, Program.mWebApi);
                 return new ObjectResult("Playlist not found") { StatusCode = 404 };
             }
             var playlist = Playlists[0];
@@ -408,6 +473,7 @@ namespace MelonWebApi.Controllers
             {
                 if (playlist.Owner != curId && !playlist.Editors.Contains(curId) && !playlist.Viewers.Contains(curId))
                 {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
@@ -447,6 +513,7 @@ namespace MelonWebApi.Controllers
                 orderedTracks.Add(track);
             }
 
+            args.SendEvent("Tracks Sent", 200, Program.mWebApi);
             return new ObjectResult(orderedTracks) { StatusCode = 200 };
         }
     }
