@@ -18,21 +18,14 @@ namespace Melon.PluginModels
 {
     public class MelonHost : IHost
     {
+        public string Version => "1.1.0";
         public IMelonAPI Api => new API();
-
-        public string Version => "1.0.0";
-
         public IMelonAPI MelonAPI => new API();
         public IStorageAPI Storage => new StorageAPI();
-
         public IMelonScanner MelonScanner => new Scanner();
-
         public IStateManager StateManager => new State();
-
         public IDisplayManager DisplayManager => new Display();
-
         public IMelonUI MelonUI => new UI();
-
         public ISettingsUI SettingsUI => new SettingsMenu();
         private IWebApi _WebApi;
         public IWebApi WebApi 
@@ -229,11 +222,11 @@ namespace Melon.PluginModels
                 return StateManager.DbClient;
             }
         }
-        public Settings MelonSettings
+        public ShortSettings MelonSettings
         {
             get
             {
-                return StateManager.MelonSettings;
+                return new ShortSettings(StateManager.MelonSettings);
             }
         }
         public Flags MelonFlags

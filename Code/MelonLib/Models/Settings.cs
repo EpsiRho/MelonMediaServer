@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Melon.Interface;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -26,6 +27,35 @@ namespace Melon.Models
         public Color Melon { get; set; }
         public Color Error { get; set; }
         public bool UseMenuColor { get; set; }
+    }
+    public class ShortSettings
+    {
+        public string? MongoDbConnectionString { get; set; }
+        public List<string> LibraryPaths { get; set; }
+        public string ListeningURL { get; set; }
+        public string DefaultLanguage { get; set; }
+        public Color Text { get; set; }
+        public Color ShadedText { get; set; }
+        public Color BackgroundText { get; set; }
+        public Color Highlight { get; set; }
+        public Color Melon { get; set; }
+        public Color Error { get; set; }
+        public bool UseMenuColor { get; set; }
+        public ShortSettings(Settings set)
+        {
+            MongoDbConnectionString = set.MongoDbConnectionString;
+            LibraryPaths = set.LibraryPaths;
+            ListeningURL = set.ListeningURL;
+            DefaultLanguage = set.DefaultLanguage;
+            Text = set.Text;
+            ShadedText = set.ShadedText;
+            BackgroundText = set.BackgroundText;
+            Highlight = set.Highlight;
+            Melon = set.Melon;
+            Error = set.Error;
+            UseMenuColor = set.UseMenuColor;
+            UseMenuColor = set.UseMenuColor;
+        }
     }
     /// <summary>
     /// Configuration for SSL

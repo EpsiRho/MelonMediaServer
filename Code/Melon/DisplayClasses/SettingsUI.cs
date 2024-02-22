@@ -1,11 +1,14 @@
 ﻿using Amazon.Runtime.Internal.Transform;
 using Melon.Classes;
+using Melon.Interface;
 using Melon.LocalClasses;
 using Melon.Models;
+using Melon.PluginModels;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Pastel;
+using Serilog.Context;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -72,15 +75,93 @@ namespace Melon.DisplayClasses
         }
         private static void ViewPlugins()
         {
-            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption") });
-            foreach(var plugin in StateManager.Plugins)
+            while (true)
             {
-                Console.WriteLine($"{plugin.Name} [{plugin.Version}]");
-                Console.WriteLine($" - {plugin.Description}");
-                Console.WriteLine($"");
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption") });
+                List<string> options = new List<string>();
+                options.Add(StringsManager.GetString("BackNavigation"));
+                foreach (var plugin in Plugins)
+                {
+                    options.Add(plugin.Name);
+                }
+                options.Add(StringsManager.GetString("RescanPluginsFolderOption"));
+                options.Add(StringsManager.GetString("ReloadAllPluginsOption"));
+                var choice = MelonUI.OptionPicker(options);
+                if (choice == StringsManager.GetString("BackNavigation"))
+                {
+                    return;
+                }
+                else if (Plugins.Any(x => x.Name == choice))
+                {
+                    var plugin = Plugins.Where(x => x.Name == choice).FirstOrDefault();
+                    ViewPluginInfo(plugin);
+                }
+                else if(choice == StringsManager.GetString("RescanPluginsFolderOption"))
+                {
+                    MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("RescanPluginsFolderOption") });
+                    MelonUI.ShowIndeterminateProgress();
+                    foreach (var plugin in Plugins)
+                    {
+                        plugin.Unload();
+                    }
+                    StateManager.LoadPlugins();
+                    MelonUI.HideIndeterminateProgress();
+                }
+                else if(choice == StringsManager.GetString("ReloadAllPluginsOption"))
+                {
+                    MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("ReloadAllPluginsOption") });
+                    MelonUI.ShowIndeterminateProgress();
+                    foreach (var plugin in Plugins)
+                    {
+                        plugin.Unload();
+                    }
+                    foreach (var plugin in Plugins)
+                    {
+                        plugin.Load();
+                    }
+                    MelonUI.HideIndeterminateProgress();
+                }
             }
-            Console.WriteLine(StringsManager.GetString("ContinuationPrompt"));
-            Console.ReadKey();
+        }
+        private static void ViewPluginInfo(IPlugin plugin)
+        {
+            while (true)
+            {
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), plugin.Name });
+                Console.WriteLine($"{StringsManager.GetString("NameDisplay")}: {plugin.Name}");
+                Console.WriteLine($"{StringsManager.GetString("AuthorsDisplay")}: {plugin.Authors}");
+                Console.WriteLine($"{StringsManager.GetString("VersionDisplay")}: {plugin.Version}");
+                Console.WriteLine($"{StringsManager.GetString("DescriptionDisplay")}: {plugin.Description}");
+                List<string> options = new List<string>();
+                options.Add(StringsManager.GetString("BackNavigation"));
+                if (DisabledPlugins.Contains($"{plugin.Name}:{plugin.Authors}"))
+                {
+                    options.Add(StringsManager.GetString("EnablePluginOption"));
+                }
+                else
+                {
+                    options.Add(StringsManager.GetString("DisablePluginOption"));
+                }
+
+                var choice = MelonUI.OptionPicker(options);
+
+                if (choice == StringsManager.GetString("BackNavigation"))
+                {
+                    return;
+                }
+                else if (choice == StringsManager.GetString("DisablePluginOption"))
+                {
+                    plugin.Unload();
+                    DisabledPlugins.Add($"{plugin.Name}:{plugin.Authors}");
+                    Storage.SaveConfigFile("DisabledPlugins.json", DisabledPlugins, null);
+                }
+                else if (choice == StringsManager.GetString("EnablePluginOption"))
+                {
+                    plugin.Load();
+                    DisabledPlugins.Remove($"{plugin.Name}:{plugin.Authors}");
+                    Storage.SaveConfigFile("DisabledPlugins.json", DisabledPlugins, null);
+                }
+            }
         }
         private static void HTTPSSetup()
         {

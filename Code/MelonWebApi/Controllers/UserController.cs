@@ -233,9 +233,9 @@ namespace MelonWebApi.Controllers
             var curId = ((ClaimsIdentity)User.Identity).Claims
                         .Where(c => c.Type == ClaimTypes.UserData)
                         .Select(c => c.Value).FirstOrDefault();
-            var roles = ((ClaimsIdentity)User.Identity).Claims
+            var role = ((ClaimsIdentity)User.Identity).Claims
                         .Where(c => c.Type == ClaimTypes.Role)
-                        .Select(c => c.Value);
+                        .Select(c => c.Value).FirstOrDefault();
             var args = new WebApiEventArgs("api/users/current", curId, new Dictionary<string, object>());
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);

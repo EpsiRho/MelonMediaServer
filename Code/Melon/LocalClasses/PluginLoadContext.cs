@@ -13,7 +13,7 @@ namespace Melon.LocalClasses
     {
         private AssemblyDependencyResolver _resolver;
 
-        public PluginLoadContext(string pluginPath)
+        public PluginLoadContext(string pluginPath) : base(isCollectible: true)
         {
             _resolver = new AssemblyDependencyResolver(pluginPath);
         }
@@ -27,17 +27,6 @@ namespace Melon.LocalClasses
             }
 
             return null;
-        }
-
-        protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
-        {
-            string libraryPath = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
-            if (libraryPath != null)
-            {
-                return LoadUnmanagedDllFromPath(libraryPath);
-            }
-
-            return IntPtr.Zero;
         }
     }
 }

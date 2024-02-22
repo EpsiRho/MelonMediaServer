@@ -5,6 +5,7 @@ using Pastel;
 using System;
 using System.Drawing;
 using System.Net.Http;
+using System.Text;
 using System.Windows.Input;
 
 namespace MelonPlugin
@@ -12,18 +13,39 @@ namespace MelonPlugin
     public class EventPlugin : IPlugin
     {
         public string Name => "Event Plugin";
-        public string Version => "v1.1.0";
+        public string Authors => "Epsi";
+        public string Version => "v1.2.0";
         public string Description => "Demo plugin that displays api events";
         public IHost Host { get; set; }
         public bool Display;
         public List<string> Messages;
         public EventConfig Config;
-        public int Execute()
+        public int Load()
         {
             LoadConfig();
             SetupEventHandlers();
             Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Events", EventMenu);
             Host.SettingsUI.MenuOptions.Add("Events Settings", SettingsMenu);
+            Host.WebApi.UsePluginMiddleware(KeyValuePair.Create("EventMiddleware", EventsInfoMiddleware));
+
+            return 0;
+        }
+        public byte[] EventsInfoMiddleware(WebApiEventArgs args)
+        {
+            if (args.Api == "/api/events/info")
+            {
+                var result = $"{Name}\n{Authors}\n{Version}\n{Description}";
+                return Encoding.ASCII.GetBytes(result);
+            }
+
+            return null;
+        }
+
+        public int Unload()
+        {
+            Host.DisplayManager.MenuOptions.Remove("Events");
+            Host.SettingsUI.MenuOptions.Remove("Events Settings");
+            Host.WebApi.RemovePluginMiddleware("EventMiddleware");
             return 0;
         }
 
@@ -36,7 +58,8 @@ namespace MelonPlugin
                 Config = new EventConfig()
                 {
                     Format = "[api] (user): msg",
-                    TextColor = Color.FromArgb(255, 255, 255, 255)
+                    TextColor = Color.FromArgb(255, 255, 255, 255),
+                    ShowArgs = false
                 };
             }
         }
@@ -171,7 +194,7 @@ namespace MelonPlugin
             {
                 if (Console.KeyAvailable)
                 {
-                    var k = Console.ReadKey();
+                    var k = Console.ReadKey(true);
                     if (k.Key == ConsoleKey.Escape)
                     {
                         Display = false;

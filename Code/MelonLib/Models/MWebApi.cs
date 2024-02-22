@@ -4,6 +4,23 @@ namespace Melon.Models
 {
     public class MWebApi : IWebApi
     {
+        private Dictionary<string, Func<WebApiEventArgs, byte[]>> _middlewares = new Dictionary<string, Func<WebApiEventArgs, byte[]>>();
+
+        public bool UsePluginMiddleware(KeyValuePair<string, Func<WebApiEventArgs, byte[]>> middleware)
+        {
+            var check = _middlewares.TryAdd(middleware.Key, middleware.Value);
+            return check;
+        }
+        public bool RemovePluginMiddleware(string name)
+        {
+            var check = _middlewares.Remove(name);
+            return check;
+        }
+        public Dictionary<string, Func<WebApiEventArgs, byte[]>> GetPluginMiddlewares()
+        {
+            return _middlewares;
+        }
+
         // ArtDeleteController
         public event EventHandler<WebApiEventArgs> ArtDeleteTrack;
         public event EventHandler<WebApiEventArgs> ArtDeleteAlbum;
@@ -577,5 +594,7 @@ namespace Melon.Models
                     break;
             }
         }
+
+        
     }
 }

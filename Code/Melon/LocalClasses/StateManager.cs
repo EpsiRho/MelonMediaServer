@@ -39,6 +39,9 @@ namespace Melon.LocalClasses
         public static Flags MelonFlags { get; set; }
         public static ResourceManager StringsManager { get; set; }
         public static List<IPlugin> Plugins { get; set; }
+        public static List<PluginLoadContext> PluginsContexts { get; set; }
+        public static List<string> DisabledPlugins { get; set; }
+        public static MelonHost Host { get; set; }
         private static void LoadSettings()
         {
             if (!File.Exists($"{melonPath}/Configs/MelonSettings.json"))
@@ -182,6 +185,8 @@ namespace Melon.LocalClasses
                 ChecklistUI.ChecklistDislayToggle();
             }
 
+            Host = new MelonHost() { WebApi = mWebApi };
+
             CreateDirectories();
             LoadSettings();
             SetLanguage(language);
@@ -257,11 +262,27 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
 
+            if (!headless)
+            {
+                ChecklistUI.UpdateChecklist(1, true);
+            }
+
             // Plugins
             if (!MelonFlags.DisablePlugins || loadPlugins)
             {
-                ChecklistUI.UpdateChecklist(1, true);
-                LoadPlugins(mWebApi);
+                if (File.Exists($"{melonPath}/Configs/DisabledPlugins.json"))
+                {
+                    DisabledPlugins = Storage.LoadConfigFile<List<string>>("DisabledPlugins.json", null);
+                }
+                else
+                {
+                    DisabledPlugins = new List<string>();
+                    Storage.SaveConfigFile("DisabledPlugins.json", DisabledPlugins, null);
+                }
+                PluginsContexts = new List<PluginLoadContext>();
+
+                LoadPlugins();
+
             }
 
             if (!headless)
@@ -322,7 +343,7 @@ namespace Melon.LocalClasses
                 return ms.ToArray();
             }
         }
-        private static void LoadPlugins(IWebApi mWebApi)
+        public static void LoadPlugins()
         {
             if (!Directory.Exists($"{melonPath}/Plugins"))
             {
@@ -330,34 +351,41 @@ namespace Melon.LocalClasses
             }
 
             var files = Directory.GetFiles($"{melonPath}/Plugins");
-            List<IPlugin> Plugins = new List<IPlugin>();
+            Plugins = new List<IPlugin>();
             foreach(var file in files)
             {
                 try
                 {
-                    Assembly pluginAssembly = LoadPlugin(file);
+                    PluginLoadContext context;
+                    Assembly pluginAssembly = LoadPlugin(file, out context);
                     Plugins.AddRange(CreatePlugins(pluginAssembly));
+                    PluginsContexts.Add(context);
                 }
                 catch (Exception)
                 {
 
                 }
             }
-            var host = new MelonHost() { WebApi = mWebApi };
             foreach (var plugin in Plugins)
             {
-                plugin.LoadMelonCommands(host);
-                var check = plugin.Execute();
+                if (DisabledPlugins.Contains($"{plugin.Name}:{plugin.Authors}"))
+                {
+                    continue;
+                }
+                plugin.LoadMelonCommands(Host);
+                var check = plugin.Load();
                 if(check != 0)
                 {
                     Serilog.Log.Error($"Plugin Execute failed: {plugin.Name}");
                 }
             }
         }
-        private static Assembly LoadPlugin(string path)
+        private static Assembly LoadPlugin(string path, out PluginLoadContext context)
         {
             PluginLoadContext loadContext = new PluginLoadContext(path);
-            return loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(path)));
+            var result = loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(path)));
+            context = loadContext;
+            return result;
         }
         private static List<IPlugin> CreatePlugins(Assembly assembly)
         {

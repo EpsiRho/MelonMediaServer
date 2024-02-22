@@ -7,6 +7,7 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http;
 using System.Resources;
 using System.Text;
 using System.Threading.Tasks;
@@ -53,7 +54,7 @@ namespace Melon.Interface
     public interface IStateManager
     {
         public string melonPath { get; }
-        public Settings MelonSettings { get; }
+        public ShortSettings MelonSettings { get; }
         public Flags MelonFlags { get; }
         public ResourceManager StringsManager { get; }
         public List<IPlugin> Plugins { get; }
@@ -87,6 +88,11 @@ namespace Melon.Interface
     }
     public interface IWebApi
     {
+        // Middleware
+        public bool UsePluginMiddleware(KeyValuePair<string, Func<WebApiEventArgs, byte[]>> middleware);
+        public bool RemovePluginMiddleware(string name);
+        public Dictionary<string, Func<WebApiEventArgs, byte[]>> GetPluginMiddlewares();
+
         // ArtDeleteController
         public event EventHandler<WebApiEventArgs> ArtDeleteTrack;
         public event EventHandler<WebApiEventArgs> ArtDeleteAlbum;

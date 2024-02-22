@@ -13,11 +13,22 @@ namespace Melon.Models
         public int StatusCode { get; set; }
         public string Message { get; set; }
         public string User { get; set; }
+        public string Role { get; set; }
         public Dictionary<string, object> Args { get; set; }
-        public WebApiEventArgs(string api, string user, Dictionary<string,object> args)
+        public WebApiEventArgs(string api, string user, Dictionary<string, object> args)
         {
             Api = api;
             User = user;
+            Role = "";
+            Args = args;
+            StatusCode = 0;
+            Message = "";
+        }
+        public WebApiEventArgs(string api, string user, string role, Dictionary<string,object> args)
+        {
+            Api = api;
+            User = user;
+            Role = role;
             Args = args;
             StatusCode = 0;
             Message = "";

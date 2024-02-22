@@ -1,7 +1,6 @@
 using Melon.Classes;
 using Melon.DisplayClasses;
 using Melon.LocalClasses;
-using MelonWebApi.Middleware.ApiKeyAuthentication.Middlewares;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -23,6 +22,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.RateLimiting;
 using Melon.Models;
+using NuGet.Protocol.Plugins;
+using MelonWebApi.Middleware;
 namespace MelonWebApi
 {
     public static class Program
@@ -160,6 +161,7 @@ namespace MelonWebApi
             app.UseAuthorization();
 
             app.UseMiddleware<JwtMiddleware>();
+            app.UseMiddleware<PluginMiddleware>();
 
             var webSocketOptions = new WebSocketOptions
             {
