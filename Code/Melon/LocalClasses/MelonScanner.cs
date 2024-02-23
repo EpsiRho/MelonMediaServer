@@ -1236,19 +1236,26 @@ namespace Melon.LocalClasses
         }
         private static void IndexCollections()
         {
-            var indexOptions = new CreateIndexOptions { Background = true, Collation = new Collation(locale: "en", strength: CollationStrength.Secondary) }; 
+            try
+            {
+                var indexOptions = new CreateIndexOptions { Background = true, Collation = new Collation(locale: "en", strength: CollationStrength.Secondary) };
 
-            var artistIndexKeysDefinition = Builders<Artist>.IndexKeys.Ascending(x=>x.Name);
-            var artistIndexModel = new CreateIndexModel<Artist>(artistIndexKeysDefinition, indexOptions);
-            ArtistCollection.Indexes.CreateOne(artistIndexModel);
+                var artistIndexKeysDefinition = Builders<Artist>.IndexKeys.Ascending(x => x.Name);
+                var artistIndexModel = new CreateIndexModel<Artist>(artistIndexKeysDefinition, indexOptions);
+                ArtistCollection.Indexes.CreateOne(artistIndexModel);
 
-            var albumIndexKeysDefinition = Builders<Album>.IndexKeys.Ascending(x => x.Name);
-            var albumIndexModel = new CreateIndexModel<Album>(albumIndexKeysDefinition, indexOptions);
-            AlbumCollection.Indexes.CreateOne(albumIndexModel);
+                var albumIndexKeysDefinition = Builders<Album>.IndexKeys.Ascending(x => x.Name);
+                var albumIndexModel = new CreateIndexModel<Album>(albumIndexKeysDefinition, indexOptions);
+                AlbumCollection.Indexes.CreateOne(albumIndexModel);
 
-            var trackIndexKeysDefinition = Builders<Track>.IndexKeys.Ascending(x => x.Name);
-            var trackIndexModel = new CreateIndexModel<Track>(trackIndexKeysDefinition, indexOptions);
-            TracksCollection.Indexes.CreateOne(trackIndexModel);
+                var trackIndexKeysDefinition = Builders<Track>.IndexKeys.Ascending(x => x.Name);
+                var trackIndexModel = new CreateIndexModel<Track>(trackIndexKeysDefinition, indexOptions);
+                TracksCollection.Indexes.CreateOne(trackIndexModel);
+            }
+            catch (Exception)
+            {
+
+            }
         }
         public static void ResetDb()
         {

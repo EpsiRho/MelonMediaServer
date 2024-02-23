@@ -24,6 +24,16 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Gets a list of all the unique formats in the database
+        /// </summary>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User, Pass
+        /// </remarks>
+        /// <returns>Returns list of format strings.</returns>
+        /// <response code="200">On successful list generation.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("format")]
         public ObjectResult GetFormat()
