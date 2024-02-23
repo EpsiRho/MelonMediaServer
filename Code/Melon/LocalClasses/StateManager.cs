@@ -234,11 +234,14 @@ namespace Melon.LocalClasses
             var check = CheckMongoDB(connectionString);
             if (!check)
             {
-                // MongoDb connection failed
-                ChecklistUI.ChecklistDislayToggle();
-                Thread.Sleep(200);
+                if (!headless)
+                {
+                    // MongoDb connection failed
+                    ChecklistUI.ChecklistDislayToggle();
+                    Thread.Sleep(200);
+                    MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
+                }
 
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
                 Console.WriteLine(StringsManager.GetString("MongoDBConnectionError").Pastel(MelonColor.Error));
 
                 if (!headless)
@@ -290,9 +293,12 @@ namespace Melon.LocalClasses
                 ChecklistUI.UpdateChecklist(2, true);
             }
 
-
-            ChecklistUI.ChecklistDislayToggle();
-            Thread.Sleep(200);
+            if (!headless)
+            {
+                ChecklistUI.ChecklistDislayToggle();
+                Thread.Sleep(200);
+            }
+            
 
         }
         public static bool CheckMongoDB(string connectionString)
