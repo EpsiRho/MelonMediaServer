@@ -26,7 +26,17 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
-        // Albums
+        /// <summary>
+        /// Create a new Album.
+        /// </summary>
+        /// <param name="name">The name of the album.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>The id for the newly created album.</returns>
+        /// <response code="200">On successful creation of the album.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("album/create")]
         public ObjectResult CreateAlbum(string name)
@@ -73,6 +83,18 @@ namespace MelonWebApi.Controllers
             args.SendEvent($"Album created {album._id}", 200, Program.mWebApi);
             return new ObjectResult(album._id) { StatusCode = 200 };
         }
+        /// <summary>
+        /// Delete an Album.
+        /// </summary>
+        /// <param name="id">The id of the album.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">On successful creation of the album.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the album cannot be found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("album/delete")]
         public ObjectResult DeleteAlbum(string id)
@@ -172,7 +194,17 @@ namespace MelonWebApi.Controllers
             return new ObjectResult("Album deleted") { StatusCode = 200 };
         }
 
-        // Artists
+        /// <summary>
+        /// Create a new Artist.
+        /// </summary>
+        /// <param name="name">The name of the artist.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>The id for the newly created artist.</returns>
+        /// <response code="200">On successful creation of the artist.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("artist/create")]
         public ObjectResult CreateArtist(string name)
@@ -217,6 +249,19 @@ namespace MelonWebApi.Controllers
             args.SendEvent($"Artist created {artist._id}", 200, Program.mWebApi);
             return new ObjectResult(artist._id) { StatusCode = 200 };
         }
+
+        /// <summary>
+        /// Delete an Artist.
+        /// </summary>
+        /// <param name="id">The id of the artist.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">On successful creation of the artist.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the artist cannot be found.</response>
         [Authorize(Roles = "Admin")]
         [HttpPost("artist/delete")]
         public ObjectResult DeleteArtist(string id)
