@@ -1236,7 +1236,7 @@ namespace Melon.LocalClasses
         }
         private static void IndexCollections()
         {
-            var indexOptions = new CreateIndexOptions { Background = true  }; 
+            var indexOptions = new CreateIndexOptions { Background = true, Collation = new Collation(locale: "en", strength: CollationStrength.Secondary) }; 
 
             var artistIndexKeysDefinition = Builders<Artist>.IndexKeys.Ascending(x=>x.Name);
             var artistIndexModel = new CreateIndexModel<Artist>(artistIndexKeysDefinition, indexOptions);
@@ -1257,12 +1257,15 @@ namespace Melon.LocalClasses
 
             var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
             TracksCollection.DeleteMany(Builders<Track>.Filter.Empty);
+            TracksCollection.Indexes.DropAll();
 
             var ArtistCollection = NewMelonDB.GetCollection<Artist>("Artists");
             ArtistCollection.DeleteMany(Builders<Artist>.Filter.Empty);
+            ArtistCollection.Indexes.DropAll();
 
             var AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");
             AlbumCollection.DeleteMany(Builders<Album>.Filter.Empty);
+            AlbumCollection.Indexes.DropAll();
 
             var QueueCollection = NewMelonDB.GetCollection<PlayQueue>("Queues");
             QueueCollection.DeleteMany(Builders<PlayQueue>.Filter.Empty);

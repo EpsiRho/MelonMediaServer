@@ -212,7 +212,7 @@ namespace MelonWebApi.Controllers
 
             var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
                                                             .Exclude(x => x.LyricsPath);
-            var trackDocs = TracksCollection.Find(combinedFilter)
+            var trackDocs = TracksCollection.Find(combinedFilter, new FindOptions() { Collation = new Collation("en", strength: CollationStrength.Secondary) })
                                             .Project(trackProjection)
                                             .Sort(sortDefinition)
                                             .Skip(page * count)
@@ -402,7 +402,7 @@ namespace MelonWebApi.Controllers
 
             var albumProjection = Builders<Album>.Projection.Exclude(x => x.AlbumArtPaths)
                                                             .Exclude(x => x.Tracks);
-            var albumDocs = AlbumCollection.Find(combinedFilter)
+            var albumDocs = AlbumCollection.Find(combinedFilter, new FindOptions() { Collation = new Collation("en", strength: CollationStrength.Secondary)})
                                            .Project(albumProjection)
                                            .Sort(sortDefinition)
                                            .Skip(page * count)
@@ -552,7 +552,7 @@ namespace MelonWebApi.Controllers
                                                               .Exclude(x => x.SeenOn)
                                                               .Exclude(x => x.Tracks)
                                                               .Exclude(x => x.ConnectedArtists);
-            var ArtistDocs = ArtistCollection.Find(combinedFilter)
+            var ArtistDocs = ArtistCollection.Find(combinedFilter, new FindOptions() { Collation = new Collation("en", strength: CollationStrength.Secondary) })
                                              .Project(artistProjection)
                                              .Sort(sortDefinition)
                                              .Skip(page * count)
