@@ -232,7 +232,7 @@ namespace Melon.LocalClasses
             // Setup MongoDb
             var connectionString = MelonSettings.MongoDbConnectionString;
             var check = CheckMongoDB(connectionString);
-            if (!check)
+            if (!check && !headless)
             {
                 // MongoDb connection failed
                 ChecklistUI.ChecklistDislayToggle();
@@ -290,9 +290,12 @@ namespace Melon.LocalClasses
                 ChecklistUI.UpdateChecklist(2, true);
             }
 
-
-            ChecklistUI.ChecklistDislayToggle();
-            Thread.Sleep(200);
+            if (!headless)
+            {
+                ChecklistUI.ChecklistDislayToggle();
+                Thread.Sleep(200);
+            }
+            
 
         }
         public static bool CheckMongoDB(string connectionString)
