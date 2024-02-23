@@ -232,11 +232,14 @@ namespace Melon.LocalClasses
             // Setup MongoDb
             var connectionString = MelonSettings.MongoDbConnectionString;
             var check = CheckMongoDB(connectionString);
-            if (!check && !headless)
+            if (!check)
             {
-                // MongoDb connection failed
-                ChecklistUI.ChecklistDislayToggle();
-                Thread.Sleep(200);
+                if (!headless)
+                {
+                    // MongoDb connection failed
+                    ChecklistUI.ChecklistDislayToggle();
+                    Thread.Sleep(200);
+                }
 
                 MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
                 Console.WriteLine(StringsManager.GetString("MongoDBConnectionError").Pastel(MelonColor.Error));
