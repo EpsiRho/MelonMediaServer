@@ -277,6 +277,7 @@ namespace MelonWebApi.Controllers
             var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
                                                     .Exclude(x => x.LyricsPath);
             var trackDocs = TracksCollection.Find(filter).Project(trackProjection)
+                                            .SortBy(track => track.Disc).ThenBy(track => track.Position)
                                             .ToList();
 
             var tracks = trackDocs.Select(x => BsonSerializer.Deserialize<ResponseTrack>(x)).ToList();
