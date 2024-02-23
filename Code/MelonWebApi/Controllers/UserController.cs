@@ -114,11 +114,7 @@ namespace MelonWebApi.Controllers
 
                 if (user.Username != User.Identity.Name)
                 {
-                    if (!roles.Contains("Admin"))
-                    {
-                        continue;
-                    }
-                    else if (!user.Friends.Contains(cUser._id))
+                    if (!user.Friends.Contains(cUser._id) && !roles.Contains("Admin"))
                     {
                         continue;
                     }
