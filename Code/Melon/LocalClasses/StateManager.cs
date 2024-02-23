@@ -239,9 +239,9 @@ namespace Melon.LocalClasses
                     // MongoDb connection failed
                     ChecklistUI.ChecklistDislayToggle();
                     Thread.Sleep(200);
+                    MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
                 }
 
-                MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
                 Console.WriteLine(StringsManager.GetString("MongoDBConnectionError").Pastel(MelonColor.Error));
 
                 if (!headless)
