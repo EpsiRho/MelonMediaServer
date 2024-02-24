@@ -42,6 +42,7 @@ namespace Melon.LocalClasses
         public static List<PluginLoadContext> PluginsContexts { get; set; }
         public static List<string> DisabledPlugins { get; set; }
         public static MelonHost Host { get; set; }
+        public static bool RestartServer { get; set; }
         private static void LoadSettings()
         {
             if (!File.Exists($"{melonPath}/Configs/MelonSettings.json"))
@@ -232,6 +233,7 @@ namespace Melon.LocalClasses
             // Setup MongoDb
             var connectionString = MelonSettings.MongoDbConnectionString;
             var check = CheckMongoDB(connectionString);
+            DisplayManager.MenuOptions = new System.Collections.Specialized.OrderedDictionary();
             if (!check)
             {
                 if (!headless)

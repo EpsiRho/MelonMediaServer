@@ -28,10 +28,10 @@ namespace MelonWebApi
 {
     public static class Program
     {
-        public static bool started = false;
+        //public static bool started = false;
         public static WebApplication app;
         public static MWebApi mWebApi;
-        public static int Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.OutputEncoding = Encoding.UTF8;
@@ -39,96 +39,97 @@ namespace MelonWebApi
             bool setup = args.Contains("--setup");
             bool disablePlugins = args.Contains("--disablePlugins");
             string lang = args.Where(x => x.Contains("--lang")).FirstOrDefault() != null ? args.Where(x=>x.Contains("--lang")).FirstOrDefault().Split("=")[1] : "";
-            if (!started)
+            StateManager.RestartServer = true;
+            while (StateManager.RestartServer)
             {
+                StateManager.RestartServer = false;
                 mWebApi = new MWebApi();
                 StateManager.Init(headless, setup, disablePlugins, lang, mWebApi);
-            }
 
-            if (headless && DisplayManager.UIExtensions.Count() != 0)
-            {
-                SetupUI.ShowSetupError();
-                return -1;
-            }
-
-            var builder = WebApplication.CreateBuilder();
-
-            builder.Services.AddControllers();
-
-            builder.Logging.ClearProviders();
-
-            builder.WebHost.UseUrls(StateManager.MelonSettings.ListeningURL);
-
-            // Load SSL Certificate
-            var sslConfig = Security.GetSSLConfig();
-
-            if (sslConfig.PathToCert != "")
-            {
-                var certificate = new X509Certificate2(sslConfig.PathToCert, sslConfig.Password);
-
-                // Configure Kestrel to use SSL
-                builder.WebHost.ConfigureKestrel(serverOptions =>
+                if (headless && DisplayManager.UIExtensions.Count() != 0)
                 {
-                    serverOptions.ConfigureHttpsDefaults(httpsOptions =>
+                    SetupUI.ShowSetupError();
+                    return -1;
+                }
+
+                var builder = WebApplication.CreateBuilder();
+
+                builder.Services.AddControllers();
+
+                builder.Logging.ClearProviders();
+
+                builder.WebHost.UseUrls(StateManager.MelonSettings.ListeningURL);
+
+                // Load SSL Certificate
+                var sslConfig = Security.GetSSLConfig();
+
+                if (sslConfig.PathToCert != "")
+                {
+                    var certificate = new X509Certificate2(sslConfig.PathToCert, sslConfig.Password);
+
+                    // Configure Kestrel to use SSL
+                    builder.WebHost.ConfigureKestrel(serverOptions =>
                     {
-                        httpsOptions.ServerCertificate = certificate;
-                    });
-                });
-            }
-
-
-
-            if (args.Contains("--headless") || args.Contains("-h"))
-            {
-                Log.Logger = new LoggerConfiguration()
-                        .WriteTo.File($"{StateManager.melonPath}/logs.txt")
-                        .WriteTo.Console()
-                        .CreateLogger();
-            }
-            else
-            {
-                Log.Logger = new LoggerConfiguration()
-                        .WriteTo.File($"{StateManager.melonPath}/logs.txt")
-                        .CreateLogger();
-            }
-
-            builder.Host.UseSerilog();
-
-            var key = StateManager.MelonSettings.JWTKey;
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer(x =>
-                    {
-                        x.RequireHttpsMetadata = false; // Set to true in production
-                        x.SaveToken = true;
-                        x.TokenValidationParameters = new TokenValidationParameters
+                        serverOptions.ConfigureHttpsDefaults(httpsOptions =>
                         {
-                            ValidateIssuerSigningKey = true,
-                            IssuerSigningKey = new SymmetricSecurityKey(key),
-                            ValidateIssuer = false,
-                            ValidateAudience = false
-                        };
+                            httpsOptions.ServerCertificate = certificate;
+                        });
                     });
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(c =>
-            {
-                // Use method name as operationId
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Melon Web API", Version = "v1.0.0" });
+                }
 
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath);
 
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+
+                if (args.Contains("--headless") || args.Contains("-h"))
                 {
-                    Description = @"JWT Authorization header using the Bearer scheme.",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer"
-                });
-
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                    Log.Logger = new LoggerConfiguration()
+                            .WriteTo.File($"{StateManager.melonPath}/logs.txt")
+                            .WriteTo.Console()
+                            .CreateLogger();
+                }
+                else
                 {
+                    Log.Logger = new LoggerConfiguration()
+                            .WriteTo.File($"{StateManager.melonPath}/logs.txt")
+                            .CreateLogger();
+                }
+
+                builder.Host.UseSerilog();
+
+                var key = StateManager.MelonSettings.JWTKey;
+                builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                        .AddJwtBearer(x =>
+                        {
+                            x.RequireHttpsMetadata = false; // Set to true in production
+                            x.SaveToken = true;
+                            x.TokenValidationParameters = new TokenValidationParameters
+                            {
+                                ValidateIssuerSigningKey = true,
+                                IssuerSigningKey = new SymmetricSecurityKey(key),
+                                ValidateIssuer = false,
+                                ValidateAudience = false
+                            };
+                        });
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen(c =>
+                {
+                    // Use method name as operationId
+                    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Melon Web API", Version = "v1.0.0" });
+
+                    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                    c.IncludeXmlComments(xmlPath);
+
+                    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        Description = @"JWT Authorization header using the Bearer scheme.",
+                        Name = "Authorization",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.ApiKey,
+                        Scheme = "Bearer"
+                    });
+
+                    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                    {
                     {
                         new OpenApiSecurityScheme
                         {
@@ -144,61 +145,63 @@ namespace MelonWebApi
                         },
                         new List<string>()
                     }
+                    });
                 });
-            });
 
-            builder.Services.Configure<KestrelServerOptions>(options =>
-            {
-                options.AllowSynchronousIO = true;
-            });
+                builder.Services.Configure<KestrelServerOptions>(options =>
+                {
+                    options.AllowSynchronousIO = true;
+                });
 
-            app = builder.Build();
+                app = builder.Build();
 
-            app.UseHttpsRedirection();
+                app.UseHttpsRedirection();
 
-            app.UseAuthentication();
+                app.UseAuthentication();
 
-            app.UseAuthorization();
+                app.UseAuthorization();
 
-            app.UseMiddleware<JwtMiddleware>();
-            app.UseMiddleware<PluginMiddleware>();
+                app.UseMiddleware<JwtMiddleware>();
+                app.UseMiddleware<PluginMiddleware>();
 
-            var webSocketOptions = new WebSocketOptions
-            {
-                KeepAliveInterval = TimeSpan.FromMinutes(2)
-            };
+                var webSocketOptions = new WebSocketOptions
+                {
+                    KeepAliveInterval = TimeSpan.FromMinutes(2)
+                };
 
-            app.UseWebSockets(webSocketOptions);
+                app.UseWebSockets(webSocketOptions);
 
-            app.UseSwagger(options =>
-            {
-                options.SerializeAsV2 = true;
-            });
+                app.UseSwagger(options =>
+                {
+                    options.SerializeAsV2 = true;
+                });
 
-            app.UseSwaggerUI(options =>
-            {
-                options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-                options.RoutePrefix = string.Empty;
-            });
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+                    options.RoutePrefix = string.Empty;
+                });
 
-            app.MapControllers();
+                app.MapControllers();
 
-            app.RunAsync();
+                app.RunAsync();
 
-            if (!started && !args.Contains("--headless") && !args.Contains("-h"))
-            {
-                started = true;
+                if (!args.Contains("--headless") && !args.Contains("-h"))
+                {
 
-                // Melon Startup
 
-                // UI Startup
-                DisplayManager.DisplayHome();
+                    // Melon Startup
+
+                    // UI Startup
+                    DisplayManager.DisplayHome();
+                }
+                else
+                {
+                    app.WaitForShutdown();
+                }
+
+                await app.StopAsync();
             }
-            else
-            {
-                app.WaitForShutdown();
-            }
-
             return 0;
         }
     }

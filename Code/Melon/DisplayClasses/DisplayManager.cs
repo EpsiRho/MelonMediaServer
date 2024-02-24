@@ -20,7 +20,7 @@ namespace Melon.Classes
         public static void DisplayHome()
         {
             Console.CursorVisible = false;
-            while (true)
+            while (!StateManager.RestartServer)
             {
                 MelonUI.ClearConsole();
 
