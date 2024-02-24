@@ -35,6 +35,13 @@ namespace MelonWebApi
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.OutputEncoding = Encoding.UTF8;
+            bool openFolder = args.Contains("--openFolder");
+            if (openFolder)
+            {
+                SettingsUI.OpenMelonFolder();
+                Environment.Exit(0);
+            }
+
             bool headless = args.Contains("--headless") || args.Contains("-h");
             bool setup = args.Contains("--setup");
             bool disablePlugins = args.Contains("--disablePlugins");

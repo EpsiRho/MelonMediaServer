@@ -635,7 +635,7 @@ namespace Melon.DisplayClasses
             }
             MenuOptions.Remove(StringsManager.GetString("BackNavigation"));
         }
-        private static void OpenMelonFolder()
+        public static void OpenMelonFolder()
         {
             var path = $"{StateManager.melonPath}";
             try
