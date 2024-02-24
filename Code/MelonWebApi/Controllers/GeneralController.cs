@@ -380,11 +380,11 @@ namespace MelonWebApi.Controllers
             {
                 var artistFilter = Builders<Artist>.Filter.Eq(x => x._id, id);
                 var artistProjection = Builders<Artist>.Projection.Exclude(x => x.ArtistBannerPaths)
-                                                              .Exclude(x => x.ArtistPfpArtCount)
-                                                              .Exclude(x => x.Releases)
-                                                              .Exclude(x => x.SeenOn)
-                                                              .Exclude(x => x.Tracks)
-                                                              .Exclude(x => x.ConnectedArtists);
+                                                                  .Exclude(x => x.ArtistPfpPaths)
+                                                                  .Exclude(x => x.Releases)
+                                                                  .Exclude(x => x.SeenOn)
+                                                                  .Exclude(x => x.Tracks)
+                                                                  .Exclude(x => x.ConnectedArtists);
                 var albumDocs = ArtistCollection.Find(artistFilter).Project(artistProjection)
                                                 .ToList();
 

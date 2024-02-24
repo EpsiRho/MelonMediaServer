@@ -264,7 +264,7 @@ namespace Melon.DisplayClasses
                 var userMetadata = new DbMetadata
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
-                    Name = "UserCollection",
+                    Name = "UsersCollection",
                     Version = "1.0.0",
                     Info = $""
                 };

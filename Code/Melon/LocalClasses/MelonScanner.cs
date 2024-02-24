@@ -110,7 +110,7 @@ namespace Melon.LocalClasses
             LyricFiles = null;
             Scanning = false;
         }
-        private static void CheckAndFix()
+        public static void CheckAndFix()
         {
             var metadataCollection = NewMelonDB.GetCollection<DbMetadata>("Metadata");
             var artistMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "ArtistsCollection").FirstOrDefault();
@@ -120,6 +120,27 @@ namespace Melon.LocalClasses
             var playlistsMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "PlaylistsCollection").FirstOrDefault();
             var collectionsMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "CollectionsCollection").FirstOrDefault();
             var queuesMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "QueuesCollection").FirstOrDefault();
+            var usersMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "UsersCollection").FirstOrDefault();
+            if (usersMetadata != null)
+            {
+                if (usersMetadata.Version != "1.0.0")
+                {
+                    // Add code needed for upgrading db objects here
+                    Serilog.Log.Error("Unsupported User Database Version");
+                }
+            }
+            else
+            {
+                var userMetadata = new DbMetadata
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Name = "UsersCollection",
+                    Version = "1.0.0",
+                    Info = $""
+                };
+                metadataCollection.InsertOne(userMetadata);
+            }
+
             if (artistMetadata != null)
             {
                 if (artistMetadata.Version != "1.0.0")
