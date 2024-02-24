@@ -151,6 +151,8 @@ namespace Melon.LocalClasses
 
                         usersCollection.ReplaceOne(Builders<BsonDocument>.Filter.Eq(x => x["_id"], upgradedUser._id), upgradedUser.ToBsonDocument());
                     }
+                    usersMetadata.Version = "1.1.0";
+                    metadataCollection.ReplaceOne(Builders<DbMetadata>.Filter.Eq(x => x._id, usersMetadata._id), usersMetadata);
                 }
             }
             else
