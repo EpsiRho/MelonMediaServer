@@ -12,6 +12,8 @@
         public string FavAlbum { get; set; }
         public string FavArtist { get; set; }
         public bool PublicStats { get; set; }
+        public bool EnableUserPage { get; set; }
+        public string UserPfpPath { get; set; }
         public List<string> Friends { get; set; }
         public DateTime LastLogin { get; set; }
 
@@ -26,6 +28,7 @@
         public string FavAlbum { get; set; }
         public string FavArtist { get; set; }
         public bool PublicStats { get; set; }
+        public bool EnableUserPage { get; set; }
         public List<string> Friends { get; set; }
         public DateTime LastLogin { get; set; }
         public ResponseUser(User u)
@@ -40,6 +43,7 @@
             PublicStats = u.PublicStats;
             Friends = u.Friends;
             LastLogin = u.LastLogin;
+            EnableUserPage = u.EnableUserPage;
         }
 
     }

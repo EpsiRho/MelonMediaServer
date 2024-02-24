@@ -260,6 +260,8 @@ namespace Melon.LocalClasses
                 }
             }
 
+            MelonScanner.CheckAndFix();
+
             // Setup Display Options
             DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);

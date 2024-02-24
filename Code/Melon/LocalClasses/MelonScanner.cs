@@ -112,6 +112,7 @@ namespace Melon.LocalClasses
         }
         public static void CheckAndFix()
         {
+            NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
             var metadataCollection = NewMelonDB.GetCollection<DbMetadata>("Metadata");
             var artistMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "ArtistsCollection").FirstOrDefault();
             var albumMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "AlbumsCollection").FirstOrDefault();
@@ -123,10 +124,33 @@ namespace Melon.LocalClasses
             var usersMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "UsersCollection").FirstOrDefault();
             if (usersMetadata != null)
             {
-                if (usersMetadata.Version != "1.0.0")
+                if (usersMetadata.Version != "1.1.0")
                 {
-                    // Add code needed for upgrading db objects here
-                    Serilog.Log.Error("Unsupported User Database Version");
+                    var usersCollection = NewMelonDB.GetCollection<BsonDocument>("Users");
+                    var users = usersCollection.AsQueryable().Select(x => x).ToList();
+                    foreach(var user in users)
+                    {
+                        User upgradedUser = new User();
+                        upgradedUser._id = (string)user["_id"];
+                        upgradedUser.Username = (string)user["Username"];
+                        upgradedUser.Password = (string)user["Password"];
+                        upgradedUser.Bio = (string)user["Bio"];
+                        upgradedUser.Salt = (byte[])user["Salt"];
+                        upgradedUser.Type = (string)user["Type"];
+                        upgradedUser.FavTrack = (string)user["FavTrack"];
+                        upgradedUser.FavAlbum = (string)user["FavAlbum"];
+                        upgradedUser.FavArtist = (string)user["FavArtist"];
+                        upgradedUser.PublicStats = (bool)user["PublicStats"];
+                        upgradedUser.EnableUserPage = false;
+                        upgradedUser.UserPfpPath = "";
+                        if (user["Friends"].GetType() != typeof(BsonNull))
+                        {
+                            upgradedUser.Friends = (List<string>)(user["Friends"].AsBsonArray.Select(x => (string)x));
+                        }
+                        upgradedUser.LastLogin = (DateTime)user["LastLogin"];
+
+                        usersCollection.ReplaceOne(Builders<BsonDocument>.Filter.Eq(x => x["_id"], upgradedUser._id), upgradedUser.ToBsonDocument());
+                    }
                 }
             }
             else
@@ -135,7 +159,7 @@ namespace Melon.LocalClasses
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
                     Name = "UsersCollection",
-                    Version = "1.0.0",
+                    Version = "1.1.0",
                     Info = $""
                 };
                 metadataCollection.InsertOne(userMetadata);
