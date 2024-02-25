@@ -1,0 +1,57 @@
+.carousel-container {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 20px 0;
+}
+
+.carousel-container h2 {
+    margin-left: 20px;
+}
+
+.carousel {
+    padding: 0 20px;
+}
+
+.carousel-item {
+    display: inline-block;
+    width: 160px; 
+    margin-right: 20px;
+    text-align: center;
+    vertical-align: top;
+}
+
+.carousel-item img {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.carousel-item p {
+    margin-top: 10px;
+    margin-bottom: 100%;
+}
+
+/* Firefox */
+.carousel-container {
+    scrollbar-width: thin;
+    scrollbar-color: #6e6e6e #171719;
+}
+
+.top-card {
+    background-color: #2e2e2e;
+    border-radius:  10px;
+    padding:  0px;
+    justify-content: center;
+    grid-column: span 2;
+    align-items: center;
+}
+
+.top-card-title {
+    margin: 10px;
+}
+
+/* Responsive styles for smaller screens */
+@media (max-width:  950px) {
+    .top-card {
+        grid-column: span  1; /* Stack vertically on mobile */
+    }
+}

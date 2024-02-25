@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Card Grid</title>
+    <link rel="stylesheet" href="styles\card-layout.css">
+    <link rel="stylesheet" href="styles\header.css">
+    <link rel="stylesheet" href="styles\main.css">
+    <link rel="stylesheet" href="styles\timechart.css">
+    <link rel="stylesheet" href="styles\carousel.css">
+</head>
+<body>
+    <div class="card-grid">
+        <div class="user-info-card">
+            <div>
+                <img src="defaultArtwork.png" alt="User Profile Picture" id="user-picture">
+                <h1 id="username">User Name</h1>
+                <p id="bio">Short bio or description...</p>
+            </div>
+            <div>
+                <h1 class="highlights-header">Highlights</h1>
+            </div>
+            <div class="favorites-card">
+                <div>
+                    <h2>Track</h2>
+                    <div class="favorite-item">
+                        <img src="defaultArtwork.png" alt="Track Artwork" class="artwork" id="favorite-track-artwork">
+                        <div class="details">
+                            <h2 class="title" id="favorite-track-name">Track Name</h2>
+                            <p class="artist" id="favorite-track-artist">Track Artist</p>
+                        </div>
+                    </div>
+                </div>  
+                <div>
+                    <h2>Album</h2>
+                    <div class="favorite-item">
+                        <img src="defaultArtwork.png" alt="Album Artwork" class="artwork" id="favorite-album-artwork">
+                        <div class="details">
+                            <h2 class="title" id="favorite-album-name">Album Name</h2>
+                            <p class="artist" id="favorite-album-artist">Album Artist</p>
+                        </div>
+                    </div>  
+                </div>
+                <div>
+                    <h2>Artist</h2>
+                    <div class="favorite-item">
+                        <img src="defaultArtwork.png" alt="Artist Profile Picture" class="artwork" id="favorite-artist-artwork">
+                        <div class="details">
+                            <h2 class="title" id="favorite-artist-name">Artist Name</h2>
+                        </div>
+                    </div>  
+                </div>
+            </div>
+        </div>
+
+        <div class="listening-stats-card">
+            <section id="listening-stats-graph">
+                <h2>Listening Time by Time of Day</h2>
+                <canvas id="timeOfDayGraph", height="400"></canvas>
+            </section>
+        </div>
+        <div class="top-card">
+            <h2 class="top-card-title">Top Tracks</h2>
+            <section id="top-tracks" class="carousel-container">
+                <div class="carousel">
+                </div>
+            </section>
+        </div>
+        <div class="top-card">
+            <h2 class="top-card-title">Top Albums</h2>
+            <section id="top-albums" class="carousel-container">
+                <div class="carousel">
+                </div>
+            </section>
+        </div>
+        <div class="top-card">
+            <h2 class="top-card-title">Top Artists</h2>
+            <section id="top-artists" class="carousel-container">
+                <div class="carousel">
+                </div>
+            </section>
+        </div>
+        <!-- Add more cards as needed -->
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        VariablesInputHere
+    </script>
+    <script src="scripts\timeframe.js"></script>
+    <script src="scripts\time-graph.js"></script>
+    <script src="scripts\top-items.js"></script>
+    <script src="scripts\userinfo.js"></script>
+    <script src="scripts\favorites.js"></script>
+</body>
+</html>

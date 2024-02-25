@@ -1,0 +1,43 @@
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px,  1fr));
+    grid-gap:  20px;
+    padding:  20px;
+}
+
+.card {
+    background-color: #2e2e2e;
+    border-radius:  5px;
+    padding:  20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height:  150px;
+}
+
+/* Different width cards */
+.card-half {
+    grid-column: span  2; /* Half-width card */
+}
+
+.card-full {
+    grid-column: span  4; /* Full-width card */
+}
+
+.card-third {
+    grid-column: span  1; /* Third-width card */
+}
+
+.card-quarter {
+    grid-column: span  1; /* Quarter-width card */
+}
+
+/* Responsive styles for smaller screens */
+@media (max-width:  950px) {
+    .card-grid {
+        grid-template-columns:  100%;
+    }
+    .card {
+        grid-column: span  1; /* Stack vertically on mobile */
+    }
+}

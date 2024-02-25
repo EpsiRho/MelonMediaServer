@@ -1,0 +1,43 @@
+#listening-stats-graph {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+#listening-stats-graph canvas {
+    width:  00%; 
+    max-width: 100%; 
+    height: 350px;
+}
+#timeOfDayGraph {
+    width: 100%; 
+    max-width: 100%; 
+    height: 400px; 
+    margin: 10px;
+}
+
+#period-stats-display {
+    width:  100%; 
+    margin-top:  10px;
+    text-align: center;
+}
+
+.listening-stats-card {
+    background-color: #2e2e2e;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    grid-column: span 2;
+    align-items: center;
+    min-height: 250px;
+    width: 100%; 
+}
+
+@media (max-width: 950px) {
+    .listening-stats-card {
+        grid-column: span 1; 
+        width: 100%; 
+    }
+}

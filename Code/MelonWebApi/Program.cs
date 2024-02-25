@@ -191,6 +191,8 @@ namespace MelonWebApi
 
                 app.MapControllers();
 
+                app.UseStaticFiles();
+
                 app.RunAsync();
 
                 if (!args.Contains("--headless") && !args.Contains("-h"))
