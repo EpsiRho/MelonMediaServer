@@ -1056,7 +1056,7 @@ namespace Melon.LocalClasses
                 DateAdded = DateTime.UtcNow,
                 Name = fileMetadata.Title ?? StateManager.StringsManager.GetString("UnknownStatus"),
                 Album = sAlbum,
-                Path = fileMetadata.Path,
+                Path = fileMetadata.Path.Replace("\\", "/"),
                 Position = fileMetadata.TrackNumber ?? 0,
                 Format = Path.GetExtension(fileMetadata.Path)?.TrimStart('.') ?? "",
                 Bitrate = fileMetadata.Bitrate.ToString() ?? "",
