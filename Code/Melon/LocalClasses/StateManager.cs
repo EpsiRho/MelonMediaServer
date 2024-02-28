@@ -250,7 +250,7 @@ namespace Melon.LocalClasses
                 {
                     Console.WriteLine(StringsManager.GetString("ReturnPrompt").Pastel(MelonColor.BackgroundText));
                     Console.ReadKey(intercept: true);
-                    DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
+                    DisplayManager.MenuOptions.Add(StringsManager.GetString("MongoDBConnectionEditOption"), SettingsUI.MongoDBSettings);
                     DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
                     return;
                 }
@@ -263,7 +263,6 @@ namespace Melon.LocalClasses
             // Setup Display Options
             DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);
-            DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDBUI);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
 

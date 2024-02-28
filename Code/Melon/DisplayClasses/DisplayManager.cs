@@ -1,4 +1,5 @@
-﻿using Melon.LocalClasses;
+﻿using Amazon.Util.Internal;
+using Melon.LocalClasses;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
