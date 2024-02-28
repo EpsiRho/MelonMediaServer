@@ -145,7 +145,6 @@ MenuCustomizationOption=Menu Customization
 PluginsOption=Plugins
 PluginsSettingsOption=Plugins Settings
 OpenMelonFolderOption=Open Melon folder
-
 ImportExportMenu=Backups
 DbBackupOption=Backup Database
 DbLoadBackupOption=Load From Backup

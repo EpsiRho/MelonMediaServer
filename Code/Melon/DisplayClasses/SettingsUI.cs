@@ -410,7 +410,7 @@ namespace Melon.DisplayClasses
                     { StringsManager.GetString("ColorEditOption") , ChangeMelonColors }
                 };
 
-            while (LockUI)
+            while (LockUI && !StateManager.RestartServer)
             {
                 // Title
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("MenuCustomizationOption") });
