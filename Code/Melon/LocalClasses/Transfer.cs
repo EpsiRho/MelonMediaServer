@@ -21,42 +21,7 @@ namespace Melon.LocalClasses
 {
     public static class Transfer
     {
-        public static void TransferUI()
-        {
-            // Used to stay in settings until back is selected
-            bool LockUI = true;
-            var options = new OrderedDictionary()
-                {
-                    { StringsManager.GetString("BackNavigation"), () => { LockUI = false; } },
-                    { StringsManager.GetString("DbBackupOption"), ExportDb },
-                    { StringsManager.GetString("DbLoadBackupOption"), ImportDbUI },
-                    { StringsManager.GetString("PlaylistExportOption"), ExportPlaylistUI },
-                    { StringsManager.GetString("PlaylistImportOption"), ImportPlaylistUI },
-                };
-
-            while (LockUI)
-            {
-                // Title
-                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("ImportExportMenu") });
-
-                // Input
-                var commands = new List<string>();
-                foreach (var key in options.Keys)
-                {
-                    commands.Add((string)key);
-                }
-                var choice = MelonUI.OptionPicker(commands);
-
-                if (choice == StringsManager.GetString("BackNavigation"))
-                {
-                    LockUI = false;
-                    break;
-                }
-
-                ((Action)options[choice])();
-            }
-        }
-        private static void ExportPlaylistUI()
+        public static void ExportPlaylistUI()
         {
             var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
             var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
@@ -68,7 +33,7 @@ namespace Melon.LocalClasses
             Playlist plst = new Playlist();
             while (true)
             {
-                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("ImportExportMenu"), StringsManager.GetString("PlaylistExportOption") });
+                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), StringsManager.GetString("PlaylistExportOption") });
                 Console.WriteLine(StringsManager.GetString("ExportPlaylistIdRequest").Pastel(MelonColor.Text));
                 Console.WriteLine(StringsManager.GetString("ImportPlaylistControls").Pastel(MelonColor.Text));
                 if (error)
@@ -108,7 +73,7 @@ namespace Melon.LocalClasses
                 ".xml"
             };
 
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("ImportExportMenu"), StringsManager.GetString("PlaylistExportOption") });
+            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), StringsManager.GetString("PlaylistExportOption") });
             Console.WriteLine(StringsManager.GetString("FileFormatSelection").Pastel(MelonColor.Text));
             var choice = MelonUI.OptionPicker(commands);
 
@@ -147,12 +112,12 @@ namespace Melon.LocalClasses
 
             File.WriteAllText($"{StateManager.melonPath}/Exports/Playlists/{plst.Name}{choice}", txt);
         }
-        private static void ImportPlaylistUI()
+        public static void ImportPlaylistUI()
         {
             var NewMelonDB = DbClient.GetDatabase("Melon");
             var UsersCollection = NewMelonDB.GetCollection<User>("Users");
 
-            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("ImportExportMenu"), StringsManager.GetString("PlaylistImportOption") });
+            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), StringsManager.GetString("PlaylistImportOption") });
             Console.WriteLine(StringsManager.GetString("PlaylistUserRequest").Pastel(MelonColor.Text));
 
             var commands = new List<string>();
@@ -174,7 +139,7 @@ namespace Melon.LocalClasses
             bool isDir = false;
             string input = "";
             while (true) {
-                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("ImportExportMenu"), StringsManager.GetString("PlaylistImportOption") });
+                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), StringsManager.GetString("PlaylistImportOption") });
                 Console.WriteLine(StringsManager.GetString("ImportPlaylistFileRequest").Pastel(MelonColor.Text));
                 Console.WriteLine(StringsManager.GetString("ImportPlaylistControls").Pastel(MelonColor.Text));
                 if (error)
@@ -204,7 +169,7 @@ namespace Melon.LocalClasses
                 error = true;
             }
 
-            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("ImportExportMenu"), "Import Playlist" });
+            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), "Import Playlist" });
             Console.WriteLine(StringsManager.GetString("ImportProgress").Pastel(MelonColor.Text));
             //MelonUI.ShowIndeterminateProgress();
 
@@ -235,7 +200,7 @@ namespace Melon.LocalClasses
             //MelonUI.HideIndeterminateProgress();
             Thread.Sleep(200);
         }
-        private static void ImportDbUI()
+        public static void ImportDbUI()
         {
             // Used to stay in settings until back is selected
             bool LockUI = true;
@@ -256,7 +221,7 @@ namespace Melon.LocalClasses
             while (LockUI)
             {
                 // Title
-                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("ImportExportMenu"), StringsManager.GetString("DbLoadBackupOption") });
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), StringsManager.GetString("DbLoadBackupOption") });
                 Console.WriteLine(StringsManager.GetString("ImportBackupSelection").Pastel(MelonColor.Text));
 
                 // Input
@@ -271,7 +236,7 @@ namespace Melon.LocalClasses
                 ImportDb(choice);
             }
         }
-        private static void ExportDb()
+        public static void ExportDb()
         {
             var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
             var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
@@ -282,8 +247,8 @@ namespace Melon.LocalClasses
             var MetadataCollection = NewMelonDB.GetCollection<DbMetadata>("Metadata");
             var StatsCollection = NewMelonDB.GetCollection<PlayStat>("Stats");
             var UsersCollection = NewMelonDB.GetCollection<User>("Users");
-
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("ImportExportMenu"), StringsManager.GetString("DbBackupOption") });
+            
+            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), StringsManager.GetString("DbBackupOption") });
             ChecklistUI.SetChecklistItems(new[]
                 {
                     "Tracks",
@@ -413,7 +378,7 @@ namespace Melon.LocalClasses
                 var StatsCollection = NewMelonDB.GetCollection<PlayStat>("Stats");
                 var UsersCollection = NewMelonDB.GetCollection<User>("Users");
 
-                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("ImportExportMenu"), "Import Database" });
+                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), "Import Database" });
                 ChecklistUI.SetChecklistItems(new[]
                     {
                     "Tracks",

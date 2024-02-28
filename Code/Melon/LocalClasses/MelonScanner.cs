@@ -1,4 +1,5 @@
-﻿using ATL.Logging;
+﻿using Amazon.Util.Internal;
+using ATL.Logging;
 using Melon.Classes;
 using Melon.DisplayClasses;
 using Melon.Models;
@@ -121,6 +122,27 @@ namespace Melon.LocalClasses
             var collectionsMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "CollectionsCollection").FirstOrDefault();
             var queuesMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "QueuesCollection").FirstOrDefault();
             var usersMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "UsersCollection").FirstOrDefault();
+            var statsMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "StatsCollection").FirstOrDefault();
+            if (statsMetadata != null)
+            {
+                if (statsMetadata.Version != "1.0.0")
+                {
+                    // Add code needed for upgrading db objects here
+                    Serilog.Log.Error("Unsupported User Database Version");
+                }
+            }
+            else
+            {
+                var statMetadata = new DbMetadata
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Name = "StatsCollection",
+                    Version = "1.0.0",
+                    Info = $""
+                };
+                metadataCollection.InsertOne(statMetadata);
+            }
+
             if (usersMetadata != null)
             {
                 if (usersMetadata.Version != "1.0.0")
@@ -1281,7 +1303,7 @@ namespace Melon.LocalClasses
         public static void ResetDb()
         {
             MelonUI.ShowIndeterminateProgress();
-            var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
+            NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
 
             var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
             TracksCollection.DeleteMany(Builders<Track>.Filter.Empty);
@@ -1364,7 +1386,7 @@ namespace Melon.LocalClasses
         public static void ResetDBUI()
         {
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("DatabaseResetOption") });
+            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("DatabaseMenu"), StateManager.StringsManager.GetString("DatabaseResetOption") });
 
             // Description
             Console.WriteLine(StateManager.StringsManager.GetString("DatabaseRemovalWarning").Pastel(MelonColor.Text));

@@ -46,6 +46,7 @@ namespace Melon.DisplayClasses
                     { StringsManager.GetString("NetworkSettingsOption"), Networking },
                     { StringsManager.GetString("MenuCustomizationOption"), MenuCustomization },
                     { StringsManager.GetString("PluginsOption"), PluginsMenu },
+                    { StringsManager.GetString("DatabaseMenu"), DatabaseSettings },
                     { StringsManager.GetString("OpenMelonFolderOption") , OpenMelonFolder }
                 };
 
@@ -72,7 +73,45 @@ namespace Melon.DisplayClasses
             }
         }
 
-        // Settings Scanner
+        // Database Settings
+        private static void DatabaseSettings()
+        {
+            // Used to stay in settings until back is selected
+            bool LockUI = true;
+            var options = new OrderedDictionary()
+                {
+                    { StringsManager.GetString("BackNavigation"), () => { LockUI = false; } },
+                    { StringsManager.GetString("DbBackupOption"), Transfer.ExportDb },
+                    { StringsManager.GetString("DbLoadBackupOption"), Transfer.ImportDbUI },
+                    { StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDBUI},
+                    { StringsManager.GetString("PlaylistExportOption"), Transfer.ExportPlaylistUI },
+                    { StringsManager.GetString("PlaylistImportOption"), Transfer.ImportPlaylistUI },
+                };
+
+            while (LockUI)
+            {
+                // Title
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu") });
+
+                // Input
+                var commands = new List<string>();
+                foreach (var key in options.Keys)
+                {
+                    commands.Add((string)key);
+                }
+                var choice = MelonUI.OptionPicker(commands);
+
+                if (choice == StringsManager.GetString("BackNavigation"))
+                {
+                    LockUI = false;
+                    break;
+                }
+
+                ((Action)options[choice])();
+            }
+        }
+
+        // Scanner Settings
         private static void ScannerSettings()
         {
             // Used to stay in settings until back is selected
@@ -210,7 +249,7 @@ namespace Melon.DisplayClasses
                 ((Action)settings[choice])();
             }
         }
-        private static void MongoDBSettings()
+        public static void MongoDBSettings()
         {
             bool check = true;
             while (true)
@@ -246,8 +285,6 @@ namespace Melon.DisplayClasses
                         DisplayManager.MenuOptions.Clear();
                         DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
                         DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);
-                        DisplayManager.MenuOptions.Add(StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDBUI);
-                        DisplayManager.MenuOptions.Add(StringsManager.GetString("ImportExportMenu"), Transfer.TransferUI);
                         DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
                         DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
                     }
