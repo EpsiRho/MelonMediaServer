@@ -22,7 +22,7 @@ namespace MelonLib.Parsers
 
             if (text.Contains("#PLAYLIST"))
             {
-                name = text.Split("#PLAYLIST:")[1].Split("\n")[0];
+                name = path.Replace("\\", "/").Split("/").Last().Split(".")[0];
             }
 
             foreach(var line in text.Replace("\r","").Split("\n"))
@@ -38,7 +38,7 @@ namespace MelonLib.Parsers
         public static KeyValuePair<string, List<string>> FromPLS(string path)
         {
             string text = File.ReadAllText(path);
-            string name = "";
+            string name = path.Replace("\\", "/").Split("/").Last().Split(".")[0];
             List<string> paths = new List<string>();
 
             if (!text.StartsWith("[playlist]"))
@@ -59,7 +59,7 @@ namespace MelonLib.Parsers
         public static KeyValuePair<string, List<string>> FromXML(string path)
         {
             string text = File.ReadAllText(path);
-            string name = "";
+            string name = path.Replace("\\", "/").Split("/").Last().Split(".")[0];
             List<string> paths = new List<string>();
 
             if (!text.StartsWith("<?xml"))

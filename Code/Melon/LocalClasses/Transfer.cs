@@ -61,6 +61,7 @@ namespace Melon.LocalClasses
             var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
             var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
             var PlaylistsCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
+            var CollectionsCollection = NewMelonDB.GetCollection<Collection>("Collections");
 
             bool error = false;
             string input = "";
@@ -69,6 +70,7 @@ namespace Melon.LocalClasses
             {
                 MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("ImportExportMenu"), StringsManager.GetString("PlaylistExportOption") });
                 Console.WriteLine(StringsManager.GetString("ExportPlaylistIdRequest").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ImportPlaylistControls").Pastel(MelonColor.Text));
                 if (error)
                 {
                     Console.WriteLine(StringsManager.GetString("PlaylistNotFound").Pastel(MelonColor.Error));
@@ -76,9 +78,23 @@ namespace Melon.LocalClasses
                 Console.Write("> ");
                 input = Console.ReadLine();
 
+                if(input == "")
+                {
+                    return;
+                }
+
                 plst = PlaylistsCollection.AsQueryable().Where(x => x._id == input).FirstOrDefault();
                 if (plst != null)
                 {
+                    break;
+                }
+
+                var col = CollectionsCollection.AsQueryable().Where(x => x._id == input).FirstOrDefault();
+                if (col != null)
+                {
+                    plst = new Playlist();
+                    plst.Name = col.Name;
+                    plst.Tracks = col.Tracks;
                     break;
                 }
 
@@ -140,11 +156,17 @@ namespace Melon.LocalClasses
             Console.WriteLine(StringsManager.GetString("PlaylistUserRequest").Pastel(MelonColor.Text));
 
             var commands = new List<string>();
+            commands.Add(StringsManager.GetString("BackNavigation"));
             foreach (var user in UsersCollection.AsQueryable())
             {
                 commands.Add($"{user.Username}-{user._id}");
             }
             var choice = MelonUI.OptionPicker(commands);
+
+            if(choice == StringsManager.GetString("BackNavigation"))
+            {
+                return;
+            }
             string userId = choice.Split("-")[1];
 
 
@@ -161,6 +183,11 @@ namespace Melon.LocalClasses
                 }
                 Console.Write("> ");
                 input = Console.ReadLine();
+
+                if (input == "")
+                {
+                    return;
+                }
 
                 input = input.Replace("\"", "");
 
