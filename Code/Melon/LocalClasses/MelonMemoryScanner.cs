@@ -25,6 +25,7 @@ namespace Melon.LocalClasses
         public static double ScannedFiles { get; set; }
         public static double FoundFiles { get; set; }
         public static long averageMilliseconds { get; set; }
+        public static List<long> fileTimes { get; set; }
         public static bool Indexed { get; set; }
         public static bool endDisplay { get; set; }
         public static bool Scanning { get; set; }
@@ -370,6 +371,7 @@ namespace Melon.LocalClasses
             averageMilliseconds = 0;
             Indexed = false;
             endDisplay = false;
+            fileTimes = new List<long>();
 
             CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
@@ -480,19 +482,23 @@ namespace Melon.LocalClasses
 
                 // Add thread to the thread tracker and start it
                 threads.TryAdd(file, "");
-                Thread ft = new Thread(ScanInTrack);
-                ft.Start(file);
+                Task.Factory.StartNew(() =>
+                {
+                    ScanInTrack(file);
+                });
             };
 
         }
-        private static void ScanInTrack(object fo)
+        private static void ScanInTrack(string file)
         {
-            string file = (string)fo;
             var watch = Stopwatch.StartNew(); // Start a watch to measure the time taken to scan the file
 
             try
             {
-                CurrentFile = file;
+                Task.Factory.StartNew(() =>
+                {
+                    CurrentFile = file;
+                });
 
                 // Get the file name
                 var filename = Path.GetFileName(file);
@@ -518,11 +524,10 @@ namespace Melon.LocalClasses
                 ATL.Settings.FileBufferSize = 131072;
                 var fileMetadata = new ATL.Track(file);
 
-                Task s = new Task(() =>
+                Task.Factory.StartNew(() =>
                 {
                     CurrentStatus = StateManager.StringsManager.GetString("TagPreparationStatus");
                 });
-                s.Start();
 
                 // Get and Split the artists metadata tag
                 List<string> albumArtists = SplitArtists(fileMetadata.AlbumArtist);
@@ -694,8 +699,11 @@ namespace Melon.LocalClasses
 
             // Track added successfully, so update metrics and remove the thread from the tracker
             watch.Stop();
-            averageMilliseconds += watch.ElapsedMilliseconds;
-            ScannedFiles++;
+            Task.Factory.StartNew(() =>
+            {
+                ScannedFiles++;
+                averageMilliseconds = UpdateAvgFileTime(watch.ElapsedMilliseconds);
+            });
             threads.TryRemove(file, out _);
             return;
         }
@@ -839,11 +847,10 @@ namespace Melon.LocalClasses
                     ServerURL = ""
                 }));
 
-                Task up = new Task(() =>
+                Task.Factory.StartNew (() =>
                 {
                     ScannedFiles++;
                 });
-                up.Start();
             }
 
             // Check if tempAlbums exist already, update if they do, add new if they don't.
@@ -870,11 +877,10 @@ namespace Melon.LocalClasses
                     albums.TryAdd($"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}", dbAlbums[i]);
                 }
 
-                Task up = new Task(() =>
+                Task.Factory.StartNew(() =>
                 {
                     ScannedFiles++;
                 });
-                up.Start();
             }
 
             // Get distinct artists
@@ -902,11 +908,10 @@ namespace Melon.LocalClasses
                     artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].Genres = dbArtists[i].Genres;
                 }
 
-                Task up = new Task(() =>
+                Task.Factory.StartNew(() =>
                 {
                     ScannedFiles++;
                 });
-                up.Start();
             }
 
             // Update tracks with the proper album and artist ids
@@ -924,11 +929,10 @@ namespace Melon.LocalClasses
                 t.TrackArtists = t.TrackArtists.DistinctBy(x => x._id).ToList();
                 dbTracks.Add(t);
 
-                Task up = new Task(() =>
+                Task.Factory.StartNew(() =>
                 {
                     ScannedFiles++;
                 });
-                up.Start();
             }
 
             // Update tracks to include found lyric files
@@ -943,11 +947,10 @@ namespace Melon.LocalClasses
                 {
                     dbTracks[idx].LyricsPath = lyricFile;
                 }
-                Task up = new Task(() =>
+                Task.Factory.StartNew(() =>
                 {
                     ScannedFiles++;
                 });
-                up.Start();
             }
 
             // Bulk write to MongoDB
@@ -1195,6 +1198,21 @@ namespace Melon.LocalClasses
 
             return genres;
         }
+        private static long UpdateAvgFileTime(long newTime)
+        {
+            double alpha = 0.0001;
+
+            fileTimes.Add(newTime);
+
+            if (fileTimes.Count() == 0)
+            {
+                return newTime;
+            }
+
+            long avg = fileTimes.Sum() / fileTimes.Count();
+            return (long)((alpha * newTime) + ((1 - alpha) * avg));
+        }
+
 
         // UI
         public static void ResetDBUI()
@@ -1346,12 +1364,12 @@ namespace Melon.LocalClasses
                         MelonUI.DisplayProgressBar(ScannedFiles, FoundFiles, '#', '-');
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        string msg = $"{StateManager.StringsManager.GetString("TimeLeftDisplay")}: {TimeSpan.FromMilliseconds((averageMilliseconds / ScannedFiles) * (FoundFiles - ScannedFiles)).ToString(@"hh\:mm\:ss")}  ";
+                        string msg = $"{StateManager.StringsManager.GetString("TimeLeftDisplay")}: {TimeSpan.FromMilliseconds((averageMilliseconds) * (FoundFiles - ScannedFiles)).ToString(@"hh\:mm\:ss")}  ";
                         int max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"{StateManager.StringsManager.GetString("AverageFileTime")}: {TimeSpan.FromMilliseconds(averageMilliseconds / ScannedFiles)}  ";
+                        msg = $"{StateManager.StringsManager.GetString("AverageFileTime")}: {TimeSpan.FromMilliseconds(averageMilliseconds)}  ";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
