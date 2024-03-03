@@ -266,7 +266,7 @@ namespace MelonWebApi.Controllers
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
-            var args = new WebApiEventArgs("api/download/album-art", curId, new Dictionary<string, object>()
+            var args = new WebApiEventArgs("api/download/track-art", curId, new Dictionary<string, object>()
             {
                 { "id", id },
                 { "index", index }
@@ -274,25 +274,47 @@ namespace MelonWebApi.Controllers
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
             var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var ACollection = mongoDatabase.GetCollection<Album>("Albums");
 
-            try
-            {
-                var aFilter = Builders<Album>.Filter.Eq(x => x._id, id);
-                var album = ACollection.Find(aFilter).FirstOrDefault();
+            var aFilter = Builders<Album>.Filter.Eq(x => x._id, id);
+            var album = ACollection.Find(aFilter).FirstOrDefault();
 
-                index = index == -1 ? album.AlbumArtDefault : index;
-                FileStream file = new FileStream($"{StateManager.melonPath}/AlbumArts/{album.AlbumArtPaths[index]}", FileMode.Open, FileAccess.Read);
-                byte[] bytes = new byte[file.Length];
-                file.Read(bytes, 0, (int)file.Length);
-                args.SendEvent("Album artwork sent", 200, Program.mWebApi);
-                return File(bytes, "image/jpeg");
-            }
-            catch (Exception)
+            if(album == null)
             {
                 args.SendEvent("Default artwork sent", 200, Program.mWebApi);
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
+
+            foreach (var track in album.Tracks)
+            {
+                var tFilter = Builders<Track>.Filter.Eq(x => x._id, track._id);
+                var found = TCollection.Find(tFilter).FirstOrDefault();
+
+
+                ATL.Track file = null;
+                try
+                {
+                    file = new ATL.Track(found.Path);
+                    if(file.EmbeddedPictures.Count == 0)
+                    {
+                        continue;
+                    }
+                    index = index == -1 ? found.TrackArtDefault : index;
+                    var pic = file.EmbeddedPictures[index];
+                    MemoryStream ms = new MemoryStream(pic.PictureData);
+                    ms.Seek(0, SeekOrigin.Begin);
+                    args.SendEvent("Album artwork sent", 200, Program.mWebApi);
+                    return File(ms, $"image/jpeg");
+                }
+                catch (Exception)
+                {
+
+                }
+            }
+
+            args.SendEvent("Default artwork sent", 200, Program.mWebApi);
+            return File(StateManager.GetDefaultImage(), "image/jpeg");
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist-pfp")]
