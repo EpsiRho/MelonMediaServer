@@ -477,7 +477,10 @@ namespace Melon.LocalClasses
                 }
 
                 // If there are 25 threads, don't add more threads till previous ones finish
-                while (threads.Count() > 25)
+                int workers = 0;
+                int asyncIOThread = 0;
+                ThreadPool.GetAvailableThreads(out workers, out asyncIOThread);
+                while (threads.Count() >= asyncIOThread)
                 {
                     Thread.Sleep(100);
                 }
@@ -707,24 +710,24 @@ namespace Melon.LocalClasses
             
             // Start creating albums
             ScannedFiles = 0;
-            FoundFiles = albums.Count();
+            FoundFiles = albums.Count;
             CurrentStatus = "Creating Albums";
             foreach (var album in tempAlbums)
             {
                 // Get the first album artist name and use it to find tracks from this album/artist
-                string artistName = album.AlbumArtists.Select(x => x.Name).FirstOrDefault("");
+                string artistName = album.AlbumArtists.Select(x => x.Name).FirstOrDefault();
                 var sTracks = tracks.Values.Where(t => t.Album.Name == album.Name && t.Album.AlbumArtists.Select(a => a.Name).Contains(artistName)).ToList();
                 sTracks = sTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).ToList();
 
                 // Get the album artists and contributing artists
                 var aArtists = sTracks.SelectMany(t => t.Album.AlbumArtists).DistinctBy(a => a.Name).Select(x => new DbLink()
                 {
-                    _id = artists.Values.Where(y => y.Name == x.Name).FirstOrDefault() != null ? artists.Values.Where(y => y.Name == x.Name).FirstOrDefault()._id : ObjectId.GenerateNewId().ToString(),
+                    _id = artists.Values.FirstOrDefault(y => y.Name == x.Name) != null ? artists.Values.FirstOrDefault(y => y.Name == x.Name)._id : ObjectId.GenerateNewId().ToString(),
                     Name = x.Name
                 }).ToList();
                 var cArtists = sTracks.SelectMany(t => t.Album.ContributingArtists).DistinctBy(a => a.Name).Select(x => new DbLink()
                 {
-                    _id = artists.Values.Where(y => y.Name == x.Name).FirstOrDefault() != null ? artists.Values.Where(y => y.Name == x.Name).FirstOrDefault()._id : ObjectId.GenerateNewId().ToString(),
+                    _id = artists.Values.FirstOrDefault(y => y.Name == x.Name) != null ? artists.Values.FirstOrDefault(y => y.Name == x.Name)._id : ObjectId.GenerateNewId().ToString(),
                     Name = x.Name
                 }).ToList();
 
@@ -732,7 +735,7 @@ namespace Melon.LocalClasses
                 cArtists = cArtists.Where(x => !aArtists.Select(y => y.Name).Contains(x.Name)).ToList();
 
                 // Check if the album exists, if it does, update it, otherwise create a new album
-                var foundAlbum = albums.Values.Where(x => x.Name == album.Name && x.AlbumArtists.Select(x => x.Name).Contains(artistName)).FirstOrDefault();
+                var foundAlbum = albums.Values.FirstOrDefault(x => x.Name == album.Name && x.AlbumArtists.Select(x => x.Name).Contains(artistName));
                 if (foundAlbum == null)
                 {
                     var a = new Album()
@@ -742,7 +745,7 @@ namespace Melon.LocalClasses
                         DateAdded = DateTime.Now.ToUniversalTime(),
                         Bio = "",
                         TotalDiscs = album.TotalDiscs,
-                        TotalTracks = sTracks.Count(),
+                        TotalTracks = sTracks.Count,
                         Publisher = album.Publisher,
                         ReleaseStatus = album.ReleaseStatus,
                         ReleaseType = album.ReleaseType,
@@ -770,7 +773,7 @@ namespace Melon.LocalClasses
                         DateAdded = DateTime.Now.ToUniversalTime(),
                         Bio = foundAlbum.Bio,
                         TotalDiscs = album.TotalDiscs,
-                        TotalTracks = sTracks.Count(),
+                        TotalTracks = sTracks.Count,
                         Publisher = album.Publisher,
                         ReleaseStatus = album.ReleaseStatus,
                         ReleaseType = album.ReleaseType,
@@ -835,15 +838,11 @@ namespace Melon.LocalClasses
                     SkipCounts = new List<UserStat>(),
                     ServerURL = ""
                 }));
-
-                Task.Factory.StartNew (() =>
-                {
-                    ScannedFiles++;
-                });
+                ScannedFiles++;
             }
 
             // Check if tempAlbums exist already, update if they do, add new if they don't.
-            for (int i = 0; i < dbAlbums.Count(); i++)
+            for (int i = 0; i < dbAlbums.Count; i++)
             {
                 string n = $"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}";
                 bool check = albums.ContainsKey(n);
@@ -865,11 +864,7 @@ namespace Melon.LocalClasses
                 {
                     albums.TryAdd($"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}", dbAlbums[i]);
                 }
-
-                Task.Factory.StartNew(() =>
-                {
-                    ScannedFiles++;
-                });
+                ScannedFiles++;
             }
 
             // Get distinct artists
@@ -877,7 +872,7 @@ namespace Melon.LocalClasses
 
             // Start creating artists
             ScannedFiles = 0;
-            FoundFiles = dbArtists.Count();
+            FoundFiles = dbArtists.Count;
             CurrentStatus = "Creating Artist";
             for (int i = 0; i < dbArtists.Count(); i++)
             {
@@ -896,37 +891,29 @@ namespace Melon.LocalClasses
                     artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].Tracks = dbArtists[i].Tracks;
                     artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].Genres = dbArtists[i].Genres;
                 }
-
-                Task.Factory.StartNew(() =>
-                {
-                    ScannedFiles++;
-                });
+                ScannedFiles++;
             }
 
             // Update tracks with the proper album and artist ids
             ScannedFiles = 0;
-            FoundFiles = tracks.Count();
+            FoundFiles = tracks.Count;
             CurrentStatus = "Updating Tracks";
             foreach (var track in tracks.Values)
             {
                 Track t = new Track(track);
-                t.Album = dbAlbums.Where(x => x.Name == t.Album.Name).Select(x => new DbLink() { _id = x._id, Name = x.Name }).FirstOrDefault();
+                t.Album = dbAlbums.Select(x => new DbLink() { _id = x._id, Name = x.Name }).FirstOrDefault(x => x.Name == t.Album.Name);
                 for (int i = 0; i < t.TrackArtists.Count(); i++)
                 {
                     t.TrackArtists[i] = artists.Values.Where(x => x.Name == t.TrackArtists[i].Name).Select(x => new DbLink() { _id = x._id, Name = x.Name }).FirstOrDefault();
                 }
                 t.TrackArtists = t.TrackArtists.DistinctBy(x => x._id).ToList();
                 dbTracks.Add(t);
-
-                Task.Factory.StartNew(() =>
-                {
-                    ScannedFiles++;
-                });
+                ScannedFiles++;
             }
 
             // Update tracks to include found lyric files
             ScannedFiles = 0;
-            FoundFiles = LyricFiles.Count();
+            FoundFiles = LyricFiles.Count;
             CurrentStatus = "Setting Lyrics";
             foreach (var lyricFile in LyricFiles)
             {
@@ -936,10 +923,7 @@ namespace Melon.LocalClasses
                 {
                     dbTracks[idx].LyricsPath = lyricFile;
                 }
-                Task.Factory.StartNew(() =>
-                {
-                    ScannedFiles++;
-                });
+                ScannedFiles++;
             }
 
             // Bulk write to MongoDB
@@ -1149,7 +1133,7 @@ namespace Melon.LocalClasses
         private static List<string> SplitArtists(string artistsStr)
         {
             // TODO: Allow changing the list of delimiters
-            List<string> artists = new List<string>();
+            HashSet<string> artists = new HashSet<string>();
             var aSplit = artistsStr.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries);
             foreach (var a in aSplit)
             {
@@ -1158,34 +1142,26 @@ namespace Melon.LocalClasses
                 {
                     name = StateManager.StringsManager.GetString("UnknownArtistStatus");
                 }
-                if (!artists.Contains(name))
-                {
-                    artists.Add(name);
-                }
+                artists.Add(name);
             }
 
-            return artists;
+            return artists.ToList();
         }
         private static List<string> SplitGenres(string genresStr)
         {
             // TODO: Allow changing the list of delimiters
-            List<string> genres = new List<string>();
+            HashSet<string> genres = new HashSet<string>();
             var gSplit = genresStr.Split(new string[] { ",", ";", "/" }, StringSplitOptions.TrimEntries);
-            foreach (var g in gSplit)
+            foreach (var name in gSplit)
             {
-                if (g == "")
+                if (name == "")
                 {
                     continue;
                 }
-                if (!genres.Contains(g))
-                {
-                    genres.Add(g);
-                }
+                genres.Add(name);
             }
 
-            genres.Remove("");
-
-            return genres;
+            return genres.ToList();
         }
 
 
@@ -1316,6 +1292,8 @@ namespace Melon.LocalClasses
                 int x = Console.WindowWidth;
                 while (!endDisplay)
                 {
+                    double scanned = ScannedFiles;
+                    double found = FoundFiles;
                     if (endDisplay)
                     {
                         return;
@@ -1335,18 +1313,18 @@ namespace Melon.LocalClasses
                         Console.Write(controls.Pastel(MelonColor.BackgroundText));
                         Console.CursorTop = sTop;
                         Console.CursorLeft = sLeft;
-                        Console.WriteLine($"{StateManager.StringsManager.GetString("ScanStatus")} {ScannedFiles.ToString().Pastel(MelonColor.Melon)} // {FoundFiles.ToString().Pastel(MelonColor.Melon)} {StateManager.StringsManager.GetString("FoundStatus")}     ");
-                        MelonUI.DisplayProgressBar(ScannedFiles, FoundFiles, '#', '-');
+                        Console.WriteLine($"{StateManager.StringsManager.GetString("ScanStatus")} {scanned.ToString().Pastel(MelonColor.Melon)} // {found.ToString().Pastel(MelonColor.Melon)} {StateManager.StringsManager.GetString("FoundStatus")}     ");
+                        MelonUI.DisplayProgressBar(scanned, found, '#', '-');
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
                         var msg = $"{StateManager.StringsManager.GetString("SystemStatusDisplay")}: {CurrentStatus}  ";
                         var max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
-                        Console.Write(new string(' ', Console.WindowWidth));
-                        Console.CursorLeft = 0;
-                        msg = $"Threads: {threads.Count()}  ";
-                        max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
-                        Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
+                        //Console.Write(new string(' ', Console.WindowWidth));
+                        //Console.CursorLeft = 0;
+                        //msg = $"Threads: {threads.Count()}  ";
+                        //max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
+                        //Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.WriteLine(new string(' ', Console.WindowWidth));
                         Console.WriteLine(new string(' ', Console.WindowWidth));
                     }
@@ -1354,9 +1332,9 @@ namespace Melon.LocalClasses
                     {
 
                     }
-                    Thread.Sleep(50);
                 }
             });
+            DisplayThread.Priority = ThreadPriority.Highest;
             DisplayThread.Start();
 
 
