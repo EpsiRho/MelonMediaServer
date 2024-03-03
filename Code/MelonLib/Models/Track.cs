@@ -1,4 +1,5 @@
 ﻿using Melon.Models;
+using System.Xml.Linq;
 
 namespace Melon.Models
 {
@@ -39,7 +40,29 @@ namespace Melon.Models
         public ProtoTrack(Track t)
         {
             _id = t._id;
-            Album = new Album() { _id = t.Album._id, Name = t.Album.Name };
+            Album = new Album() { 
+                _id = t.Album._id, 
+                Name = t.Album.Name,
+                DateAdded = DateTime.Now.ToUniversalTime(),
+                Bio = "",
+                TotalDiscs = 1,
+                TotalTracks =  0,
+                Publisher = "",
+                ReleaseStatus = "",
+                ReleaseType = "",
+                ReleaseDate = DateTime.MinValue,
+                AlbumArtists = new List<DbLink>(),
+                AlbumArtPaths = new List<string>(),
+                Tracks = new List<DbLink>(),
+                ContributingArtists = new List<DbLink>(),
+                AlbumGenres = new List<string>(),
+                AlbumArtCount = 0,
+                AlbumArtDefault = 0,
+                PlayCounts = new List<UserStat>(),
+                Ratings = new List<UserStat>(),
+                SkipCounts = new List<UserStat>(),
+                ServerURL = ""
+            };
             Position = t.Position;
             Disc = t.Disc;
             Format = t.Format;
@@ -65,7 +88,28 @@ namespace Melon.Models
             Path = t.Path;
             ReleaseDate = t.ReleaseDate;
             TrackGenres = t.TrackGenres;
-            TrackArtists = t.TrackArtists.Select(x => new Artist() { _id = x._id, Name = x.Name }).ToList();
+            TrackArtists = t.TrackArtists.Select(x => new Artist() 
+            { 
+                _id = x._id, 
+                Name = x.Name,
+                Bio = "",
+                Ratings = new List<UserStat>(),
+                DateAdded = DateTime.Now.ToUniversalTime(),
+                Releases = new List<DbLink>(),
+                Genres = new List<string>(),
+                SeenOn = new List<DbLink>(),
+                Tracks = new List<DbLink>(),
+                ConnectedArtists = new List<DbLink>(),
+                ArtistBannerArtCount = 0,
+                ArtistPfpArtCount = 0,
+                ArtistBannerArtDefault = 0,
+                ArtistPfpDefault = 0,
+                ArtistBannerPaths = new List<string>(),
+                ArtistPfpPaths = new List<string>(),
+                PlayCounts = new List<UserStat>(),
+                SkipCounts = new List<UserStat>(),
+                ServerURL = ""
+            }).ToList();
         }
     }
     public class Track

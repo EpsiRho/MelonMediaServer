@@ -29,17 +29,19 @@ namespace Melon.LocalClasses
         public static bool endDisplay { get; set; }
         public static bool Scanning { get; set; }
         private static List<string> LyricFiles { get; set; }
-        private static Stopwatch watch { get; set; }
         private static IMongoDatabase newMelonDB { get; set; }
         private static IMongoCollection<Artist> artistsCollection { get; set; }
         private static IMongoCollection<Album> albumsCollection { get; set; }
         private static IMongoCollection<Track> tracksCollection { get; set; }
-        private static ConcurrentBag<ProtoTrack> tracks { get; set; }
+        private static ConcurrentDictionary<string, ProtoTrack> tracks { get; set; }
+        private static ConcurrentDictionary<string, Album> albums { get; set; }
+        private static ConcurrentDictionary<string, Artist> artists { get; set; }
         private static ConcurrentDictionary<string, string> threads { get; set; }
 
         // DB Functions
         public static void CheckAndFix()
         {
+            newMelonDB = StateManager.DbClient.GetDatabase("Melon");
             var metadataCollection = newMelonDB.GetCollection<DbMetadata>("Metadata");
             var artistMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "ArtistsCollection").FirstOrDefault();
             var albumMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "AlbumsCollection").FirstOrDefault();
@@ -337,83 +339,104 @@ namespace Melon.LocalClasses
         // Main Scanning Functions
         public static void StartScan(object skipBool)
         {
+            // If currently scanning, don't start another scan.
             if (Scanning)
             {
                 return;
             }
-
             Scanning = true;
 
-            // Get MongoDB collections
+            // Get MongoDB collections into memory
             newMelonDB = StateManager.DbClient.GetDatabase("Melon");
             artistsCollection = newMelonDB.GetCollection<Artist>("Artists");
             albumsCollection = newMelonDB.GetCollection<Album>("Albums");
             tracksCollection = newMelonDB.GetCollection<Track>("Tracks");
             var DbTracks = tracksCollection.AsQueryable().ToList();
-            tracks = new ConcurrentBag<ProtoTrack>(DbTracks.Select(x=>new ProtoTrack(x)));
+            var DbAlbums = albumsCollection.AsQueryable().ToList();
+            var DbArtists = artistsCollection.AsQueryable().ToList();
+            tracks = new ConcurrentDictionary<string, ProtoTrack>(DbTracks.Select(x => KeyValuePair.Create(x.Path, new ProtoTrack(x))));
+            albums = new ConcurrentDictionary<string, Album>(DbAlbums.Select(x => KeyValuePair.Create($"{x.Name} + {String.Join(",", x.AlbumArtists.Select(x => x.Name))}", x)));
+            artists = new ConcurrentDictionary<string, Artist>(DbArtists.Select(x => KeyValuePair.Create($"{x.Name} + {x._id}", x)));
+            foreach (var track in tracks)
+            {
+                track.Value.Album = albums.Values.Where(x => x._id == track.Value.Album._id).FirstOrDefault();
+            }
 
+            // Setup vars
             bool skip = (bool)skipBool;
             LyricFiles = new List<string>();
-            watch = new Stopwatch();
-            ScannedFiles = 1;
-            FoundFiles = 1;
-            averageMilliseconds = 1;
+            ScannedFiles = 1; // Set to 1 to avoid divide by 0 errors
+            FoundFiles = 1; // Set to 1 to avoid divide by 0 errors
+            averageMilliseconds = 0;
             Indexed = false;
+            endDisplay = false;
 
             CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentStatus = StateManager.StringsManager.GetString("CheckDbVersioningStatus");
-            CheckAndFix();
 
-            if(StateManager.MelonSettings.LibraryPaths.Count() == 0)
+            // If Library Paths are empty, display a warning and return
+            if (StateManager.MelonSettings.LibraryPaths.Count() == 0)
             {
                 MelonUI.ClearConsole();
-                Console.WriteLine(StateManager.StringsManager.GetString("NoPathWarning").Pastel(MelonColor.Error));
-                Console.WriteLine(StateManager.StringsManager.GetString("ContinuationPrompt").Pastel(MelonColor.BackgroundText));
-                Console.ReadKey(intercept: true);
+                DisplayManager.UIExtensions.Remove("LibraryScanIndicator");
+                DisplayManager.UIExtensions.Add("LibraryScanError", () => 
+                { 
+                    Console.WriteLine(StateManager.StringsManager.GetString("NoPathWarning").Pastel(MelonColor.Error));
+                    DisplayManager.UIExtensions.Remove("LibraryScanError");
+                });
+                Scanning = false;
+                endDisplay = true;
                 return;
             }
 
-            if (!Directory.Exists($"{StateManager.melonPath}/AlbumArts"))
-            {
-                Directory.CreateDirectory($"{StateManager.melonPath}/AlbumArts");
-            }
-
+            // Run through and get a count of how many files need scanning to display the proper number on the progressbar
             foreach (var path in StateManager.MelonSettings.LibraryPaths)
             {
                 ScanFolderCounter(path);
             }
 
+            // Start recursive scan to open threads and load in file metadata 
             threads = new ConcurrentDictionary<string, string>();
             foreach (var path in StateManager.MelonSettings.LibraryPaths)
             {
                 ScanFolder(path, skip);
             }
 
+            // After recursive function, wait until all opened threads have finished
             while (threads.Count != 0)
             {
 
             }
 
+            // Fill out the database with the new tracks, creating artists and albums
             CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
             FillOutDB();
 
+            // Delete any documents that should no longer exist
             CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentStatus = StateManager.StringsManager.GetString("DeletionStepStatus");
             DeletePass();
 
+            // Update any collections with new track lists
             CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentStatus = StateManager.StringsManager.GetString("CollectionStepStatus");
             UpdateCollections();
 
+            // Set Indexes for mongodb
             endDisplay = true;
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentStatus = StateManager.StringsManager.GetString("CompletionStatus");
             IndexCollections();
-            DisplayManager.UIExtensions.Clear();
+
+            // Cleanup
+            DisplayManager.UIExtensions.Remove("LibraryScanIndicator");
+            tracks = null;
+            albums = null;
+            artists = null;
             LyricFiles = null;
             Scanning = false;
         }
@@ -429,261 +452,349 @@ namespace Melon.LocalClasses
         }
         private static void ScanFolder(string path, bool skip)
         {
+            CurrentFolder = path;
+
             // Recursively scan folders
-            Task t = new Task(() =>
-            {
-                CurrentFolder = path;
-            });
-            t.Start();
             var folders = Directory.GetDirectories(path);
             foreach (var folder in folders)
             {
                 ScanFolder(folder, skip);
             }
 
-            // Get Files, for each file:
+            // Get Files, for each file start a new thread to scan the file metadata into memory
             var files = Directory.GetFiles(path);
-            foreach(var file in files)
+            foreach (var file in files)
             {
-                while(threads.Count() > 50)
+                // If the file path is already in the DB and scanner is running in fast mode, skip the file
+                if (skip && tracks.ContainsKey(file.Replace("\\", "/")))
                 {
-
+                    ScannedFiles++;
+                    continue;
                 }
-                Thread ft = new Thread(() =>
+
+                // If there are 50 threads, don't add more threads till previous ones finish
+                while (threads.Count() > 25)
                 {
-                    threads.TryAdd(file, "");
-                    watch.Restart();
+                    Thread.Sleep(100);
+                }
 
-                    try
-                    {
-                        Task f = new Task(() =>
-                        {
-                            CurrentFile = file;
-                        });
-                        f.Start();
-                        var filename = Path.GetFileName(file);
+                // Add thread to the thread tracker and start it
+                threads.TryAdd(file, "");
+                Thread ft = new Thread(ScanInTrack);
+                ft.Start(file);
+            };
 
-                        // Lyrics matcher
-                        if (filename.EndsWith(".lrc"))
-                        {
-                            LyricFiles.Add(file);
-                            Task u = new Task(() =>
-                            {
-                                ScannedFiles++;
-                            });
-                            u.Start();
-                            threads.TryRemove(file, out _);
-                            return;
-                        }
+        }
+        private static void ScanInTrack(object fo)
+        {
+            string file = (string)fo;
+            var watch = Stopwatch.StartNew(); // Start a watch to measure the time taken to scan the file
 
-                        // Move on if file is not an Audio file
-                        if (!IsAudioFile(file))
-                        {
-                            Task u = new Task(() =>
-                            {
-                                ScannedFiles++;
-                            });
-                            u.Start();
-                            threads.TryRemove(file, out _);
-                            return;
-                        }
+            try
+            {
+                CurrentFile = file;
 
-                        // Get the file metadata
-                        var fileMetadata = new ATL.Track(file);
+                // Get the file name
+                var filename = Path.GetFileName(file);
 
-                        // Attempt to find the track if it's already in the DB
-                        ProtoTrack trackDoc = tracks.Where(x => x.Path == file).FirstOrDefault();
-
-                        Task s = new Task(() =>
-                        {
-                            CurrentStatus = StateManager.StringsManager.GetString("TagPreparationStatus");
-                        });
-                        s.Start();
-
-                        if(trackDoc == null)
-                        {
-                            // Get and Split the artists metadata tag
-                            List<string> albumArtists = SplitArtists(fileMetadata.AlbumArtist);
-                            List<string> trackArtists = SplitArtists(fileMetadata.Artist);
-
-                            // Split Genres
-                            List<string> trackGenres = SplitGenres(fileMetadata.Genre);
-
-                            // Conform Genres
-                            // https://github.com/EpsiRho/MelonMediaServer/issues/12
-
-                            // If artist name is nothing, set to "Unknown Album"
-                            string albumName = string.IsNullOrEmpty(fileMetadata.Album) ? StateManager.StringsManager.GetString("UnknownAlbumStatus") : fileMetadata.Album;
-
-                            trackDoc = new ProtoTrack()
-                            {
-                                _id = ObjectId.GenerateNewId().ToString(),
-                                LastModified = File.GetLastWriteTime(fileMetadata.Path).ToUniversalTime(),
-                                DateAdded = DateTime.UtcNow,
-                                Name = fileMetadata.Title ?? StateManager.StringsManager.GetString("UnknownStatus"),
-                                Album = new Album()
-                                {
-                                    _id = "",
-                                    Name = albumName,
-                                    DateAdded = DateTime.Now.ToUniversalTime(),
-                                    Bio = "",
-                                    TotalDiscs = fileMetadata.DiscTotal ?? 1,
-                                    TotalTracks = fileMetadata.TrackTotal ?? 0,
-                                    Publisher = fileMetadata.Publisher ?? "",
-                                    ReleaseStatus = fileMetadata.AdditionalFields.TryGetValue("RELEASESTATUS", out var rs) ? rs : "",
-                                    ReleaseType = fileMetadata.AdditionalFields.TryGetValue("RELEASETYPE", out var rt) ? rt : "",
-                                    ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
-                                    AlbumArtists = albumArtists.Select(x => new DbLink() { Name = x }).ToList(),
-                                    AlbumArtPaths = new List<string>(),
-                                    Tracks = new List<DbLink>(),
-                                    ContributingArtists = trackArtists.Select(x => new DbLink() { Name = x }).ToList(),
-                                    AlbumGenres = trackGenres ?? new List<string>(),
-                                    AlbumArtCount = 0,
-                                    AlbumArtDefault = 0,
-                                    PlayCounts = new List<UserStat>(),
-                                    Ratings = new List<UserStat>(),
-                                    SkipCounts = new List<UserStat>(),
-                                    ServerURL = ""
-                                },
-                                Path = file.Replace("\\", "/"),
-                                Position = fileMetadata.TrackNumber ?? 0,
-                                Format = Path.GetExtension(fileMetadata.Path)?.TrimStart('.') ?? "",
-                                Bitrate = fileMetadata.Bitrate.ToString() ?? "",
-                                SampleRate = fileMetadata.SampleRate.ToString() ?? "",
-                                Channels = fileMetadata.ChannelsArrangement?.NbChannels.ToString() ?? "",
-                                BitsPerSample = fileMetadata.BitDepth.ToString() ?? "",
-                                Disc = fileMetadata.DiscNumber ?? 1,
-                                MusicBrainzID = fileMetadata.AdditionalFields.TryGetValue("MUSICBRAINZ_RELEASETRACKID", out var mbId) ? mbId : "",
-                                ISRC = fileMetadata.AdditionalFields.TryGetValue("ISRC", out var isrc) ? isrc : "",
-                                Year = fileMetadata.Year?.ToString() ?? "",
-                                Ratings = new List<UserStat>(),
-                                PlayCounts = new List<UserStat>(),
-                                SkipCounts = new List<UserStat>(),
-                                TrackArtCount = fileMetadata.EmbeddedPictures?.Count() ?? 0,
-                                TrackArtDefault = 0,
-                                Duration = fileMetadata.DurationMs.ToString() ?? "",
-                                TrackArtists = trackArtists.Select(x=>new Artist() { Name = x}).ToList(),
-                                TrackGenres = trackGenres ?? new List<string>(),
-                                ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
-                                LyricsPath = "",
-                                nextTrack = "",
-                                ServerURL = "",
-                            };
-
-                            foreach(var a in trackArtists)
-                            {
-                                string name = string.IsNullOrEmpty(a) ? StateManager.StringsManager.GetString("UnknownArtistStatus") : a;
-                                trackDoc.TrackArtists.Add(new Artist()
-                                {
-                                    Name = name
-                                });
-                                trackDoc.Album.ContributingArtists.Add(new DbLink()
-                                {
-                                    Name = name
-                                });
-                            }
-
-                            foreach (var a in albumArtists)
-                            {
-                                string name = string.IsNullOrEmpty(a) ? StateManager.StringsManager.GetString("UnknownArtistStatus") : a;
-                                trackDoc.Album.AlbumArtists.Add(new DbLink()
-                                {
-                                    Name = name
-                                });
-                            }
-                        }
-                        tracks.Add(trackDoc);
-                    }
-                    catch (Exception e)
-                    {
-                        if (e.Message.Contains("DuplicateKey"))
-                        {
-                            Task up = new Task(() =>
-                            {
-                                ScannedFiles++;
-                            });
-                            up.Start();
-                            threads.TryRemove(file, out _);
-                            return;
-                        }
-
-                        var FailedCollection = newMelonDB.GetCollection<FailedFile>("FailedFiles");
-
-                        var failed = new FailedFile()
-                        {
-                            _id = ObjectId.GenerateNewId().ToString(),
-                            Path = file,
-                            ErrorMessage = e.Message,
-                            StackTrace = e.StackTrace
-                        };
-
-                        FailedCollection.InsertOne(failed);
-                    }
-                    watch.Stop();
-                    averageMilliseconds += watch.ElapsedMilliseconds;
-                    Task update = new Task(() =>
-                    {
-                        ScannedFiles++;
-                    });
-                    update.Start();
+                // If this is a lyrics file, add it to the list and move on
+                if (filename.EndsWith(".lrc"))
+                {
+                    LyricFiles.Add(file);
+                    ScannedFiles++;
                     threads.TryRemove(file, out _);
                     return;
-                });
-                ft.Start();
+                }
 
-            };
-            
+                // Move on if the file is not an audio file
+                if (!IsAudioFile(file))
+                {
+                    ScannedFiles++;
+                    threads.TryRemove(file, out _);
+                    return;
+                }
+
+                // Get the file metadata, in chunks of 200000 bytes
+                ATL.Settings.FileBufferSize = 131072;
+                var fileMetadata = new ATL.Track(file);
+
+                Task s = new Task(() =>
+                {
+                    CurrentStatus = StateManager.StringsManager.GetString("TagPreparationStatus");
+                });
+                s.Start();
+
+                // Get and Split the artists metadata tag
+                List<string> albumArtists = SplitArtists(fileMetadata.AlbumArtist);
+                List<string> trackArtists = SplitArtists(fileMetadata.Artist);
+
+                // Split Genres
+                List<string> trackGenres = SplitGenres(fileMetadata.Genre);
+
+                // Conform Genres
+                // https://github.com/EpsiRho/MelonMediaServer/issues/12
+
+                // If album name is nothing, set to "Unknown Album"
+                string albumName = string.IsNullOrEmpty(fileMetadata.Album) ? StateManager.StringsManager.GetString("UnknownAlbumStatus") : fileMetadata.Album;
+
+                // Create a new ProtoTrack object and fill it with the file metadata
+                var trackDoc = new ProtoTrack()
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    LastModified = File.GetLastWriteTime(fileMetadata.Path).ToUniversalTime(),
+                    DateAdded = DateTime.UtcNow,
+                    Name = fileMetadata.Title ?? StateManager.StringsManager.GetString("UnknownStatus"),
+                    Album = new Album()
+                    {
+                        _id = "",
+                        Name = albumName,
+                        DateAdded = DateTime.Now.ToUniversalTime(),
+                        Bio = "",
+                        TotalDiscs = fileMetadata.DiscTotal ?? 1,
+                        TotalTracks = fileMetadata.TrackTotal ?? 0,
+                        Publisher = fileMetadata.Publisher ?? "",
+                        ReleaseStatus = fileMetadata.AdditionalFields.TryGetValue("RELEASESTATUS", out var rs) ? rs : "",
+                        ReleaseType = fileMetadata.AdditionalFields.TryGetValue("RELEASETYPE", out var rt) ? rt : "",
+                        ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
+                        AlbumArtists = albumArtists.Select(x => new DbLink() { Name = x }).ToList(),
+                        AlbumArtPaths = new List<string>(),
+                        Tracks = new List<DbLink>(),
+                        ContributingArtists = trackArtists.Select(x => new DbLink() { Name = x }).ToList(),
+                        AlbumGenres = trackGenres ?? new List<string>(),
+                        AlbumArtCount = 0,
+                        AlbumArtDefault = 0,
+                        PlayCounts = new List<UserStat>(),
+                        Ratings = new List<UserStat>(),
+                        SkipCounts = new List<UserStat>(),
+                        ServerURL = ""
+                    },
+                    Path = file.Replace("\\", "/"),
+                    Position = fileMetadata.TrackNumber ?? 0,
+                    Format = Path.GetExtension(fileMetadata.Path)?.TrimStart('.') ?? "",
+                    Bitrate = fileMetadata.Bitrate.ToString() ?? "",
+                    SampleRate = fileMetadata.SampleRate.ToString() ?? "",
+                    Channels = fileMetadata.ChannelsArrangement?.NbChannels.ToString() ?? "",
+                    BitsPerSample = fileMetadata.BitDepth.ToString() ?? "",
+                    Disc = fileMetadata.DiscNumber ?? 1,
+                    MusicBrainzID = fileMetadata.AdditionalFields.TryGetValue("MUSICBRAINZ_RELEASETRACKID", out var mbId) ? mbId : "",
+                    ISRC = fileMetadata.AdditionalFields.TryGetValue("ISRC", out var isrc) ? isrc : "",
+                    Year = fileMetadata.Year?.ToString() ?? "",
+                    Ratings = new List<UserStat>(),
+                    PlayCounts = new List<UserStat>(),
+                    SkipCounts = new List<UserStat>(),
+                    TrackArtCount = fileMetadata.EmbeddedPictures?.Count() ?? 0,
+                    TrackArtDefault = 0,
+                    Duration = fileMetadata.DurationMs.ToString() ?? "",
+                    TrackArtists = trackArtists.Select(x => new Artist() { Name = x }).ToList(),
+                    TrackGenres = trackGenres ?? new List<string>(),
+                    ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
+                    LyricsPath = "",
+                    nextTrack = "",
+                    ServerURL = "",
+                };
+
+                // For each track artist, setup new artist doc
+                // Also, setup contributing artists for the track's album
+                foreach (var a in trackArtists)
+                {
+                    string name = string.IsNullOrEmpty(a) ? StateManager.StringsManager.GetString("UnknownArtistStatus") : a;
+                    trackDoc.TrackArtists.Add(new Artist()
+                    {
+                        _id = "",
+                        Name = name,
+                        Bio = "",
+                        Ratings = new List<UserStat>(),
+                        DateAdded = DateTime.Now.ToUniversalTime(),
+                        Releases = new List<DbLink>(),
+                        Genres = new List<string>(),
+                        SeenOn = new List<DbLink>(),
+                        Tracks = new List<DbLink>(),
+                        ConnectedArtists = new List<DbLink>(),
+                        ArtistBannerArtCount = 0,
+                        ArtistPfpArtCount = 0,
+                        ArtistBannerArtDefault = 0,
+                        ArtistPfpDefault = 0,
+                        ArtistBannerPaths = new List<string>(),
+                        ArtistPfpPaths = new List<string>(),
+                        PlayCounts = new List<UserStat>(),
+                        SkipCounts = new List<UserStat>(),
+                        ServerURL = ""
+                    });
+                    trackDoc.Album.ContributingArtists.Add(new DbLink()
+                    {
+                        Name = name
+                    });
+                }
+
+                // For each album artist, add to track's album document
+                foreach (var a in albumArtists)
+                {
+                    string name = string.IsNullOrEmpty(a) ? StateManager.StringsManager.GetString("UnknownArtistStatus") : a;
+                    trackDoc.Album.AlbumArtists.Add(new DbLink()
+                    {
+                        Name = name
+                    });
+                }
+
+                // Check if the track exists already, if it does then update it, otherwise insert the new track.
+                if (tracks.ContainsKey(trackDoc.Path))
+                {
+                    trackDoc._id = tracks[trackDoc.Path]._id;
+                    trackDoc.Album = new Album()
+                    {
+                        _id = "",
+                        Name = albumName,
+                        DateAdded = DateTime.Now.ToUniversalTime(),
+                        Bio = "",
+                        TotalDiscs = fileMetadata.DiscTotal ?? 1,
+                        TotalTracks = fileMetadata.TrackTotal ?? 0,
+                        Publisher = fileMetadata.Publisher ?? "",
+                        ReleaseStatus = fileMetadata.AdditionalFields.TryGetValue("RELEASESTATUS", out var nrs) ? nrs : "",
+                        ReleaseType = fileMetadata.AdditionalFields.TryGetValue("RELEASETYPE", out var nrt) ? nrt : "",
+                        ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
+                        AlbumArtists = albumArtists.Select(x => new DbLink() { Name = x }).ToList(),
+                        AlbumArtPaths = new List<string>(),
+                        Tracks = new List<DbLink>(),
+                        ContributingArtists = trackArtists.Select(x => new DbLink() { Name = x }).ToList(),
+                        AlbumGenres = trackGenres ?? new List<string>(),
+                        AlbumArtCount = 0,
+                        AlbumArtDefault = 0,
+                        PlayCounts = new List<UserStat>(),
+                        Ratings = new List<UserStat>(),
+                        SkipCounts = new List<UserStat>(),
+                        ServerURL = ""
+                    };
+                    trackDoc.Ratings = tracks[trackDoc.Path].Ratings;
+                    trackDoc.PlayCounts = tracks[trackDoc.Path].PlayCounts;
+                    trackDoc.SkipCounts = tracks[trackDoc.Path].SkipCounts;
+                    trackDoc.TrackArtDefault = tracks[trackDoc.Path].TrackArtDefault;
+                    trackDoc.nextTrack = tracks[trackDoc.Path].nextTrack;
+                    tracks[trackDoc.Path] = trackDoc;
+                }
+                else
+                {
+                    tracks.TryAdd(trackDoc.Path, trackDoc);
+                }
+            }
+            catch (Exception e)
+            {
+                // If something fails, log the track, its error and stack trace to the failed files collection
+                var FailedCollection = newMelonDB.GetCollection<FailedFile>("FailedFiles");
+
+                var failed = new FailedFile()
+                {
+                    _id = ObjectId.GenerateNewId().ToString(),
+                    Path = file,
+                    ErrorMessage = e.Message,
+                    StackTrace = e.StackTrace
+                };
+
+                FailedCollection.InsertOne(failed);
+            }
+
+            // Track added successfully, so update metrics and remove the thread from the tracker
+            watch.Stop();
+            averageMilliseconds += watch.ElapsedMilliseconds;
+            ScannedFiles++;
+            threads.TryRemove(file, out _);
+            return;
         }
         private static void FillOutDB()
         {
             List<Track> dbTracks = new List<Track>();
             List<Album> dbAlbums = new List<Album>();
             List<Artist> dbArtists = new List<Artist>();
-            var albums = tracks.Select(t=>t.Album).DistinctBy(a=>$"{a.Name} && {String.Join(";",a.AlbumArtists.Select(x=>x.Name))}").ToList();
+
+            // Get Albums from found tracks (and old tracks, if applicable)
+            var tempAlbums = tracks.Values.Select(t => t.Album).DistinctBy(a => $"{a.Name} && {String.Join(";", a.AlbumArtists.Select(x => x.Name))}").ToList();
+            
+            // Start creating albums
             ScannedFiles = 0;
             FoundFiles = albums.Count();
             CurrentStatus = "Creating Albums";
-            foreach (var album in albums)
+            foreach (var album in tempAlbums)
             {
-                var sTracks = tracks.Where(t => t.Album.Name == album.Name && t.Album.AlbumArtists.Select(a=>a.Name).Contains(album.AlbumArtists.FirstOrDefault().Name)).ToList();
+                // Get the first album artist name and use it to find tracks from this album/artist
+                string artistName = album.AlbumArtists.Select(x => x.Name).FirstOrDefault("");
+                var sTracks = tracks.Values.Where(t => t.Album.Name == album.Name && t.Album.AlbumArtists.Select(a => a.Name).Contains(artistName)).ToList();
                 sTracks = sTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).ToList();
-                var aArtists = sTracks.SelectMany(t => t.Album.AlbumArtists).DistinctBy(a => a.Name).Select(x => new DbLink() 
-                { 
-                    _id = dbArtists.Where(y=>y.Name == x.Name).FirstOrDefault() != null ? dbArtists.Where(y => y.Name == x.Name).FirstOrDefault()._id : ObjectId.GenerateNewId().ToString(), 
-                    Name = x.Name 
+
+                // Get the album artists and contributing artists
+                var aArtists = sTracks.SelectMany(t => t.Album.AlbumArtists).DistinctBy(a => a.Name).Select(x => new DbLink()
+                {
+                    _id = artists.Values.Where(y => y.Name == x.Name).FirstOrDefault() != null ? artists.Values.Where(y => y.Name == x.Name).FirstOrDefault()._id : ObjectId.GenerateNewId().ToString(),
+                    Name = x.Name
                 }).ToList();
                 var cArtists = sTracks.SelectMany(t => t.Album.ContributingArtists).DistinctBy(a => a.Name).Select(x => new DbLink()
                 {
-                    _id = dbArtists.Where(y => y.Name == x.Name).FirstOrDefault() != null ? dbArtists.Where(y => y.Name == x.Name).FirstOrDefault()._id : ObjectId.GenerateNewId().ToString(),
+                    _id = artists.Values.Where(y => y.Name == x.Name).FirstOrDefault() != null ? artists.Values.Where(y => y.Name == x.Name).FirstOrDefault()._id : ObjectId.GenerateNewId().ToString(),
                     Name = x.Name
                 }).ToList();
+
+                // Remove duplicates
                 cArtists = cArtists.Where(x => !aArtists.Select(y => y.Name).Contains(x.Name)).ToList();
 
-                var a = new Album()
+                // Check if the album exists, if it does, update it, otherwise create a new album
+                var foundAlbum = albums.Values.Where(x => x.Name == album.Name && x.AlbumArtists.Select(x => x.Name).Contains(artistName)).FirstOrDefault();
+                if (foundAlbum == null)
                 {
-                    _id = ObjectId.GenerateNewId().ToString(),
-                    Name = album.Name,
-                    DateAdded = DateTime.Now.ToUniversalTime(),
-                    Bio = "",
-                    TotalDiscs = album.TotalDiscs,
-                    TotalTracks = album.TotalTracks,
-                    Publisher = album.Publisher,
-                    ReleaseStatus = album.ReleaseStatus,
-                    ReleaseType = album.ReleaseType,
-                    ReleaseDate = album.ReleaseDate,
-                    AlbumArtists = aArtists,
-                    AlbumArtPaths = new List<string>(),
-                    Tracks = sTracks.Select(t=>new DbLink() { _id = t._id, Name = t.Name }).ToList(),
-                    ContributingArtists = cArtists,
-                    AlbumGenres = sTracks.SelectMany(t=>t.TrackGenres).Distinct().ToList(),
-                    AlbumArtCount = 0,
-                    AlbumArtDefault = 0,
-                    PlayCounts = new List<UserStat>(),
-                    Ratings = new List<UserStat>(),
-                    SkipCounts = new List<UserStat>(),
-                    ServerURL = ""
-                };
-                dbArtists.AddRange(aArtists.Select(x=> new Artist()
+                    var a = new Album()
+                    {
+                        _id = ObjectId.GenerateNewId().ToString(),
+                        Name = album.Name,
+                        DateAdded = DateTime.Now.ToUniversalTime(),
+                        Bio = "",
+                        TotalDiscs = album.TotalDiscs,
+                        TotalTracks = sTracks.Count(),
+                        Publisher = album.Publisher,
+                        ReleaseStatus = album.ReleaseStatus,
+                        ReleaseType = album.ReleaseType,
+                        ReleaseDate = album.ReleaseDate,
+                        AlbumArtists = aArtists,
+                        AlbumArtPaths = new List<string>(),
+                        Tracks = sTracks.Select(t => new DbLink() { _id = t._id, Name = t.Name }).ToList(),
+                        ContributingArtists = cArtists,
+                        AlbumGenres = sTracks.SelectMany(t => t.TrackGenres).Distinct().ToList(),
+                        AlbumArtCount = 0,
+                        AlbumArtDefault = 0,
+                        PlayCounts = new List<UserStat>(),
+                        Ratings = new List<UserStat>(),
+                        SkipCounts = new List<UserStat>(),
+                        ServerURL = ""
+                    };
+                    dbAlbums.Add(a);
+                }
+                else
+                {
+                    var a = new Album()
+                    {
+                        _id = foundAlbum._id,
+                        Name = foundAlbum.Name,
+                        DateAdded = DateTime.Now.ToUniversalTime(),
+                        Bio = foundAlbum.Bio,
+                        TotalDiscs = album.TotalDiscs,
+                        TotalTracks = sTracks.Count(),
+                        Publisher = album.Publisher,
+                        ReleaseStatus = album.ReleaseStatus,
+                        ReleaseType = album.ReleaseType,
+                        ReleaseDate = album.ReleaseDate,
+                        AlbumArtists = aArtists,
+                        AlbumArtPaths = foundAlbum.AlbumArtPaths,
+                        Tracks = sTracks.Select(t => new DbLink() { _id = t._id, Name = t.Name }).ToList(),
+                        ContributingArtists = cArtists,
+                        AlbumGenres = sTracks.SelectMany(t => t.TrackGenres).Distinct().ToList(),
+                        AlbumArtCount = foundAlbum.AlbumArtCount,
+                        AlbumArtDefault = foundAlbum.AlbumArtDefault,
+                        PlayCounts = foundAlbum.PlayCounts,
+                        Ratings = foundAlbum.Ratings,
+                        SkipCounts = foundAlbum.SkipCounts,
+                        ServerURL = ""
+                    };
+                    dbAlbums.Add(a);
+                }
+
+                // Add artists to temp artist array for later.
+                dbArtists.AddRange(aArtists.Select(x => new Artist()
                 {
                     _id = x._id,
                     Name = x.Name,
@@ -727,41 +838,7 @@ namespace Melon.LocalClasses
                     SkipCounts = new List<UserStat>(),
                     ServerURL = ""
                 }));
-                dbAlbums.Add(a);
-                Task up = new Task(() =>
-                {
-                    ScannedFiles++;
-                });
-                up.Start();
-            }
-            ScannedFiles = 0;
-            FoundFiles = tracks.Count();
-            CurrentStatus = "Updating Tracks";
-            foreach (var track in tracks)
-            {
-                Track t = new Track(track);
-                t.Album = dbAlbums.Where(x => x.Name == t.Album.Name).Select(x => new DbLink() { _id = x._id, Name = x.Name }).FirstOrDefault();
-                for(int i = 0; i < t.TrackArtists.Count(); i++)
-                {
-                    t.TrackArtists[i] = dbArtists.Where(x => x.Name == t.TrackArtists[i].Name).Select(x=>new DbLink() { _id = x._id, Name = x.Name}).FirstOrDefault();
-                }
-                dbTracks.Add(t);
-                Task up = new Task(() =>
-                {
-                    ScannedFiles++;
-                });
-                up.Start();
-            }
-            dbArtists = dbArtists.DistinctBy(x=>x.Name).ToList();
-            ScannedFiles = 0;
-            FoundFiles = dbArtists.Count();
-            CurrentStatus = "Creating Artist";
-            for (int i = 0; i < dbArtists.Count(); i++)
-            {
-                dbArtists[i].Releases = dbAlbums.Where(x => x.AlbumArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
-                dbArtists[i].SeenOn = dbAlbums.Where(x => x.ContributingArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
-                dbArtists[i].Tracks = dbTracks.Where(x => x.TrackArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).ThenBy(x => x.Disc).ThenBy(x => x.Position).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
-                dbArtists[i].Genres = dbTracks.Where(x => x.TrackArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).SelectMany(x => x.TrackGenres).Distinct().ToList();
+
                 Task up = new Task(() =>
                 {
                     ScannedFiles++;
@@ -769,6 +846,92 @@ namespace Melon.LocalClasses
                 up.Start();
             }
 
+            // Check if tempAlbums exist already, update if they do, add new if they don't.
+            for (int i = 0; i < dbAlbums.Count(); i++)
+            {
+                string n = $"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}";
+                bool check = albums.ContainsKey(n);
+                if (check)
+                {
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].AlbumArtists = dbAlbums[i].AlbumArtists;
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].AlbumGenres = dbAlbums[i].AlbumGenres;
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].Tracks = dbAlbums[i].Tracks;
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].AlbumGenres = dbAlbums[i].AlbumGenres;
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].ContributingArtists = dbAlbums[i].ContributingArtists;
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].Publisher = dbAlbums[i].Publisher;
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].ReleaseStatus = dbAlbums[i].ReleaseStatus;
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].ReleaseType = dbAlbums[i].ReleaseType;
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].TotalDiscs = dbAlbums[i].TotalDiscs;
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].TotalTracks = dbAlbums[i].TotalTracks;
+                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].ReleaseDate = dbAlbums[i].ReleaseDate;
+                }
+                else
+                {
+                    albums.TryAdd($"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}", dbAlbums[i]);
+                }
+
+                Task up = new Task(() =>
+                {
+                    ScannedFiles++;
+                });
+                up.Start();
+            }
+
+            // Get distinct artists
+            dbArtists = dbArtists.DistinctBy(x => x.Name).ToList();
+
+            // Start creating artists
+            ScannedFiles = 0;
+            FoundFiles = dbArtists.Count();
+            CurrentStatus = "Creating Artist";
+            for (int i = 0; i < dbArtists.Count(); i++)
+            {
+                // Set artist info
+                dbArtists[i].Releases = dbAlbums.Where(x => x.AlbumArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
+                dbArtists[i].SeenOn = dbAlbums.Where(x => x.ContributingArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
+                dbArtists[i].Tracks = tracks.Values.Where(x => x.TrackArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).ThenBy(x => x.Disc).ThenBy(x => x.Position).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
+                dbArtists[i].Genres = tracks.Values.Where(x => x.TrackArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).SelectMany(x => x.TrackGenres).Distinct().ToList();
+                
+                // Try to add the artist, if you can't then update the artist
+                bool check = artists.TryAdd($"{dbArtists[i].Name} + {dbArtists[i]._id}", dbArtists[i]);
+                if (!check)
+                {
+                    artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].Releases = dbArtists[i].Releases;
+                    artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].SeenOn = dbArtists[i].SeenOn;
+                    artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].Tracks = dbArtists[i].Tracks;
+                    artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].Genres = dbArtists[i].Genres;
+                }
+
+                Task up = new Task(() =>
+                {
+                    ScannedFiles++;
+                });
+                up.Start();
+            }
+
+            // Update tracks with the proper album and artist ids
+            ScannedFiles = 0;
+            FoundFiles = tracks.Count();
+            CurrentStatus = "Updating Tracks";
+            foreach (var track in tracks.Values)
+            {
+                Track t = new Track(track);
+                t.Album = dbAlbums.Where(x => x.Name == t.Album.Name).Select(x => new DbLink() { _id = x._id, Name = x.Name }).FirstOrDefault();
+                for (int i = 0; i < t.TrackArtists.Count(); i++)
+                {
+                    t.TrackArtists[i] = artists.Values.Where(x => x.Name == t.TrackArtists[i].Name).Select(x => new DbLink() { _id = x._id, Name = x.Name }).FirstOrDefault();
+                }
+                t.TrackArtists = t.TrackArtists.DistinctBy(x => x._id).ToList();
+                dbTracks.Add(t);
+
+                Task up = new Task(() =>
+                {
+                    ScannedFiles++;
+                });
+                up.Start();
+            }
+
+            // Update tracks to include found lyric files
             ScannedFiles = 0;
             FoundFiles = LyricFiles.Count();
             CurrentStatus = "Setting Lyrics";
@@ -787,13 +950,17 @@ namespace Melon.LocalClasses
                 up.Start();
             }
 
-            Upload(dbTracks, dbAlbums, dbArtists);
+            // Bulk write to MongoDB
+            Upload(dbTracks, albums.Values.ToList(), artists.Values.ToList());
         }
         private static void Upload(List<Track> DbTracks, List<Album> DbAlbums, List<Artist> DbArtists)
         {
-            //tracksCollection.InsertMany(tracks);
-            var trackModels = new List<WriteModel<Track>>();
+            // Update Tracks
+            ScannedFiles = 0;
+            FoundFiles = 3;
+            CurrentStatus = "Writing Tracks";
 
+            var trackModels = new List<WriteModel<Track>>();
             foreach (var track in DbTracks)
             {
                 var filter = Builders<Track>.Filter.Eq(a => a._id, track._id);
@@ -807,9 +974,11 @@ namespace Melon.LocalClasses
                 tracksCollection.BulkWrite(trackModels);
             }
 
-            //albumsCollection.InsertMany(albums);
-            var albumModels = new List<WriteModel<Album>>();
+            // Update Albums
+            ScannedFiles = 1;
+            CurrentStatus = "Writing Albums";
 
+            var albumModels = new List<WriteModel<Album>>();
             foreach (var album in DbAlbums)
             {
                 var filter = Builders<Album>.Filter.Eq(a => a._id, album._id);
@@ -823,9 +992,11 @@ namespace Melon.LocalClasses
                 albumsCollection.BulkWrite(albumModels);
             }
 
-            //artistsCollection.InsertMany(artists);
-            var artistModels = new List<WriteModel<Artist>>();
+            // Update Artists
+            ScannedFiles = 2;
+            CurrentStatus = "Writing Artists";
 
+            var artistModels = new List<WriteModel<Artist>>();
             foreach (var artist in DbArtists)
             {
                 var filter = Builders<Artist>.Filter.Eq(a => a._id, artist._id);
@@ -838,6 +1009,8 @@ namespace Melon.LocalClasses
             {
                 artistsCollection.BulkWrite(artistModels);
             }
+
+            ScannedFiles = 3;
         }
         private static void DeletePass()
         {
@@ -851,23 +1024,23 @@ namespace Melon.LocalClasses
 
             ScannedFiles = 0;
             FoundFiles = tracks.Count();
-            foreach(var track in tracks)
+            foreach (var track in tracks.Values)
             {
                 CurrentFile = track.Path;
                 // Track is deleted, remove.
                 if (!File.Exists(track.Path))
                 {
                     // remove from albums
-                    var filter = Builders<Album>.Filter.Eq(x=>x._id, track.Album._id);
+                    var filter = Builders<Album>.Filter.Eq(x => x._id, track.Album._id);
                     var albums = AlbumCollection.Find(filter).ToList();
 
                     List<string> zeroed = new List<string>();
-                    if(albums.Count() != 0)
+                    if (albums.Count() != 0)
                     {
                         var album = albums[0];
                         var query = (from t in album.Tracks
-                                        where t._id == track._id
-                                        select t).FirstOrDefault();
+                                     where t._id == track._id
+                                     select t).FirstOrDefault();
                         album.Tracks.Remove(query);
                         if (album.Tracks.Count == 0)
                         {
@@ -883,16 +1056,16 @@ namespace Melon.LocalClasses
                     // remove from artists
                     foreach (var artist in track.TrackArtists)
                     {
-                        var aFilter = Builders<Artist>.Filter.Eq(x=>x._id, artist._id);
+                        var aFilter = Builders<Artist>.Filter.Eq(x => x._id, artist._id);
                         var artists = ArtistCollection.Find(aFilter).ToList();
                         Artist dbArtist = null;
 
-                        if(artists.Count() != 0)
+                        if (artists.Count() != 0)
                         {
                             dbArtist = artists[0];
                             var query = (from t in dbArtist.Tracks
-                                            where t._id == track._id
-                                            select t).FirstOrDefault();
+                                         where t._id == track._id
+                                         select t).FirstOrDefault();
                             dbArtist.Tracks.Remove(query);
 
                             if (dbArtist.Tracks.Count() == 0)
@@ -901,20 +1074,20 @@ namespace Melon.LocalClasses
                             }
                             else
                             {
-                                foreach(var z in zeroed)
+                                foreach (var z in zeroed)
                                 {
                                     var q = (from a in dbArtist.Releases
-                                            where a._id == z
-                                            select a).ToList();
+                                             where a._id == z
+                                             select a).ToList();
 
-                                    foreach(var a in q)
+                                    foreach (var a in q)
                                     {
                                         dbArtist.Releases.Remove(a);
                                     }
 
                                     q = (from a in dbArtist.SeenOn
-                                            where a._id == z
-                                            select a).ToList();
+                                         where a._id == z
+                                         select a).ToList();
 
                                     foreach (var a in q)
                                     {
@@ -926,7 +1099,7 @@ namespace Melon.LocalClasses
                         }
                     }
                     // Remove Track
-                    var tFilter = Builders<Track>.Filter.Eq(x=>x._id, track._id);
+                    var tFilter = Builders<Track>.Filter.Eq(x => x._id, track._id);
                     TracksCollection.DeleteOne(tFilter);
                 }
                 Task u = new Task(() =>
@@ -957,7 +1130,7 @@ namespace Melon.LocalClasses
                     }
                     collection.Tracks = tracks;
                     collection.TrackCount = collection.Tracks.Count();
-                    ColCollection.ReplaceOne(Builders<Collection>.Filter.Eq(x=>x._id, collection._id), collection);
+                    ColCollection.ReplaceOne(Builders<Collection>.Filter.Eq(x => x._id, collection._id), collection);
                     ScannedFiles++;
                 }
 
@@ -989,7 +1162,7 @@ namespace Melon.LocalClasses
             foreach (var a in aSplit)
             {
                 string name = a;
-                if(name == "")
+                if (name == "")
                 {
                     name = StateManager.StringsManager.GetString("UnknownArtistStatus");
                 }
@@ -1036,11 +1209,11 @@ namespace Melon.LocalClasses
             string PositiveConfirmation = StateManager.StringsManager.GetString("PositiveConfirmation");
             string NegativeConfirmation = StateManager.StringsManager.GetString("NegativeConfirmation");
             var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
-            if (input == PositiveConfirmation) 
+            if (input == PositiveConfirmation)
             {
                 ResetDb();
             }
-            else 
+            else
             {
                 return;
             }
@@ -1055,7 +1228,7 @@ namespace Melon.LocalClasses
 
                 Console.WriteLine(StateManager.StringsManager.GetString("ScannerRunningCheck").Pastel(MelonColor.Text));
                 var opt = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
-                if(opt == PositiveConfirmation)
+                if (opt == PositiveConfirmation)
                 {
                     ScanProgressView();
                 }
@@ -1076,9 +1249,12 @@ namespace Melon.LocalClasses
             {
                 if (!Scanning)
                 {
+                    // Check Metadata Collection for version mismatch and convert if needed
+                    CheckAndFix();
+
                     Thread scanThread = new Thread(StartScan);
                     scanThread.Start(false);
-                    DisplayManager.UIExtensions.Add(() => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
+                    DisplayManager.UIExtensions.Add("LibraryScanIndicator", () => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); });
                 }
                 ScanProgressView();
             }
@@ -1116,18 +1292,19 @@ namespace Melon.LocalClasses
             var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
             if (input == PositiveConfirmation)
             {
-                if(!Scanning)
+                if (!Scanning)
                 {
+                    // Check Metadata Collection for version mismatch and convert if needed
+                    CheckAndFix();
+
                     Thread scanThread = new Thread(StartScan);
                     scanThread.Start(true);
-                    DisplayManager.UIExtensions.Add(() => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
-                    //DisplayManager.MenuOptions.Remove("Library Scanner");
-                    //DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
+                    DisplayManager.UIExtensions.Add("LibraryScanIndicator", () => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight));});
                 }
                 ScanProgressView();
             }
-            else 
-            { 
+            else
+            {
                 return;
             }
         }
@@ -1165,36 +1342,31 @@ namespace Melon.LocalClasses
                         Console.Write(controls.Pastel(MelonColor.BackgroundText));
                         Console.CursorTop = sTop;
                         Console.CursorLeft = sLeft;
-                        Console.WriteLine($"{StateManager.StringsManager.GetString("ScanStatus")} {ScannedFiles.ToString().Pastel(MelonColor.Melon)} // {FoundFiles.ToString().Pastel(MelonColor.Melon)} {StateManager.StringsManager.GetString("FoundStatus")}");
+                        Console.WriteLine($"{StateManager.StringsManager.GetString("ScanStatus")} {ScannedFiles.ToString().Pastel(MelonColor.Melon)} // {FoundFiles.ToString().Pastel(MelonColor.Melon)} {StateManager.StringsManager.GetString("FoundStatus")}     ");
                         MelonUI.DisplayProgressBar(ScannedFiles, FoundFiles, '#', '-');
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        string msg = $"{StateManager.StringsManager.GetString("TimeLeftDisplay")}: {TimeSpan.FromMilliseconds((averageMilliseconds / ScannedFiles)*(FoundFiles - ScannedFiles)).ToString(@"hh\:mm\:ss")}";
+                        string msg = $"{StateManager.StringsManager.GetString("TimeLeftDisplay")}: {TimeSpan.FromMilliseconds((averageMilliseconds / ScannedFiles) * (FoundFiles - ScannedFiles)).ToString(@"hh\:mm\:ss")}  ";
                         int max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"{StateManager.StringsManager.GetString("AverageFileTime")}: {TimeSpan.FromMilliseconds(averageMilliseconds / ScannedFiles)}";
+                        msg = $"{StateManager.StringsManager.GetString("AverageFileTime")}: {TimeSpan.FromMilliseconds(averageMilliseconds / ScannedFiles)}  ";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"{StateManager.StringsManager.GetString("FolderStatusDisplay")}: {CurrentFolder}";
+                        msg = $"{StateManager.StringsManager.GetString("FolderStatusDisplay")}: {CurrentFolder}  ";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"{StateManager.StringsManager.GetString("FileStatusDisplay")}: {CurrentFile}";
+                        msg = $"{StateManager.StringsManager.GetString("FileStatusDisplay")}: {CurrentFile}  ";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"{StateManager.StringsManager.GetString("SystemStatusDisplay")}: {CurrentStatus}";
-                        max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
-                        Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
-                        Console.Write(new string(' ', Console.WindowWidth));
-                        Console.CursorLeft = 0;
-                        msg = $"Threads: {threads.Count()}";
+                        msg = $"{StateManager.StringsManager.GetString("SystemStatusDisplay")}: {CurrentStatus}  ";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.WriteLine(new string(' ', Console.WindowWidth));
@@ -1214,7 +1386,7 @@ namespace Melon.LocalClasses
                 if (Console.KeyAvailable)
                 {
                     var k = Console.ReadKey();
-                    if(k.Key == ConsoleKey.Escape)
+                    if (k.Key == ConsoleKey.Escape)
                     {
                         endDisplay = true;
                         return;

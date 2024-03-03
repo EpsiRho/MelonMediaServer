@@ -1437,7 +1437,7 @@ namespace Melon.LocalClasses
                 {
                     Thread scanThread = new Thread(MelonScanner.StartScan);
                     scanThread.Start(false);
-                    DisplayManager.UIExtensions.Add(() => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
+                    DisplayManager.UIExtensions.Add("LibraryScanIndicator",() => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.Remove("LibraryScanIndicator"); });
                 }
                 ScanProgressView();
             }
@@ -1479,7 +1479,7 @@ namespace Melon.LocalClasses
                 {
                     Thread scanThread = new Thread(MelonScanner.StartScan);
                     scanThread.Start(true);
-                    DisplayManager.UIExtensions.Add(() => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.RemoveAt(0); });
+                    DisplayManager.UIExtensions.Add("LibraryScanIndicator", () => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); DisplayManager.UIExtensions.Remove("LibraryScanIndicator"); });
                     //DisplayManager.MenuOptions.Remove("Library Scanner");
                     //DisplayManager.MenuOptions.Insert(0, "Scan Progress", ScanProgressView);
                 }

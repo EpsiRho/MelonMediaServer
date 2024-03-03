@@ -238,8 +238,8 @@ namespace Melon.DisplayClasses
         { 
             // Here we'll connect to the database and add the first user
             // We'll also save all the settings set during the OOBE
-            var databaseNames = StateManager.DbClient.ListDatabaseNames().ToList();
-            var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
+            var databaseNames = DbClient.ListDatabaseNames().ToList();
+            var NewMelonDB = DbClient.GetDatabase("Melon");
             var userCollection = NewMelonDB.GetCollection<User>("Users");
             var metadataCollection = NewMelonDB.GetCollection<DbMetadata>("Metadata");
 
@@ -272,8 +272,8 @@ namespace Melon.DisplayClasses
             }
 
             userCollection.InsertOne(user);
-            Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
-            DisplayManager.UIExtensions.Remove(Display);
+            Storage.SaveConfigFile("MelonSettings", MelonSettings, new[] { "JWTKey" });
+            DisplayManager.UIExtensions.Remove("SetupUI");
             Console.CursorVisible = false;
         }
         public static void ShowSetupError()

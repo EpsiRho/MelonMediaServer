@@ -65,7 +65,7 @@ namespace Melon.LocalClasses
                     UseMenuColor = true,
                 };
                 MelonColor.SetDefaults();
-                DisplayManager.UIExtensions.Add(SetupUI.Display); // Add SetupUI to UIExtentions so we can show the OOBE
+                DisplayManager.UIExtensions.Add("SetupUI", SetupUI.Display); // Add SetupUI to UIExtentions so we can show the OOBE
                 Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
             }
             else
@@ -210,7 +210,7 @@ namespace Melon.LocalClasses
             // Show OOBE if flag/arg enabled and headless disabled
             if ((MelonFlags.ForceOOBE || runSetup) && !headless)
             {
-                DisplayManager.UIExtensions.Add(SetupUI.Display);
+                DisplayManager.UIExtensions.Add("SetupUI",SetupUI.Display);
             }
 
             // Load SSLConfig if exists
@@ -264,6 +264,7 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.Scan);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.ScanShort);
             DisplayManager.MenuOptions.Add("In-Memory Scanner", MelonMemoryScanner.Scan);
+            DisplayManager.MenuOptions.Add("In-Memory Scanner (Short)", MelonMemoryScanner.ScanShort);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
 

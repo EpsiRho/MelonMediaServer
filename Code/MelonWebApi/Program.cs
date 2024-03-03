@@ -53,7 +53,7 @@ namespace MelonWebApi
                 mWebApi = new MWebApi();
                 StateManager.Init(headless, setup, disablePlugins, lang, mWebApi);
 
-                if (headless && DisplayManager.UIExtensions.Count() != 0)
+                if (headless && DisplayManager.UIExtensions.Contains("SetupUI"))
                 {
                     SetupUI.ShowSetupError();
                     return -1;
