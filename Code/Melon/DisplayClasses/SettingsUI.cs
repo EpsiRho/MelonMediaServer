@@ -57,13 +57,13 @@ namespace Melon.DisplayClasses
 
                 // Input
                 var commands = new List<string>();
-                foreach(var key in settings.Keys)
+                foreach (var key in settings.Keys)
                 {
                     commands.Add((string)key);
                 }
                 var choice = MelonUI.OptionPicker(commands);
 
-                if(choice == StringsManager.GetString("BackNavigation"))
+                if (choice == StringsManager.GetString("BackNavigation"))
                 {
                     LockUI = false;
                     break;
@@ -121,6 +121,34 @@ namespace Melon.DisplayClasses
                     { StringsManager.GetString("BackNavigation"), () => { LockUI = false; } },
                     { StringsManager.GetString("LibraryPathEditOption") , LibraryPathSettings }
                 };
+            if(((Action)DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")]).Method.Name != "Scan")
+            {
+                settings.Add("Disable Experimental V2", () =>
+                {
+                    DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")] = MelonScanner.Scan;
+                    DisplayManager.MenuOptions[StringsManager.GetString("ShortScanOption")] = MelonScanner.ScanShort;
+                    settings.Remove("Disable Experimental V2");
+                    settings.Add("Enable Experimental V2", () =>
+                    {
+                        DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")] = MelonMemoryScanner.MemoryScan;
+                        DisplayManager.MenuOptions[StringsManager.GetString("ShortScanOption")] = MelonMemoryScanner.MemoryScanShort;
+                    });
+                });
+            }
+            else
+            {
+                settings.Add("Enable Experimental V2", () =>
+                {
+                    DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")] = MelonMemoryScanner.MemoryScan;
+                    DisplayManager.MenuOptions[StringsManager.GetString("ShortScanOption")] = MelonMemoryScanner.MemoryScanShort;
+                    settings.Remove("Enable Experimental V2");
+                    settings.Add("Disable Experimental V2", () =>
+                    {
+                        DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")] = MelonScanner.Scan;
+                        DisplayManager.MenuOptions[StringsManager.GetString("ShortScanOption")] = MelonScanner.ScanShort;
+                    });
+                });
+            }
 
             while (LockUI && !StateManager.RestartServer)
             {
@@ -213,7 +241,7 @@ namespace Melon.DisplayClasses
                 }
             }
         }
-        
+
         // Settings Networking
         private static void Networking()
         {
@@ -320,7 +348,7 @@ namespace Melon.DisplayClasses
                     return;
                 }
 
-                foreach(var url in input.Split(";"))
+                foreach (var url in input.Split(";"))
                 {
                     Regex UrlWithWildcardRegex = new Regex(@"^(https?:\/\/)([\w*]+\.)*[\w*]+(:\d+)?(\/[\w\/]*)*(\?.*)?(#.*)?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
                     result = UrlWithWildcardRegex.IsMatch(url);
@@ -351,17 +379,17 @@ namespace Melon.DisplayClasses
         {
             // Check if ssl is setup already
             var config = Security.GetSSLConfig();
-            if(config.PathToCert != "")
+            if (config.PathToCert != "")
             {
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("NetworkSettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
                 Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
                 Console.WriteLine(StringsManager.GetString("SSLConfigStatus").Pastel(MelonColor.Text));
                 var opt = MelonUI.OptionPicker(new List<string>() { StringsManager.GetString("BackNavigation"), StringsManager.GetString("SSLDisableOption"), StringsManager.GetString("SSLConfigEditOption") });
-                if(opt == StringsManager.GetString("BackNavigation"))
+                if (opt == StringsManager.GetString("BackNavigation"))
                 {
                     return;
                 }
-                else if(opt == StringsManager.GetString("SSLDisableOption"))
+                else if (opt == StringsManager.GetString("SSLDisableOption"))
                 {
                     Security.SetSSLConfig("", "");
                     Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
@@ -684,7 +712,7 @@ namespace Melon.DisplayClasses
                     ProcessStartInfo startInfo = new ProcessStartInfo
                     {
                         FileName = "explorer.exe",
-                        Arguments = $"\"{path.Replace("/","\\")}\"",
+                        Arguments = $"\"{path.Replace("/", "\\")}\"",
                         UseShellExecute = true
                     };
 

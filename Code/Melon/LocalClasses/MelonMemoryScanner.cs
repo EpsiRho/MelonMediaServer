@@ -1218,13 +1218,13 @@ namespace Melon.LocalClasses
                 return;
             }
         }
-        public static void Scan()
+        public static void MemoryScan()
         {
             string PositiveConfirmation = StateManager.StringsManager.GetString("PositiveConfirmation");
             string NegativeConfirmation = StateManager.StringsManager.GetString("NegativeConfirmation");
             if (Scanning)
             {
-                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("FullScanOption") });
+                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), $"{StateManager.StringsManager.GetString("FullScanOption")} V2.0.0" });
 
                 Console.WriteLine(StateManager.StringsManager.GetString("ScannerRunningCheck").Pastel(MelonColor.Text));
                 var opt = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
@@ -1238,7 +1238,7 @@ namespace Melon.LocalClasses
                 }
             }
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("FullScanOption") });
+            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), $"{StateManager.StringsManager.GetString("FullScanOption")} V2.0.0" });
 
             // Description
             Console.WriteLine(StateManager.StringsManager.GetString("FullLibraryScanInitiation").Pastel(MelonColor.Text));
@@ -1263,13 +1263,13 @@ namespace Melon.LocalClasses
                 return;
             }
         }
-        public static void ScanShort()
+        public static void MemoryScanShort()
         {
             string PositiveConfirmation = StateManager.StringsManager.GetString("PositiveConfirmation");
             string NegativeConfirmation = StateManager.StringsManager.GetString("NegativeConfirmation");
             if (Scanning)
             {
-                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("ShortScanOption") });
+                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), $"{StateManager.StringsManager.GetString("ShortScanOption")} V2.0.0" });
 
                 Console.WriteLine(StateManager.StringsManager.GetString("ScannerRunningCheck").Pastel(MelonColor.Text));
                 var opt = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
@@ -1283,7 +1283,7 @@ namespace Melon.LocalClasses
                 }
             }
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("ShortScanOption") });
+            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), $"{StateManager.StringsManager.GetString("ShortScanOption")} V2.0.0" });
 
             // Description
             Console.WriteLine(StateManager.StringsManager.GetString("ShortScanExplanation").Pastel(MelonColor.Text));
