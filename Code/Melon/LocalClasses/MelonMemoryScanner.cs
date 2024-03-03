@@ -393,12 +393,14 @@ namespace Melon.LocalClasses
             }
 
             // Run through and get a count of how many files need scanning to display the proper number on the progressbar
+            CurrentStatus = "Finding Files";
             foreach (var path in StateManager.MelonSettings.LibraryPaths)
             {
                 ScanFolderCounter(path);
             }
 
             // Start recursive scan to open threads and load in file metadata 
+            CurrentStatus = "Scanning Files";
             threads = new ConcurrentDictionary<string, string>();
             foreach (var path in StateManager.MelonSettings.LibraryPaths)
             {
@@ -474,16 +476,16 @@ namespace Melon.LocalClasses
                     continue;
                 }
 
-                // If there are 50 threads, don't add more threads till previous ones finish
+                // If there are 25 threads, don't add more threads till previous ones finish
                 while (threads.Count() > 25)
                 {
                     Thread.Sleep(100);
                 }
 
                 // Add thread to the thread tracker and start it
-                threads.TryAdd(file, "");
                 Task.Factory.StartNew(() =>
                 {
+                    threads.TryAdd(file, "");
                     ScanInTrack(file);
                 });
             };
@@ -491,14 +493,9 @@ namespace Melon.LocalClasses
         }
         private static void ScanInTrack(string file)
         {
-            var watch = Stopwatch.StartNew(); // Start a watch to measure the time taken to scan the file
-
             try
             {
-                Task.Factory.StartNew(() =>
-                {
-                    CurrentFile = file;
-                });
+                //CurrentFile = file;
 
                 // Get the file name
                 var filename = Path.GetFileName(file);
@@ -521,13 +518,10 @@ namespace Melon.LocalClasses
                 }
 
                 // Get the file metadata, in chunks of 200000 bytes
-                ATL.Settings.FileBufferSize = 131072;
+                ATL.Settings.FileBufferSize = 32768;
                 var fileMetadata = new ATL.Track(file);
 
-                Task.Factory.StartNew(() =>
-                {
-                    CurrentStatus = StateManager.StringsManager.GetString("TagPreparationStatus");
-                });
+                //CurrentStatus = StateManager.StringsManager.GetString("TagPreparationStatus");
 
                 // Get and Split the artists metadata tag
                 List<string> albumArtists = SplitArtists(fileMetadata.AlbumArtist);
@@ -698,12 +692,7 @@ namespace Melon.LocalClasses
             }
 
             // Track added successfully, so update metrics and remove the thread from the tracker
-            watch.Stop();
-            Task.Factory.StartNew(() =>
-            {
-                ScannedFiles++;
-                averageMilliseconds = UpdateAvgFileTime(watch.ElapsedMilliseconds);
-            });
+            ScannedFiles++;
             threads.TryRemove(file, out _);
             return;
         }
@@ -1198,20 +1187,6 @@ namespace Melon.LocalClasses
 
             return genres;
         }
-        private static long UpdateAvgFileTime(long newTime)
-        {
-            double alpha = 0.0001;
-
-            fileTimes.Add(newTime);
-
-            if (fileTimes.Count() == 0)
-            {
-                return newTime;
-            }
-
-            long avg = fileTimes.Sum() / fileTimes.Count();
-            return (long)((alpha * newTime) + ((1 - alpha) * avg));
-        }
 
 
         // UI
@@ -1364,27 +1339,12 @@ namespace Melon.LocalClasses
                         MelonUI.DisplayProgressBar(ScannedFiles, FoundFiles, '#', '-');
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        string msg = $"{StateManager.StringsManager.GetString("TimeLeftDisplay")}: {TimeSpan.FromMilliseconds((averageMilliseconds) * (FoundFiles - ScannedFiles)).ToString(@"hh\:mm\:ss")}  ";
-                        int max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
+                        var msg = $"{StateManager.StringsManager.GetString("SystemStatusDisplay")}: {CurrentStatus}  ";
+                        var max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.Write(new string(' ', Console.WindowWidth));
                         Console.CursorLeft = 0;
-                        msg = $"{StateManager.StringsManager.GetString("AverageFileTime")}: {TimeSpan.FromMilliseconds(averageMilliseconds)}  ";
-                        max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
-                        Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
-                        Console.Write(new string(' ', Console.WindowWidth));
-                        Console.CursorLeft = 0;
-                        msg = $"{StateManager.StringsManager.GetString("FolderStatusDisplay")}: {CurrentFolder}  ";
-                        max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
-                        Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
-                        Console.Write(new string(' ', Console.WindowWidth));
-                        Console.CursorLeft = 0;
-                        msg = $"{StateManager.StringsManager.GetString("FileStatusDisplay")}: {CurrentFile}  ";
-                        max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
-                        Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
-                        Console.Write(new string(' ', Console.WindowWidth));
-                        Console.CursorLeft = 0;
-                        msg = $"{StateManager.StringsManager.GetString("SystemStatusDisplay")}: {CurrentStatus}  ";
+                        msg = $"Threads: {threads.Count()}  ";
                         max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
                         Console.WriteLine(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
                         Console.WriteLine(new string(' ', Console.WindowWidth));
@@ -1394,6 +1354,7 @@ namespace Melon.LocalClasses
                     {
 
                     }
+                    Thread.Sleep(50);
                 }
             });
             DisplayThread.Start();
