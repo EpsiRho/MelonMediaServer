@@ -53,7 +53,7 @@ namespace MelonWebApi
                 mWebApi = new MWebApi();
                 StateManager.Init(headless, setup, disablePlugins, lang, mWebApi);
 
-                if (headless && DisplayManager.UIExtensions.Count() != 0)
+                if (headless && DisplayManager.UIExtensions.Contains("SetupUI"))
                 {
                     SetupUI.ShowSetupError();
                     return -1;
@@ -191,6 +191,13 @@ namespace MelonWebApi
 
                 app.MapControllers();
 
+                //var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+                //
+                //lifetime.ApplicationStopping.Register(() =>
+                //{
+                //
+                //});
+
                 app.RunAsync();
 
                 if (!args.Contains("--headless") && !args.Contains("-h"))
@@ -204,6 +211,7 @@ namespace MelonWebApi
                 }
                 else
                 {
+                    StateManager.RestartServer = false;
                     app.WaitForShutdown();
                 }
 

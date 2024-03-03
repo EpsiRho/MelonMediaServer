@@ -272,7 +272,7 @@ namespace Melon.PluginModels
                 }
             }
         }
-        public List<Action> UIExtensions
+        public OrderedDictionary UIExtensions
         {
             get
             {

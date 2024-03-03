@@ -63,7 +63,7 @@ namespace Melon.Interface
     public interface IDisplayManager
     {
         public OrderedDictionary MenuOptions { get; set; }
-        public List<Action> UIExtensions { get; set; }
+        public OrderedDictionary UIExtensions { get; set; }
     }
     public interface IMelonUI
     {

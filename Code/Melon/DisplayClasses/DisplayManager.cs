@@ -17,7 +17,7 @@ namespace Melon.Classes
     {
         // Define Menu Options
         public static OrderedDictionary MenuOptions = new OrderedDictionary();
-        public static List<Action> UIExtensions = new List<Action>();
+        public static OrderedDictionary UIExtensions = new OrderedDictionary();
         public static void DisplayHome()
         {
             Console.CursorVisible = false;
@@ -29,9 +29,11 @@ namespace Melon.Classes
                 MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle") });
 
                 // UI Extensions
-                foreach (var extension in UIExtensions.ToArray())
+                Action[] ex = new Action[UIExtensions.Count];
+                UIExtensions.Values.CopyTo(ex, 0);
+                foreach (var extension in ex)
                 {
-                    extension();
+                    ((Action)extension)();
                 }
 
                 // Input
