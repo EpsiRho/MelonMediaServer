@@ -121,37 +121,27 @@ namespace Melon.DisplayClasses
                     { StringsManager.GetString("BackNavigation"), () => { LockUI = false; } },
                     { StringsManager.GetString("LibraryPathEditOption") , LibraryPathSettings }
                 };
-            if(((Action)DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")]).Method.Name != "Scan")
+            while (LockUI && !StateManager.RestartServer)
             {
-                settings.Add("Disable Experimental V2", () =>
+                if (((Action)DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")]).Method.Name != "Scan")
                 {
-                    DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")] = MelonScanner.Scan;
-                    DisplayManager.MenuOptions[StringsManager.GetString("ShortScanOption")] = MelonScanner.ScanShort;
-                    settings.Remove("Disable Experimental V2");
-                    settings.Add("Enable Experimental V2", () =>
-                    {
-                        DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")] = MelonMemoryScanner.MemoryScan;
-                        DisplayManager.MenuOptions[StringsManager.GetString("ShortScanOption")] = MelonMemoryScanner.MemoryScanShort;
-                    });
-                });
-            }
-            else
-            {
-                settings.Add("Enable Experimental V2", () =>
-                {
-                    DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")] = MelonMemoryScanner.MemoryScan;
-                    DisplayManager.MenuOptions[StringsManager.GetString("ShortScanOption")] = MelonMemoryScanner.MemoryScanShort;
-                    settings.Remove("Enable Experimental V2");
-                    settings.Add("Disable Experimental V2", () =>
+                    settings.Add(StringsManager.GetString("ExperimentalScannerDisable"), () =>
                     {
                         DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")] = MelonScanner.Scan;
                         DisplayManager.MenuOptions[StringsManager.GetString("ShortScanOption")] = MelonScanner.ScanShort;
+                        settings.Remove(StringsManager.GetString("ExperimentalScannerDisable"));
                     });
-                });
-            }
+                }
+                else
+                {
+                    settings.Add(StringsManager.GetString("ExperimentalScannerEnable"), () =>
+                    {
+                        DisplayManager.MenuOptions[StringsManager.GetString("FullScanOption")] = MelonMemoryScanner.MemoryScan;
+                        DisplayManager.MenuOptions[StringsManager.GetString("ShortScanOption")] = MelonMemoryScanner.MemoryScanShort;
+                        settings.Remove(StringsManager.GetString("ExperimentalScannerEnable"));
+                    });
+                }
 
-            while (LockUI && !StateManager.RestartServer)
-            {
                 // Title
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("ScannerSettingsOption") });
 

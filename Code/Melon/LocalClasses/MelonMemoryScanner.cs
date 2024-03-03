@@ -393,14 +393,14 @@ namespace Melon.LocalClasses
             }
 
             // Run through and get a count of how many files need scanning to display the proper number on the progressbar
-            CurrentStatus = "Finding Files";
+            CurrentStatus = StateManager.StringsManager.GetString("ScannerFinding");
             foreach (var path in StateManager.MelonSettings.LibraryPaths)
             {
                 ScanFolderCounter(path);
             }
 
             // Start recursive scan to open threads and load in file metadata 
-            CurrentStatus = "Scanning Files";
+            CurrentStatus = StateManager.StringsManager.GetString("ScannerScanning");
             threads = new ConcurrentDictionary<string, string>();
             foreach (var path in StateManager.MelonSettings.LibraryPaths)
             {
@@ -432,6 +432,8 @@ namespace Melon.LocalClasses
 
             // Set Indexes for mongodb
             endDisplay = true;
+            FoundFiles = 100;
+            ScannedFiles = 99;
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentStatus = StateManager.StringsManager.GetString("CompletionStatus");
             IndexCollections();
@@ -709,9 +711,9 @@ namespace Melon.LocalClasses
             var tempAlbums = tracks.Values.Select(t => t.Album).DistinctBy(a => $"{a.Name} && {String.Join(";", a.AlbumArtists.Select(x => x.Name))}").ToList();
             
             // Start creating albums
-            ScannedFiles = 0;
+            ScannedFiles = 1;
             FoundFiles = albums.Count;
-            CurrentStatus = "Creating Albums";
+            CurrentStatus = StateManager.StringsManager.GetString("CreateAlbumsStatus");
             foreach (var album in tempAlbums)
             {
                 // Get the first album artist name and use it to find tracks from this album/artist
@@ -871,9 +873,9 @@ namespace Melon.LocalClasses
             dbArtists = dbArtists.DistinctBy(x => x.Name).ToList();
 
             // Start creating artists
-            ScannedFiles = 0;
+            ScannedFiles = 1;
             FoundFiles = dbArtists.Count;
-            CurrentStatus = "Creating Artist";
+            CurrentStatus = StateManager.StringsManager.GetString("CreateArtistsStatus");
             for (int i = 0; i < dbArtists.Count(); i++)
             {
                 // Set artist info
@@ -895,9 +897,9 @@ namespace Melon.LocalClasses
             }
 
             // Update tracks with the proper album and artist ids
-            ScannedFiles = 0;
+            ScannedFiles = 1;
             FoundFiles = tracks.Count;
-            CurrentStatus = "Updating Tracks";
+            CurrentStatus = StateManager.StringsManager.GetString("UpdateTracksStatus");
             foreach (var track in tracks.Values)
             {
                 Track t = new Track(track);
@@ -912,9 +914,9 @@ namespace Melon.LocalClasses
             }
 
             // Update tracks to include found lyric files
-            ScannedFiles = 0;
+            ScannedFiles = 1;
             FoundFiles = LyricFiles.Count;
-            CurrentStatus = "Setting Lyrics";
+            CurrentStatus = StateManager.StringsManager.GetString("UpdateLyricsStatus");
             foreach (var lyricFile in LyricFiles)
             {
                 var t = dbTracks.Where(x => x.Path.StartsWith(lyricFile.Replace(".lrc", "").Replace("\\", "/"))).FirstOrDefault();
@@ -932,9 +934,9 @@ namespace Melon.LocalClasses
         private static void Upload(List<Track> DbTracks, List<Album> DbAlbums, List<Artist> DbArtists)
         {
             // Update Tracks
-            ScannedFiles = 0;
-            FoundFiles = 3;
-            CurrentStatus = "Writing Tracks";
+            ScannedFiles = 1;
+            FoundFiles = 4;
+            CurrentStatus = StateManager.StringsManager.GetString("WritingTracksStatus");
 
             var trackModels = new List<WriteModel<Track>>();
             foreach (var track in DbTracks)
@@ -951,8 +953,8 @@ namespace Melon.LocalClasses
             }
 
             // Update Albums
-            ScannedFiles = 1;
-            CurrentStatus = "Writing Albums";
+            ScannedFiles = 2;
+            CurrentStatus = StateManager.StringsManager.GetString("WritingAlbumsStatus");
 
             var albumModels = new List<WriteModel<Album>>();
             foreach (var album in DbAlbums)
@@ -969,8 +971,8 @@ namespace Melon.LocalClasses
             }
 
             // Update Artists
-            ScannedFiles = 2;
-            CurrentStatus = "Writing Artists";
+            ScannedFiles = 3;
+            CurrentStatus = StateManager.StringsManager.GetString("WritingArtistsStatus");
 
             var artistModels = new List<WriteModel<Artist>>();
             foreach (var artist in DbArtists)
@@ -986,7 +988,7 @@ namespace Melon.LocalClasses
                 artistsCollection.BulkWrite(artistModels);
             }
 
-            ScannedFiles = 3;
+            ScannedFiles = 4;
         }
         private static void DeletePass()
         {
@@ -1092,7 +1094,7 @@ namespace Melon.LocalClasses
             int page = 0;
             int count = 100;
             FoundFiles = ColCollection.Count(Builders<Collection>.Filter.Empty);
-            ScannedFiles = 0;
+            ScannedFiles = 1;
             while (true)
             {
                 var collections = ColCollection.Find(Builders<Collection>.Filter.Empty).Skip(page * count).Limit(count).ToList();
