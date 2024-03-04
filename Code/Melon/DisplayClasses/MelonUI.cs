@@ -292,8 +292,8 @@ namespace Melon.Classes
             {
                 // 8 in the am pm gang
                 double progressPercentage = count / max;
-                double completedWidth = (Console.WindowWidth - 2) * progressPercentage;
-                double remainingWidth = (Console.WindowWidth - 2) - completedWidth;
+                double completedWidth = (Console.WindowWidth - 4) * progressPercentage;
+                double remainingWidth = (Console.WindowWidth - 4) - completedWidth;
 
                 string progressBar = new string(foreground, (int)completedWidth);
                 string backgroundBar = new string(background, (int)remainingWidth);
