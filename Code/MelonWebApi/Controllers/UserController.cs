@@ -51,8 +51,8 @@ namespace MelonWebApi.Controllers
 
             var userFilter = Builders<User>.Filter.Eq(x => x._id, id);
             var user = UserCollection.Find(userFilter).FirstOrDefault();
-            
-            if(user == null) 
+
+            if (user == null)
             {
                 args.SendEvent("User Not Found", 404, Program.mWebApi);
                 return new ObjectResult("User Not Found") { StatusCode = 404 };
@@ -102,12 +102,12 @@ namespace MelonWebApi.Controllers
             var cUser = currentUsers[0];
 
             var userFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(username, "i"));
-            var users = UserCollection.Find(userFilter).ToList();            
+            var users = UserCollection.Find(userFilter).ToList();
 
             List<ResponseUser> pUsers = new List<ResponseUser>();
-            foreach(var user in users)
+            foreach (var user in users)
             {
-                if(user.Friends == null)
+                if (user.Friends == null)
                 {
                     user.Friends = new List<string>();
                 }
@@ -146,13 +146,13 @@ namespace MelonWebApi.Controllers
 
             var userFilter = Builders<User>.Filter.Eq(x => x.Username, User.Identity.Name);
             var user = UserCollection.Find(userFilter).FirstOrDefault();
-            if(user == null)
+            if (user == null)
             {
                 args.SendEvent("User Not Found", 404, Program.mWebApi);
                 return new ObjectResult("User Not Found") { StatusCode = 404 };
             }
 
-            if(user.Friends == null)
+            if (user.Friends == null)
             {
                 user.Friends = new List<string>();
             }
@@ -195,7 +195,7 @@ namespace MelonWebApi.Controllers
             var userFilter = Builders<User>.Filter.Eq(x => x.Username, User.Identity.Name);
             var users = UserCollection.Find(userFilter).ToList();
             var user = users.FirstOrDefault();
-            if(user == null)
+            if (user == null)
             {
                 args.SendEvent("User Not Found", 404, Program.mWebApi);
                 return new ObjectResult("User Not Found") { StatusCode = 404 };
@@ -277,7 +277,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
 
-            if(password == "")
+            if (password == "")
             {
                 args.SendEvent("User Not Found", 400, Program.mWebApi);
                 return new ObjectResult("Password cannot be empty") { StatusCode = 400 };
@@ -325,7 +325,7 @@ namespace MelonWebApi.Controllers
             var userFilter = Builders<User>.Filter.Eq(x => x._id, id);
             var user = UserCollection.Find(userFilter).FirstOrDefault();
 
-            if (user == null) 
+            if (user == null)
             {
                 args.SendEvent("User Not Found", 404, Program.mWebApi);
                 return new ObjectResult("User Not Found") { StatusCode = 404 };
@@ -391,25 +391,25 @@ namespace MelonWebApi.Controllers
             }
 
 
-            if(bio != null)
+            if (bio != null)
             {
                 user.Bio = bio;
             }
-            if(role != null && roles.Contains("Admin"))
+            if (role != null && roles.Contains("Admin"))
             {
                 user.Type = role;
             }
-            else if(role != null && !roles.Contains("Admin"))
+            else if (role != null && !roles.Contains("Admin"))
             {
                 args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                 return new ObjectResult("Invalid Auth") { StatusCode = 401 };
             }
 
-            if(publicStats != null)
+            if (publicStats != null)
             {
                 user.PublicStats = Convert.ToBoolean(publicStats);
             }
-            if(favTrackId != null)
+            if (favTrackId != null)
             {
                 user.FavTrack = favTrackId;
             }
@@ -515,7 +515,7 @@ namespace MelonWebApi.Controllers
 
             byte[] tempSalt;
             var protectedPassword = Security.HashPassword(password, out tempSalt);
-            
+
             user.Password = protectedPassword;
             user.Salt = tempSalt;
 

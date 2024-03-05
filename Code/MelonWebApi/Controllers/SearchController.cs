@@ -7,6 +7,7 @@ using MongoDB.Driver;
 using Melon.LocalClasses;
 using Melon.Models;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace MelonWebApi.Controllers
 {
@@ -70,37 +71,37 @@ namespace MelonWebApi.Controllers
             List<FilterDefinition<Track>> filterList = new List<FilterDefinition<Track>>();
             if (trackName != "")
             {
-                filterList.Add(Builders<Track>.Filter.Regex(x=>x.Name, new BsonRegularExpression(trackName, "i")));
+                filterList.Add(Builders<Track>.Filter.Regex(x=>x.Name, new BsonRegularExpression(Regex.Escape(trackName), "i")));
             }
 
             if (format != "")
             {
-                filterList.Add(Builders<Track>.Filter.Regex(x=>x.Format, new BsonRegularExpression(format, "i")));
+                filterList.Add(Builders<Track>.Filter.Regex(x=>x.Format, new BsonRegularExpression(Regex.Escape(format), "i")));
             }
 
             if (bitrate != "")
             {
-                filterList.Add(Builders<Track>.Filter.Regex(x=>x.Bitrate, new BsonRegularExpression(bitrate, "i")));
+                filterList.Add(Builders<Track>.Filter.Regex(x=>x.Bitrate, new BsonRegularExpression(Regex.Escape(bitrate), "i")));
             }
 
             if (sampleRate != "")
             {
-                filterList.Add(Builders<Track>.Filter.Regex(x=>x.SampleRate, new BsonRegularExpression(sampleRate, "i")));
+                filterList.Add(Builders<Track>.Filter.Regex(x=>x.SampleRate, new BsonRegularExpression(Regex.Escape(sampleRate), "i")));
             }
 
             if (channels != "")
             {
-                filterList.Add(Builders<Track>.Filter.Regex(x=>x.Channels, new BsonRegularExpression(channels, "i")));
+                filterList.Add(Builders<Track>.Filter.Regex(x=>x.Channels, new BsonRegularExpression(Regex.Escape(channels), "i")));
             }
 
             if (bitsPerSample != "")
             {
-                filterList.Add(Builders<Track>.Filter.Regex(x => x.BitsPerSample, new BsonRegularExpression(bitsPerSample, "i")));
+                filterList.Add(Builders<Track>.Filter.Regex(x => x.BitsPerSample, new BsonRegularExpression(Regex.Escape(bitsPerSample), "i")));
             }
 
             if (year != "")
             {
-                filterList.Add(Builders<Track>.Filter.Regex(x => x.Year, new BsonRegularExpression(year, "i")));
+                filterList.Add(Builders<Track>.Filter.Regex(x => x.Year, new BsonRegularExpression(Regex.Escape(year), "i")));
             }
 
             // Play Count
@@ -159,7 +160,7 @@ namespace MelonWebApi.Controllers
             {
                 foreach (var genre in genres)
                 {
-                    filterList.Add(Builders<Track>.Filter.Regex(x=>x.TrackGenres, new BsonRegularExpression(genre, "i")));
+                    filterList.Add(Builders<Track>.Filter.Regex(x=>x.TrackGenres, new BsonRegularExpression(Regex.Escape(genre), "i")));
                 }
             }
 
@@ -288,22 +289,22 @@ namespace MelonWebApi.Controllers
 
             if (albumName != "")
             {
-                filterList.Add(Builders<Album>.Filter.Regex(x=>x.Name, new BsonRegularExpression(albumName, "i")));
+                filterList.Add(Builders<Album>.Filter.Regex(x=>x.Name, new BsonRegularExpression(Regex.Escape(albumName), "i")));
             }
 
             if (publisher != "")
             {
-                filterList.Add(Builders<Album>.Filter.Regex(x=>x.Publisher, new BsonRegularExpression(publisher, "i")));
+                filterList.Add(Builders<Album>.Filter.Regex(x=>x.Publisher, new BsonRegularExpression(Regex.Escape(publisher), "i")));
             }
 
             if (releaseType != "")
             {
-                filterList.Add(Builders<Album>.Filter.Regex(x=>x.ReleaseType, new BsonRegularExpression(releaseType, "i")));
+                filterList.Add(Builders<Album>.Filter.Regex(x=>x.ReleaseType, new BsonRegularExpression(Regex.Escape(releaseType), "i")));
             }
 
             if (releaseType != "")
             {
-                filterList.Add(Builders<Album>.Filter.Regex(x=>x.ReleaseStatus, new BsonRegularExpression(releaseStatus, "i")));
+                filterList.Add(Builders<Album>.Filter.Regex(x=>x.ReleaseStatus, new BsonRegularExpression(Regex.Escape(releaseStatus), "i")));
             }
 
             // Play Count
@@ -349,7 +350,7 @@ namespace MelonWebApi.Controllers
             {
                 foreach (var genre in genres)
                 {
-                    filterList.Add(Builders<Album>.Filter.Regex(x=>x.AlbumGenres, new BsonRegularExpression(genre, "i")));
+                    filterList.Add(Builders<Album>.Filter.Regex(x=>x.AlbumGenres, new BsonRegularExpression(Regex.Escape(genre), "i")));
                 }
             }
 
@@ -470,7 +471,7 @@ namespace MelonWebApi.Controllers
             List<FilterDefinition<Artist>> filterList = new List<FilterDefinition<Artist>>();
             if (artistName != "")
             {
-                filterList.Add(Builders<Artist>.Filter.Regex(x=>x.Name, new BsonRegularExpression(artistName, "i")));
+                filterList.Add(Builders<Artist>.Filter.Regex(x=>x.Name, new BsonRegularExpression(Regex.Escape(artistName), "i")));
             }
 
             if (gtPlayCount >= 0)
@@ -501,7 +502,7 @@ namespace MelonWebApi.Controllers
             {
                 foreach (var genre in genres)
                 {
-                    filterList.Add(Builders<Artist>.Filter.Regex(x=>x.Genres, new BsonRegularExpression(genre, "i")));
+                    filterList.Add(Builders<Artist>.Filter.Regex(x=>x.Genres, new BsonRegularExpression(Regex.Escape(genre), "i")));
                 }
             }
 
