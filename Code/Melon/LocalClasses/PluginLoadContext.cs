@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace Melon.LocalClasses
 {
-    
     public class PluginLoadContext : AssemblyLoadContext
     {
         private AssemblyDependencyResolver _resolver;

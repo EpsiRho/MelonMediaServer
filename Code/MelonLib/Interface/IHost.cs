@@ -58,6 +58,7 @@ namespace Melon.Interface
         public Flags MelonFlags { get; }
         public ResourceManager StringsManager { get; }
         public List<IPlugin> Plugins { get; }
+        public Dictionary<string, string> LaunchArgs { get; }
         public byte[] GetDefaultImage();
     }
     public interface IDisplayManager

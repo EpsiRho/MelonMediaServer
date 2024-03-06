@@ -22,7 +22,21 @@ namespace MelonPlugin
         public EventConfig Config;
         public int Load()
         {
-            LoadConfig();
+            if (Host.StateManager.LaunchArgs.ContainsKey("resetEventSettings"))
+            {
+                Config = new EventConfig()
+                {
+                    Format = "[api] (user): msg",
+                    TextColor = Color.FromArgb(255, 255, 255, 255),
+                    ShowArgs = false
+                };
+                Host.Storage.SaveConfigFile("EventConfig", Config, null);
+            }
+            else
+            {
+
+                LoadConfig();
+            }
             SetupEventHandlers();
             Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Events", EventMenu);
             Host.SettingsUI.MenuOptions.Add("Events Settings", SettingsMenu);
@@ -61,6 +75,7 @@ namespace MelonPlugin
                     TextColor = Color.FromArgb(255, 255, 255, 255),
                     ShowArgs = false
                 };
+                Host.Storage.SaveConfigFile("EventConfig", Config, null);
             }
         }
 
@@ -359,6 +374,14 @@ namespace MelonPlugin
             Host.WebApi.UsersUpdate += MessageHandler;
             Host.WebApi.UsersChangeUsername += MessageHandler;
             Host.WebApi.UsersChangePassword += MessageHandler;
+        }
+
+        public Dictionary<string, string> GetHelpOptions()
+        {
+            return new Dictionary<string, string>()
+            {
+                { "--resetEventSettings", "Resets the Event plugin's settings to their defaults." }
+            };
         }
     }
 }

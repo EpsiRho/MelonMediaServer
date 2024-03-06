@@ -250,6 +250,13 @@ namespace Melon.PluginModels
                 return StateManager.Plugins;
             }
         }
+        public Dictionary<string, string> LaunchArgs
+        {
+            get
+            {
+                return StateManager.LaunchArgs;
+            }
+        }
 
         public byte[] GetDefaultImage()
         {

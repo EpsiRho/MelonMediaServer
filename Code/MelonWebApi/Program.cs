@@ -33,30 +33,30 @@ namespace MelonWebApi
         public static MWebApi mWebApi;
         public static async Task<int> Main(string[] args)
         {
+            MelonColor.SetDefaults();
+
             Console.ForegroundColor = ConsoleColor.White;
             Console.OutputEncoding = Encoding.UTF8;
-            bool openFolder = args.Contains("--openFolder");
-            if (openFolder)
+
+            StateManager.ParseArgs(args);
+
+            if (StateManager.LaunchArgs.ContainsKey("openFolder"))
             {
                 SettingsUI.OpenMelonFolder();
                 Environment.Exit(0);
             }
 
-            bool headless = args.Contains("--headless") || args.Contains("-h");
-            bool setup = args.Contains("--setup");
-            bool disablePlugins = args.Contains("--disablePlugins");
-            string lang = args.Where(x => x.Contains("--lang")).FirstOrDefault() != null ? args.Where(x=>x.Contains("--lang")).FirstOrDefault().Split("=")[1] : "";
             StateManager.RestartServer = true;
             while (StateManager.RestartServer)
             {
                 StateManager.RestartServer = false;
                 mWebApi = new MWebApi();
-                StateManager.Init(headless, setup, disablePlugins, lang, mWebApi);
+                StateManager.Init(mWebApi);
 
-                if (headless && DisplayManager.UIExtensions.Contains("SetupUI"))
+                if (StateManager.LaunchArgs.ContainsKey("headless") && DisplayManager.UIExtensions.Contains("SetupUI"))
                 {
                     SetupUI.ShowSetupError();
-                    return -1;
+                    return 1;
                 }
 
                 var builder = WebApplication.CreateBuilder();
@@ -86,7 +86,7 @@ namespace MelonWebApi
 
 
 
-                if (args.Contains("--headless") || args.Contains("-h"))
+                if (StateManager.LaunchArgs.ContainsKey("headless"))
                 {
                     Log.Logger = new LoggerConfiguration()
                             .WriteTo.File($"{StateManager.melonPath}/logs.txt")
@@ -200,12 +200,8 @@ namespace MelonWebApi
 
                 app.RunAsync();
 
-                if (!args.Contains("--headless") && !args.Contains("-h"))
+                if (!StateManager.LaunchArgs.ContainsKey("headless"))
                 {
-
-
-                    // Melon Startup
-
                     // UI Startup
                     DisplayManager.DisplayHome();
                 }

@@ -17,6 +17,7 @@ using MongoDB.Bson;
 using System.Threading;
 using Amazon.Util.Internal;
 using static Melon.LocalClasses.StateManager;
+using MongoDB.Bson.Serialization;
 namespace Melon.LocalClasses
 {
     public static class Transfer
@@ -203,7 +204,6 @@ namespace Melon.LocalClasses
         public static void ImportDbUI()
         {
             // Used to stay in settings until back is selected
-            bool LockUI = true;
             var options = new List<string>()
                 {
                     { StateManager.StringsManager.GetString("BackNavigation") },
@@ -218,39 +218,36 @@ namespace Melon.LocalClasses
 
             }
 
-            while (LockUI)
+            // Title
+            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), StringsManager.GetString("DbLoadBackupOption") });
+            Console.WriteLine(StringsManager.GetString("ImportBackupSelection").Pastel(MelonColor.Text));
+
+            // Input
+            var choice = MelonUI.OptionPicker(options);
+
+            if (choice != StateManager.StringsManager.GetString("BackNavigation"))
             {
-                // Title
-                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), StringsManager.GetString("DbLoadBackupOption") });
-                Console.WriteLine(StringsManager.GetString("ImportBackupSelection").Pastel(MelonColor.Text));
-
-                // Input
-                var choice = MelonUI.OptionPicker(options);
-
-                if (choice == StateManager.StringsManager.GetString("BackNavigation"))
-                {
-                    LockUI = false;
-                    break;
-                }
-
                 ImportDb(choice);
             }
+
         }
-        public static void ExportDb()
+        public static bool ExportDb()
         {
-            var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
-            var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
-            var AlbumsCollection = NewMelonDB.GetCollection<Album>("Albums");
-            var ArtistsCollection = NewMelonDB.GetCollection<Artist>("Artists");
-            var PlaylistsCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
-            var CollectionsCollection = NewMelonDB.GetCollection<Collection>("Collections");
-            var MetadataCollection = NewMelonDB.GetCollection<DbMetadata>("Metadata");
-            var StatsCollection = NewMelonDB.GetCollection<PlayStat>("Stats");
-            var UsersCollection = NewMelonDB.GetCollection<User>("Users");
-            
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), StringsManager.GetString("DbBackupOption") });
-            ChecklistUI.SetChecklistItems(new[]
-                {
+            var NewMelonDB = DbClient.GetDatabase("Melon");
+            var TracksCollection = NewMelonDB.GetCollection<BsonDocument>("Tracks");
+            var AlbumsCollection = NewMelonDB.GetCollection<BsonDocument>("Albums");
+            var ArtistsCollection = NewMelonDB.GetCollection<BsonDocument>("Artists");
+            var PlaylistsCollection = NewMelonDB.GetCollection<BsonDocument>("Playlists");
+            var CollectionsCollection = NewMelonDB.GetCollection<BsonDocument>("Collections");
+            var MetadataCollection = NewMelonDB.GetCollection<BsonDocument>("Metadata");
+            var StatsCollection = NewMelonDB.GetCollection<BsonDocument>("Stats");
+            var UsersCollection = NewMelonDB.GetCollection<BsonDocument>("Users");
+
+            if (!LaunchArgs.ContainsKey("headless"))
+            {
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), StringsManager.GetString("DbBackupOption") });
+                ChecklistUI.SetChecklistItems(new[]
+                    {
                     "Tracks",
                     "Albums",
                     "Artists",
@@ -260,7 +257,8 @@ namespace Melon.LocalClasses
                     "Stats",
                     "Users",
                 });
-            ChecklistUI.ChecklistDislayToggle();
+                ChecklistUI.ChecklistDislayToggle();
+            }
 
             if (!Directory.Exists($"{StateManager.melonPath}/Exports/DbBackups"))
             {
@@ -273,102 +271,157 @@ namespace Melon.LocalClasses
             string json = "";
             try
             {
-                json = JsonConvert.SerializeObject(TracksCollection.AsQueryable());
+                json = TracksCollection.AsQueryable().ToList().ToJson();
                 File.WriteAllText($"{StateManager.melonPath}/Exports/DbBackups/{dt}/tracks.json", json);
             }
             catch (Exception)
             {
-
+                if (!LaunchArgs.ContainsKey("headless"))
+                {
+                    ChecklistUI.ChecklistDislayToggle();
+                }
+                return false;
             }
-            ChecklistUI.UpdateChecklist(0, true);
+            if (!LaunchArgs.ContainsKey("headless"))
+            {
+                ChecklistUI.UpdateChecklist(0, true);
+            }
 
             try
             {
-                json = JsonConvert.SerializeObject(AlbumsCollection.AsQueryable());
+                json = AlbumsCollection.AsQueryable().ToList().ToJson();
                 File.WriteAllText($"{StateManager.melonPath}/Exports/DbBackups/{dt}/albums.json", json);
             }
             catch (Exception)
             {
-
+                if (!LaunchArgs.ContainsKey("headless"))
+                {
+                    ChecklistUI.ChecklistDislayToggle();
+                }
+                return false;
             }
-            ChecklistUI.UpdateChecklist(1, true);
+            if (!LaunchArgs.ContainsKey("headless"))
+            {
+                ChecklistUI.UpdateChecklist(1, true);
+            }
 
             try
             {
-                json = JsonConvert.SerializeObject(ArtistsCollection.AsQueryable());
+                json = ArtistsCollection.AsQueryable().ToList().ToJson();
                 File.WriteAllText($"{StateManager.melonPath}/Exports/DbBackups/{dt}/artists.json", json);
             }
             catch (Exception)
             {
-
+                if (!LaunchArgs.ContainsKey("headless"))
+                {
+                    ChecklistUI.ChecklistDislayToggle();
+                }
+                return false;
             }
-            ChecklistUI.UpdateChecklist(2, true);
+            if (!LaunchArgs.ContainsKey("headless"))
+            {
+                ChecklistUI.UpdateChecklist(2, true);
+            }
 
             try
             {
-                json = JsonConvert.SerializeObject(PlaylistsCollection.AsQueryable());
+                json = PlaylistsCollection.AsQueryable().ToList().ToJson();
                 File.WriteAllText($"{StateManager.melonPath}/Exports/DbBackups/{dt}/playlists.json", json);
             }
             catch (Exception)
             {
-
+                if (!LaunchArgs.ContainsKey("headless"))
+                {
+                    ChecklistUI.ChecklistDislayToggle();
+                }
+                return false;
             }
-            ChecklistUI.UpdateChecklist(3, true);
+            if (!LaunchArgs.ContainsKey("headless"))
+            {
+                ChecklistUI.UpdateChecklist(3, true);
+            }
 
             try
             {
-                json = JsonConvert.SerializeObject(CollectionsCollection.AsQueryable());
+                json = CollectionsCollection.AsQueryable().ToList().ToJson();
                 File.WriteAllText($"{StateManager.melonPath}/Exports/DbBackups/{dt}/collections.json", json);
             }
             catch (Exception)
             {
-
+                if (!LaunchArgs.ContainsKey("headless"))
+                {
+                    ChecklistUI.ChecklistDislayToggle();
+                }
+                return false;
             }
-            ChecklistUI.UpdateChecklist(4, true);
+            if (!LaunchArgs.ContainsKey("headless"))
+            {
+                ChecklistUI.UpdateChecklist(4, true);
+            }
 
             try
             {
-                json = JsonConvert.SerializeObject(MetadataCollection.AsQueryable());
+                json = MetadataCollection.AsQueryable().ToList().ToJson();
                 File.WriteAllText($"{StateManager.melonPath}/Exports/DbBackups/{dt}/metadata.json", json);
             }
             catch (Exception)
             {
-
+                if (!LaunchArgs.ContainsKey("headless"))
+                {
+                    ChecklistUI.ChecklistDislayToggle();
+                }
+                return false;
             }
-            ChecklistUI.UpdateChecklist(5, true);
+            if (!LaunchArgs.ContainsKey("headless"))
+            {
+                ChecklistUI.UpdateChecklist(5, true);
+            }
 
             try
             {
-                json = JsonConvert.SerializeObject(StatsCollection.AsQueryable());
+                json = StatsCollection.AsQueryable().ToList().ToJson();
                 File.WriteAllText($"{StateManager.melonPath}/Exports/DbBackups/{dt}/stats.json", json);
             }
             catch (Exception)
             {
-
+                if (!LaunchArgs.ContainsKey("headless"))
+                {
+                    ChecklistUI.ChecklistDislayToggle();
+                }
+                return false;
             }
-            ChecklistUI.UpdateChecklist(6, true);
+            if (!LaunchArgs.ContainsKey("headless"))
+            {
+                ChecklistUI.UpdateChecklist(6, true);
+            }
 
             try
             {
-                json = JsonConvert.SerializeObject(UsersCollection.AsQueryable());
+                json = UsersCollection.AsQueryable().ToList().ToJson();
                 File.WriteAllText($"{StateManager.melonPath}/Exports/DbBackups/{dt}/users.json", json);
             }
             catch (Exception)
             {
-
+                if (!LaunchArgs.ContainsKey("headless"))
+                {
+                    ChecklistUI.ChecklistDislayToggle();
+                }
+                return false;
             }
-            ChecklistUI.UpdateChecklist(7, true);
-
-            ChecklistUI.ChecklistDislayToggle();
-
-            Thread.Sleep(200);
-            MelonUI.ClearConsole();
+            if (!LaunchArgs.ContainsKey("headless"))
+            {
+                ChecklistUI.UpdateChecklist(7, true);
+                ChecklistUI.ChecklistDislayToggle();
+                Thread.Sleep(200);
+                MelonUI.ClearConsole();
+            }
+            return true;
         }
         private static void ImportDb(string path)
         {
             try
             {
-                var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
+                var NewMelonDB = DbClient.GetDatabase("Melon");
                 var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
                 var AlbumsCollection = NewMelonDB.GetCollection<Album>("Albums");
                 var ArtistsCollection = NewMelonDB.GetCollection<Artist>("Artists");
@@ -378,7 +431,7 @@ namespace Melon.LocalClasses
                 var StatsCollection = NewMelonDB.GetCollection<PlayStat>("Stats");
                 var UsersCollection = NewMelonDB.GetCollection<User>("Users");
 
-                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), "Import Database" });
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu"), "Import Database" });
                 ChecklistUI.SetChecklistItems(new[]
                     {
                     "Tracks",
@@ -402,7 +455,7 @@ namespace Melon.LocalClasses
                 try
                 {
                     json = File.ReadAllText($"{StateManager.melonPath}/{path}/tracks.json");
-                    var tracks = JsonConvert.DeserializeObject<List<Track>>(json);
+                    var tracks = BsonSerializer.Deserialize<List<Track>>(json);
                     var trackModels = new List<WriteModel<Track>>();
 
                     foreach (var track in tracks)
@@ -427,7 +480,7 @@ namespace Melon.LocalClasses
                 try
                 {
                     json = File.ReadAllText($"{StateManager.melonPath}/{path}/albums.json");
-                    var albums = JsonConvert.DeserializeObject<List<Album>>(json);
+                    var albums = BsonSerializer.Deserialize<List<Album>>(json);
                     var albumModels = new List<WriteModel<Album>>();
 
                     foreach (var album in albums)
@@ -452,7 +505,7 @@ namespace Melon.LocalClasses
                 try
                 {
                     json = File.ReadAllText($"{StateManager.melonPath}/{path}/artists.json");
-                    var artists = JsonConvert.DeserializeObject<List<Artist>>(json);
+                    var artists = BsonSerializer.Deserialize<List<Artist>>(json);
                     var artistModels = new List<WriteModel<Artist>>();
 
                     foreach (var artist in artists)
@@ -477,7 +530,7 @@ namespace Melon.LocalClasses
                 try
                 {
                     json = File.ReadAllText($"{StateManager.melonPath}/{path}/playlists.json");
-                    var playlists = JsonConvert.DeserializeObject<List<Playlist>>(json);
+                    var playlists = BsonSerializer.Deserialize<List<Playlist>>(json);
                     var playlistModels = new List<WriteModel<Playlist>>();
 
                     foreach (var playlist in playlists)
@@ -502,7 +555,7 @@ namespace Melon.LocalClasses
                 try
                 {
                     json = File.ReadAllText($"{StateManager.melonPath}/{path}/collections.json");
-                    var collections = JsonConvert.DeserializeObject<List<Collection>>(json);
+                    var collections = BsonSerializer.Deserialize<List<Collection>>(json);
                     var collectionModels = new List<WriteModel<Collection>>();
 
                     foreach (var collection in collections)
@@ -527,7 +580,7 @@ namespace Melon.LocalClasses
                 try
                 {
                     json = File.ReadAllText($"{StateManager.melonPath}/{path}/metadata.json");
-                    var metadatas = JsonConvert.DeserializeObject<List<DbMetadata>>(json);
+                    var metadatas = BsonSerializer.Deserialize<List<DbMetadata>>(json);
                     var metadataModels = new List<WriteModel<DbMetadata>>();
 
                     foreach (var metadata in metadatas)
@@ -552,7 +605,7 @@ namespace Melon.LocalClasses
                 try
                 {
                     json = File.ReadAllText($"{StateManager.melonPath}/{path}/stats.json");
-                    var stats = JsonConvert.DeserializeObject<List<PlayStat>>(json);
+                    var stats = BsonSerializer.Deserialize<List<PlayStat>>(json);
                     var statModels = new List<WriteModel<PlayStat>>();
 
                     foreach (var stat in stats)
@@ -577,7 +630,7 @@ namespace Melon.LocalClasses
                 try
                 {
                     json = File.ReadAllText($"{StateManager.melonPath}/{path}/users.json");
-                    var users = JsonConvert.DeserializeObject<List<User>>(json);
+                    var users = BsonSerializer.Deserialize<List<User>>(json);
                     var userModels = new List<WriteModel<User>>();
 
                     foreach (var user in users)

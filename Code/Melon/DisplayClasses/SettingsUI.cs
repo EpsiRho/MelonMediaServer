@@ -106,8 +106,14 @@ namespace Melon.DisplayClasses
                     LockUI = false;
                     break;
                 }
-
-                ((Action)options[choice])();
+                else if (choice == StringsManager.GetString("DbBackupOption"))
+                {
+                    ((Func<bool>)options[choice])();
+                }
+                else
+                {
+                    ((Action)options[choice])();
+                }
             }
         }
 
@@ -514,11 +520,11 @@ namespace Melon.DisplayClasses
                     return;
                 }
 
-                var resources = typeof(Program).Assembly.GetManifestResourceNames();
+                var resources = typeof(SettingsUI).Assembly.GetManifestResourceNames();
                 if (resources.Contains($"Melon.Strings.UIStrings{input.ToUpper()}.resources"))
                 {
                     MelonSettings.DefaultLanguage = input;
-                    StringsManager = StringsManager = new ResourceManager($"Melon.Strings.UIStrings{input.ToUpper()}", typeof(Program).Assembly);
+                    StringsManager = StringsManager = new ResourceManager($"Melon.Strings.UIStrings{input.ToUpper()}", typeof(SettingsUI).Assembly);
                     Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
                     StateManager.RestartServer = true;
                     foreach (var plugin in Plugins)
@@ -772,7 +778,7 @@ namespace Melon.DisplayClasses
             {
                 plugin.Unload();
             }
-            StateManager.LoadPlugins();
+            PluginsManager.LoadPlugins();
             MelonUI.HideIndeterminateProgress();
         }
         private static void ReloadPlugins()

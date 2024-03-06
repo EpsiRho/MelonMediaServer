@@ -32,6 +32,12 @@ namespace Melon.Interface
         /// The plugin api host
         /// </summary>
         public IHost Host { get; set; }
+
+        /// <summary>
+        /// The plugin api host
+        /// </summary>
+        public Dictionary<string, string> GetHelpOptions();
+
         /// <summary>
         /// Loads the Host from the Melon Server that gives access to the plugin api.
         /// </summary>
