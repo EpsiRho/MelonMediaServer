@@ -1175,7 +1175,7 @@ namespace Melon.LocalClasses
         public static void ResetDBUI()
         {
             // Title
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("DatabaseMenu"), StateManager.StringsManager.GetString("DatabaseResetOption") });
+            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StateManager.StringsManager.GetString("DatabaseMenu"), StateManager.StringsManager.GetString("DatabaseResetOption") });
 
             // Description
             Console.WriteLine(StateManager.StringsManager.GetString("DatabaseRemovalWarning").Pastel(MelonColor.Text));

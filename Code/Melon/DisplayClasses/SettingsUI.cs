@@ -91,7 +91,7 @@ namespace Melon.DisplayClasses
             while (LockUI)
             {
                 // Title
-                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("DatabaseMenu") });
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("DatabaseMenu") });
 
                 // Input
                 var commands = new List<string>();
