@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MelonUpdater.Classes
+namespace MelonInstaller.Classes
 {
     public static class ZipManager
     {
@@ -16,25 +16,36 @@ namespace MelonUpdater.Classes
             // Ensure the target directory exists
             Directory.CreateDirectory(extractPath);
 
-            int finished = 0;
+            double finished = 0;
+
+            double total = 0;
 
             // Open the zip file for reading
             using (ZipArchive archive = ZipFile.OpenRead(zipPath))
             {
+                total = archive.Entries.Count;
                 foreach (ZipArchiveEntry entry in archive.Entries)
                 {
                     string destinationPath = Path.GetFullPath(Path.Combine(extractPath, entry.FullName));
 
-                    if (entry.FullName.EndsWith("/"))
+                    try
                     {
-                        Directory.CreateDirectory(destinationPath);
+                        if (entry.FullName.EndsWith("/"))
+                        {
+                            Directory.CreateDirectory(destinationPath);
+                        }
+                        else
+                        {
+                            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+                            entry.ExtractToFile(destinationPath, overwrite: true);
+                        }
                     }
-                    else 
+                    catch (Exception e)
                     {
-                        Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
-                        entry.ExtractToFile(destinationPath, overwrite: true);
+
                     }
-                    progress.Report(finished / archive.Entries.Count);
+                    finished++;
+                    progress.Report(finished / total);
                 }
             }
         }

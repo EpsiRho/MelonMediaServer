@@ -12,9 +12,4 @@
     <PackageReference Include="Microsoft.Build.Locator" Version="1.7.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MelonLib\MelonLib.csproj" />
-    <ProjectReference Include="..\Melon\Melon.csproj" />
-  </ItemGroup>
-
 </Project>

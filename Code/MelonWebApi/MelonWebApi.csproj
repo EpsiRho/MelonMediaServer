@@ -43,6 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MelonInstaller\MelonInstaller.csproj" />
     <ProjectReference Include="..\Melon\Melon.csproj" />
   </ItemGroup>
 

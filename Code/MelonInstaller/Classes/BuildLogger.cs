@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MelonUpdater.Classes
+namespace MelonInstaller.Classes
 {
     public class BuildLogger : ILogger
     {
@@ -17,13 +17,13 @@ namespace MelonUpdater.Classes
         {
             eventSource.BuildStarted += (sender, e) =>
             {
-                Console.Write($"Build started at {e.Timestamp}");
+                Console.Write($"[-] Build started at {e.Timestamp}");
             };
 
             eventSource.BuildFinished += (sender, e) =>
             {
                 Console.WriteLine();
-                Console.WriteLine($"Build finished at {e.Timestamp}. Success: {e.Succeeded}");
+                Console.WriteLine($"[+] Build finished at {e.Timestamp}. Success: {e.Succeeded}");
             };
 
             // Adjust this to capture more specific progress details if needed
@@ -35,6 +35,12 @@ namespace MelonUpdater.Classes
             eventSource.ProjectFinished += (sender, e) =>
             {
                 Console.Write($".");
+            };
+
+            eventSource.ErrorRaised += (sender, e) =>
+            {
+                Console.WriteLine();
+                Console.WriteLine($"[!] Error: {e.Message}");
             };
         }
 

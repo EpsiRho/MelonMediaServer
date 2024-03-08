@@ -1,10 +1,8 @@
-﻿using ATL;
-using Microsoft.Build.Evaluation;
+﻿using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Locator;
 using Microsoft.Build.Logging;
-using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,17 +10,18 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MelonUpdater.Classes
+namespace MelonInstaller.Classes
 {
     public static class MelonBuildManager
     {
         public static void Build()
         {
-            string buildPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Updater", "MelonWebApiUpdater.exe");
-            if (Program.LaunchArgs.ContainsKey("buildPath"))
+            if (!Program.LaunchArgs.ContainsKey("buildPath"))
             {
-                buildPath = Program.LaunchArgs["buildPath"];
+                Console.WriteLine($"[!] Build path required!");
+                return;
             }
+            string buildPath = Program.LaunchArgs["buildPath"];
 
             string version = CreateVersionNumber();
 
@@ -37,6 +36,8 @@ namespace MelonUpdater.Classes
                 Console.WriteLine($"[!] \"{buildPath}\" does not exist!");
                 return;
             }
+
+            Directory.CreateDirectory("Build");
 
             try
             {
@@ -78,6 +79,8 @@ namespace MelonUpdater.Classes
             }
             catch (Exception e)
             {
+                UIManager.endDisplay = true;
+                Thread.Sleep(500);
                 Console.WriteLine($"[!] Build failed!");
                 Console.WriteLine($"[!] {e.Message}");
                 return;
@@ -90,7 +93,7 @@ namespace MelonUpdater.Classes
             string[] files = System.IO.Directory.GetFiles(projectFolderPath, "*.cs", System.IO.SearchOption.AllDirectories);
 
             var prog = files.FirstOrDefault(x => x.EndsWith("Program.cs"));
-            if (prog.IsNullOrEmpty())
+            if (String.IsNullOrEmpty(prog))
             {
                 throw new InvalidOperationException("Program.cs is missing!");
             }
@@ -105,7 +108,7 @@ namespace MelonUpdater.Classes
         private static string BuildProject(string projectFolderPath)
         {
             var projectFilePath = System.IO.Directory.GetFiles(projectFolderPath, "*.csproj").FirstOrDefault(x=>!x.Contains("Backup"));
-            if (projectFilePath.IsNullOrEmpty())
+            if (String.IsNullOrEmpty(projectFilePath))
             {
                 throw new InvalidOperationException("No project found!");
             }

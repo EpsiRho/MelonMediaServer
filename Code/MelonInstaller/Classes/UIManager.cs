@@ -1,11 +1,10 @@
-﻿using Melon.Classes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MelonUpdater.Classes
+namespace MelonInstaller.Classes
 {
     public static class UIManager
     {
@@ -40,7 +39,7 @@ namespace MelonUpdater.Classes
                         var msg = $"{action}: {(zipPercentage*100).ToString("000.00")}%";
                         Console.Write(msg);
                         Console.WriteLine(new string(' ', Console.WindowWidth - msg.Length - 1));
-                        MelonUI.DisplayProgressBar(zipPercentage, '#', '-');
+                        DisplayProgressBar(zipPercentage, '#', '-');
                         Console.WriteLine(new string(' ', Console.WindowWidth));
                         Console.WriteLine(new string(' ', Console.WindowWidth));
                     }
@@ -52,6 +51,25 @@ namespace MelonUpdater.Classes
             });
             DisplayThread.Priority = ThreadPriority.Highest;
             DisplayThread.Start();
+        }
+        private static void DisplayProgressBar(double progressPercentage, char foreground, char background)
+        {
+            try
+            {
+                // 8 in the am pm gang
+                double completedWidth = (Console.WindowWidth - 4) * progressPercentage;
+                double remainingWidth = (Console.WindowWidth - 4) - completedWidth;
+
+                string progressBar = new string(foreground, (int)completedWidth);
+                string backgroundBar = new string(background, (int)remainingWidth);
+                Console.CursorLeft = 0;
+                Console.WriteLine($"[{progressBar}{backgroundBar}] ");
+            }
+            catch (Exception)
+            {
+
+            }
+
         }
     }
 }
