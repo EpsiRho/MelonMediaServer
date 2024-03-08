@@ -121,7 +121,7 @@ namespace Melon.Classes
             Thread.Sleep(200);
             Console.WriteLine(StringsManager.GetString("MelonMediaServer").Pastel(MelonColor.Melon));
             Console.WriteLine($"{StringsManager.GetString("VersionLabel")}: {StringsManager.GetString("BetaLabel")} {version}".Pastel(MelonColor.Text));
-            Console.WriteLine($"{StringsManager.GetString("BuildDateLabel")}: {buildDate.ToString("MM/dd/yyyy hh:mm:ss")} ".Pastel(MelonColor.Text));
+            Console.WriteLine($"{StringsManager.GetString("BuildDateLabel")}: {buildDate.ToString("MM/dd/yyyy hh:mm:sstt")} ".Pastel(MelonColor.Text));
         }
     }
 }
