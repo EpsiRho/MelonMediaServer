@@ -10,7 +10,6 @@ namespace Melon.Models
     {
         public double ScannedFiles { get; set; }
         public double FoundFiles { get; set; }
-        public double averageMillisecondsPerFile { get; set; }
-        public double estimatedTimeLeft { get; set; }
+        public string Status { get; set; }
     }
 }

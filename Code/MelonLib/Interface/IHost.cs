@@ -49,7 +49,6 @@ namespace Melon.Interface
         public void StartScan(bool skip);
         public void UpdateCollections();
         public void ResetDB();
-        public void Sort();
     }
     public interface IStateManager
     {
@@ -76,6 +75,7 @@ namespace Melon.Interface
         public void DisplayProgressBar(double count, double max, char foreground, char background);
         public void ShowIndeterminateProgress();
         public void HideIndeterminateProgress();
+        public static bool endOptionsDisplay { get; set; }
         public string OptionPicker(List<string> Choices);
         public string StringInput(bool UsePred, bool AutoCorrect, bool FreeInput, bool ShowChoices, List<string> Choices = null);
         public void ChecklistDisplayToggle();

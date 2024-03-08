@@ -26,7 +26,7 @@ namespace Melon.Classes
     public static class MelonUI
     {
         // Output 
-        private static bool endDisplay;
+        public static bool endOptionsDisplay;
         public static void BreadCrumbBar(List<string> list)
         {
             ClearConsole();
@@ -383,13 +383,13 @@ namespace Melon.Classes
             int place = 0;
             int sLeft = Console.CursorLeft;
             int sTop = Console.CursorTop;
-            endDisplay = false;
+            endOptionsDisplay = false;
             Thread DisplayThread = new Thread(() =>
             {
                 int x = Console.WindowWidth;
-                while (!endDisplay)
+                while (!endOptionsDisplay)
                 {
-                    if (endDisplay)
+                    if (endOptionsDisplay)
                     {
                         Console.CursorVisible = true;
                         return;
@@ -451,33 +451,36 @@ namespace Melon.Classes
                 }
             });
             DisplayThread.Start();
-            while (!endDisplay)
+            while (!endOptionsDisplay)
             {
                 // Get Input
-                var input = Console.ReadKey(intercept: true);
-                if (input.Key == ConsoleKey.UpArrow)
+                if (Console.KeyAvailable)
                 {
-                    if (place != 0)
+                    var input = Console.ReadKey(intercept: true);
+                    if (input.Key == ConsoleKey.UpArrow)
                     {
-                        place--;
+                        if (place != 0)
+                        {
+                            place--;
+                        }
                     }
-                }
-                else if (input.Key == ConsoleKey.DownArrow)
-                {
-                    if (place < Choices.Count() - 1)
+                    else if (input.Key == ConsoleKey.DownArrow)
                     {
-                        place++;
+                        if (place < Choices.Count() - 1)
+                        {
+                            place++;
+                        }
                     }
-                }
-                else if (input.Key == ConsoleKey.Enter)
-                {
-                    endDisplay = true;
-                    Console.CursorVisible = true;
-                    return Choices[place];
-                }
-                else
-                {
+                    else if (input.Key == ConsoleKey.Enter)
+                    {
+                        endOptionsDisplay = true;
+                        Console.CursorVisible = true;
+                        return Choices[place];
+                    }
+                    else
+                    {
 
+                    }
                 }
 
             }

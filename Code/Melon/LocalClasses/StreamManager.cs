@@ -77,7 +77,7 @@ namespace Melon.LocalClasses
         {
             while (wss.Socket.State == WebSocketState.Open)
             {
-                string message = await ReceiveAsync(wss);
+                string message = await ReceiveAsync(wss.Socket);
 
                 if (message.Contains("PONG"))
                 {
@@ -86,7 +86,7 @@ namespace Melon.LocalClasses
                 }
                 else if (message.Contains("GET QUEUE"))
                 {
-                    WriteToSocket(wss, wss.CurrentQueue);
+                    WriteToSocket(wss.Socket, wss.CurrentQueue);
                 }
                 else if (message.Contains("SET QUEUE"))
                 {
@@ -94,11 +94,11 @@ namespace Melon.LocalClasses
                     {
                         var queueId = message.Split(":")[1];
                         wss.CurrentQueue = queueId;
-                        WriteToSocket(wss, wss.CurrentQueue);
+                        WriteToSocket(wss.Socket, wss.CurrentQueue);
                     }
                     catch (Exception)
                     {
-                        WriteToSocket(wss, "Invalid Syntax");
+                        WriteToSocket(wss.Socket, "Invalid Syntax");
                     }
                 }
                 else if (message.Contains("SET DEVICE"))
@@ -112,16 +112,16 @@ namespace Melon.LocalClasses
                                       select sock).ToList();
                         if(devices.Count() != 0)
                         {
-                            WriteToSocket(wss, "Device Name Taken");
+                            WriteToSocket(wss.Socket, "Device Name Taken");
                             continue;
                         }
 
                         wss.DeviceName = name;
-                        WriteToSocket(wss, name);
+                        WriteToSocket(wss.Socket, name);
                     }
                     catch (Exception)
                     {
-                        WriteToSocket(wss, "Invalid Syntax");
+                        WriteToSocket(wss.Socket, "Invalid Syntax");
                     }
                 }
                 else if (message.Contains("SET PUBLIC"))
@@ -131,16 +131,49 @@ namespace Melon.LocalClasses
                         bool set = bool.Parse(message.Split(":")[1]);
 
                         wss.IsPublic = set;
-                        WriteToSocket(wss, $"DEVICE IS PUBLIC:{set}");
+                        WriteToSocket(wss.Socket, $"DEVICE IS PUBLIC:{set}");
                     }
                     catch (Exception)
                     {
-                        WriteToSocket(wss, "Invalid Syntax");
+                        WriteToSocket(wss.Socket, "Invalid Syntax");
                     }
+                }
+                else if (message.Contains("SEND PROGRESS"))
+                {
+                    Task.Run(()=> { SendProgress(wss); });
+                }
+                else if (message.Contains("STOP PROGRESS"))
+                {
+                    wss.SendProgress = false;
                 }
             }
 
             RemoveSocket(wss);
+        }
+        public static void SendProgress(WSS wss)
+        {
+            if(wss == null)
+            {
+                return;
+            }
+
+            wss.SendProgress = true;
+            string lastStatus = "";
+            while (wss.SendProgress && MelonScanner.Scanning)
+            {
+                var ScannedFiles = MelonScanner.ScannedFiles;
+                var FoundFiles = MelonScanner.FoundFiles;
+                var CurrentStatus = MelonScanner.CurrentStatus;
+
+                WriteToSocket(wss.Socket, $"PROGRESS:{ScannedFiles}:{FoundFiles}");
+                if(lastStatus != CurrentStatus)
+                {
+                    lastStatus = CurrentStatus;
+                    WriteToSocket(wss.Socket, $"PROGRESS INFO:{CurrentStatus}");
+                }
+                Thread.Sleep(100);
+            }
+            WriteToSocket(wss.Socket, $"END PROGRESS");
         }
         public static void AlertQueueUpdate(string id, string msg = "UPDATE QUEUE", string skipDevice = "")
         {
@@ -152,7 +185,7 @@ namespace Melon.LocalClasses
             {
                 if(wss.CurrentQueue == id && wss.DeviceName != skipDevice)
                 {
-                    WriteToSocket(wss, msg);
+                    WriteToSocket(wss.Socket, msg);
                 }
             }
         }
@@ -170,7 +203,7 @@ namespace Melon.LocalClasses
                         }
                         else if (DateTime.Now - wss.LastPing > new TimeSpan(0, 2, 0))
                         {
-                            WriteToSocket(wss, "PING");
+                            WriteToSocket(wss.Socket, "PING");
                         }
                         Thread.Sleep(1000);
                     }
@@ -181,20 +214,20 @@ namespace Melon.LocalClasses
                 }
             }
         }
-        public static async void WriteToSocket(WSS wss, string message)
+        public static async void WriteToSocket(WebSocket ws, string message)
         {
             try
             {
                 var buffer = Encoding.UTF8.GetBytes(message);
                 var segment = new ArraySegment<byte>(buffer);
-                await wss.Socket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
+                await ws.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
             }
             catch (Exception)
             {
 
             }
         }
-        public static async Task<string> ReceiveAsync(WSS wss)
+        public static async Task<string> ReceiveAsync(WebSocket ws)
         {
             try
             {
@@ -204,7 +237,7 @@ namespace Melon.LocalClasses
                 {
                     do
                     {
-                        result = await wss.Socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                        result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                         ms.Write(buffer, 0, result.Count);
                     }
                     while (!result.EndOfMessage);

@@ -201,10 +201,6 @@ namespace Melon.PluginModels
         {
             MelonScanner.ResetDb();
         }
-        public void Sort()
-        {
-            MelonScanner.Sort();
-        }
     }
     public class State : IStateManager
     {
@@ -327,6 +323,20 @@ namespace Melon.PluginModels
         public void HideIndeterminateProgress()
         {
             MelonUI.HideIndeterminateProgress();
+        }
+        public bool endOptionsDisplay
+        {
+            get
+            {
+                return MelonUI.endOptionsDisplay;
+            }
+            set
+            {
+                if (value == null)
+                {
+                    MelonUI.endOptionsDisplay = value;
+                }
+            }
         }
         public string OptionPicker(List<string> Choices)
         {

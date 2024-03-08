@@ -13,6 +13,7 @@ namespace Melon.Models
         public string DeviceName { get; set; }
         public string UserId { get; set; }
         public bool IsPublic { get; set; }
+        public bool SendProgress { get;set; }
         public DateTime LastPing { get; set; }
 
     }

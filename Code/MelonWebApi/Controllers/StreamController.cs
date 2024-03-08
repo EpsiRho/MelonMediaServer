@@ -53,6 +53,11 @@ namespace MelonWebApi.Controllers
             StreamManager.AddSocket(webSocket, curId);
 
             args.SendEvent("Websocket connected", 200, Program.mWebApi);
+
+            while (true)
+            {
+
+            }
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get-external")]
@@ -85,7 +90,7 @@ namespace MelonWebApi.Controllers
                 args.SendEvent("Device Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };
             }
-            StreamManager.WriteToSocket(wss, $"PLAY QUEUE:{queueId}");
+            StreamManager.WriteToSocket(wss.Socket, $"PLAY QUEUE:{queueId}");
             args.SendEvent("Sent play to external device", 200, Program.mWebApi);
             return new ObjectResult("Request Sent") { StatusCode = 200 };
         }
@@ -107,7 +112,7 @@ namespace MelonWebApi.Controllers
                 args.SendEvent("Device Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };
             }
-            StreamManager.WriteToSocket(wss, $"PAUSE");
+            StreamManager.WriteToSocket(wss.Socket, $"PAUSE");
             args.SendEvent("Sent pause to external device", 200, Program.mWebApi);
             return new ObjectResult("Request Sent") { StatusCode = 200 };
         }
@@ -129,7 +134,7 @@ namespace MelonWebApi.Controllers
                 args.SendEvent("Device Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };
             }
-            StreamManager.WriteToSocket(wss, $"SKIP");
+            StreamManager.WriteToSocket(wss.Socket, $"SKIP");
             args.SendEvent("Sent skip to external device", 200, Program.mWebApi);
             return new ObjectResult("Request Sent") { StatusCode = 200 };
         }
@@ -151,7 +156,7 @@ namespace MelonWebApi.Controllers
                 args.SendEvent("Device Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };
             }
-            StreamManager.WriteToSocket(wss, $"REWIND");
+            StreamManager.WriteToSocket(wss.Socket, $"REWIND");
             args.SendEvent("Sent rewind to external device", 200, Program.mWebApi);
             return new ObjectResult("Request Sent") { StatusCode = 200 };
         }
@@ -174,7 +179,7 @@ namespace MelonWebApi.Controllers
                 args.SendEvent("Device Not Found", 404, Program.mWebApi);
                 return new ObjectResult("Device Not Found") { StatusCode = 404 };
             }
-            StreamManager.WriteToSocket(wss, $"VOLUME:{volume}");
+            StreamManager.WriteToSocket(wss.Socket, $"VOLUME:{volume}");
             args.SendEvent("Sent volume to external device", 200, Program.mWebApi);
             return new ObjectResult("Request Sent") { StatusCode = 200 };
         }

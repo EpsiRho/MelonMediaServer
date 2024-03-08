@@ -10,6 +10,9 @@ using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using NuGet.Packaging.Signing;
 using System.Security.Claims;
+using Melon.Classes;
+using Pastel;
+using Melon.DisplayClasses;
 
 namespace MelonWebApi.Controllers
 {
@@ -56,7 +59,7 @@ namespace MelonWebApi.Controllers
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
-            var args = new WebApiEventArgs("api/scan/start", curId, new Dictionary<string, object>());
+            var args = new WebApiEventArgs("api/scan/progress-old", curId, new Dictionary<string, object>());
 
             if (!MelonScanner.Scanning)
             {
@@ -66,13 +69,12 @@ namespace MelonWebApi.Controllers
 
             var progress = new ScanProgress()
             {
-                estimatedTimeLeft = (MelonScanner.averageMilliseconds / MelonScanner.ScannedFiles) * (MelonScanner.FoundFiles - MelonScanner.ScannedFiles),
-                averageMillisecondsPerFile = MelonScanner.averageMilliseconds / MelonScanner.ScannedFiles,
                 ScannedFiles = MelonScanner.ScannedFiles,
-                FoundFiles = MelonScanner.FoundFiles
+                FoundFiles = MelonScanner.FoundFiles,
+                Status = MelonScanner.CurrentStatus
             };
 
-            args.SendEvent("Scanner progress sent", 202, Program.mWebApi);
+            args.SendEvent("Scanner progress sent", 200, Program.mWebApi);
             return new ObjectResult(progress) { StatusCode = 200 };
         }
     }

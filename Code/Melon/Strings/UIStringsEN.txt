@@ -197,3 +197,4 @@ EnableDBConversion=If there is a database version incompatibility, enable conver
 VersionLabel=Version
 BetaLabel=Beta
 BuildDateLabel=Build Date
+LoadDbStatus=Loading Database

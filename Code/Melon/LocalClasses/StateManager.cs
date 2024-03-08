@@ -245,8 +245,8 @@ namespace Melon.LocalClasses
             }
 
             // Setup Display Options
-            DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonMemoryScanner.MemoryScan);
-            DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonMemoryScanner.MemoryScanShort);
+            DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.MemoryScan);
+            DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.MemoryScanShort);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
 
