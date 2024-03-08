@@ -265,7 +265,7 @@ namespace Melon.LocalClasses
                 Directory.CreateDirectory($"{StateManager.melonPath}/Exports/DbBackups");
             }
 
-            string dt = DateTime.Now.ToString("dd mm yy-hh mm ss tt").Replace(" ", "");
+            string dt = DateTime.Now.ToString("dd MM yy-hh mm ss tt").Replace(" ", "");
             Directory.CreateDirectory($"{StateManager.melonPath}/Exports/DbBackups/{dt}");
 
             string json = "";

@@ -26,7 +26,7 @@ namespace MelonPlugin
             {
                 Config = new EventConfig()
                 {
-                    Format = "[api] (user): msg",
+                    Format = "[api] (userId): msg",
                     TextColor = Color.FromArgb(255, 255, 255, 255),
                     ShowArgs = false
                 };
@@ -71,7 +71,7 @@ namespace MelonPlugin
             {
                 Config = new EventConfig()
                 {
-                    Format = "[api] (user): msg",
+                    Format = "[api] (userId): msg",
                     TextColor = Color.FromArgb(255, 255, 255, 255),
                     ShowArgs = false
                 };
@@ -118,7 +118,7 @@ namespace MelonPlugin
         public void ChangeFormatMenu()
         {
             Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Events Settings", "Change Format" });
-            Console.WriteLine("Format markers: api, statuscode, msg, user".Pastel(Config.TextColor));
+            Console.WriteLine("Format markers: api, statuscode, msg, userId".Pastel(Config.TextColor));
             Console.WriteLine($"Current format: {Config.Format}".Pastel(Config.TextColor));
             Console.WriteLine($"(Enter nothing to go back)".Pastel(Config.TextColor));
             Console.Write("> ");
@@ -158,6 +158,7 @@ namespace MelonPlugin
                     Messages.RemoveAt(0);
                     Host.MelonUI.ShowIndeterminateProgress();
                 }
+                Thread.Sleep(100);
             }
             Host.MelonUI.HideIndeterminateProgress();
         }
@@ -165,7 +166,7 @@ namespace MelonPlugin
         private void MessageHandler(object sender, WebApiEventArgs e)
         {
             string msg = Config.Format;
-            msg = msg.Replace("api", e.Api).Replace("user", e.User).Replace("statuscode", $"{e.StatusCode}").Replace("msg", e.Message);
+            msg = msg.Replace("api", e.Api).Replace("userId", e.User).Replace("statuscode", $"{e.StatusCode}").Replace("msg", e.Message);
             if (Config.ShowArgs)
             {
                 foreach(var arg in e.Args)
