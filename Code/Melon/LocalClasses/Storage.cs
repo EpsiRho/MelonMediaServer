@@ -13,8 +13,9 @@ namespace Melon.LocalClasses
 {
     public static class Storage
     {
-        public static T LoadConfigFile<T>(string filename, string[] protectedProperties)
+        public static T LoadConfigFile<T>(string filename, string[] protectedProperties, out bool converted)
         {
+            converted = false;
             if (!Directory.Exists($"{StateManager.melonPath}/Configs/"))
             {
                 Directory.CreateDirectory($"{StateManager.melonPath}/Configs/");
@@ -29,7 +30,18 @@ namespace Melon.LocalClasses
             {
                 return default(T);
             }
-            T config = JsonConvert.DeserializeObject<T>(txt);
+
+            T config = default(T);
+
+            try
+            {
+                config = JsonConvert.DeserializeObject<T>(txt);
+            }
+            catch (Exception)
+            {
+                config = TryConvertConfigType<T>(txt);
+                converted = true;
+            }
 
             if (config == null)
             {
@@ -113,5 +125,19 @@ namespace Melon.LocalClasses
             File.WriteAllText($"{StateManager.melonPath}/Configs/{filename}.json", settingstxt);
 
         }
+        private static T TryConvertConfigType<T>(string json)
+        {
+            var dynDoc = JsonConvert.DeserializeObject<dynamic>(json);
+            try
+            {
+                T objRes = DbVersionManager.ConvertDynamicObject<T>(dynDoc);
+                return objRes;
+            }
+            catch (Exception)
+            {
+                return default(T);
+            }
+        }
+
     }
 }
