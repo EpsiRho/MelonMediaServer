@@ -52,9 +52,9 @@ namespace Melon.PluginModels
     }
     public class StorageAPI : IStorageAPI
     {
-        public T LoadConfigFile<T>(string filename, string[] protectedProperties)
+        public T LoadConfigFile<T>(string filename, string[] protectedProperties, out bool converted)
         {
-            return Storage.LoadConfigFile<T>(filename, protectedProperties);
+            return Storage.LoadConfigFile<T>(filename, protectedProperties, out converted);
         }
         public void SaveConfigFile<T>(string filename, T config, string[] protectedProperties)
         {

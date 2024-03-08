@@ -86,6 +86,7 @@ namespace Melon.DisplayClasses
                     { StringsManager.GetString("DatabaseResetConfirmation"), MelonScanner.ResetDBUI},
                     { StringsManager.GetString("PlaylistExportOption"), Transfer.ExportPlaylistUI },
                     { StringsManager.GetString("PlaylistImportOption"), Transfer.ImportPlaylistUI },
+                    { "Queue Cleanup Frequency", ChangeQueueCleanupTime },
                 };
 
             while (LockUI)
@@ -115,6 +116,49 @@ namespace Melon.DisplayClasses
                     ((Action)options[choice])();
                 }
             }
+        }
+        private static void ChangeQueueCleanupTime()
+        {
+            bool result = true;
+            while (true)
+            {
+                // Title
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("DatabaseMenu"), "Queue Cleanup Frequency" });
+
+                // Description
+                Console.WriteLine($"Queues are removed after they haven't been listened to or edited in over [{MelonSettings.QueueCleanupWaitInHours}] hours".Pastel(MelonColor.Text));
+                Console.WriteLine("Here you can change how long before clearing, or set it to -1 to disable queue clearing.".Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ImportPlaylistControls").Pastel(MelonColor.Text));
+
+                if (!result)
+                {
+                    Console.WriteLine($"[Input must be a valid integer or decimal]".Pastel(MelonColor.Error));
+                }
+
+                // Get Input
+                Console.Write("> ".Pastel(MelonColor.Text));
+                string input = Console.ReadLine();
+                if (input == "")
+                {
+                    return;
+                }
+                else if(double.TryParse(input, out double res))
+                {
+                    double cur = MelonSettings.QueueCleanupWaitInHours;
+                    MelonSettings.QueueCleanupWaitInHours = res;
+                    if (cur == -1)
+                    {
+                        QueuesCleaner.StartCleaner();
+                    }
+                    Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
+                    return;
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+
         }
 
         // Scanner Settings

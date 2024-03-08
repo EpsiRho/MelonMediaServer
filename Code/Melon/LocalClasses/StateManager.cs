@@ -26,6 +26,7 @@ using Melon.Interface;
 using Melon.PluginModels;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Amazon.Runtime.Internal.Transform;
+using Serilog;
 
 namespace Melon.LocalClasses
 {
@@ -47,6 +48,9 @@ namespace Melon.LocalClasses
         public static bool RestartServer { get; set; }
         public static void Init(IWebApi mWebApi)
         {
+            Log.Logger = new LoggerConfiguration()
+                            .WriteTo.File($"{StateManager.melonPath}/MelonLogs.txt")
+                            .CreateLogger();
             // Title
             if (!LaunchArgs.ContainsKey("headless"))
             {
@@ -99,7 +103,7 @@ namespace Melon.LocalClasses
             {
                 if (File.Exists($"{melonPath}/Configs/DisabledPlugins.json"))
                 {
-                    DisabledPlugins = Storage.LoadConfigFile<List<string>>("DisabledPlugins.json", null);
+                    DisabledPlugins = Storage.LoadConfigFile<List<string>>("DisabledPlugins.json", null, out _);
                 }
                 else
                 {
@@ -129,7 +133,7 @@ namespace Melon.LocalClasses
             }
 
             // Load SSLConfig if exists
-            var config = Storage.LoadConfigFile<SSLConfig>("SSLConfig", new[] { "Password" });
+            var config = Storage.LoadConfigFile<SSLConfig>("SSLConfig", new[] { "Password" }, out _);
             if (config != null)
             {
                 Security.SetSSLConfig(config);
@@ -244,6 +248,9 @@ namespace Melon.LocalClasses
                 }
             }
 
+            // Start Queues Cleaner
+            QueuesCleaner.StartCleaner();
+
             // Setup Display Options
             DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.MemoryScan);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.MemoryScanShort);
@@ -289,6 +296,7 @@ namespace Melon.LocalClasses
                     DefaultLanguage = "EN",
                     JWTExpireInMinutes = 60,
                     UseMenuColor = true,
+                    QueueCleanupWaitInHours = 48
                 };
                 MelonColor.SetDefaults();
                 DisplayManager.UIExtensions.Add("SetupUI", SetupUI.Display); // Add SetupUI to UIExtentions so we can show the OOBE
@@ -297,7 +305,8 @@ namespace Melon.LocalClasses
             else
             {
                 // Load settings
-                MelonSettings = Storage.LoadConfigFile<Settings>("MelonSettings", new[] { "JWTKey" });
+                MelonSettings = Storage.LoadConfigFile<Settings>("MelonSettings", new[] { "JWTKey" }, out _);
+
 
                 if (MelonSettings == null)
                 {
@@ -316,7 +325,13 @@ namespace Melon.LocalClasses
                         DefaultLanguage = "EN",
                         JWTExpireInMinutes = 60,
                         UseMenuColor = true,
+                        QueueCleanupWaitInHours = 48
                     };
+                }
+
+                if (MelonSettings.QueueCleanupWaitInHours == 0)
+                {
+                    MelonSettings.QueueCleanupWaitInHours = 48;
                 }
 
                 if (MelonSettings.DefaultLanguage.IsNullOrEmpty())
@@ -341,6 +356,8 @@ namespace Melon.LocalClasses
                 MelonColor.Highlight = MelonSettings.Highlight;
                 MelonColor.Melon = MelonSettings.Melon;
                 MelonColor.Error = MelonSettings.Error;
+
+                Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
             }
         }
         private static void SetLanguage(string language)
@@ -383,7 +400,7 @@ namespace Melon.LocalClasses
             }
             else
             {
-                MelonFlags = Storage.LoadConfigFile<Flags>("MelonFlags", null);
+                MelonFlags = Storage.LoadConfigFile<Flags>("MelonFlags", null, out _);
                 if (MelonFlags == null)
                 {
                     MelonFlags = new Flags

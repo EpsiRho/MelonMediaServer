@@ -65,7 +65,7 @@ namespace MelonPlugin
 
         private void LoadConfig()
         {
-            Config = Host.Storage.LoadConfigFile<EventConfig>("EventConfig", null);
+            Config = Host.Storage.LoadConfigFile<EventConfig>("EventConfig", null, out _);
 
             if(Config == null)
             {

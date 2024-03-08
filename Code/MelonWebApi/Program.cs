@@ -89,14 +89,14 @@ namespace MelonWebApi
                 if (StateManager.LaunchArgs.ContainsKey("headless"))
                 {
                     Log.Logger = new LoggerConfiguration()
-                            .WriteTo.File($"{StateManager.melonPath}/logs.txt")
+                            .WriteTo.File($"{StateManager.melonPath}/MelonWebLogs.txt")
                             .WriteTo.Console()
                             .CreateLogger();
                 }
                 else
                 {
                     Log.Logger = new LoggerConfiguration()
-                            .WriteTo.File($"{StateManager.melonPath}/logs.txt")
+                            .WriteTo.File($"{StateManager.melonPath}/MelonWebLogs.txt")
                             .CreateLogger();
                 }
 
@@ -191,12 +191,12 @@ namespace MelonWebApi
 
                 app.MapControllers();
 
-                //var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
-                //
-                //lifetime.ApplicationStopping.Register(() =>
-                //{
-                //
-                //});
+                var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+                
+                lifetime.ApplicationStopping.Register(() =>
+                {
+                    QueuesCleaner.CleanerActive = false;
+                });
 
                 app.RunAsync();
 

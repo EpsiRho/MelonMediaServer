@@ -58,8 +58,15 @@ namespace Melon.LocalClasses
                     continue;
                 }
                 plugin.LoadMelonCommands(Host);
-                var check = plugin.Load();
-                if (check != 0)
+                try
+                {
+                    var check = plugin.Load();
+                    if (check != 0)
+                    {
+                        Serilog.Log.Error($"Plugin Execute failed: {plugin.Name}");
+                    }
+                }
+                catch (Exception)
                 {
                     Serilog.Log.Error($"Plugin Execute failed: {plugin.Name}");
                 }

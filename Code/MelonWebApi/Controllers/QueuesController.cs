@@ -56,6 +56,7 @@ namespace MelonWebApi.Controllers
             queue.Viewers = new List<string>();
             queue.Tracks = new List<DbLink>();
             queue.CurPosition = 0;
+            queue.LastListen = DateTime.Now.ToUniversalTime();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, queue._id);
 
@@ -141,6 +142,7 @@ namespace MelonWebApi.Controllers
             queue.Viewers = new List<string>();
             queue.Tracks = new List<DbLink>();
             queue.CurPosition = 0;
+            queue.LastListen = DateTime.Now.ToUniversalTime();
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, queue._id);
             List<Track> tracks = new List<Track>();
@@ -232,6 +234,7 @@ namespace MelonWebApi.Controllers
             queue.Viewers = new List<string>();
             queue.Tracks = new List<DbLink>();
             queue.CurPosition = 0;
+            queue.LastListen = DateTime.Now.ToUniversalTime();
 
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, queue._id);
@@ -324,6 +327,7 @@ namespace MelonWebApi.Controllers
             queue.Viewers = new List<string>();
             queue.Tracks = new List<DbLink>();
             queue.CurPosition = 0;
+            queue.LastListen = DateTime.Now.ToUniversalTime();
 
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, queue._id);
@@ -416,6 +420,7 @@ namespace MelonWebApi.Controllers
             queue.Viewers = new List<string>();
             queue.Tracks = new List<DbLink>();
             queue.CurPosition = 0;
+            queue.LastListen = DateTime.Now.ToUniversalTime();
 
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, queue._id);
@@ -480,7 +485,7 @@ namespace MelonWebApi.Controllers
         
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get")]
-        public ObjectResult GetQueueFromIDs(string id)
+        public ObjectResult GetQueueFromId(string id)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -496,7 +501,8 @@ namespace MelonWebApi.Controllers
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x=>x._id, id);
             var qProjection = Builders<PlayQueue>.Projection.Exclude(x => x.Tracks)
-                                                            .Exclude(x => x.OriginalTrackOrder);
+                                                            .Exclude(x => x.OriginalTrackOrder)
+                                                            .Exclude(x => x.LastListen);
             var queue = QCollection.Find(qFilter).Project(qProjection).ToList()
                                    .Select(x => BsonSerializer.Deserialize<ResponseQueue>(x)).FirstOrDefault();
 
@@ -597,6 +603,9 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            queue.LastListen = DateTime.Now.ToUniversalTime();
+            QCollection.ReplaceOne(qFilter, queue);
+
             var tracks = Queues[0].Tracks.Take(new Range(page * count, (page * count) + count));
 
             var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
@@ -672,6 +681,8 @@ namespace MelonWebApi.Controllers
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
+
+            queue.LastListen = DateTime.Now.ToUniversalTime();
 
             foreach (var tid in trackIds)
             {
@@ -757,6 +768,8 @@ namespace MelonWebApi.Controllers
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }
+
+            queue.LastListen = DateTime.Now.ToUniversalTime();
 
             foreach (var pos in positions)
             {
@@ -852,6 +865,8 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            queue.LastListen = DateTime.Now.ToUniversalTime();
+
             var track = queue.Tracks[fromPos];
             if(queue.CurPosition == fromPos)
             {
@@ -911,6 +926,7 @@ namespace MelonWebApi.Controllers
             }
 
             oq.CurPosition = pos;
+            oq.LastListen = DateTime.Now.ToUniversalTime();
 
             QCollection.ReplaceOne(qFilter, oq);
 
@@ -972,6 +988,7 @@ namespace MelonWebApi.Controllers
 
             oq.Editors = editors == null ? oq.Editors : editors.ToList();
             oq.Viewers = viewers == null ? oq.Viewers : viewers.ToList();
+            oq.LastListen = DateTime.Now.ToUniversalTime();
 
 
             QCollection.ReplaceOne(qFilter, oq);
@@ -1018,6 +1035,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            queue.LastListen = DateTime.Now.ToUniversalTime();
 
             List<Track> tracks = TCollection.Find(Builders<Track>.Filter.In(x => x._id, queue.Tracks.Select(x => x._id))).ToList();
             Track currentTrack = tracks.Where(x=>x._id == queue.Tracks[queue.CurPosition]._id).FirstOrDefault();
