@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MelonUpdater": {
+      "commandName": "Project",
+      "commandLineArgs": "-build -buildPath C:\\Users\\jhset\\Documents\\GitHub\\MelonMediaServer\\Code\\MelonWebApi"
+    }
+  }
+}

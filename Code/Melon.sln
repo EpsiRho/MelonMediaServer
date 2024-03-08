@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MelonWebApi", "MelonWebApi\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MelonLib", "MelonLib\MelonLib.csproj", "{35DED3BA-1966-4CED-B255-C6F88E1390A7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MelonUpdater", "MelonUpdater\MelonUpdater.csproj", "{5424B44E-00C2-4C75-BE15-C2C95E3E4700}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{35DED3BA-1966-4CED-B255-C6F88E1390A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{35DED3BA-1966-4CED-B255-C6F88E1390A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{35DED3BA-1966-4CED-B255-C6F88E1390A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5424B44E-00C2-4C75-BE15-C2C95E3E4700}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5424B44E-00C2-4C75-BE15-C2C95E3E4700}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5424B44E-00C2-4C75-BE15-C2C95E3E4700}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5424B44E-00C2-4C75-BE15-C2C95E3E4700}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
