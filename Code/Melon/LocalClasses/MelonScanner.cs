@@ -486,7 +486,7 @@ namespace Melon.LocalClasses
                 int workers = 0;
                 int asyncIOThread = 0;
                 ThreadPool.GetAvailableThreads(out workers, out asyncIOThread);
-                while (threads.Count() >= 10)
+                while (threads.Count() >= 25)
                 {
                     Thread.Sleep(100);
                 }

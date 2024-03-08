@@ -43,8 +43,13 @@ namespace MelonWebApi.Controllers
             {
                 args.SendEvent("Scanner is already running", 425, Program.mWebApi);
                 return new ObjectResult("Scanner is already running") { StatusCode = 425 };
-            } 
+            }
 
+            DisplayManager.UIExtensions.Add("LibraryScanIndicator", () =>
+            {
+                Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight));
+            });
+            MelonUI.endOptionsDisplay = true;
             Thread scanThread = new Thread(MelonScanner.StartScan);
             scanThread.Start(skip);
 
