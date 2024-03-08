@@ -31,7 +31,8 @@ namespace MelonWebApi
         //public static bool started = false;
         public static WebApplication app;
         public static MWebApi mWebApi;
-        public const string Version = "1.0.67.584";
+        public const string Version = "1.0.67.620";
+
         public static async Task<int> Main(string[] args)
         {
             StateManager.Version = Version;

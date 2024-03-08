@@ -11,12 +11,11 @@ namespace MelonUpdater.Classes
     {
         public static bool endDisplay = false;
         public static double zipPercentage = 0;
-        public static void ZipProgressView()
+        public static void ZipProgressView(string action)
         {
             // Title
             Console.CursorVisible = false;
-            MelonUI.ClearConsole();
-            MelonUI.BreadCrumbBar(new List<string>() { "Melon Build Manager", "Building Zip" });
+            Console.WriteLine();
 
             endDisplay = false;
             int sLeft = Console.CursorLeft;
@@ -33,14 +32,12 @@ namespace MelonUpdater.Classes
                     if (x != Console.WindowWidth)
                     {
                         x = Console.WindowWidth;
-                        MelonUI.ClearConsole();
-                        MelonUI.BreadCrumbBar(new List<string>() { "Melon Build Manager", "Building Zip" });
                     }
                     try
                     {
                         Console.CursorTop = sTop;
                         Console.CursorLeft = sLeft;
-                        var msg = $"Progress: {(zipPercentage*100).ToString("000.00")}%";
+                        var msg = $"{action}: {(zipPercentage*100).ToString("000.00")}%";
                         Console.Write(msg);
                         Console.WriteLine(new string(' ', Console.WindowWidth - msg.Length - 1));
                         MelonUI.DisplayProgressBar(zipPercentage, '#', '-');

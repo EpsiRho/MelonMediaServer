@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
@@ -10,19 +11,39 @@ namespace MelonUpdater.Classes
 {
     public static class ZipManager
     {
-        public static void ExtractZip(string zipPath, string extractPath)
+        public static async Task ExtractZip(string zipPath, string extractPath, IProgress<double> progress)
         {
-            System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, extractPath);
+            // Ensure the target directory exists
+            Directory.CreateDirectory(extractPath);
+
+            int finished = 0;
+
+            // Open the zip file for reading
+            using (ZipArchive archive = ZipFile.OpenRead(zipPath))
+            {
+                foreach (ZipArchiveEntry entry in archive.Entries)
+                {
+                    string destinationPath = Path.GetFullPath(Path.Combine(extractPath, entry.FullName));
+
+                    if (entry.FullName.EndsWith("/"))
+                    {
+                        Directory.CreateDirectory(destinationPath);
+                    }
+                    else 
+                    {
+                        Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+                        entry.ExtractToFile(destinationPath, overwrite: true);
+                    }
+                    progress.Report(finished / archive.Entries.Count);
+                }
+            }
         }
         public static async Task CreateZip(string zipPath, string buildFolderPath, IProgress<double> progress)
         {
-
             string[] allFilesToZip = Directory.GetFiles(buildFolderPath, "*.*", System.IO.SearchOption.AllDirectories);
 
-            // You can use the size as the progress total size
+            // Progress vars
             double size = allFilesToZip.Length;
-
-            // You can use the progress to notify the current progress.
             double finished = 0;
 
             // To have relative paths in the zip.
@@ -32,6 +53,7 @@ namespace MelonUpdater.Classes
                 pathToRemove += "\\";
             }
 
+            // Create the zip file by file
             using (ZipArchive zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
             {
                 // Go over all files and zip them.

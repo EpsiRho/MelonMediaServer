@@ -65,13 +65,14 @@ namespace MelonUpdater.Classes
 
             try
             {
-                UIManager.ZipProgressView();
+                UIManager.ZipProgressView("Compressing to Zip");
                 var t = ZipManager.CreateZip(outputPath, buildOutputPath, new Progress<double>(x=>
                     UIManager.zipPercentage = x
                 ));
 
                 t.Wait();
                 UIManager.endDisplay = true;
+                Thread.Sleep(500);
                 Console.WriteLine($"[+] Build created at {buildOutputPath}");
                 Console.WriteLine($"[+] Build Package created at {outputPath}");
             }
@@ -95,8 +96,10 @@ namespace MelonUpdater.Classes
             }
 
             var txt = File.ReadAllText(prog);
-            var split = txt.Split("\n");
-            txt = txt.Replace(split.FirstOrDefault(x=>x.Contains("public const string Version = ")), vString);
+            var split = txt.Contains("\r\n") ? txt.Split("\r\n") : txt.Split("\n");
+            string repl = split.FirstOrDefault(x => x.Contains("public const string Version = "));
+
+            txt = txt.Replace(repl, vString);
             File.WriteAllText(prog, txt);
         }
         private static string BuildProject(string projectFolderPath)
@@ -112,12 +115,13 @@ namespace MelonUpdater.Classes
 
             // Retrieve the SDK path
             var sdkPath = project.GetPropertyValue("MSBuildSDKsPath");
+            project.SetProperty("Configuration", "Release");
 
             var projectCollection = new ProjectCollection();
 
             var buildParameters = new BuildParameters(projectCollection)
             {
-                Loggers = new List<ILogger> { new ConsoleLogger(LoggerVerbosity.Minimal) }
+                Loggers = new List<ILogger> { new BuildLogger() }
             };
 
             var buildRequest = new BuildRequestData(projectFilePath, project.GlobalProperties, null, new[] { "Build" }, null);
