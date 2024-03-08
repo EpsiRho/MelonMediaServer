@@ -5,6 +5,7 @@ using MongoDB.Driver;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -293,83 +294,7 @@ namespace Melon.LocalClasses
             foreach(var doc in documents)
             {
                 dynamic dynDoc = BsonTypeMapper.MapToDotNetValue(doc);
-                T targetInstance = Activator.CreateInstance<T>();
-
-                foreach (PropertyInfo prop in targetType.GetProperties())
-                {
-                    if (doc != null && doc.Contains(prop.Name))
-                    {
-                        if (prop.PropertyType == typeof(DbLink))
-                        {
-                            prop.SetValue(targetInstance, new DbLink() { _id = dynDoc[prop.Name]["_id"], Name = dynDoc[prop.Name]["Name"] });
-                        }
-                        else if (typeof(IEnumerable).IsAssignableFrom(prop.PropertyType) && prop.PropertyType != typeof(string) && prop.PropertyType != typeof(byte[]))
-                        {
-                            var listType = typeof(List<>).MakeGenericType(new[] { prop.PropertyType.GetGenericArguments()[0] });
-                            var resultList = (IList)Activator.CreateInstance(listType);
-                            if(dynDoc[prop.Name] == null)
-                            {
-                                prop.SetValue(targetInstance, resultList);
-                                continue;
-                            }
-                            foreach (var item in dynDoc[prop.Name])
-                            {
-                                if (prop.PropertyType.GetGenericArguments()[0] == typeof(DbLink))
-                                {
-                                    var link = new DbLink() { _id = item["_id"], Name = item["Name"] };
-                                    resultList.Add(link);
-                                }
-                                else if (prop.PropertyType.GetGenericArguments()[0] == typeof(UserStat))
-                                {
-                                    var stat = new UserStat() { UserId = item["UserId"], Value = item["Value"] };
-                                    resultList.Add(stat);
-                                }
-                                else if(prop.PropertyType.GetGenericArguments()[0] == typeof(string))
-                                {
-                                    string str = item;
-                                    resultList.Add(str);
-                                }
-                            }
-                            prop.SetValue(targetInstance, resultList);
-                        }
-                        else 
-                        {
-                            prop.SetValue(targetInstance, dynDoc[prop.Name]);
-                        }
-                    }
-                    else
-                    {
-                        if (prop.PropertyType == typeof(string))
-                        {
-                            prop.SetValue(targetInstance, string.Empty);
-                        }
-                        else if(prop.PropertyType == typeof(bool))
-                        {
-                            prop.SetValue(targetInstance, false);
-                        }
-                        else if(prop.PropertyType == typeof(DateTime))
-                        {
-                            prop.SetValue(targetInstance, DateTime.MinValue);
-                        }
-                        else if(prop.PropertyType == typeof(int) || prop.PropertyType == typeof(long) || prop.PropertyType == typeof(double))
-                        {
-                            prop.SetValue(targetInstance, 0);
-                        }
-                        else if(prop.PropertyType == typeof(DbLink))
-                        {
-                            prop.SetValue(targetInstance, new DbLink() { _id = "", Name = "" });
-                        }
-                        else if (prop.PropertyType.IsArray)
-                        {
-                            prop.SetValue(targetInstance, Array.CreateInstance(prop.PropertyType.GetElementType(), 0));
-                        }
-                        else if (typeof(IEnumerable).IsAssignableFrom(prop.PropertyType))
-                        {
-                            Type listType = typeof(List<>).MakeGenericType(prop.PropertyType.GetGenericArguments());
-                            prop.SetValue(targetInstance, Activator.CreateInstance(listType));
-                        }
-                    }
-                }
+                T targetInstance = ConvertDynamicObject<T>(dynDoc);
 
                 results.Add(KeyValuePair.Create(doc["_id"].ToString(), targetInstance.ToBsonDocument()));
             }
@@ -391,6 +316,123 @@ namespace Melon.LocalClasses
             var metadata = mongoDb.GetCollection<DbMetadata>("Metadata");
             metadata.UpdateOne(Builders<DbMetadata>.Filter.Eq("Name", $"{col}Collection"), Builders<DbMetadata>.Update.Set(x=>x.Version, version));
 
+        }
+        public static T ConvertDynamicObject<T>(dynamic dynDoc)
+        {
+            Type targetType = typeof(T);
+            T targetInstance = Activator.CreateInstance<T>();
+
+            foreach (PropertyInfo prop in targetType.GetProperties())
+            {
+                if (dynDoc != null && dynDoc[prop.Name] != null)
+                {
+                    if (prop.PropertyType == typeof(DbLink))
+                    {
+                        prop.SetValue(targetInstance, new DbLink() { _id = dynDoc[prop.Name]["_id"], Name = dynDoc[prop.Name]["Name"] });
+                    }
+                    else if (typeof(IEnumerable).IsAssignableFrom(prop.PropertyType) && prop.PropertyType != typeof(string) && prop.PropertyType != typeof(byte[]))
+                    {
+                        var listType = typeof(List<>).MakeGenericType(new[] { prop.PropertyType.GetGenericArguments()[0] });
+                        var resultList = (IList)Activator.CreateInstance(listType);
+                        if (dynDoc[prop.Name] == null)
+                        {
+                            prop.SetValue(targetInstance, resultList);
+                            continue;
+                        }
+                        foreach (var item in dynDoc[prop.Name])
+                        {
+                            if (prop.PropertyType.GetGenericArguments()[0] == typeof(DbLink))
+                            {
+                                var link = new DbLink() { _id = item["_id"], Name = item["Name"] };
+                                resultList.Add(link);
+                            }
+                            else if (prop.PropertyType.GetGenericArguments()[0] == typeof(UserStat))
+                            {
+                                var stat = new UserStat() { UserId = item["UserId"], Value = item["Value"] };
+                                resultList.Add(stat);
+                            }
+                            else if (prop.PropertyType.GetGenericArguments()[0] == typeof(Chapter))
+                            {
+                                TimeSpan time = new TimeSpan();
+                                TimeSpan.TryParse(item["Timestamp"], out time);
+                                var stat = new Chapter() 
+                                { 
+                                    _id = item["_id"],
+                                    Title = item["Title"], 
+                                    Description = item["Description"],
+                                    Timestamp = time,
+                                    Tracks = ((List<dynamic>)item["Tracks"]).Select(x=> new DbLink() { _id = x["_id"], Name = x["Name"] }).ToList(),
+                                    Albums = ((List<dynamic>)item["Albums"]).Select(x => new DbLink() { _id = x["_id"], Name = x["Name"] }).ToList(),
+                                    Artists = ((List<dynamic>)item["Artists"]).Select(x => new DbLink() { _id = x["_id"], Name = x["Name"] }).ToList()
+                                };
+                                resultList.Add(stat);
+                            }
+                            else if (prop.PropertyType.GetGenericArguments()[0] == typeof(string))
+                            {
+                                string str = item;
+                                resultList.Add(str);
+                            }
+                            else if (prop.PropertyType.GetGenericArguments()[0] == typeof(int))
+                            {
+                                int i = item;
+                                resultList.Add(i);
+                            }
+                            else if (prop.PropertyType.GetGenericArguments()[0] == typeof(long))
+                            {
+                                long i = item;
+                                resultList.Add(i);
+                            }
+                            else
+                            {
+                                resultList.Add(item);
+                            }
+                        }
+                        prop.SetValue(targetInstance, resultList);
+                    }
+                    else
+                    {
+                        prop.SetValue(targetInstance, dynDoc[prop.Name]);
+                    }
+                }
+                else
+                {
+                    if (prop.PropertyType == typeof(string))
+                    {
+                        prop.SetValue(targetInstance, string.Empty);
+                    }
+                    else if (prop.PropertyType == typeof(bool))
+                    {
+                        prop.SetValue(targetInstance, false);
+                    }
+                    else if (prop.PropertyType == typeof(DateTime))
+                    {
+                        prop.SetValue(targetInstance, DateTime.MinValue);
+                    }
+                    else if (prop.PropertyType == typeof(Color))
+                    {
+                        prop.SetValue(targetInstance, Color.FromArgb(255, 255, 255));
+                    }
+                    else if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(long) || prop.PropertyType == typeof(double))
+                    {
+                        prop.SetValue(targetInstance, 0);
+                    }
+                    else if (prop.PropertyType == typeof(DbLink))
+                    {
+                        prop.SetValue(targetInstance, new DbLink() { _id = "", Name = "" });
+                    }
+                    else if (prop.PropertyType.IsArray)
+                    {
+                        prop.SetValue(targetInstance, Array.CreateInstance(prop.PropertyType.GetElementType(), 0));
+                    }
+                    else if (typeof(IEnumerable).IsAssignableFrom(prop.PropertyType))
+                    {
+                        Type listType = typeof(List<>).MakeGenericType(prop.PropertyType.GetGenericArguments());
+                        prop.SetValue(targetInstance, Activator.CreateInstance(listType));
+                    }
+                }
+            }
+
+            return targetInstance;
         }
     }
 }
