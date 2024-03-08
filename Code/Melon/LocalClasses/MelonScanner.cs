@@ -599,6 +599,16 @@ namespace Melon.LocalClasses
                     LyricsPath = "",
                     nextTrack = "",
                     ServerURL = "",
+                    Chapters = fileMetadata.Chapters != null ? fileMetadata.Chapters.Select(x => new Chapter()
+                    {
+                        _id = ObjectId.GenerateNewId().ToString(),
+                        Title = x.Title,
+                        Timestamp = x.UseOffset ? TimeSpan.FromMilliseconds(x.StartOffset) : TimeSpan.FromMilliseconds(x.StartTime),
+                        Description = x.Subtitle,
+                        Tracks = new List<DbLink>(),
+                        Albums = new List<DbLink>(),
+                        Artists = new List<DbLink>()
+                    }).ToList() : new List<Chapter>()
                 };
 
                 // For each track artist, setup new artist doc
@@ -606,28 +616,7 @@ namespace Melon.LocalClasses
                 foreach (var a in trackArtists)
                 {
                     string name = string.IsNullOrEmpty(a) ? StateManager.StringsManager.GetString("UnknownArtistStatus") : a;
-                    trackDoc.TrackArtists.Add(new Artist()
-                    {
-                        _id = "",
-                        Name = name,
-                        Bio = "",
-                        Ratings = new List<UserStat>(),
-                        DateAdded = DateTime.Now.ToUniversalTime(),
-                        Releases = new List<DbLink>(),
-                        Genres = new List<string>(),
-                        SeenOn = new List<DbLink>(),
-                        Tracks = new List<DbLink>(),
-                        ConnectedArtists = new List<DbLink>(),
-                        ArtistBannerArtCount = 0,
-                        ArtistPfpArtCount = 0,
-                        ArtistBannerArtDefault = 0,
-                        ArtistPfpDefault = 0,
-                        ArtistBannerPaths = new List<string>(),
-                        ArtistPfpPaths = new List<string>(),
-                        PlayCounts = new List<UserStat>(),
-                        SkipCounts = new List<UserStat>(),
-                        ServerURL = ""
-                    });
+                    trackDoc.TrackArtists.Add(new Artist(name));
                     trackDoc.Album.ContributingArtists.Add(new DbLink()
                     {
                         Name = name
@@ -854,17 +843,17 @@ namespace Melon.LocalClasses
                 bool check = albums.ContainsKey(n);
                 if (check)
                 {
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].AlbumArtists = dbAlbums[i].AlbumArtists;
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].AlbumGenres = dbAlbums[i].AlbumGenres;
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].Tracks = dbAlbums[i].Tracks;
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].AlbumGenres = dbAlbums[i].AlbumGenres;
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].ContributingArtists = dbAlbums[i].ContributingArtists;
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].Publisher = dbAlbums[i].Publisher;
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].ReleaseStatus = dbAlbums[i].ReleaseStatus;
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].ReleaseType = dbAlbums[i].ReleaseType;
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].TotalDiscs = dbAlbums[i].TotalDiscs;
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].TotalTracks = dbAlbums[i].TotalTracks;
-                    albums[$"{dbAlbums[i].Name} + {String.Join(",", dbAlbums[i].AlbumArtists.Select(x => x.Name))}"].ReleaseDate = dbAlbums[i].ReleaseDate;
+                    albums[n].AlbumArtists = dbAlbums[i].AlbumArtists;
+                    albums[n].AlbumGenres = dbAlbums[i].AlbumGenres;
+                    albums[n].Tracks = dbAlbums[i].Tracks;
+                    albums[n].AlbumGenres = dbAlbums[i].AlbumGenres;
+                    albums[n].ContributingArtists = dbAlbums[i].ContributingArtists;
+                    albums[n].Publisher = dbAlbums[i].Publisher;
+                    albums[n].ReleaseStatus = dbAlbums[i].ReleaseStatus;
+                    albums[n].ReleaseType = dbAlbums[i].ReleaseType;
+                    albums[n].TotalDiscs = dbAlbums[i].TotalDiscs;
+                    albums[n].TotalTracks = dbAlbums[i].TotalTracks;
+                    albums[n].ReleaseDate = dbAlbums[i].ReleaseDate;
                 }
                 else
                 {

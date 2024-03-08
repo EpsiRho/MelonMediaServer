@@ -1,4 +1,5 @@
 ﻿using Melon.Models;
+using System.Xml.Linq;
 
 namespace Melon.Models
 {
@@ -23,6 +24,32 @@ namespace Melon.Models
         public List<DbLink> SeenOn { get; set; }
         public List<DbLink> ConnectedArtists { get; set; }
         public List<DbLink> Tracks { get; set; }
+        public Artist()
+        {
+
+        }
+        public Artist(string name)
+        {
+            _id = "";
+            Name = name;
+            Bio = "";
+            Ratings = new List<UserStat>();
+            DateAdded = DateTime.Now.ToUniversalTime();
+            Releases = new List<DbLink>();
+            Genres = new List<string>();
+            SeenOn = new List<DbLink>();
+            Tracks = new List<DbLink>();
+            ConnectedArtists = new List<DbLink>();
+            ArtistBannerArtCount = 0;
+            ArtistPfpArtCount = 0;
+            ArtistBannerArtDefault = 0;
+            ArtistPfpDefault = 0;
+            ArtistBannerPaths = new List<string>();
+            ArtistPfpPaths = new List<string>();
+            PlayCounts = new List<UserStat>();
+            SkipCounts = new List<UserStat>();
+            ServerURL = "";
+        }
     }
     public class ResponseArtist
     {

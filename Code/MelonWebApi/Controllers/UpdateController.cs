@@ -13,6 +13,7 @@ using System.Web.Http.Filters;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Security.Claims;
 using System.Security.Policy;
+using NuGet.Packaging.Signing;
 
 namespace MelonWebApi.Controllers
 {
@@ -27,8 +28,6 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
-        // Tracks
-        
         [Authorize(Roles = "Admin")]
         [HttpPatch("track/update")]
         public ObjectResult UpdateTrack(string trackId, string disc = "", string isrc = "", string releaseDate = "", string position = "",
@@ -284,7 +283,86 @@ namespace MelonWebApi.Controllers
             args.SendEvent("Track updated", 200, Program.mWebApi);
             return new ObjectResult("Track updated") { StatusCode = 200 };
         }
-        
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("track/update/add-chapter")]
+        public ObjectResult AddTrackChapter(string id, string title, long timestampMs, string description = "",
+                                            [FromQuery] List<string> trackIds = null, [FromQuery] List<string> albumIds = null, [FromQuery] List<string> artistIds = null)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/track/update/add-chapter", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "title", title },
+                { "timestampMs", timestampMs },
+                { "description", description },
+                { "trackIds", trackIds },
+                { "albumIds", albumIds },
+                { "artistIds", artistIds }
+            });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
+            var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
+
+            var trackFilter = Builders<Track>.Filter.Eq(x => x._id, id);
+            var foundTrack = TracksCollection.Find(trackFilter).FirstOrDefault();
+            if (foundTrack == null)
+            {
+                args.SendEvent("Track Not Found", 404, Program.mWebApi);
+                return new ObjectResult("Track Not Found") { StatusCode = 404 };
+            }
+
+            Chapter ch = new Chapter();
+            ch._id = ObjectId.GenerateNewId().ToString();
+            ch.Title = title;
+            ch.Description = description;
+            ch.Timestamp = TimeSpan.FromMilliseconds(timestampMs);
+            ch.Tracks = trackIds != null ? TracksCollection.AsQueryable().Where(x=>trackIds.Contains(x._id)).ToList().Select(x=>new DbLink(x)).ToList() : new List<DbLink>();
+            ch.Albums = albumIds != null ? AlbumsCollection.AsQueryable().Where(x => albumIds.Contains(x._id)).ToList().Select(x => new DbLink(x)).ToList() : new List<DbLink>();
+            ch.Artists = artistIds != null ? ArtistsCollection.AsQueryable().Where(x => artistIds.Contains(x._id)).ToList().Select(x => new DbLink(x)).ToList() : new List<DbLink>();
+
+            foundTrack.Chapters.Add(ch);
+            TracksCollection.ReplaceOne(trackFilter, foundTrack);
+
+            args.SendEvent("Track Chapter Added", 200, Program.mWebApi);
+            return new ObjectResult("Track Chapter Added") { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("track/update/remove-chapter")]
+        public ObjectResult RemoveTrackChapter(string id, string chapterId)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                       .Where(c => c.Type == ClaimTypes.UserData)
+                       .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/track/update/remove-chapter", curId, new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "chapterId", chapterId }
+            });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+            var trackFilter = Builders<Track>.Filter.Eq(x => x._id, id);
+            var foundTrack = TracksCollection.Find(trackFilter).FirstOrDefault();
+            if (foundTrack == null)
+            {
+                args.SendEvent("Track Not Found", 404, Program.mWebApi);
+                return new ObjectResult("Track Not Found") { StatusCode = 404 };
+            }
+
+            foundTrack.Chapters.Remove(foundTrack.Chapters.FirstOrDefault(x=>x._id == chapterId));
+            TracksCollection.ReplaceOne(trackFilter, foundTrack);
+
+            args.SendEvent("Track Chapter Removed", 200, Program.mWebApi);
+            return new ObjectResult("Track Chapter Removed") { StatusCode = 200 };
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpPatch("album/update")]
         public ObjectResult UpdateAlbum(string albumId, [FromQuery] string[] trackIds = null, string totalDiscs = "", string totalTracks = "", string releaseDate = "", string albumName = "",

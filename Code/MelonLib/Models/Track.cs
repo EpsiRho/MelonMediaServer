@@ -31,6 +31,7 @@ namespace Melon.Models
         public DateTime LastModified { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime ReleaseDate { get; set; }
+        public List<Chapter> Chapters { get; set; }
         public List<string> TrackGenres { get; set; }
         public List<Artist> TrackArtists { get; set; }
         public ProtoTrack()
@@ -140,6 +141,7 @@ namespace Melon.Models
         public DateTime LastModified { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime ReleaseDate { get; set; }
+        public List<Chapter> Chapters { get; set; }
         public List<string> TrackGenres { get; set; }
         public List<DbLink> TrackArtists { get; set; }
         public Track()
@@ -175,6 +177,7 @@ namespace Melon.Models
             Path = t.Path;
             ReleaseDate = t.ReleaseDate;
             TrackGenres = t.TrackGenres;
+            Chapters = t.Chapters;
             TrackArtists = t.TrackArtists.Select(x=> new DbLink() { _id = x._id, Name = x.Name }).ToList();
         }
     }
@@ -204,6 +207,7 @@ namespace Melon.Models
         public DateTime LastModified { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime ReleaseDate { get; set; }
+        public List<Chapter> Chapters { get; set; }
         public List<string> TrackGenres { get; set; }
         public List<DbLink> TrackArtists { get; set; }
         public ResponseTrack(Track t)
@@ -233,6 +237,7 @@ namespace Melon.Models
             ReleaseDate = t.ReleaseDate;
             TrackGenres = t.TrackGenres;
             TrackArtists = t.TrackArtists;
+            Chapters = t.Chapters;
         }
     }
 }
