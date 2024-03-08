@@ -32,7 +32,7 @@ namespace Melon.Interface
     }
     public interface IStorageAPI
     {
-        public T LoadConfigFile<T>(string filename, string[] protectedProperties);
+        public T LoadConfigFile<T>(string filename, string[] protectedProperties, out bool converted);
         public void SaveConfigFile<T>(string filename, T config, string[] protectedProperties);
     }
     public interface IMelonScanner

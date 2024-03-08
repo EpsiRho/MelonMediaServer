@@ -10,7 +10,6 @@ namespace Melon.Models
 {
     /// <summary>
     /// All of Melon's Settings.
-    /// New settings can be added here and will converted into json for saving to a file.
     /// </summary>
     public class Settings
     {
@@ -27,6 +26,7 @@ namespace Melon.Models
         public Color Melon { get; set; }
         public Color Error { get; set; }
         public bool UseMenuColor { get; set; }
+        public double QueueCleanupWaitInHours { get; set; }
     }
     public class ShortSettings
     {

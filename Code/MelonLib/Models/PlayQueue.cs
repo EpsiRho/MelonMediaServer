@@ -11,6 +11,7 @@
         public bool PublicViewing { get; set; }
         public bool PublicEditing { get; set; }
         public int TrackCount { get; set; }
+        public DateTime LastListen { get; set; }
         public List<DbLink> Tracks { get; set; }
         public List<string> OriginalTrackOrder { get; set; }
     }
