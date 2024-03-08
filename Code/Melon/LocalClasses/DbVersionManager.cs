@@ -16,6 +16,15 @@ namespace Melon.LocalClasses
 {
     public static class DbVersionManager
     {
+        public const string ArtistsVersion = "1.0.0";
+        public const string AlbumsVersion = "1.0.0";
+        public const string TracksVersion = "1.1.0";
+        public const string FailedFilesVersion = "1.0.0";
+        public const string PlaylistsVersion = "1.0.0";
+        public const string CollectionsVersion = "1.0.0";
+        public const string QueuesVersion = "1.0.0";
+        public const string UsersVersion = "1.0.0";
+        public const string StatsVersion = "1.0.0";
         public static string CheckVersionCompatibility()
         {
             var newMelonDB = StateManager.DbClient.GetDatabase("Melon");
@@ -34,7 +43,7 @@ namespace Melon.LocalClasses
 
             if (statsMetadata != null)
             {
-                if (statsMetadata.Version != "1.0.0")
+                if (statsMetadata.Version != StatsVersion)
                 {
                     // Add code needed for upgrading db objects here
                     Serilog.Log.Error("Unsupported User Database Version");
@@ -47,7 +56,7 @@ namespace Melon.LocalClasses
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
                     Name = "StatsCollection",
-                    Version = "1.0.0",
+                    Version = StatsVersion,
                     Info = $""
                 };
                 metadataCollection.InsertOne(statMetadata);
@@ -55,7 +64,7 @@ namespace Melon.LocalClasses
 
             if (usersMetadata != null)
             {
-                if (usersMetadata.Version != "1.0.0")
+                if (usersMetadata.Version != UsersVersion)
                 {
                     // Add code needed for upgrading db objects here
                     Serilog.Log.Error("Unsupported User Database Version");
@@ -68,7 +77,7 @@ namespace Melon.LocalClasses
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
                     Name = "UsersCollection",
-                    Version = "1.0.0",
+                    Version = UsersVersion,
                     Info = $""
                 };
                 metadataCollection.InsertOne(userMetadata);
@@ -76,7 +85,7 @@ namespace Melon.LocalClasses
 
             if (artistMetadata != null)
             {
-                if (artistMetadata.Version != "1.0.0")
+                if (artistMetadata.Version != ArtistsVersion)
                 {
                     // Add code needed for upgrading db objects here
                     Serilog.Log.Error("Unsupported Artist Database Version");
@@ -89,7 +98,7 @@ namespace Melon.LocalClasses
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
                     Name = "ArtistsCollection",
-                    Version = "1.0.0",
+                    Version = ArtistsVersion,
                     Info = $""
                 };
                 metadataCollection.InsertOne(metadata);
@@ -97,7 +106,7 @@ namespace Melon.LocalClasses
 
             if (albumMetadata != null)
             {
-                if (albumMetadata.Version != "1.0.0")
+                if (albumMetadata.Version != AlbumsVersion)
                 {
                     // Add code needed for upgrading db objects here
                     Serilog.Log.Error("Unsupported Album Database Version");
@@ -110,7 +119,7 @@ namespace Melon.LocalClasses
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
                     Name = "AlbumsCollection",
-                    Version = "1.0.0",
+                    Version = AlbumsVersion,
                     Info = $""
                 };
                 metadataCollection.InsertOne(metadata);
@@ -118,7 +127,7 @@ namespace Melon.LocalClasses
 
             if (trackMetadata != null)
             {
-                if (trackMetadata.Version != "1.0.0")
+                if (trackMetadata.Version != TracksVersion)
                 {
                     // Add code needed for upgrading db objects here
                     Serilog.Log.Error("Unsupported Track Database Version");
@@ -131,7 +140,7 @@ namespace Melon.LocalClasses
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
                     Name = "TracksCollection",
-                    Version = "1.0.0",
+                    Version = TracksVersion,
                     Info = $""
                 };
                 metadataCollection.InsertOne(metadata);
@@ -139,7 +148,7 @@ namespace Melon.LocalClasses
 
             if (failedFilesMetadata != null)
             {
-                if (failedFilesMetadata.Version != "1.0.0")
+                if (failedFilesMetadata.Version != FailedFilesVersion)
                 {
                     // Add code needed for upgrading db objects here
                     Serilog.Log.Error("Unsupported FailedFiles Database Version");
@@ -152,7 +161,7 @@ namespace Melon.LocalClasses
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
                     Name = "FailedFilesCollection",
-                    Version = "1.0.0",
+                    Version = FailedFilesVersion,
                     Info = $""
                 };
                 metadataCollection.InsertOne(metadata);
@@ -160,7 +169,7 @@ namespace Melon.LocalClasses
 
             if (playlistsMetadata != null)
             {
-                if (playlistsMetadata.Version != "1.0.0")
+                if (playlistsMetadata.Version != PlaylistsVersion)
                 {
                     // Add code needed for upgrading db objects here
                     Serilog.Log.Error("Unsupported Playlists Database Version");
@@ -173,7 +182,7 @@ namespace Melon.LocalClasses
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
                     Name = "PlaylistsCollection",
-                    Version = "1.0.0",
+                    Version = PlaylistsVersion,
                     Info = $""
                 };
                 metadataCollection.InsertOne(metadata);
@@ -181,7 +190,7 @@ namespace Melon.LocalClasses
 
             if (collectionsMetadata != null)
             {
-                if (collectionsMetadata.Version != "1.0.0")
+                if (collectionsMetadata.Version != CollectionsVersion)
                 {
                     // Add code needed for upgrading db objects here
                     Serilog.Log.Error("Unsupported Collections Database Version");
@@ -194,7 +203,7 @@ namespace Melon.LocalClasses
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
                     Name = "CollectionsCollection",
-                    Version = "1.0.0",
+                    Version = CollectionsVersion,
                     Info = $""
                 };
                 metadataCollection.InsertOne(metadata);
@@ -202,7 +211,7 @@ namespace Melon.LocalClasses
 
             if (queuesMetadata != null)
             {
-                if (queuesMetadata.Version != "1.0.0")
+                if (queuesMetadata.Version != QueuesVersion)
                 {
                     // Add code needed for upgrading db objects here
                     Serilog.Log.Error("Unsupported Queues Database Version");
@@ -215,7 +224,7 @@ namespace Melon.LocalClasses
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
                     Name = "QueuesCollection",
-                    Version = "1.0.0",
+                    Version = QueuesVersion,
                     Info = $""
                 };
                 metadataCollection.InsertOne(metadata);
@@ -241,31 +250,31 @@ namespace Melon.LocalClasses
                 switch (col)
                 {
                     case "Artists":
-                        ConvertDocuments<Artist>(col, "1.0.0");
+                        ConvertDocuments<Artist>(col, ArtistsVersion);
                         break;
                     case "Albums":
-                        ConvertDocuments<Album>(col, "1.0.0");
+                        ConvertDocuments<Album>(col, AlbumsVersion);
                         break;
                     case "Tracks":
-                        ConvertDocuments<Track>(col, "1.0.0");
+                        ConvertDocuments<Track>(col, TracksVersion);
                         break;
                     case "FailedFiles":
-                        ConvertDocuments<FailedFile>(col, "1.0.0");
+                        ConvertDocuments<FailedFile>(col, FailedFilesVersion);
                         break;
                     case "Playlists":
-                        ConvertDocuments<Playlist>(col, "1.0.0");
+                        ConvertDocuments<Playlist>(col, PlaylistsVersion);
                         break;
                     case "Collections":
-                        ConvertDocuments<Collection>(col, "1.0.0");
+                        ConvertDocuments<Collection>(col, CollectionsVersion);
                         break;
                     case "Queues":
-                        ConvertDocuments<PlayQueue>(col, "1.0.0");
+                        ConvertDocuments<PlayQueue>(col, QueuesVersion);
                         break;
                     case "Users":
-                        ConvertDocuments<User>(col, "1.0.0");
+                        ConvertDocuments<User>(col, UsersVersion);
                         break;
                     case "Stats":
-                        ConvertDocuments<PlayStat>(col, "1.0.0");
+                        ConvertDocuments<PlayStat>(col, StatsVersion);
                         break;
                 }
 
