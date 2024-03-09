@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -142,11 +143,12 @@ namespace MelonInstaller.Classes
         }
         private static void RestartServer(string installPath)
         {
-            var melonPath = Path.Combine(installPath, "MelonWebApi.exe");
+            string command = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "dotnet.exe" : "dotnet";
+            var melonPath = Path.Combine(installPath, "MelonWebApi.dll");
             var processInfo = new ProcessStartInfo
             {
-                FileName = melonPath,
-                Arguments = $"",
+                FileName = command,
+                Arguments = melonPath,
                 UseShellExecute = false
             };
             Process.Start(processInfo);
