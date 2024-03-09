@@ -21,35 +21,41 @@ namespace MelonInstaller.Classes
             Directory.CreateDirectory(installTempDir);
             var installTemp = $"{installTempDir}/release.zip";
 
-            // Check github
-            Console.WriteLine($"[+] Checking GitHub for releases.");
-            var release = await GetGithubRelease(versionToFind);
-            if (release == null)
+            if (!LaunchArgs.ContainsKey("localPath"))
             {
-                Console.WriteLine($"[!] Install failed!");
-                Console.WriteLine($"[!] Couldn't find {versionToFind}");
-                return;
-            }
+                // Check github
+                Console.WriteLine($"[+] Checking GitHub for releases.");
+                var release = await GetGithubRelease(versionToFind);
+                if (release == null)
+                {
+                    Console.WriteLine($"[!] Install failed!");
+                    Console.WriteLine($"[!] Couldn't find {versionToFind}");
+                    return;
+                }
 
-            var asset = release.assets.FirstOrDefault();
-            if (asset == null)
-            {
-                Console.WriteLine($"[!] Install failed!");
-                Console.WriteLine($"[!] Couldn't find {versionToFind}");
-                return;
+                var asset = release.assets.FirstOrDefault();
+                if (asset == null)
+                {
+                    Console.WriteLine($"[!] Install failed!");
+                    Console.WriteLine($"[!] Couldn't find {versionToFind}");
+                    return;
+                }
+                // Download File If Newer
+                Console.WriteLine($"[+] Downloading {versionToFind} from GitHub");
+                // Download
+                try
+                {
+                    await DownloadFileAsync(asset.browser_download_url, installTemp);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"[!] Install failed!");
+                    Console.WriteLine($"[!] {e.Message}");
+                }
             }
-
-            // Download File If Newer
-            Console.WriteLine($"[+] Downloading {versionToFind} from GitHub");
-            // Download
-            try
+            else
             {
-                await DownloadFileAsync(asset.browser_download_url, installTemp);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"[!] Install failed!");
-                Console.WriteLine($"[!] {e.Message}");
+                installTemp = LaunchArgs["localPath"];
             }
 
             // Extract the zip file
