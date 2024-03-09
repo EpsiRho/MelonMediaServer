@@ -28,7 +28,7 @@ namespace MelonWebApi.Controllers
                                          string sampleRate = "", string channels = "", string bitsPerSample = "", string year = "", 
                                          long ltPlayCount = -1, long gtPlayCount = -1, long ltSkipCount = -1, long gtSkipCount = -1, int ltYear = -1, int ltMonth = -1, int ltDay = -1,
                                          int gtYear = -1, int gtMonth = -1, int gtDay = -1, long ltRating = -1, long gtRating = -1, [FromQuery] List<string> genres = null, 
-                                         bool searchOr = false, string sort = "NameAsc")
+                                         bool searchOr = false, string sort = "NameAsc", string albumName = "", string artistName = "")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -102,6 +102,17 @@ namespace MelonWebApi.Controllers
             if (year != "")
             {
                 filterList.Add(Builders<Track>.Filter.Regex(x => x.Year, new BsonRegularExpression(Regex.Escape(year), "i")));
+            }
+
+            if (albumName != "")
+            {
+                filterList.Add(Builders<Track>.Filter.Regex(x => x.Album.Name, new BsonRegularExpression(Regex.Escape(albumName), "i")));
+            }
+
+            if (artistName != "")
+            {
+                var f = Builders<DbLink>.Filter.And(Builders<DbLink>.Filter.Eq(x => x.Name, artistName), Builders<DbLink>.Filter.Regex(x => x.Name, new BsonRegularExpression(Regex.Escape(albumName), "i")));
+                filterList.Add(Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, f));
             }
 
             // Play Count
