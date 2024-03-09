@@ -2,7 +2,6 @@
   "profiles": {
     "MelonWebApi": {
       "commandName": "Project",
-      "commandLineArgs": "-v",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
