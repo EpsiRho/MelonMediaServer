@@ -516,5 +516,174 @@ namespace MelonWebApi.Controllers
             args.SendEvent("Tracks Sent", 200, Program.mWebApi);
             return new ObjectResult(orderedTracks) { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("get-albums")]
+        public ObjectResult GetAlbums(string id, int page = 0, int count = 100)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/palylists/get-tracks", curId, new Dictionary<string, object>()
+                {
+                        { "id", id },
+                        { "page", page },
+                        { "count", count }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
+
+            var pFilter = Builders<Playlist>.Filter.Eq(x => x._id, id);
+
+
+            var Playlists = PCollection.Find(pFilter).ToList();
+            if (Playlists.Count() == 0)
+            {
+                args.SendEvent("Playlist not found", 404, Program.mWebApi);
+                return new ObjectResult("Playlist not found") { StatusCode = 404 };
+            }
+            var playlist = Playlists[0];
+
+            if (playlist.PublicEditing == false)
+            {
+                if (playlist.Owner != curId && !playlist.Editors.Contains(curId) && !playlist.Viewers.Contains(curId))
+                {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+            }
+
+            var tracks = playlist.Tracks;
+
+            var trackProjection = Builders<Track>.Projection.Include(x => x.Album._id);
+            List<string> albumIds = TracksCollection.Find(Builders<Track>.Filter.In(x => x._id, tracks.Select(x => x._id)))
+                                                    .Project(trackProjection).ToList().Select(x => (string)x["Album"]["_id"]).Distinct().ToList();
+
+            var albumProjection = Builders<Album>.Projection.Exclude(x => x.AlbumArtPaths)
+                                                            .Exclude(x => x.Tracks);
+            List<ResponseAlbum> albums = AlbumsCollection.Find(Builders<Album>.Filter.In(x => x._id, albumIds))
+                                                         .Project(albumProjection).ToList().Select(x => BsonSerializer.Deserialize<ResponseAlbum>(x))
+                                                         .Take(new Range(page * count, (page * count) + count)).ToList();
+
+            var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
+            userIds.Add(curId);
+
+            List<ResponseAlbum> orderedAlbums = new List<ResponseAlbum>();
+            foreach (var album in albums)
+            {
+
+                // Check for null or empty collections to avoid exceptions
+                if (album.PlayCounts != null)
+                {
+                    album.PlayCounts = album.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                }
+
+                if (album.SkipCounts != null)
+                {
+                    album.SkipCounts = album.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                }
+
+                if (album.Ratings != null)
+                {
+                    album.Ratings = album.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
+                }
+
+                orderedAlbums.Add(album);
+            }
+
+            args.SendEvent("Tracks Sent", 200, Program.mWebApi);
+            return new ObjectResult(orderedAlbums) { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("get-artists")]
+        public ObjectResult GetArtists(string id, int page = 0, int count = 100)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/palylists/get-tracks", curId, new Dictionary<string, object>()
+                {
+                        { "id", id },
+                        { "page", page },
+                        { "count", count }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var PCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+            var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
+
+            var pFilter = Builders<Playlist>.Filter.Eq(x => x._id, id);
+
+
+            var Playlists = PCollection.Find(pFilter).ToList();
+            if (Playlists.Count() == 0)
+            {
+                args.SendEvent("Playlist not found", 404, Program.mWebApi);
+                return new ObjectResult("Playlist not found") { StatusCode = 404 };
+            }
+            var playlist = Playlists[0];
+
+            if (playlist.PublicEditing == false)
+            {
+                if (playlist.Owner != curId && !playlist.Editors.Contains(curId) && !playlist.Viewers.Contains(curId))
+                {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+            }
+
+            var tracks = playlist.Tracks;
+
+            var trackProjection = Builders<Track>.Projection.Include(x => x.TrackArtists);
+            List<string> artistIds = TracksCollection.Find(Builders<Track>.Filter.In(x => x._id, tracks.Select(x => x._id)))
+                                                     .Project(trackProjection).ToList().SelectMany(x => BsonSerializer.Deserialize<Track>(x).TrackArtists)
+                                                     .Select(x=>x._id).Distinct().ToList();
+
+            var artistProjection = Builders<Artist>.Projection.Exclude(x => x.ArtistBannerPaths)
+                                                              .Exclude(x => x.ArtistPfpPaths)
+                                                              .Exclude(x => x.Releases)
+                                                              .Exclude(x => x.SeenOn)
+                                                              .Exclude(x => x.Tracks)
+                                                              .Exclude(x => x.ConnectedArtists);
+            List<ResponseArtist> artists = ArtistsCollection.Find(Builders<Artist>.Filter.In(x => x._id, artistIds))
+                                                           .Project(artistProjection).ToList().Select(x => BsonSerializer.Deserialize<ResponseArtist>(x))
+                                                           .Take(new Range(page * count, (page * count) + count)).ToList();
+
+            var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
+            userIds.Add(curId);
+
+            List<ResponseArtist> orderedArtists = new List<ResponseArtist>();
+            foreach (var artist in artists)
+            {
+
+                // Check for null or empty collections to avoid exceptions
+                if (artist.PlayCounts != null)
+                {
+                    artist.PlayCounts = artist.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                }
+
+                if (artist.SkipCounts != null)
+                {
+                    artist.SkipCounts = artist.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                }
+
+                if (artist.Ratings != null)
+                {
+                    artist.Ratings = artist.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
+                }
+
+                orderedArtists.Add(artist);
+            }
+
+            args.SendEvent("Tracks Sent", 200, Program.mWebApi);
+            return new ObjectResult(orderedArtists) { StatusCode = 200 };
+        }
     }
 }
