@@ -46,6 +46,7 @@ namespace Melon.LocalClasses
         public static Dictionary<string, string> LaunchArgs { get; set; }
         public static MelonHost Host { get; set; }
         public static string Version { get; set; }
+        public static string Language { get; set; }
         public static bool RestartServer { get; set; }
         public static void Init(IWebApi mWebApi)
         {
@@ -372,10 +373,12 @@ namespace Melon.LocalClasses
             if (resources.Contains($"Melon.Strings.UIStrings{language.ToUpper()}.resources"))
             {
                 StringsManager = new ResourceManager($"Melon.Strings.UIStrings{language.ToUpper()}", typeof(StateManager).Assembly);
+                Language = language.ToUpper();
             }
             else
             {
                 StringsManager = new ResourceManager($"Melon.Strings.UIStringsEN", typeof(StateManager).Assembly);
+                Language = "EN";
             }
         }
         private static void CreateDirectories()

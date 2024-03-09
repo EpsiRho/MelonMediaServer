@@ -1,6 +1,8 @@
 ﻿using MelonInstaller.Classes;
 using Microsoft.Build.Locator;
 using System.Diagnostics;
+using System.Resources;
+using System.Runtime.InteropServices;
 
 namespace MelonInstaller
 {
@@ -10,15 +12,45 @@ namespace MelonInstaller
         public static string installPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}/MelonInstall";
         public static string versionToFind = "latest";
         public static bool addAppIcons = false;
+        public static ResourceManager StringsManager { get; set; }
+        [DllImport("libc")]
+        public static extern int system(string exec);
+        public static void ClearConsole()
+        {
+            try
+            {
+                system("clear");
+            }
+            catch (Exception)
+            {
+                Console.Clear();
+            }
+
+            Console.Out.Flush();
+            Console.SetCursorPosition(0, 0);
+        }
         public static async Task<int> Main(string[] args)
         {
+            ClearConsole();
+            ParseArgs(args);
+
+            var resources = typeof(Program).Assembly.GetManifestResourceNames();
+            if (LaunchArgs.ContainsKey("lang") && resources.Contains($"MelonInstaller.Strings.UIStrings{LaunchArgs["lang"].ToUpper()}.resources"))
+            {
+                StringsManager = new ResourceManager($"MelonInstaller.Strings.UIStrings{LaunchArgs["lang"].ToUpper()}", typeof(Program).Assembly);
+            }
+            else
+            {
+                StringsManager = new ResourceManager($"MelonInstaller.Strings.UIStringsEN", typeof(Program).Assembly);
+            }
+
             Console.ForegroundColor = ConsoleColor.White;
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             Process[] processes = Process.GetProcessesByName("MelonWebApi.exe");
             bool isRunning = processes.Length > 0;
 
-            string msg = "Waiting on Melon to close...";
+            string msg = StringsManager.GetString("WaitForClose");
             while (isRunning)
             {
                 if (msg != "")
@@ -29,8 +61,6 @@ namespace MelonInstaller
             }
 
             SetupMSBuild();
-
-            ParseArgs(args);
 
             if(LaunchArgs.ContainsKey("update"))
             {
@@ -46,8 +76,8 @@ namespace MelonInstaller
             // Install UI: Get install path
             if (!LaunchArgs.ContainsKey("installPath"))
             {
-                Console.WriteLine($"Welcome to Melon! Please enter an install path or nothing to install to the default location.");
-                Console.WriteLine($"(The default is {installPath})");
+                Console.WriteLine(StringsManager.GetString("InstallPathRequest"));
+                Console.WriteLine($"({StringsManager.GetString("DefaultPrompt")} {installPath})");
                 var input = Console.ReadLine();
 
                 if(Directory.CreateDirectory(input).Exists)
@@ -56,7 +86,7 @@ namespace MelonInstaller
                 }
                 else
                 {
-                    Console.WriteLine($"[!] Invalid location");
+                    Console.WriteLine($"[!] {StringsManager.GetString("InvalidLocation")}");
                     return 3;
                 }
             }
@@ -68,7 +98,7 @@ namespace MelonInstaller
                 }
                 else
                 {
-                    Console.WriteLine($"[!] Invalid location");
+                    Console.WriteLine($"[!] {StringsManager.GetString("InvalidLocation")}");
                     return 3;
                 }
             }

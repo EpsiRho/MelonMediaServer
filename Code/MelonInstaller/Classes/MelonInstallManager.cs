@@ -24,24 +24,24 @@ namespace MelonInstaller.Classes
             if (!LaunchArgs.ContainsKey("localPath"))
             {
                 // Check github
-                Console.WriteLine($"[+] Checking GitHub for releases.");
+                Console.WriteLine($"[+] {StringsManager.GetString("GithubCheck")}");
                 var release = await GetGithubRelease(versionToFind);
                 if (release == null)
                 {
-                    Console.WriteLine($"[!] Install failed!");
-                    Console.WriteLine($"[!] Couldn't find {versionToFind}");
+                    Console.WriteLine($"[!] {StringsManager.GetString("InstallFailed")}");
+                    Console.WriteLine($"[!] {StringsManager.GetString("VersionMissing")} {versionToFind}");
                     return;
                 }
 
                 var asset = release.assets.FirstOrDefault();
                 if (asset == null)
                 {
-                    Console.WriteLine($"[!] Install failed!");
-                    Console.WriteLine($"[!] Couldn't find {versionToFind}");
+                    Console.WriteLine($"[!] {StringsManager.GetString("InstallFailed")}");
+                    Console.WriteLine($"[!] {StringsManager.GetString("VersionMissing")} {versionToFind}");
                     return;
                 }
                 // Download File If Newer
-                Console.WriteLine($"[+] Downloading {versionToFind} from GitHub");
+                Console.WriteLine($"[+] {StringsManager.GetString("DownloadFromGithub").Replace("{}",versionToFind)}");
                 // Download
                 try
                 {
@@ -49,7 +49,7 @@ namespace MelonInstaller.Classes
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"[!] Install failed!");
+                    Console.WriteLine($"[!] {StringsManager.GetString("InstallFailed")}");
                     Console.WriteLine($"[!] {e.Message}");
                 }
             }
@@ -61,20 +61,20 @@ namespace MelonInstaller.Classes
             // Extract the zip file
             try
             {
-                UIManager.ZipProgressView("Extracting Melon");
+                UIManager.ZipProgressView(StringsManager.GetString("MelonExtracting"));
                 var t = ZipManager.ExtractZip($"{installTemp}", installPath, new Progress<double>(x =>
                     UIManager.zipPercentage = x
                 ));
                 t.Wait();
                 UIManager.endDisplay = true;
                 Thread.Sleep(500);
-                Console.WriteLine($"[+] Melon extracted to {installPath.Replace("\\","/")}");
+                Console.WriteLine($"[+] {StringsManager.GetString("MelonExtracted")} {installPath.Replace("\\","/")}");
             }
             catch (Exception e)
             {
                 UIManager.endDisplay = true;
                 Thread.Sleep(500);
-                Console.WriteLine($"[!] Install failed!");
+                Console.WriteLine($"[!] {StringsManager.GetString("InstallFailed")}");
                 Console.WriteLine($"[!] {e.Message}");
                 return;
             }
@@ -87,7 +87,7 @@ namespace MelonInstaller.Classes
                 // If set, restart the server
                 if (Program.LaunchArgs.ContainsKey("restart"))
                 {
-                    Console.WriteLine($"[+] Launching Melon...");
+                    Console.WriteLine($"[+] {StringsManager.GetString("LaunchingMelon")}");
                     RestartServer(installPath);
                 }
             }
@@ -115,7 +115,7 @@ namespace MelonInstaller.Classes
                 var release = JsonSerializer.Deserialize<GithubResponse>(response);
                 if (release == null)
                 {
-                    Console.WriteLine("Could not get the latest release information.");
+                    Console.WriteLine(StringsManager.GetString("ReleaseInformationError"));
                     return null;
                 }
 
@@ -124,7 +124,7 @@ namespace MelonInstaller.Classes
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"{StringsManager.GetString("HttpError")} {ex.Message}");
                 return null;
             }
         }

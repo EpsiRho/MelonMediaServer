@@ -50,7 +50,7 @@ namespace Melon.DisplayClasses
                     { StringsManager.GetString("PluginsOption"), PluginsMenu },
                     { StringsManager.GetString("DatabaseMenu"), DatabaseSettings },
                     { StringsManager.GetString("OpenMelonFolderOption") , OpenMelonFolder },
-                    { "Check For Updates" , CheckForUpdates }
+                    { StringsManager.GetString("CheckForUpdates") , CheckForUpdates }
                 };
 
             while (LockUI && !StateManager.RestartServer)
@@ -97,7 +97,7 @@ namespace Melon.DisplayClasses
                     var release = JsonSerializer.Deserialize<GithubResponse>(response);
                     if (release == null)
                     {
-                        Console.WriteLine("Could not get the latest release information.");
+                        Console.WriteLine(StringsManager.GetString("ReleaseInfoError"));
                         return null;
                     }
 
@@ -107,16 +107,16 @@ namespace Melon.DisplayClasses
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"{StringsManager.GetString("ErrorOccurred")}: {ex.Message}");
                 return null;
             }
         }
         // Check For Updates
         private static void CheckForUpdates()
         {
-            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), "Check For Updates" });
+            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("CheckForUpdates") });
             // Check github
-            Console.WriteLine($"[+] Checking GitHub for releases.");
+            Console.WriteLine($"[+] {StringsManager.GetString("CheckingGitHub")}");
             var release = GetGithubRelease("latest").Result;
             if (release != null)
             {
@@ -124,19 +124,33 @@ namespace Melon.DisplayClasses
                 var latestVersion = System.Version.Parse(release.tag_name.Replace("v", ""));
                 if (curVersion >= latestVersion)
                 {
-                    Console.WriteLine("[+] No updates found.\n");
+                    Console.WriteLine($"[+] {StringsManager.GetString("NoUpdates")}\n");
                     Console.WriteLine(StringsManager.GetString("ContinuationPrompt"));
                     Console.ReadKey();
                     return;
                 }
 
-                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), "Update Available" });
-                Console.WriteLine($"Current Version: {StateManager.Version}");
-                Console.WriteLine($"Latest Version: {release.tag_name}");
-                Console.WriteLine($"Release Notes:\n{release.body}");
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("UpdateAvailable") });
+                int y = Console.CursorTop;
+                Console.CursorTop += 4;
+                Console.WriteLine($"{StringsManager.GetString("Current")} {StateManager.Version} -> {StringsManager.GetString("Latest")} {release.tag_name}".Pastel(MelonColor.Highlight));
+                Console.WriteLine(StringsManager.GetString("ReleaseNotes").Pastel(MelonColor.Text));
+                foreach(var str in release.body.Split("\n"))
+                {
+                    Console.WriteLine(str.Pastel(MelonColor.ShadedText));
+                    if(Console.WindowHeight - Console.CursorTop < 3)
+                    {
+                        Console.WriteLine("...");
+                        break;
+                    }
+                }
                 Console.WriteLine($"");
-                string PositiveConfirmation = StateManager.StringsManager.GetString("PositiveConfirmation");
-                string NegativeConfirmation = StateManager.StringsManager.GetString("NegativeConfirmation");
+
+                string PositiveConfirmation = StringsManager.GetString("PositiveConfirmation");
+                string NegativeConfirmation = StringsManager.GetString("NegativeConfirmation");
+
+                Console.CursorTop = y;
+                Console.WriteLine(StringsManager.GetString("UpdatePrompt"));
                 var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
                 if (input == PositiveConfirmation)
                 {
@@ -146,7 +160,7 @@ namespace Melon.DisplayClasses
                         var processInfo = new ProcessStartInfo
                         {
                             FileName = updaterPath,
-                            Arguments = $"--update --restart --installPath {AppDomain.CurrentDomain.BaseDirectory}",
+                            Arguments = $"-update -restart -installPath {AppDomain.CurrentDomain.BaseDirectory} -lang {StateManager.Language}",
                             UseShellExecute = false
                         };
                         Process.Start(processInfo);
@@ -155,7 +169,7 @@ namespace Melon.DisplayClasses
                     }
                     catch (Exception)
                     {
-                        Console.WriteLine("Couldn't launch the updater, is it missing?");
+                        Console.WriteLine(StringsManager.GetString("MissingUpdater"));
                         Console.WriteLine(StringsManager.GetString("ContinuationPrompt"));
                         Console.ReadKey();
                     }
@@ -167,7 +181,7 @@ namespace Melon.DisplayClasses
             }
             else
             {
-                Console.WriteLine("No updates found.");
+                Console.WriteLine(StringsManager.GetString("NoUpdates"));
             }
 
             Console.WriteLine(StringsManager.GetString("ContinuationPrompt"));

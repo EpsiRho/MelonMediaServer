@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static MelonInstaller.Program;
 
 namespace MelonInstaller.Classes
 {
@@ -17,13 +18,13 @@ namespace MelonInstaller.Classes
         {
             eventSource.BuildStarted += (sender, e) =>
             {
-                Console.Write($"[-] Build started at {e.Timestamp}");
+                Console.Write($"[-] {StringsManager.GetString("BuildStart")} {e.Timestamp}");
             };
 
             eventSource.BuildFinished += (sender, e) =>
             {
                 Console.WriteLine();
-                Console.WriteLine($"[+] Build finished at {e.Timestamp}. Success: {e.Succeeded}");
+                Console.WriteLine($"[+] {StringsManager.GetString("BuildFinish")} {e.Timestamp}. {StringsManager.GetString("Success")}: {e.Succeeded}");
             };
 
             // Adjust this to capture more specific progress details if needed
@@ -40,7 +41,7 @@ namespace MelonInstaller.Classes
             eventSource.ErrorRaised += (sender, e) =>
             {
                 Console.WriteLine();
-                Console.WriteLine($"[!] Error: {e.Message}");
+                Console.WriteLine($"[!] {StringsManager.GetString("Error")}: {e.Message}");
             };
         }
 

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
+using static MelonInstaller.Program;
 
 namespace MelonInstaller.Classes
 {
@@ -18,7 +19,7 @@ namespace MelonInstaller.Classes
         {
             if (!Program.LaunchArgs.ContainsKey("buildPath"))
             {
-                Console.WriteLine($"[!] Build path required!");
+                Console.WriteLine($"[!] {StringsManager.GetString("BuildStart")}");
                 return;
             }
             string buildPath = Program.LaunchArgs["buildPath"];
@@ -28,16 +29,18 @@ namespace MelonInstaller.Classes
             string outputPath = $"Build/{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
             if (Program.LaunchArgs.ContainsKey("outputPath"))
             {
-                outputPath = Program.LaunchArgs["outputPath"];
+                outputPath = $"{Program.LaunchArgs["outputPath"]}/{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
+            }
+            else
+            {
+                Directory.CreateDirectory("Build");
             }
 
             if (!Directory.Exists(buildPath))
             {
-                Console.WriteLine($"[!] \"{buildPath}\" does not exist!");
+                Console.WriteLine($"[!] \"{buildPath}\" {StringsManager.GetString("PathMissing")}");
                 return;
             }
-
-            Directory.CreateDirectory("Build");
 
             try
             {
@@ -45,7 +48,7 @@ namespace MelonInstaller.Classes
             }
             catch (Exception e)
             {
-                Console.WriteLine($"[!] Build failed!");
+                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
                 Console.WriteLine($"[!] {e.Message}");
                 return;
             }
@@ -58,7 +61,7 @@ namespace MelonInstaller.Classes
             }
             catch (Exception e)
             {
-                Console.WriteLine($"[!] Build failed!");
+                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
                 Console.WriteLine($"[!] {e.Message}");
                 return;
             }
@@ -66,7 +69,7 @@ namespace MelonInstaller.Classes
 
             try
             {
-                UIManager.ZipProgressView("Compressing to Zip");
+                UIManager.ZipProgressView(StringsManager.GetString("Compress"));
                 var t = ZipManager.CreateZip(outputPath, buildOutputPath, new Progress<double>(x=>
                     UIManager.zipPercentage = x
                 ));
@@ -74,14 +77,14 @@ namespace MelonInstaller.Classes
                 t.Wait();
                 UIManager.endDisplay = true;
                 Thread.Sleep(500);
-                Console.WriteLine($"[+] Build created at {buildOutputPath}");
-                Console.WriteLine($"[+] Build Package created at {outputPath}");
+                Console.WriteLine($"[+] {StringsManager.GetString("BuildCreated")} {buildOutputPath}");
+                Console.WriteLine($"[+] {StringsManager.GetString("BuildPackageCreated")} {outputPath}");
             }
             catch (Exception e)
             {
                 UIManager.endDisplay = true;
                 Thread.Sleep(500);
-                Console.WriteLine($"[!] Build failed!");
+                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
                 Console.WriteLine($"[!] {e.Message}");
                 return;
             }
@@ -95,7 +98,7 @@ namespace MelonInstaller.Classes
             var prog = files.FirstOrDefault(x => x.EndsWith("Program.cs"));
             if (String.IsNullOrEmpty(prog))
             {
-                throw new InvalidOperationException("Program.cs is missing!");
+                throw new InvalidOperationException(StringsManager.GetString("ProgramcsMissing"));
             }
 
             var txt = File.ReadAllText(prog);
@@ -110,7 +113,7 @@ namespace MelonInstaller.Classes
             var projectFilePath = System.IO.Directory.GetFiles(projectFolderPath, "*.csproj").FirstOrDefault(x=>!x.Contains("Backup"));
             if (String.IsNullOrEmpty(projectFilePath))
             {
-                throw new InvalidOperationException("No project found!");
+                throw new InvalidOperationException(StringsManager.GetString("ProjectMissing"));
             }
 
             // Load the project
@@ -139,7 +142,7 @@ namespace MelonInstaller.Classes
             }
             else
             {
-                throw new InvalidOperationException("Build failed.");
+                throw new InvalidOperationException(StringsManager.GetString("BuildFailed"));
             }
         }
         public static string CreateVersionNumber()

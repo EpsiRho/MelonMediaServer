@@ -41,13 +41,13 @@ namespace MelonInstaller.Classes
                         Console.WriteLine(new string(' ', Console.WindowWidth - msg.Length - 1));
                         DisplayProgressBar(zipPercentage, '#', '-');
                         Console.WriteLine(new string(' ', Console.WindowWidth));
-                        Console.WriteLine(new string(' ', Console.WindowWidth));
                     }
                     catch (Exception)
                     {
 
                     }
                 }
+                Console.CursorVisible = true;
             });
             DisplayThread.Priority = ThreadPriority.Highest;
             DisplayThread.Start();
