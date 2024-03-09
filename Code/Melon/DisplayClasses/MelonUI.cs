@@ -306,6 +306,25 @@ namespace Melon.Classes
             }
 
         }
+        public static void DisplayProgressBar(double progressPercentage, char foreground, char background)
+        {
+            try
+            {
+                // 8 in the am pm gang
+                double completedWidth = (Console.WindowWidth - 4) * progressPercentage;
+                double remainingWidth = (Console.WindowWidth - 4) - completedWidth;
+
+                string progressBar = new string(foreground, (int)completedWidth);
+                string backgroundBar = new string(background, (int)remainingWidth);
+                Console.CursorLeft = 0;
+                Console.WriteLine($"[{progressBar.Pastel(MelonColor.Highlight)}{backgroundBar.Pastel(MelonColor.ShadedText)}] ");
+            }
+            catch (Exception)
+            {
+
+            }
+
+        }
         private static bool IndeterminateProgress { get; set; }
         private static bool NeedsShutdown { get; set; }
         public static void ShowIndeterminateProgress()

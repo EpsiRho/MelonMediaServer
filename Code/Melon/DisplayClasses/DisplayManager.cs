@@ -112,8 +112,8 @@ namespace Melon.Classes
         }
         public static void DisplayVersionInfo()
         {
-            var assembly = Assembly.GetExecutingAssembly().GetName();
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            //var assembly = Assembly.GetExecutingAssembly().GetName();
+            var version = new Version(StateManager.Version);
             DateTime buildDate = new DateTime(2024, 1, 1)
                 .AddDays(version.Build)
                 .AddMinutes(version.Revision);

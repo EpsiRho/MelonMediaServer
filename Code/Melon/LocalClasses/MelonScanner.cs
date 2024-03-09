@@ -40,199 +40,6 @@ namespace Melon.LocalClasses
         private static ConcurrentDictionary<string, string> threads { get; set; }
 
         // DB Functions
-        public static void CheckAndFix()
-        {
-            newMelonDB = StateManager.DbClient.GetDatabase("Melon");
-            var metadataCollection = newMelonDB.GetCollection<DbMetadata>("Metadata");
-            var artistMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "ArtistsCollection").FirstOrDefault();
-            var albumMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "AlbumsCollection").FirstOrDefault();
-            var trackMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "TracksCollection").FirstOrDefault();
-            var failedFilesMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "FailedFilesCollection").FirstOrDefault();
-            var playlistsMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "PlaylistsCollection").FirstOrDefault();
-            var collectionsMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "CollectionsCollection").FirstOrDefault();
-            var queuesMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "QueuesCollection").FirstOrDefault();
-            var usersMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "UsersCollection").FirstOrDefault();
-            var statsMetadata = metadataCollection.AsQueryable().Where(x => x.Name == "StatsCollection").FirstOrDefault();
-            if (statsMetadata != null)
-            {
-                if (statsMetadata.Version != "1.0.0")
-                {
-                    // Add code needed for upgrading db objects here
-                    Serilog.Log.Error("Unsupported User Database Version");
-                }
-            }
-            else
-            {
-                var statMetadata = new DbMetadata
-                {
-                    _id = ObjectId.GenerateNewId().ToString(),
-                    Name = "StatsCollection",
-                    Version = "1.0.0",
-                    Info = $""
-                };
-                metadataCollection.InsertOne(statMetadata);
-            }
-
-            if (usersMetadata != null)
-            {
-                if (usersMetadata.Version != "1.0.0")
-                {
-                    // Add code needed for upgrading db objects here
-                    Serilog.Log.Error("Unsupported User Database Version");
-                }
-            }
-            else
-            {
-                var userMetadata = new DbMetadata
-                {
-                    _id = ObjectId.GenerateNewId().ToString(),
-                    Name = "UsersCollection",
-                    Version = "1.0.0",
-                    Info = $""
-                };
-                metadataCollection.InsertOne(userMetadata);
-            }
-
-            if (artistMetadata != null)
-            {
-                if (artistMetadata.Version != "1.0.0")
-                {
-                    // Add code needed for upgrading db objects here
-                    Serilog.Log.Error("Unsupported Artist Database Version");
-                }
-            }
-            else
-            {
-                var metadata = new DbMetadata
-                {
-                    _id = ObjectId.GenerateNewId().ToString(),
-                    Name = "ArtistsCollection",
-                    Version = "1.0.0",
-                    Info = $""
-                };
-                metadataCollection.InsertOne(metadata);
-            }
-
-            if (albumMetadata != null)
-            {
-                if (albumMetadata.Version != "1.0.0")
-                {
-                    // Add code needed for upgrading db objects here
-                    Serilog.Log.Error("Unsupported Album Database Version");
-                }
-            }
-            else
-            {
-                var metadata = new DbMetadata
-                {
-                    _id = ObjectId.GenerateNewId().ToString(),
-                    Name = "AlbumsCollection",
-                    Version = "1.0.0",
-                    Info = $""
-                };
-                metadataCollection.InsertOne(metadata);
-            }
-
-            if (trackMetadata != null)
-            {
-                if (trackMetadata.Version != "1.0.0")
-                {
-                    // Add code needed for upgrading db objects here
-                    Serilog.Log.Error("Unsupported Track Database Version");
-                }
-            }
-            else
-            {
-                var metadata = new DbMetadata
-                {
-                    _id = ObjectId.GenerateNewId().ToString(),
-                    Name = "TracksCollection",
-                    Version = "1.0.0",
-                    Info = $""
-                };
-                metadataCollection.InsertOne(metadata);
-            }
-
-            if (failedFilesMetadata != null)
-            {
-                if (failedFilesMetadata.Version != "1.0.0")
-                {
-                    // Add code needed for upgrading db objects here
-                    Serilog.Log.Error("Unsupported FailedFiles Database Version");
-                }
-            }
-            else
-            {
-                var metadata = new DbMetadata
-                {
-                    _id = ObjectId.GenerateNewId().ToString(),
-                    Name = "FailedFilesCollection",
-                    Version = "1.0.0",
-                    Info = $""
-                };
-                metadataCollection.InsertOne(metadata);
-            }
-
-            if (playlistsMetadata != null)
-            {
-                if (playlistsMetadata.Version != "1.0.0")
-                {
-                    // Add code needed for upgrading db objects here
-                    Serilog.Log.Error("Unsupported Playlists Database Version");
-                }
-            }
-            else
-            {
-                var metadata = new DbMetadata
-                {
-                    _id = ObjectId.GenerateNewId().ToString(),
-                    Name = "PlaylistsCollection",
-                    Version = "1.0.0",
-                    Info = $""
-                };
-                metadataCollection.InsertOne(metadata);
-            }
-
-            if (collectionsMetadata != null)
-            {
-                if (collectionsMetadata.Version != "1.0.0")
-                {
-                    // Add code needed for upgrading db objects here
-                    Serilog.Log.Error("Unsupported Collections Database Version");
-                }
-            }
-            else
-            {
-                var metadata = new DbMetadata
-                {
-                    _id = ObjectId.GenerateNewId().ToString(),
-                    Name = "CollectionsCollection",
-                    Version = "1.0.0",
-                    Info = $""
-                };
-                metadataCollection.InsertOne(metadata);
-            }
-
-            if (queuesMetadata != null)
-            {
-                if (queuesMetadata.Version != "1.0.0")
-                {
-                    // Add code needed for upgrading db objects here
-                    Serilog.Log.Error("Unsupported Queues Database Version");
-                }
-            }
-            else
-            {
-                var metadata = new DbMetadata
-                {
-                    _id = ObjectId.GenerateNewId().ToString(),
-                    Name = "QueuesCollection",
-                    Version = "1.0.0",
-                    Info = $""
-                };
-                metadataCollection.InsertOne(metadata);
-            }
-        }
         private static void IndexCollections()
         {
             try
@@ -444,11 +251,13 @@ namespace Melon.LocalClasses
             // Cleanup
             DisplayManager.UIExtensions.Remove("LibraryScanIndicator");
             MelonUI.endOptionsDisplay = true;
+
             tracks = null;
             albums = null;
             artists = null;
             LyricFiles = null;
             Scanning = false;
+            Thread.Sleep(500);
         }
         private static async void ScanFolderCounter(string path)
         {
@@ -1213,9 +1022,6 @@ namespace Melon.LocalClasses
             {
                 if (!Scanning)
                 {
-                    // Check Metadata Collection for version mismatch and convert if needed
-                    CheckAndFix();
-
                     Thread scanThread = new Thread(StartScan);
                     scanThread.Start(false);
                     DisplayManager.UIExtensions.Add("LibraryScanIndicator", () => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); });
@@ -1259,9 +1065,6 @@ namespace Melon.LocalClasses
             {
                 if (!Scanning)
                 {
-                    // Check Metadata Collection for version mismatch and convert if needed
-                    CheckAndFix();
-
                     Thread scanThread = new Thread(StartScan);
                     scanThread.Start(true);
                     DisplayManager.UIExtensions.Add("LibraryScanIndicator", () => 

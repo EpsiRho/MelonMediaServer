@@ -45,6 +45,8 @@ namespace Melon.LocalClasses
         public static List<string> DisabledPlugins { get; set; }
         public static Dictionary<string, string> LaunchArgs { get; set; }
         public static MelonHost Host { get; set; }
+        public static string Version { get; set; }
+        public static string Language { get; set; }
         public static bool RestartServer { get; set; }
         public static void Init(IWebApi mWebApi)
         {
@@ -371,10 +373,12 @@ namespace Melon.LocalClasses
             if (resources.Contains($"Melon.Strings.UIStrings{language.ToUpper()}.resources"))
             {
                 StringsManager = new ResourceManager($"Melon.Strings.UIStrings{language.ToUpper()}", typeof(StateManager).Assembly);
+                Language = language.ToUpper();
             }
             else
             {
                 StringsManager = new ResourceManager($"Melon.Strings.UIStringsEN", typeof(StateManager).Assembly);
+                Language = "EN";
             }
         }
         private static void CreateDirectories()
@@ -466,6 +470,12 @@ namespace Melon.LocalClasses
             for (int i = 0; i < args.Length; i++)
             {
                 string arg = args[i].Replace("-", "");
+                if (!args[i].StartsWith("-"))
+                {
+                    LaunchArgs[LaunchArgs.Last().Key] += $" {arg}";
+                    break;
+                }
+
                 if (i + 1 >= args.Length)
                 {
                     LaunchArgs.Add(arg, "");

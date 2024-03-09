@@ -31,8 +31,12 @@ namespace MelonWebApi
         //public static bool started = false;
         public static WebApplication app;
         public static MWebApi mWebApi;
+        public const string Version = "1.0.68.322";
+
         public static async Task<int> Main(string[] args)
         {
+            StateManager.Version = Version;
+
             MelonColor.SetDefaults();
 
             Console.ForegroundColor = ConsoleColor.White;
@@ -52,6 +56,7 @@ namespace MelonWebApi
                 StateManager.RestartServer = false;
                 mWebApi = new MWebApi();
                 StateManager.Init(mWebApi);
+                //DisplayManager.UIExtensions.Add("Future", ()=> { Console.WriteLine("Hello this is a future version!"); });
 
                 if (StateManager.LaunchArgs.ContainsKey("headless") && DisplayManager.UIExtensions.Contains("SetupUI"))
                 {

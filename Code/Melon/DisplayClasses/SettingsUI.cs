@@ -17,10 +17,12 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Resources;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static Melon.LocalClasses.StateManager;
@@ -47,7 +49,8 @@ namespace Melon.DisplayClasses
                     { StringsManager.GetString("MenuCustomizationOption"), MenuCustomization },
                     { StringsManager.GetString("PluginsOption"), PluginsMenu },
                     { StringsManager.GetString("DatabaseMenu"), DatabaseSettings },
-                    { StringsManager.GetString("OpenMelonFolderOption") , OpenMelonFolder }
+                    { StringsManager.GetString("OpenMelonFolderOption") , OpenMelonFolder },
+                    { StringsManager.GetString("CheckForUpdates") , CheckForUpdates }
                 };
 
             while (LockUI && !StateManager.RestartServer)
@@ -71,6 +74,118 @@ namespace Melon.DisplayClasses
 
                 ((Action)settings[choice])();
             }
+        }
+        public static async Task<GithubResponse> GetGithubRelease(string version)
+        {
+            try
+            {
+                using(var httpClient = new HttpClient())
+                {
+                    // Get the release (latest or specific version
+                    string url = "";
+                    if (version != "latest")
+                    {
+                        url = $"https://api.github.com/repos/EpsiRho/MelonMediaServer/releases/tags/{version}";
+                    }
+                    else
+                    {
+                        url = $"https://api.github.com/repos/EpsiRho/MelonMediaServer/releases/latest";
+                    }
+                    httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd("MelonUpdater");
+
+                    var response = await httpClient.GetStringAsync(url);
+                    var release = JsonSerializer.Deserialize<GithubResponse>(response);
+                    if (release == null)
+                    {
+                        Console.WriteLine(StringsManager.GetString("ReleaseInfoError"));
+                        return null;
+                    }
+
+                    return release;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{StringsManager.GetString("ErrorOccurred")}: {ex.Message}");
+                return null;
+            }
+        }
+        // Check For Updates
+        private static void CheckForUpdates()
+        {
+            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("CheckForUpdates") });
+            // Check github
+            Console.WriteLine($"[+] {StringsManager.GetString("CheckingGitHub")}");
+            var release = GetGithubRelease("latest").Result;
+            if (release != null)
+            {
+                var curVersion = System.Version.Parse(StateManager.Version);
+                var latestVersion = System.Version.Parse(release.tag_name.Replace("v", ""));
+                if (curVersion >= latestVersion)
+                {
+                    Console.WriteLine($"[+] {StringsManager.GetString("NoUpdates")}\n");
+                    Console.WriteLine(StringsManager.GetString("ContinuationPrompt"));
+                    Console.ReadKey();
+                    return;
+                }
+
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("UpdateAvailable") });
+                int y = Console.CursorTop;
+                Console.CursorTop += 4;
+                Console.WriteLine($"{StringsManager.GetString("Current")} {StateManager.Version} -> {StringsManager.GetString("Latest")} {release.tag_name}".Pastel(MelonColor.Highlight));
+                Console.WriteLine(StringsManager.GetString("ReleaseNotes").Pastel(MelonColor.Text));
+                foreach(var str in release.body.Split("\n"))
+                {
+                    Console.WriteLine(str.Pastel(MelonColor.ShadedText));
+                    if(Console.WindowHeight - Console.CursorTop < 3)
+                    {
+                        Console.WriteLine("...");
+                        break;
+                    }
+                }
+                Console.WriteLine($"");
+
+                string PositiveConfirmation = StringsManager.GetString("PositiveConfirmation");
+                string NegativeConfirmation = StringsManager.GetString("NegativeConfirmation");
+
+                Console.CursorTop = y;
+                Console.WriteLine(StringsManager.GetString("UpdatePrompt"));
+                var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
+                if (input == PositiveConfirmation)
+                {
+                    try
+                    {
+                        var updaterPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MelonInstaller.exe");
+                        var processInfo = new ProcessStartInfo
+                        {
+                            FileName = updaterPath,
+                            Arguments = $"-update -restart -installPath {AppDomain.CurrentDomain.BaseDirectory} -lang {StateManager.Language}",
+                            UseShellExecute = false
+                        };
+                        Process.Start(processInfo);
+
+                        Environment.Exit(0);
+                    }
+                    catch (Exception)
+                    {
+                        Console.WriteLine(StringsManager.GetString("MissingUpdater"));
+                        Console.WriteLine(StringsManager.GetString("ContinuationPrompt"));
+                        Console.ReadKey();
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else
+            {
+                Console.WriteLine(StringsManager.GetString("NoUpdates"));
+            }
+
+            Console.WriteLine(StringsManager.GetString("ContinuationPrompt"));
+            Console.ReadKey();
         }
 
         // Database Settings
