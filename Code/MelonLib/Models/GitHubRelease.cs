@@ -6,6 +6,12 @@ using System.Threading.Tasks;
 
 namespace Melon.Models
 {
+    public class UpdateResponse
+    {
+        public string CurrentVersion { get; set; }
+        public string LatestVersion { get; set; }
+        public string ReleaseNotes { get; set; }
+    }
     public class GithubResponse
     {
         public string url { get; set; }

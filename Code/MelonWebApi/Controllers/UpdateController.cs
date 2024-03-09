@@ -14,6 +14,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Security.Claims;
 using System.Security.Policy;
 using NuGet.Packaging.Signing;
+using Amazon.Util.Internal;
+using Melon.Classes;
+using Melon.DisplayClasses;
 
 namespace MelonWebApi.Controllers
 {
@@ -997,6 +1000,65 @@ namespace MelonWebApi.Controllers
 
             args.SendEvent("Artist updated", 200, Program.mWebApi);
             return new ObjectResult("Artist updated") { StatusCode = 200 };
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("update/check")]
+        public ObjectResult CheckForUpdate()
+        {
+            var release = SettingsUI.GetGithubRelease("latest").Result;
+            if (release != null)
+            {
+                var curVersion = System.Version.Parse(StateManager.Version);
+                var latestVersion = System.Version.Parse(release.tag_name.Replace("v", ""));
+                if (curVersion >= latestVersion)
+                {
+                    return new ObjectResult("No update found") { StatusCode = 204 };
+                }
+
+                UpdateResponse response = new UpdateResponse()
+                {
+                    CurrentVersion = curVersion.ToString(),
+                    LatestVersion = latestVersion.ToString(),
+                    ReleaseNotes = release.body
+                };
+                return new ObjectResult(response) { StatusCode = 200 };
+            }
+            return new ObjectResult("No update found") { StatusCode = 204 };
+        }
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("update/server")]
+        public ObjectResult UpdateServer()
+        {
+            var release = SettingsUI.GetGithubRelease("latest").Result;
+            if (release != null)
+            {
+                var curVersion = System.Version.Parse(StateManager.Version);
+                var latestVersion = System.Version.Parse(release.tag_name.Replace("v", ""));
+                if (curVersion >= latestVersion)
+                {
+                    return new ObjectResult("No update found") { StatusCode = 204 };
+                }
+
+                try
+                {
+                    var updaterPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MelonInstaller.exe");
+                    var processInfo = new ProcessStartInfo
+                    {
+                        FileName = updaterPath,
+                        Arguments = $"-update -restart -installPath {AppDomain.CurrentDomain.BaseDirectory} -lang {StateManager.Language}",
+                        UseShellExecute = false
+                    };
+                    Process.Start(processInfo);
+
+                    Environment.Exit(0);
+                }
+                catch (Exception)
+                {
+                    return new ObjectResult("Updater failed to launch, is the updater missing?") { StatusCode = 500 };
+                }
+            }
+            return new ObjectResult("No update found") { StatusCode = 204 };
         }
 
     }
