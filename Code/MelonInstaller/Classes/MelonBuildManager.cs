@@ -15,26 +15,18 @@ namespace MelonInstaller.Classes
 {
     public static class MelonBuildManager
     {
-        public static void Build()
+        public static string version = "";
+        public static string buildPath = "";
+        public static string outputPath = "";
+        public static void PrepareBuild()
         {
+            // Get Build Path
             if (!Program.LaunchArgs.ContainsKey("buildPath"))
             {
                 Console.WriteLine($"[!] {StringsManager.GetString("BuildStart")}");
                 return;
             }
-            string buildPath = Program.LaunchArgs["buildPath"];
-
-            string version = CreateVersionNumber();
-
-            string outputPath = $"Build/{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
-            if (Program.LaunchArgs.ContainsKey("outputPath"))
-            {
-                outputPath = $"{Program.LaunchArgs["outputPath"]}/{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
-            }
-            else
-            {
-                Directory.CreateDirectory("Build");
-            }
+            buildPath = Program.LaunchArgs["buildPath"];
 
             if (!Directory.Exists(buildPath))
             {
@@ -42,6 +34,8 @@ namespace MelonInstaller.Classes
                 return;
             }
 
+            // Generate Version Number
+            version = CreateVersionNumber();
             try
             {
                 SetVersionNumber(buildPath, version);
@@ -52,6 +46,21 @@ namespace MelonInstaller.Classes
                 Console.WriteLine($"[!] {e.Message}");
                 return;
             }
+
+            // Get Output Path
+            outputPath = $"Build/{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
+            if (Program.LaunchArgs.ContainsKey("outputPath"))
+            {
+                outputPath = $"{Program.LaunchArgs["outputPath"]}/{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
+            }
+            else
+            {
+                Directory.CreateDirectory("Build");
+            }
+
+        }
+        public static void Build()
+        {
 
             // Build Melon
             string buildOutputPath = "";
@@ -106,7 +115,15 @@ namespace MelonInstaller.Classes
             string repl = split.FirstOrDefault(x => x.Contains("public const string Version = "));
 
             txt = txt.Replace(repl, vString);
-            File.WriteAllText(prog, txt);
+            using (var fileStream = new FileStream(prog, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                using (var writer = new StreamWriter(fileStream))
+                {
+                    writer.Write(txt);
+                    writer.Flush();
+                }
+            }
+            Thread.Sleep(1000);
         }
         private static string BuildProject(string projectFolderPath)
         {
@@ -116,29 +133,41 @@ namespace MelonInstaller.Classes
                 throw new InvalidOperationException(StringsManager.GetString("ProjectMissing"));
             }
 
+            // Stop mucking up my version number >:(
+            ProjectCollection.GlobalProjectCollection.UnloadAllProjects();
+
             // Load the project
             var project = new Project(projectFilePath, null, null);
 
             // Retrieve the SDK path
             var sdkPath = project.GetPropertyValue("MSBuildSDKsPath");
-            project.SetProperty("Configuration", "Release");
 
-            var projectCollection = new ProjectCollection();
+            var globalProperties = new Dictionary<string, string>
+            {
+                ["Configuration"] = "Release"
+            };
+
+            foreach(var prop in project.GlobalProperties)
+            {
+                globalProperties.TryAdd(prop.Key, prop.Value);
+            }
+
+            var projectCollection = new ProjectCollection(globalProperties);
 
             var buildParameters = new BuildParameters(projectCollection)
             {
                 Loggers = new List<ILogger> { new BuildLogger() }
             };
 
-            var buildRequest = new BuildRequestData(projectFilePath, project.GlobalProperties, null, new[] { "Build" }, null);
+
+            var buildRequest = new BuildRequestData(projectFilePath, globalProperties, null, new[] { "Build" }, null);
 
             var buildResult = BuildManager.DefaultBuildManager.Build(buildParameters, buildRequest);
 
             if (buildResult.OverallResult == BuildResultCode.Success)
             {
-                var outputDir = project.GetPropertyValue("OutputPath");
-                var fullOutputPath = Path.Combine(projectFolderPath, outputDir);
-                return fullOutputPath;
+                var outputDir = buildResult.ResultsByTarget["Build"].Items.FirstOrDefault().ItemSpec.Replace("MelonWebApi.dll", "");
+                return outputDir;
             }
             else
             {

@@ -12,6 +12,7 @@ namespace MelonInstaller
         public static string installPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}/MelonInstall";
         public static string versionToFind = "latest";
         public static bool addAppIcons = false;
+        public static string Version = "1.1.4";
         public static ResourceManager StringsManager { get; set; }
         [DllImport("libc")]
         public static extern int system(string exec);
@@ -33,6 +34,12 @@ namespace MelonInstaller
         {
             ClearConsole();
             ParseArgs(args);
+
+            if (LaunchArgs.ContainsKey("v") || LaunchArgs.ContainsKey("version"))
+            {
+                Console.WriteLine($"Melon Installer {Version}");
+                return 0;
+            }
 
             var resources = typeof(Program).Assembly.GetManifestResourceNames();
             if (LaunchArgs.ContainsKey("lang") && resources.Contains($"MelonInstaller.Strings.UIStrings{LaunchArgs["lang"].ToUpper()}.resources"))
@@ -60,7 +67,6 @@ namespace MelonInstaller
                 }
             }
 
-            SetupMSBuild();
 
             if(LaunchArgs.ContainsKey("update"))
             {
@@ -69,6 +75,8 @@ namespace MelonInstaller
             }
             else if (LaunchArgs.ContainsKey("build"))
             {
+                SetupMSBuild();
+                MelonBuildManager.PrepareBuild();
                 MelonBuildManager.Build();
                 return 2;
             }
@@ -122,7 +130,7 @@ namespace MelonInstaller
 
             for (int i = 0; i < args.Length; i++)
             {
-                string arg = args[i].Replace("-", "");
+                string arg = args[i].Replace("-", "").Replace("\"", "");
                 if (!args[i].StartsWith("-"))
                 {
                     LaunchArgs[LaunchArgs.Last().Key] += $" {arg}";
