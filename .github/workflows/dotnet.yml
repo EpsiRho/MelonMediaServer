@@ -30,7 +30,7 @@ jobs:
       working-directory: ./Code/MelonWebApi
     - name: Tarball
       working-directory: ./Code/MelonWebApi/bin/Release/net8.0/
-      run: tar -czvf ${{ github.event.release.tag_name }}.tar.gz 
+      run: tar -czvf 1.0.68.843.tar.gz *
     - name: Upload files to a GitHub release
       uses: svenstaro/upload-release-action@2.9.0
       with: 
