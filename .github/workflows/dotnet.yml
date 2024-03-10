@@ -23,9 +23,9 @@ jobs:
       with:
         dotnet-version: 6.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ./MelonWebApi.csproj
       working-directory: ./Code/MelonWebApi
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore ./MelonWebApi.csproj
       working-directory: ./Code/MelonWebApi
 
