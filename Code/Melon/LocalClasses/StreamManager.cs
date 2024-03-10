@@ -11,6 +11,7 @@ namespace Melon.LocalClasses
 {
     public static class StreamManager
     {
+        public static bool ThreadCleanerActive { get; set; }
         private static List<WSS> Sockets { get; set; }
         public static void AddSocket(WebSocket socket, string userId)
         {
@@ -191,7 +192,8 @@ namespace Melon.LocalClasses
         }
         public static void ManageSockets() 
         {
-            while (Sockets.Count() != 0)
+            ThreadCleanerActive = true;
+            while (Sockets.Count() != 0 && ThreadCleanerActive)
             {
                 try
                 {

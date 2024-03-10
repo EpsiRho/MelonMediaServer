@@ -50,6 +50,12 @@ namespace MelonWebApi
                 Environment.Exit(0);
             }
 
+            // Tray Icon
+            if (StateManager.LaunchArgs.ContainsKey("headless"))
+            {
+                TrayIconManager.AddIcon();
+            }
+
             StateManager.RestartServer = true;
             while (StateManager.RestartServer)
             {
@@ -201,6 +207,8 @@ namespace MelonWebApi
                 lifetime.ApplicationStopping.Register(() =>
                 {
                     QueuesCleaner.CleanerActive = false;
+                    StreamManager.ThreadCleanerActive = false;
+                    TrayIconManager.RemoveIcon();
                 });
 
                 app.RunAsync();
