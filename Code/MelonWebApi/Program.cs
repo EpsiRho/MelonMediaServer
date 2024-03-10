@@ -51,7 +51,7 @@ namespace MelonWebApi
             }
 
             // Tray Icon
-            if (StateManager.LaunchArgs.ContainsKey("headless"))
+            if (StateManager.LaunchArgs.ContainsKey("headless") && OperatingSystem.IsWindows())
             {
                 TrayIconManager.AddIcon();
             }
