@@ -2,6 +2,7 @@
 using Melon.Classes;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualBasic;
 using Microsoft.Win32.SafeHandles;
 using Pastel;
 using System;
@@ -90,19 +91,21 @@ namespace Melon.DisplayClasses
         }
         private static bool ConsoleEventHandler(int eventType)
         {
-            //if (eventType == CTRL_CLOSE_EVENT)
-            //{
-            //    Console.WriteLine("Console window is closing, performing cleanup...");
-            //    // Perform your cleanup here
+            switch (eventType)
+            {
+                case CTRL_CLOSE_EVENT:
+                    HideConsole(); // Your existing function to hide the console
+                    return true; // Indicates that we've handled the event
+                case CTRL_C_EVENT:
+                    HideConsole(); // Your existing function to hide the console
+                    return true; // Indicates that we've handled the event
+            }
+            return false;
+
+            //HideConsole();
             //
-            //    // Return true if the event was handled
-            //    return true;
-            //}
-
-            HideConsole();
-
-            // Return false to let the default handler process the event
-            return true;
+            //// Return false to let the default handler process the event
+            //return true;
         }
 
         public static void HideConsole()
@@ -116,7 +119,7 @@ namespace Melon.DisplayClasses
         }
         public static void AddIcon()
         {
-            using var iconStream = GetStream();
+            using var iconStream = GetStream("cda.ico");
             icon = new Icon(iconStream);
             trayIcon = new TrayIconWithContextMenu
             {
@@ -143,9 +146,9 @@ namespace Melon.DisplayClasses
                     }),
                     new PopupMenuItem("Show Console", (_, _) =>
                     {
-                        ShowConsole();
+                        Task.Run(ShowConsole);
                     }),
-                    new PopupMenuItem("Check For Updates", (_, _) => UpdateMelon()),
+                    new PopupMenuItem("Check For Updates", (_, _) => Task.Run(UpdateMelon)),
                     new PopupMenuItem("Exit Melon", (_, _) =>
                     {
                         trayIcon.Dispose();
@@ -233,11 +236,10 @@ namespace Melon.DisplayClasses
                 ShowMessageBox("No update found!");
             }
         }
-        public static Stream GetStream()
+        public static Stream GetStream(string fileName)
         {
             var assembly = Assembly.GetExecutingAssembly();
 
-            var fileName = "cda.ico";
 
             try
             {

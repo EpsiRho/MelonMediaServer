@@ -664,6 +664,7 @@ namespace Melon.DisplayClasses
                 if (resources.Contains($"Melon.Strings.UIStrings{input.ToUpper()}.resources"))
                 {
                     MelonSettings.DefaultLanguage = input;
+                    LaunchArgs.Remove("lang");
                     StringsManager = StringsManager = new ResourceManager($"Melon.Strings.UIStrings{input.ToUpper()}", typeof(SettingsUI).Assembly);
                     Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
                     StateManager.RestartServer = true;
@@ -691,7 +692,7 @@ namespace Melon.DisplayClasses
                     { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("ErrorColorSetting").Pastel(MelonColor.Error)}", 5 },
                     { StringsManager.GetString("DefaultColorReset"), 6 }
                 };
-                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("MenuCustomizationOption"), StringsManager.GetString("LibraryOption"), StringsManager.GetString("ColorOptions") });
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("MenuCustomizationOption"), StringsManager.GetString("ColorOptions") });
                 Console.WriteLine($"{StringsManager.GetString("ColorSelection")}:".Pastel(MelonColor.Text));
                 var choice = MelonUI.OptionPicker(ColorMenuOptions.Keys.ToList());
                 Thread.Sleep(100);

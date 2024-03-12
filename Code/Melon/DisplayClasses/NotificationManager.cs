@@ -1,4 +1,6 @@
 ﻿using Melon.LocalClasses;
+using Melon.Models;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,16 +21,11 @@ namespace Melon.DisplayClasses
             // Get the app image
             Directory.CreateDirectory($"{StateManager.melonPath}/Assets");
             string imageSrc = $"{StateManager.melonPath}/Assets/AppIcon.png";
-
             try 
-            { 
-                using var iconStream = TrayIconManager.GetStream();
-                Bitmap b = (Bitmap)Bitmap.FromStream(new FileStream(imageSrc, FileMode.CreateNew));
-
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    b.Save(ms, ImageFormat.Png);
-                }
+            {
+                FileStream file = new FileStream(imageSrc, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                var stream = typeof(StateManager).Assembly.GetManifestResourceStream("Melon.Assets.Melon.png");
+                stream.CopyTo(file);
             }
             catch (Exception)
             {

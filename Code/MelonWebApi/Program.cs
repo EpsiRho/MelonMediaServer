@@ -43,16 +43,17 @@ namespace MelonWebApi
             StateManager.ServerIsAlive = true;
             //StateManager.ConsoleIsAlive = true;
 
-            if (StateManager.LaunchArgs.ContainsKey("noConsole"))
+            if (StateManager.LaunchArgs.ContainsKey("noConsole") && OperatingSystem.IsWindows())
             {
                 StateManager.ConsoleIsAlive = false;
-                TrayIconManager.HideConsole();
+                Task.Run(TrayIconManager.HideConsole);
             }
             else
             {
-                TrayIconManager.HideConsole();
-                Thread.Sleep(100);
-                TrayIconManager.ShowConsole();
+                Task.Run(TrayIconManager.HideConsole);
+                Thread.Sleep(1000);
+                Task.Run(TrayIconManager.ShowConsole).Wait();
+                Thread.Sleep(3000);
             }
 
             MelonColor.SetDefaults();
@@ -66,7 +67,7 @@ namespace MelonWebApi
             // Tray Icon
             if (!StateManager.LaunchArgs.ContainsKey("headless") && OperatingSystem.IsWindows())
             {
-                TrayIconManager.AddIcon();
+                Task.Run(TrayIconManager.AddIcon);
             }
 
 
