@@ -932,7 +932,7 @@ namespace Melon.LocalClasses
         {
             var filename = Path.GetFileName(path);
             if (!filename.EndsWith(".flac") && !filename.EndsWith(".aac") && !filename.EndsWith(".wma") &&
-                !filename.EndsWith(".wav") && !filename.EndsWith(".mp3") && !filename.EndsWith(".m4a"))
+                !filename.EndsWith(".wav") && !filename.EndsWith(".mp3") && !filename.EndsWith(".m4a") && !filename.EndsWith(".ogg"))
             {
                 return false;
             }
