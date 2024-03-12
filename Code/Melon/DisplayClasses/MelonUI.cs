@@ -405,68 +405,75 @@ namespace Melon.Classes
             endOptionsDisplay = false;
             Thread DisplayThread = new Thread(() =>
             {
-                int x = Console.WindowWidth;
-                while (!endOptionsDisplay)
+                try
                 {
-                    if (endOptionsDisplay)
+                    int x = Console.WindowWidth;
+                    while (!endOptionsDisplay)
                     {
-                        Console.CursorVisible = true;
-                        return;
-                    }
-                    if (x != Console.WindowWidth)
-                    {
-                        x = Console.WindowWidth;
+                        if (endOptionsDisplay)
+                        {
+                            Console.CursorVisible = true;
+                            return;
+                        }
+                        if (x != Console.WindowWidth)
+                        {
+                            x = Console.WindowWidth;
+                            try
+                            {
+                                for (int i = 0; i < Choices.Count + 1; i++)
+                                {
+                                    Console.CursorTop = sTop + i;
+                                    Console.CursorLeft = 0;
+                                    Console.Write(new string(' ', x));
+                                }
+                            }
+                            catch (Exception)
+                            {
+
+                            }
+                        }
                         try
                         {
-                            for (int i = 0; i < Choices.Count + 1; i++)
-                            {
-                                Console.CursorTop = sTop + i;
-                                Console.CursorLeft = 0;
-                                Console.Write(new string(' ', x));
-                            }
+                            string controls = StateManager.StringsManager.GetString("SimpleNavigationControls");
+                            int conX = Console.WindowWidth - controls.Length - 4;
+                            Console.CursorLeft = conX;
+                            Console.CursorTop = sTop;
+                            Console.Write(controls.Pastel(MelonColor.BackgroundText));
+                            Console.SetCursorPosition(sLeft, sTop);
                         }
                         catch (Exception)
                         {
 
                         }
+                        //Console.CursorTop = sTop;
+                        //Console.CursorLeft = sLeft;
+                        // Show Choices
+                        for (int i = 0; i < Choices.Count(); i++)
+                        {
+                            Color clr = new Color();
+                            if (i == place)
+                            {
+                                clr = MelonColor.Text;
+                            }
+                            else
+                            {
+                                clr = MelonColor.BackgroundText;
+                            }
+                            if (StateManager.MelonSettings.UseMenuColor)
+                            {
+                                Console.WriteLine($"• {Choices[i]}".Pastel(clr));
+                            }
+                            else
+                            {
+                                Console.WriteLine((i == place ? "> " : "• ") + Choices[i]);
+                            }
+                        }
+                        Thread.Sleep(10);
                     }
-                    try
-                    {
-                        string controls = StateManager.StringsManager.GetString("SimpleNavigationControls");
-                        int conX = Console.WindowWidth - controls.Length - 4;
-                        Console.CursorLeft = conX;
-                        Console.CursorTop = sTop;
-                        Console.Write(controls.Pastel(MelonColor.BackgroundText));
-                        Console.SetCursorPosition(sLeft, sTop);
-                    }
-                    catch (Exception)
-                    {
+                }
+                catch (Exception)
+                {
 
-                    }
-                    //Console.CursorTop = sTop;
-                    //Console.CursorLeft = sLeft;
-                    // Show Choices
-                    for (int i = 0; i < Choices.Count(); i++)
-                    {
-                        Color clr = new Color();
-                        if (i == place)
-                        {
-                            clr = MelonColor.Text;
-                        }
-                        else
-                        {
-                            clr = MelonColor.BackgroundText;
-                        }
-                        if (StateManager.MelonSettings.UseMenuColor)
-                        {
-                            Console.WriteLine($"• {Choices[i]}".Pastel(clr));
-                        }
-                        else
-                        {
-                            Console.WriteLine((i == place ? "> " : "• ") + Choices[i]);
-                        }
-                    }
-                    Thread.Sleep(10);
                 }
             });
             DisplayThread.Start();

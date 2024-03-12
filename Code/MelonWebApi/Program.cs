@@ -24,6 +24,9 @@ using System.Threading.RateLimiting;
 using Melon.Models;
 using NuGet.Protocol.Plugins;
 using MelonWebApi.Middleware;
+using Microsoft.Extensions.Hosting.WindowsServices;
+using Microsoft.Identity.Client;
+using System.Runtime.Versioning;
 namespace MelonWebApi
 {
     public static class Program
@@ -31,18 +34,28 @@ namespace MelonWebApi
         //public static bool started = false;
         public static WebApplication app;
         public static MWebApi mWebApi;
-        public const string Version = "1.0.68.843";
+        public const string Version = "1.0.71.11";
 
         public static async Task<int> Main(string[] args)
         {
             StateManager.Version = Version;
+            StateManager.ParseArgs(args);
+            StateManager.ServerIsAlive = true;
+            //StateManager.ConsoleIsAlive = true;
+
+            if (StateManager.LaunchArgs.ContainsKey("noConsole"))
+            {
+                StateManager.ConsoleIsAlive = false;
+                TrayIconManager.HideConsole();
+            }
+            else
+            {
+                TrayIconManager.HideConsole();
+                Thread.Sleep(100);
+                TrayIconManager.ShowConsole();
+            }
 
             MelonColor.SetDefaults();
-
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.OutputEncoding = Encoding.UTF8;
-
-            StateManager.ParseArgs(args);
 
             if (StateManager.LaunchArgs.ContainsKey("openFolder"))
             {
@@ -51,10 +64,11 @@ namespace MelonWebApi
             }
 
             // Tray Icon
-            if (StateManager.LaunchArgs.ContainsKey("headless") && OperatingSystem.IsWindows())
+            if (!StateManager.LaunchArgs.ContainsKey("headless") && OperatingSystem.IsWindows())
             {
                 TrayIconManager.AddIcon();
             }
+
 
             StateManager.RestartServer = true;
             while (StateManager.RestartServer)
@@ -112,6 +126,7 @@ namespace MelonWebApi
                 }
 
                 builder.Host.UseSerilog();
+                builder.Host.UseWindowsService();
 
                 var key = StateManager.MelonSettings.JWTKey;
                 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -215,8 +230,28 @@ namespace MelonWebApi
 
                 if (!StateManager.LaunchArgs.ContainsKey("headless"))
                 {
+                    StateManager.ConsoleIsAlive = false;
                     // UI Startup
-                    DisplayManager.DisplayHome();
+                    while (!StateManager.ConsoleIsAlive)
+                    {
+                        try
+                        {
+                            MelonUI.ClearConsole();
+                            StateManager.ConsoleIsAlive = true;
+                            MelonUI.endOptionsDisplay = true;
+                            DisplayManager.DisplayHome();
+                        }
+                        catch (Exception e)
+                        {
+                            Serilog.Log.Error(e.Message);
+                        }
+                        Thread.Sleep(1000);
+
+                        //if (!OperatingSystem.IsWindows())
+                        //{
+                        //    StateManager.ConsoleIsAlive = true;
+                        //}
+                    }
                 }
                 else
                 {

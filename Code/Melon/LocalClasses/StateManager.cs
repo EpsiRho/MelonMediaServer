@@ -48,6 +48,8 @@ namespace Melon.LocalClasses
         public static string Version { get; set; }
         public static string Language { get; set; }
         public static bool RestartServer { get; set; }
+        public static bool ServerIsAlive;
+        public static bool ConsoleIsAlive;
         public static void Init(IWebApi mWebApi)
         {
             Log.Logger = new LoggerConfiguration()
@@ -257,7 +259,13 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.MemoryScan);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.MemoryScanShort);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
-            DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => Environment.Exit(0));
+            DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => 
+            {
+                //StateManager.RestartServer = true;
+                //MelonUI.endOptionsDisplay = true;
+                StateManager.ConsoleIsAlive = false;
+                TrayIconManager.HideConsole();
+            });
 
             if (!LaunchArgs.ContainsKey("headless"))
             {

@@ -258,6 +258,11 @@ namespace Melon.LocalClasses
             LyricFiles = null;
             Scanning = false;
             Thread.Sleep(500);
+
+            if (OperatingSystem.IsWindows())
+            {
+                NotificationManager.ShowToast("Scanner", "Scanning is complete!");
+            }
         }
         private static async void ScanFolderCounter(string path)
         {
