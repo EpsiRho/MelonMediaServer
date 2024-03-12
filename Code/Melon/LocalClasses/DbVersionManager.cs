@@ -324,7 +324,7 @@ namespace Melon.LocalClasses
 
             foreach (PropertyInfo prop in targetType.GetProperties())
             {
-                if (dynDoc != null && dynDoc[prop.Name] != null)
+                if (dynDoc != null && dynDoc.ContainsKey(prop.Name))
                 {
                     if (prop.PropertyType == typeof(DbLink))
                     {
