@@ -54,6 +54,10 @@ namespace MelonWebApi.Controllers
 
             args.SendEvent("Websocket connected", 200, Program.mWebApi);
 
+            while (true)
+            {
+
+            }
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get-external")]
