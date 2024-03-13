@@ -8,6 +8,7 @@ namespace Melon.Models
 {
     public class WSS
     {
+        public string _id { get; set; }
         public System.Net.WebSockets.WebSocket Socket { get; set; }
         public string CurrentQueue { get; set; }
         public string DeviceName { get; set; }
