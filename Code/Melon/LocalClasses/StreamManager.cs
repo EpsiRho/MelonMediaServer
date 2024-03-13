@@ -212,6 +212,7 @@ namespace Melon.LocalClasses
                 {
 
                 }
+                Thread.Sleep(1000);
             }
         }
         public static async void WriteToSocket(WebSocket ws, string message)
