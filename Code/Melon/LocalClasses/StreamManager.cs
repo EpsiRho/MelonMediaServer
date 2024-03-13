@@ -143,7 +143,6 @@ namespace Melon.LocalClasses
                 {
                     wss.SendProgress = false;
                 }
-                Thread.Sleep(100);
             }
 
             RemoveSocket(wss);
