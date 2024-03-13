@@ -1,4 +1,5 @@
 ﻿using Melon.Models;
+using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,6 @@ namespace Melon.LocalClasses
 {
     public static class StreamManager
     {
-        public static bool ThreadCleanerActive { get; set; }
         private static List<WSS> Sockets { get; set; }
         public static void AddSocket(WebSocket socket, string userId)
         {
@@ -20,19 +20,15 @@ namespace Melon.LocalClasses
                 Sockets = new List<WSS>();
             }
             WSS wss = new WSS();
+            wss._id = ObjectId.GenerateNewId().ToString();
             wss.Socket = socket;
             wss.CurrentQueue = "";
             wss.UserId = userId;
             wss.IsPublic = false;
             wss.LastPing = DateTime.Now;
-            var check = Sockets.Count() == 0;
             Sockets.Add(wss);
             HandleWebSocketAsync(wss);
-            if(check)
-            {
-                Thread t = new Thread(ManageSockets);
-                t.Start();
-            }
+            ManageSocket(wss);
         }
         public static List<string> GetDevices(string userId)
         {
@@ -147,6 +143,7 @@ namespace Melon.LocalClasses
                 {
                     wss.SendProgress = false;
                 }
+                Thread.Sleep(100);
             }
 
             RemoveSocket(wss);
@@ -190,30 +187,27 @@ namespace Melon.LocalClasses
                 }
             }
         }
-        public static void ManageSockets() 
+        public static void ManageSocket(WSS wss) 
         {
-            ThreadCleanerActive = true;
-            while (Sockets.Count() != 0 && ThreadCleanerActive)
+            while (Sockets.Any(x=>x._id == wss._id))
             {
                 try
                 {
-                    foreach (WSS wss in Sockets)
+                    if (DateTime.Now - wss.LastPing > new TimeSpan(0, 3, 0))
                     {
-                        if (DateTime.Now - wss.LastPing > new TimeSpan(0, 3, 0))
-                        {
-                            RemoveSocket(wss);
-                        }
-                        else if (DateTime.Now - wss.LastPing > new TimeSpan(0, 2, 0))
-                        {
-                            WriteToSocket(wss.Socket, "PING");
-                        }
-                        Thread.Sleep(1000);
+                        RemoveSocket(wss);
                     }
+                    else if (DateTime.Now - wss.LastPing > new TimeSpan(0, 2, 0))
+                    {
+                        WriteToSocket(wss.Socket, "PING");
+                    }
+                    Thread.Sleep(1000);
                 }
                 catch (Exception)
                 {
 
                 }
+                Thread.Sleep(1000);
             }
         }
         public static async void WriteToSocket(WebSocket ws, string message)

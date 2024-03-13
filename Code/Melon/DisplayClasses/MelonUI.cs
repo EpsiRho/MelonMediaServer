@@ -508,6 +508,10 @@ namespace Melon.Classes
 
                     }
                 }
+                else
+                {
+                    Thread.Sleep(50);
+                }
 
             }
             return "";
