@@ -1,4 +1,5 @@
 ﻿using Melon.Models;
+using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,19 +20,15 @@ namespace Melon.LocalClasses
                 Sockets = new List<WSS>();
             }
             WSS wss = new WSS();
+            wss._id = ObjectId.GenerateNewId().ToString();
             wss.Socket = socket;
             wss.CurrentQueue = "";
             wss.UserId = userId;
             wss.IsPublic = false;
             wss.LastPing = DateTime.Now;
-            var check = Sockets.Count() == 0;
             Sockets.Add(wss);
             HandleWebSocketAsync(wss);
-            if(check)
-            {
-                Thread t = new Thread(ManageSockets);
-                t.Start();
-            }
+            ManageSocket(wss);
         }
         public static List<string> GetDevices(string userId)
         {
@@ -190,24 +187,21 @@ namespace Melon.LocalClasses
                 }
             }
         }
-        public static void ManageSockets() 
+        public static void ManageSocket(WSS wss) 
         {
-            while (Sockets.Count() != 0)
+            while (Sockets.Any(x=>x._id == wss._id))
             {
                 try
                 {
-                    foreach (WSS wss in Sockets)
+                    if (DateTime.Now - wss.LastPing > new TimeSpan(0, 3, 0))
                     {
-                        if (DateTime.Now - wss.LastPing > new TimeSpan(0, 3, 0))
-                        {
-                            RemoveSocket(wss);
-                        }
-                        else if (DateTime.Now - wss.LastPing > new TimeSpan(0, 2, 0))
-                        {
-                            WriteToSocket(wss.Socket, "PING");
-                        }
-                        Thread.Sleep(1000);
+                        RemoveSocket(wss);
                     }
+                    else if (DateTime.Now - wss.LastPing > new TimeSpan(0, 2, 0))
+                    {
+                        WriteToSocket(wss.Socket, "PING");
+                    }
+                    Thread.Sleep(1000);
                 }
                 catch (Exception)
                 {
