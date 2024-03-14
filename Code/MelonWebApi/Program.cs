@@ -50,11 +50,20 @@ namespace MelonWebApi
             }
             else
             {
-                Task.Run(TrayIconManager.HideConsole);
-                Thread.Sleep(1000);
-                Task.Run(TrayIconManager.ShowConsole).Wait();
-                Thread.Sleep(3000);
+
+                if (StateManager.LaunchArgs.ContainsKey("help") || StateManager.LaunchArgs.ContainsKey("version"))
+                {
+                    StateManager.Init(null, true);
+                    return 0;
+                }
+                else
+                {
+                    Task.Run(TrayIconManager.HideConsole);
+                    TrayIconManager.ShowConsole();
+                }
             }
+
+            
 
             MelonColor.SetDefaults();
 
@@ -76,12 +85,20 @@ namespace MelonWebApi
             {
                 StateManager.RestartServer = false;
                 mWebApi = new MWebApi();
-                StateManager.Init(mWebApi);
+                StateManager.Init(mWebApi, true);
                 //DisplayManager.UIExtensions.Add("Future", ()=> { Console.WriteLine("Hello this is a future version!"); });
 
                 if (StateManager.LaunchArgs.ContainsKey("headless") && DisplayManager.UIExtensions.Contains("SetupUI"))
                 {
                     SetupUI.ShowSetupError();
+                    return 1;
+                }
+
+                // TODO: uiOnly arg
+                if (StateManager.LaunchArgs.ContainsKey("uiOnly"))
+                {
+                    TrayIconManager.ShowConsole();
+                    Thread.Sleep(3000);
                     return 1;
                 }
 
@@ -223,7 +240,6 @@ namespace MelonWebApi
                 lifetime.ApplicationStopping.Register(() =>
                 {
                     QueuesCleaner.CleanerActive = false;
-                    StreamManager.ThreadCleanerActive = false;
                     TrayIconManager.RemoveIcon();
                 });
 
@@ -231,27 +247,35 @@ namespace MelonWebApi
 
                 if (!StateManager.LaunchArgs.ContainsKey("headless"))
                 {
-                    StateManager.ConsoleIsAlive = false;
-                    // UI Startup
-                    while (!StateManager.ConsoleIsAlive)
+                    if (OperatingSystem.IsWindows())
                     {
-                        try
+                        StateManager.RestartServer = false;
+                        app.WaitForShutdown();
+                    }
+                    else
+                    {
+                        StateManager.ConsoleIsAlive = false;
+                        // UI Startup
+                        while (!StateManager.ConsoleIsAlive)
                         {
-                            MelonUI.ClearConsole();
-                            StateManager.ConsoleIsAlive = true;
-                            MelonUI.endOptionsDisplay = true;
-                            DisplayManager.DisplayHome();
-                        }
-                        catch (Exception e)
-                        {
-                            Serilog.Log.Error(e.Message);
-                        }
-                        Thread.Sleep(1000);
+                            try
+                            {
+                                MelonUI.ClearConsole();
+                                StateManager.ConsoleIsAlive = true;
+                                MelonUI.endOptionsDisplay = true;
+                                DisplayManager.DisplayHome();
+                            }
+                            catch (Exception e)
+                            {
+                                Serilog.Log.Error(e.Message);
+                            }
+                            Thread.Sleep(1000);
 
-                        //if (!OperatingSystem.IsWindows())
-                        //{
-                        //    StateManager.ConsoleIsAlive = true;
-                        //}
+                            //if (!OperatingSystem.IsWindows())
+                            //{
+                            //    StateManager.ConsoleIsAlive = true;
+                            //}
+                        }
                     }
                 }
                 else

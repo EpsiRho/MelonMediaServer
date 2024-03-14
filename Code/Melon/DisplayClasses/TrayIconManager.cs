@@ -58,36 +58,57 @@ namespace Melon.DisplayClasses
 
         public static void ShowConsole()
         {
-            if (ConsoleStream != null)
+            //if (ConsoleStream != null)
+            //{
+            //    ConsoleStream.Close();
+            //}
+            //
+            //AllocConsole();
+            //
+            //IntPtr stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+            //IntPtr stdInHandle = GetStdHandle(STD_INPUT_HANDLE);
+            //if (GetConsoleMode(stdOutHandle, out uint mode))
+            //{
+            //    mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            //    SetConsoleMode(stdOutHandle, mode);
+            //}
+            //SafeFileHandle safeFileHandleOut = new SafeFileHandle(stdOutHandle, true);
+            //SafeFileHandle safeFileHandleIn = new SafeFileHandle(stdInHandle, true);
+            //FileStream fileStreamOut = new FileStream(safeFileHandleOut, FileAccess.Write);
+            //FileStream fileStreamIn = new FileStream(safeFileHandleIn, FileAccess.Read);
+            //Encoding encoding = Encoding.UTF8;
+            //StreamWriter standardOutput = new StreamWriter(fileStreamOut, encoding);
+            //StreamReader standardInput = new StreamReader(fileStreamIn, encoding);
+            //standardOutput.AutoFlush = true;
+            //standardOutput.Flush();
+            //Console.ForegroundColor = ConsoleColor.White;
+            //Console.OutputEncoding = Encoding.UTF8;
+            //Console.SetOut(standardOutput);
+            //Console.SetIn(standardInput);
+            //
+            //var b = SetConsoleCtrlHandler(ConsoleEventHandler, true);
+            //Console.WriteLine(b);
+
+            try
             {
-                ConsoleStream.Close();
+                var uiPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Melon.exe");
+                string args = $"-SetVer {StateManager.Version} ";
+                foreach(var arg in StateManager.LaunchArgs)
+                {
+                    args += $"-{arg.Key} {arg.Value} ";
+                }
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = uiPath,
+                    Arguments = args,
+                    UseShellExecute = false
+                };
+                Process.Start(processInfo);
             }
-
-            AllocConsole();
-
-            IntPtr stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-            IntPtr stdInHandle = GetStdHandle(STD_INPUT_HANDLE);
-            if (GetConsoleMode(stdOutHandle, out uint mode))
+            catch (Exception)
             {
-                mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-                SetConsoleMode(stdOutHandle, mode);
+                
             }
-            SafeFileHandle safeFileHandleOut = new SafeFileHandle(stdOutHandle, true);
-            SafeFileHandle safeFileHandleIn = new SafeFileHandle(stdInHandle, true);
-            FileStream fileStreamOut = new FileStream(safeFileHandleOut, FileAccess.Write);
-            FileStream fileStreamIn = new FileStream(safeFileHandleIn, FileAccess.Read);
-            Encoding encoding = Encoding.UTF8;
-            StreamWriter standardOutput = new StreamWriter(fileStreamOut, encoding);
-            StreamReader standardInput = new StreamReader(fileStreamIn, encoding);
-            standardOutput.AutoFlush = true;
-            standardOutput.Flush();
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.OutputEncoding = Encoding.UTF8;
-            Console.SetOut(standardOutput);
-            Console.SetIn(standardInput);
-
-            var b = SetConsoleCtrlHandler(ConsoleEventHandler, true);
-            Console.WriteLine(b);
         }
         private static bool ConsoleEventHandler(int eventType)
         {

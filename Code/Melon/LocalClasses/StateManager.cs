@@ -27,6 +27,7 @@ using Melon.PluginModels;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Amazon.Runtime.Internal.Transform;
 using Serilog;
+using Microsoft.Owin.Hosting;
 
 namespace Melon.LocalClasses
 {
@@ -45,18 +46,19 @@ namespace Melon.LocalClasses
         public static List<string> DisabledPlugins { get; set; }
         public static Dictionary<string, string> LaunchArgs { get; set; }
         public static MelonHost Host { get; set; }
+        public static IWebApi WebApi { get; set; }
         public static string Version { get; set; }
         public static string Language { get; set; }
         public static bool RestartServer { get; set; }
         public static bool ServerIsAlive;
         public static bool ConsoleIsAlive;
-        public static void Init(IWebApi mWebApi)
+        public static void Init(IWebApi mWebApi, bool headless)
         {
             Log.Logger = new LoggerConfiguration()
                             .WriteTo.File($"{StateManager.melonPath}/MelonLogs.txt")
                             .CreateLogger();
             // Title
-            if (!LaunchArgs.ContainsKey("headless"))
+            if (!headless)
             {
                 MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Init" });
                 // Setup checklist UI
@@ -69,14 +71,14 @@ namespace Melon.LocalClasses
                 ChecklistUI.ChecklistDislayToggle();
             }
 
-            Host = new MelonHost() { WebApi = mWebApi };
-
+            Host = new MelonHost();
+            WebApi = mWebApi;
             CreateDirectories();
             LoadSettings();
             SetLanguage(LaunchArgs.ContainsKey("lang") ? LaunchArgs["lang"] : "");
 
             // Reload UI in set language
-            if (!LaunchArgs.ContainsKey("headless"))
+            if (!headless)
             {
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("InitializationStatus") });
                 // Setup checklist UI
@@ -92,7 +94,7 @@ namespace Melon.LocalClasses
 
             if (StateManager.LaunchArgs.ContainsKey("version"))
             {
-                if (!LaunchArgs.ContainsKey("headless"))
+                if (!headless)
                 {
                     ChecklistUI.ChecklistDislayToggle();
                 }
@@ -122,7 +124,7 @@ namespace Melon.LocalClasses
             // Show help menu
             if (LaunchArgs.ContainsKey("help"))
             {
-                if (!LaunchArgs.ContainsKey("headless"))
+                if (!headless)
                 {
                     ChecklistUI.ChecklistDislayToggle();
                 }
@@ -131,7 +133,7 @@ namespace Melon.LocalClasses
             }
 
             // Show OOBE if flag/arg enabled and headless disabled
-            if ((MelonFlags.ForceOOBE || LaunchArgs.ContainsKey("setup")) && !LaunchArgs.ContainsKey("headless"))
+            if ((MelonFlags.ForceOOBE || LaunchArgs.ContainsKey("setup")) && !headless)
             {
                 DisplayManager.UIExtensions.Add("SetupUI", SetupUI.Display);
             }
@@ -148,7 +150,7 @@ namespace Melon.LocalClasses
             }
 
             // Update the checklistUI, Load Settings done
-            if (!LaunchArgs.ContainsKey("headless"))
+            if (!headless)
             {
                 ChecklistUI.UpdateChecklist(0, true);
             }
@@ -159,7 +161,7 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions = new System.Collections.Specialized.OrderedDictionary();
             if (!check)
             {
-                if (!LaunchArgs.ContainsKey("headless"))
+                if (!headless)
                 {
                     ChecklistUI.ChecklistDislayToggle();
                     Thread.Sleep(200);
@@ -168,7 +170,7 @@ namespace Melon.LocalClasses
 
                 Console.WriteLine(StringsManager.GetString("MongoDBConnectionError").Pastel(MelonColor.Error));
 
-                if (!LaunchArgs.ContainsKey("headless"))
+                if (!headless)
                 {
                     Console.WriteLine(StringsManager.GetString("ReturnPrompt").Pastel(MelonColor.BackgroundText));
                     Console.ReadKey(intercept: true);
@@ -186,7 +188,7 @@ namespace Melon.LocalClasses
             var compatible = DbVersionManager.CheckVersionCompatibility();
             if (compatible != "" && !LaunchArgs.ContainsKey("allowConversion"))
             {
-                if (!LaunchArgs.ContainsKey("headless"))
+                if (!headless)
                 {
                     ChecklistUI.ChecklistDislayToggle();
                     Thread.Sleep(200);
@@ -196,7 +198,7 @@ namespace Melon.LocalClasses
                 Console.WriteLine(StringsManager.GetString("IncompatibleCollections").Pastel(MelonColor.Text));
                 Console.WriteLine($"[{compatible}]".Pastel(MelonColor.Highlight));
 
-                if (!LaunchArgs.ContainsKey("headless"))
+                if (!headless)
                 {
                     Console.WriteLine(StringsManager.GetString("ConvertCollectionsPrompt").Pastel(MelonColor.Text));
                     Console.WriteLine($"({StringsManager.GetString("ConversionWarning")})".Pastel(MelonColor.Text));
@@ -204,7 +206,7 @@ namespace Melon.LocalClasses
                     if (choice == StringsManager.GetString("PositiveConfirmation"))
                     {
                         DbVersionManager.ConvertCollectionsUI(compatible.Split(","));
-                        if (!LaunchArgs.ContainsKey("headless"))
+                        if (!headless)
                         {
                             ChecklistUI.SetChecklistItems(new[]
                             {
@@ -231,14 +233,14 @@ namespace Melon.LocalClasses
             }
             else if (compatible != "" && LaunchArgs.ContainsKey("allowConversion"))
             {
-                if (!LaunchArgs.ContainsKey("headless"))
+                if (!headless)
                 {
                     ChecklistUI.ChecklistDislayToggle();
                     Thread.Sleep(200);
                     MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("InitializationStatus") });
                 }
                 DbVersionManager.ConvertCollectionsUI(compatible.Split(","));
-                if (!LaunchArgs.ContainsKey("headless"))
+                if (!headless)
                 {
                     ChecklistUI.SetChecklistItems(new[]
                     {
@@ -267,7 +269,7 @@ namespace Melon.LocalClasses
                 TrayIconManager.HideConsole();
             });
 
-            if (!LaunchArgs.ContainsKey("headless"))
+            if (!headless)
             {
                 ChecklistUI.UpdateChecklist(1, true);
             }
@@ -275,10 +277,17 @@ namespace Melon.LocalClasses
             // Plugins
             if (!MelonFlags.DisablePlugins && !LaunchArgs.ContainsKey("disablePlugins"))
             {
-                PluginsManager.ExecutePlugins();
+                if (WebApi == null)
+                {
+                    PluginsManager.LoadPluginUIs();
+                }
+                else
+                {
+                    PluginsManager.ExecutePlugins();
+                }
             }
 
-            if (!LaunchArgs.ContainsKey("headless"))
+            if (!headless)
             {
                 ChecklistUI.UpdateChecklist(2, true);
                 ChecklistUI.ChecklistDislayToggle();

@@ -49,7 +49,7 @@ namespace Melon.LocalClasses
                 }
             }
         }
-        public static void ExecutePlugins()
+        public static void LoadPluginUIs()
         {
             foreach (var plugin in Plugins)
             {
@@ -60,7 +60,31 @@ namespace Melon.LocalClasses
                 plugin.LoadMelonCommands(Host);
                 try
                 {
-                    var check = plugin.Load();
+                    var check = plugin.LoadUI();
+                    if (check != 0)
+                    {
+                        Serilog.Log.Error($"Plugin UI load failed: {plugin.Name}");
+                    }
+                }
+                catch (Exception)
+                {
+                    Serilog.Log.Error($"Plugin UI load failed: {plugin.Name}");
+                }
+            }
+        }
+        public static void ExecutePlugins()
+        {
+            foreach (var plugin in Plugins)
+            {
+                if (DisabledPlugins.Contains($"{plugin.Name}:{plugin.Authors}"))
+                {
+                    continue;
+                }
+                plugin.LoadMelonCommands(Host);
+                plugin.LoadMelonServerCommands(WebApi);
+                try
+                {
+                    var check = plugin.Execute();
                     if (check != 0)
                     {
                         Serilog.Log.Error($"Plugin Execute failed: {plugin.Name}");
