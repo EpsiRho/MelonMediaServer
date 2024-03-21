@@ -18,7 +18,7 @@ namespace Melon
 
             StateManager.ParseArgs(args);
             StateManager.Version = StateManager.LaunchArgs["SetVer"];
-            StateManager.Init(null, false);
+            StateManager.Init(null, false, true);
 
             // Launch DisplayHome
             DisplayManager.DisplayHome();

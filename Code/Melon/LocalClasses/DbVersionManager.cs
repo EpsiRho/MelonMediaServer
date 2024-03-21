@@ -282,6 +282,48 @@ namespace Melon.LocalClasses
                 Console.WriteLine($"[+] {StringsManager.GetString("ConversionCompleted")}");
             }
         }
+        public static void ConvertCollections(string[] collections)
+        {
+            var backup = Transfer.ExportDb();
+            if (!backup)
+            {
+                Environment.Exit(2);
+            }
+
+            foreach (var col in collections)
+            {
+                switch (col)
+                {
+                    case "Artists":
+                        ConvertDocuments<Artist>(col, ArtistsVersion);
+                        break;
+                    case "Albums":
+                        ConvertDocuments<Album>(col, AlbumsVersion);
+                        break;
+                    case "Tracks":
+                        ConvertDocuments<Track>(col, TracksVersion);
+                        break;
+                    case "FailedFiles":
+                        ConvertDocuments<FailedFile>(col, FailedFilesVersion);
+                        break;
+                    case "Playlists":
+                        ConvertDocuments<Playlist>(col, PlaylistsVersion);
+                        break;
+                    case "Collections":
+                        ConvertDocuments<Collection>(col, CollectionsVersion);
+                        break;
+                    case "Queues":
+                        ConvertDocuments<PlayQueue>(col, QueuesVersion);
+                        break;
+                    case "Users":
+                        ConvertDocuments<User>(col, UsersVersion);
+                        break;
+                    case "Stats":
+                        ConvertDocuments<PlayStat>(col, StatsVersion);
+                        break;
+                }
+            }
+        }
         public static void ConvertDocuments<T>(string col, string version)
         {
             List<KeyValuePair<string, BsonDocument>> results = new List<KeyValuePair<string, BsonDocument>>();

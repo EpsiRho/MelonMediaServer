@@ -27,6 +27,7 @@ using MelonWebApi.Middleware;
 using Microsoft.Extensions.Hosting.WindowsServices;
 using Microsoft.Identity.Client;
 using System.Runtime.Versioning;
+using Melon.PluginModels;
 namespace MelonWebApi
 {
     public static class Program
@@ -34,38 +35,15 @@ namespace MelonWebApi
         //public static bool started = false;
         public static WebApplication app;
         public static MWebApi mWebApi;
-        public const string Version = "1.0.71.11";
+        public const string Version = "1.0.80.209";
 
         public static async Task<int> Main(string[] args)
         {
             StateManager.Version = Version;
             StateManager.ParseArgs(args);
             StateManager.ServerIsAlive = true;
-            //StateManager.ConsoleIsAlive = true;
-
-            if (StateManager.LaunchArgs.ContainsKey("noConsole") && OperatingSystem.IsWindows())
-            {
-                StateManager.ConsoleIsAlive = false;
-                Task.Run(TrayIconManager.HideConsole);
-            }
-            else
-            {
-
-                if (StateManager.LaunchArgs.ContainsKey("help") || StateManager.LaunchArgs.ContainsKey("version"))
-                {
-                    StateManager.Init(null, true);
-                    return 0;
-                }
-                else
-                {
-                    Task.Run(TrayIconManager.HideConsole);
-                    TrayIconManager.ShowConsole();
-                }
-            }
-
-            
-
             MelonColor.SetDefaults();
+            //StateManager.ConsoleIsAlive = true;
 
             if (StateManager.LaunchArgs.ContainsKey("openFolder"))
             {
@@ -73,34 +51,86 @@ namespace MelonWebApi
                 Environment.Exit(0);
             }
 
-            // Tray Icon
-            if (!StateManager.LaunchArgs.ContainsKey("headless") && OperatingSystem.IsWindows())
+            if (StateManager.LaunchArgs.ContainsKey("help") || StateManager.LaunchArgs.ContainsKey("version"))
             {
-                Task.Run(TrayIconManager.AddIcon);
+                StateManager.Init(null, true, false);
+                return 0;
             }
 
+            if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
+            {
+                StateManager.ConsoleIsAlive = false;
+
+                TrayIconManager.HideConsole();
+                TrayIconManager.ShowConsole();
+            }
+            else if (!StateManager.LaunchArgs.ContainsKey("headless"))
+            {
+                TrayIconManager.ShowConsole();
+            }
 
             StateManager.RestartServer = true;
             while (StateManager.RestartServer)
             {
                 StateManager.RestartServer = false;
                 mWebApi = new MWebApi();
-                StateManager.Init(mWebApi, true);
-                //DisplayManager.UIExtensions.Add("Future", ()=> { Console.WriteLine("Hello this is a future version!"); });
+                StateManager.Init(mWebApi, true, false);
 
-                if (StateManager.LaunchArgs.ContainsKey("headless") && DisplayManager.UIExtensions.Contains("SetupUI"))
+                if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
                 {
-                    SetupUI.ShowSetupError();
-                    return 1;
+                    try
+                    {
+                        TrayIconManager.AddIcon();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
                 }
 
-                // TODO: uiOnly arg
-                if (StateManager.LaunchArgs.ContainsKey("uiOnly"))
+                // Watch for settings changes
+                _ = Task.Run(() =>
                 {
-                    TrayIconManager.ShowConsole();
-                    Thread.Sleep(3000);
-                    return 1;
-                }
+                    var watcher = new FileSystemWatcher();
+                    watcher.Path = $"{StateManager.melonPath}/Configs/";
+
+                    // Watch for changes in LastAccess and LastWrite times, and
+                    // the renaming of files or directories.
+                    watcher.NotifyFilter = NotifyFilters.LastWrite
+                                         | NotifyFilters.FileName
+                                         | NotifyFilters.DirectoryName;
+
+                    // Only watch text files.
+                    watcher.Filter = "*.json";
+
+                    FileSystemEventHandler func = (sender, args) =>
+                    {
+                        if(args.Name == "MelonSettings.json" || args.Name == "SSLConfig.json" || args.Name == "DisabledPlugins.json")
+                        {
+                            try
+                            {
+                                StateManager.RestartServer = true;
+                                app.StopAsync();
+                            }
+                            catch (Exception)
+                            {
+
+                            }
+                        }
+                    };
+
+                    // Add event handlers.
+                    watcher.Changed += func;
+                    watcher.Created += func;
+                    watcher.Deleted += func;
+
+                    // Begin watching.
+                    watcher.EnableRaisingEvents = true;
+                    while (QueuesCleaner.CleanerActive)
+                    {
+                        Thread.Sleep(100);
+                    }
+                });
 
                 var builder = WebApplication.CreateBuilder();
 
@@ -129,17 +159,17 @@ namespace MelonWebApi
 
 
 
-                if (StateManager.LaunchArgs.ContainsKey("headless"))
+                if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
                 {
                     Log.Logger = new LoggerConfiguration()
                             .WriteTo.File($"{StateManager.melonPath}/MelonWebLogs.txt")
-                            .WriteTo.Console()
                             .CreateLogger();
                 }
                 else
                 {
                     Log.Logger = new LoggerConfiguration()
                             .WriteTo.File($"{StateManager.melonPath}/MelonWebLogs.txt")
+                            .WriteTo.Console()
                             .CreateLogger();
                 }
 
@@ -243,49 +273,11 @@ namespace MelonWebApi
                     TrayIconManager.RemoveIcon();
                 });
 
-                app.RunAsync();
-
-                if (!StateManager.LaunchArgs.ContainsKey("headless"))
-                {
-                    if (OperatingSystem.IsWindows())
-                    {
-                        StateManager.RestartServer = false;
-                        app.WaitForShutdown();
-                    }
-                    else
-                    {
-                        StateManager.ConsoleIsAlive = false;
-                        // UI Startup
-                        while (!StateManager.ConsoleIsAlive)
-                        {
-                            try
-                            {
-                                MelonUI.ClearConsole();
-                                StateManager.ConsoleIsAlive = true;
-                                MelonUI.endOptionsDisplay = true;
-                                DisplayManager.DisplayHome();
-                            }
-                            catch (Exception e)
-                            {
-                                Serilog.Log.Error(e.Message);
-                            }
-                            Thread.Sleep(1000);
-
-                            //if (!OperatingSystem.IsWindows())
-                            //{
-                            //    StateManager.ConsoleIsAlive = true;
-                            //}
-                        }
-                    }
-                }
-                else
-                {
-                    StateManager.RestartServer = false;
-                    app.WaitForShutdown();
-                }
+                app.Run();
 
                 await app.StopAsync();
             }
+            TrayIconManager.RemoveIcon();
             return 0;
         }
     }

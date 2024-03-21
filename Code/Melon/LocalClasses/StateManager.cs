@@ -28,6 +28,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Amazon.Runtime.Internal.Transform;
 using Serilog;
 using Microsoft.Owin.Hosting;
+using MongoDB.Bson;
 
 namespace Melon.LocalClasses
 {
@@ -52,7 +53,7 @@ namespace Melon.LocalClasses
         public static bool RestartServer { get; set; }
         public static bool ServerIsAlive;
         public static bool ConsoleIsAlive;
-        public static void Init(IWebApi mWebApi, bool headless)
+        public static void Init(IWebApi mWebApi, bool headless, bool conUI)
         {
             Log.Logger = new LoggerConfiguration()
                             .WriteTo.File($"{StateManager.melonPath}/MelonLogs.txt")
@@ -109,12 +110,12 @@ namespace Melon.LocalClasses
             {
                 if (File.Exists($"{melonPath}/Configs/DisabledPlugins.json"))
                 {
-                    DisabledPlugins = Storage.LoadConfigFile<List<string>>("DisabledPlugins.json", null, out _);
+                    DisabledPlugins = Storage.LoadConfigFile<List<string>>("DisabledPlugins", null, out _);
                 }
                 else
                 {
                     DisabledPlugins = new List<string>();
-                    Storage.SaveConfigFile("DisabledPlugins.json", DisabledPlugins, null);
+                    Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
                 }
                 PluginsContexts = new List<PluginLoadContext>();
 
@@ -132,11 +133,7 @@ namespace Melon.LocalClasses
                 Environment.Exit(0);
             }
 
-            // Show OOBE if flag/arg enabled and headless disabled
-            if ((MelonFlags.ForceOOBE || LaunchArgs.ContainsKey("setup")) && !headless)
-            {
-                DisplayManager.UIExtensions.Add("SetupUI", SetupUI.Display);
-            }
+            
 
             // Load SSLConfig if exists
             var config = Storage.LoadConfigFile<SSLConfig>("SSLConfig", new[] { "Password" }, out _);
@@ -170,7 +167,7 @@ namespace Melon.LocalClasses
 
                 Console.WriteLine(StringsManager.GetString("MongoDBConnectionError").Pastel(MelonColor.Error));
 
-                if (!headless)
+                if (!headless && conUI)
                 {
                     Console.WriteLine(StringsManager.GetString("ReturnPrompt").Pastel(MelonColor.BackgroundText));
                     Console.ReadKey(intercept: true);
@@ -180,7 +177,7 @@ namespace Melon.LocalClasses
                 }
                 else
                 {
-                    Environment.Exit(1);
+                    //Environment.Exit(1);
                 }
             }
 
@@ -198,7 +195,7 @@ namespace Melon.LocalClasses
                 Console.WriteLine(StringsManager.GetString("IncompatibleCollections").Pastel(MelonColor.Text));
                 Console.WriteLine($"[{compatible}]".Pastel(MelonColor.Highlight));
 
-                if (!headless)
+                if (!headless && conUI)
                 {
                     Console.WriteLine(StringsManager.GetString("ConvertCollectionsPrompt").Pastel(MelonColor.Text));
                     Console.WriteLine($"({StringsManager.GetString("ConversionWarning")})".Pastel(MelonColor.Text));
@@ -206,18 +203,15 @@ namespace Melon.LocalClasses
                     if (choice == StringsManager.GetString("PositiveConfirmation"))
                     {
                         DbVersionManager.ConvertCollectionsUI(compatible.Split(","));
-                        if (!headless)
+                        ChecklistUI.SetChecklistItems(new[]
                         {
-                            ChecklistUI.SetChecklistItems(new[]
-                            {
-                                StringsManager.GetString("SettingsLoadStatus"),
-                                StringsManager.GetString("MongoDBConnectStatus"),
-                                StringsManager.GetString("LoadPluginsStatus")
-                            });
-                            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("InitializationStatus") });
-                            ChecklistUI.ChecklistDislayToggle();
-                            ChecklistUI.UpdateChecklist(0, true);
-                        }
+                            StringsManager.GetString("SettingsLoadStatus"),
+                            StringsManager.GetString("MongoDBConnectStatus"),
+                            StringsManager.GetString("LoadPluginsStatus")
+                        });
+                        MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("InitializationStatus") });
+                        ChecklistUI.ChecklistDislayToggle();
+                        ChecklistUI.UpdateChecklist(0, true);
                     }
                     else
                     {
@@ -226,9 +220,7 @@ namespace Melon.LocalClasses
                 }
                 else
                 {
-                    Console.WriteLine(StringsManager.GetString("RelaunchHeadlessMode"));
                     Console.WriteLine($"({StringsManager.GetString("ConversionWarning")})");
-                    Environment.Exit(1);
                 }
             }
             else if (compatible != "" && LaunchArgs.ContainsKey("allowConversion"))
@@ -239,9 +231,9 @@ namespace Melon.LocalClasses
                     Thread.Sleep(200);
                     MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("InitializationStatus") });
                 }
-                DbVersionManager.ConvertCollectionsUI(compatible.Split(","));
                 if (!headless)
                 {
+                    DbVersionManager.ConvertCollectionsUI(compatible.Split(","));
                     ChecklistUI.SetChecklistItems(new[]
                     {
                         StringsManager.GetString("SettingsLoadStatus"),
@@ -252,6 +244,16 @@ namespace Melon.LocalClasses
                     ChecklistUI.ChecklistDislayToggle();
                     ChecklistUI.UpdateChecklist(0, true);
                 }
+                else
+                {
+                    DbVersionManager.ConvertCollections(compatible.Split(","));
+                }
+            }
+
+            // Check for users
+            if (DbClient.GetDatabase("Melon").GetCollection<BsonDocument>("Users").CountDocuments(new BsonDocument()) == 0)
+            {
+                DisplayManager.UIExtensions.Add("SetupUI", SetupUI.Display);
             }
 
             // Start Queues Cleaner
@@ -317,8 +319,7 @@ namespace Melon.LocalClasses
                     UseMenuColor = true,
                     QueueCleanupWaitInHours = 48
                 };
-                MelonColor.SetDefaults();
-                DisplayManager.UIExtensions.Add("SetupUI", SetupUI.Display); // Add SetupUI to UIExtentions so we can show the OOBE
+                MelonColor.SetDefaults(); 
                 Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
             }
             else

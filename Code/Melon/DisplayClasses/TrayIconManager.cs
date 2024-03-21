@@ -1,4 +1,5 @@
-﻿using H.NotifyIcon.Core;
+﻿using Amazon.Util.Internal;
+using H.NotifyIcon.Core;
 using Melon.Classes;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Mvc;
@@ -23,72 +24,15 @@ namespace Melon.DisplayClasses
     public static class TrayIconManager
     {
         private static TrayIconWithContextMenu trayIcon;
+
         private static Icon icon;
-        private static Stream ConsoleStream;
-
-        [DllImport("kernel32.dll", EntryPoint = "GetStdHandle", SetLastError = true, CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern IntPtr GetStdHandle(int nStdHandle);
-
-        [DllImport("kernel32.dll", EntryPoint = "AllocConsole", SetLastError = true, CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern int AllocConsole();
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool FreeConsole();
-        [DllImport("kernel32.dll")]
-        static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
-        [DllImport("kernel32.dll")]
-        static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
-
-        const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
-        //const uint DISABLE_NEWLINE_AUTO_RETURN = 0x0008; // Optional: Prevents automatic newline on '\n'
-        private const int STD_OUTPUT_HANDLE = -11;
-        private const int STD_INPUT_HANDLE = -10;
-
-        [DllImport("kernel32.dll")]
-        public static extern bool SetConsoleCtrlHandler(ConsoleEventDelegate callback, bool add);
-
-        // Define the delegate type for handling console events
-        public delegate bool ConsoleEventDelegate(int eventType);
-
-        // Define the event types we're interested in
-        public const int CTRL_C_EVENT = 0;
-        public const int CTRL_BREAK_EVENT = 1;
-        public const int CTRL_CLOSE_EVENT = 2;
-        public const int CTRL_LOGOFF_EVENT = 5;
-        public const int CTRL_SHUTDOWN_EVENT = 6;
+        private static extern bool FreeConsole();
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int MessageBox(IntPtr hWnd, String text, String caption, uint type);
 
         public static void ShowConsole()
         {
-            //if (ConsoleStream != null)
-            //{
-            //    ConsoleStream.Close();
-            //}
-            //
-            //AllocConsole();
-            //
-            //IntPtr stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-            //IntPtr stdInHandle = GetStdHandle(STD_INPUT_HANDLE);
-            //if (GetConsoleMode(stdOutHandle, out uint mode))
-            //{
-            //    mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-            //    SetConsoleMode(stdOutHandle, mode);
-            //}
-            //SafeFileHandle safeFileHandleOut = new SafeFileHandle(stdOutHandle, true);
-            //SafeFileHandle safeFileHandleIn = new SafeFileHandle(stdInHandle, true);
-            //FileStream fileStreamOut = new FileStream(safeFileHandleOut, FileAccess.Write);
-            //FileStream fileStreamIn = new FileStream(safeFileHandleIn, FileAccess.Read);
-            //Encoding encoding = Encoding.UTF8;
-            //StreamWriter standardOutput = new StreamWriter(fileStreamOut, encoding);
-            //StreamReader standardInput = new StreamReader(fileStreamIn, encoding);
-            //standardOutput.AutoFlush = true;
-            //standardOutput.Flush();
-            //Console.ForegroundColor = ConsoleColor.White;
-            //Console.OutputEncoding = Encoding.UTF8;
-            //Console.SetOut(standardOutput);
-            //Console.SetIn(standardInput);
-            //
-            //var b = SetConsoleCtrlHandler(ConsoleEventHandler, true);
-            //Console.WriteLine(b);
-
             try
             {
                 var uiPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Melon.exe");
@@ -110,32 +54,8 @@ namespace Melon.DisplayClasses
                 
             }
         }
-        private static bool ConsoleEventHandler(int eventType)
-        {
-            switch (eventType)
-            {
-                case CTRL_CLOSE_EVENT:
-                    HideConsole(); // Your existing function to hide the console
-                    return true; // Indicates that we've handled the event
-                case CTRL_C_EVENT:
-                    HideConsole(); // Your existing function to hide the console
-                    return true; // Indicates that we've handled the event
-            }
-            return false;
-
-            //HideConsole();
-            //
-            //// Return false to let the default handler process the event
-            //return true;
-        }
-
         public static void HideConsole()
         {
-            ConsoleStream = new FileStream("ConsoleOutput.txt", FileMode.Create, FileAccess.Write);
-            Encoding encoding = Encoding.UTF8;
-            StreamWriter standardOutput = new StreamWriter(ConsoleStream, encoding);
-            standardOutput.AutoFlush = true;
-            Console.SetOut(standardOutput);
             FreeConsole();
         }
         public static void AddIcon()
@@ -152,25 +72,30 @@ namespace Melon.DisplayClasses
             {
                 Items =
                 {
-                    new PopupMenuItem("Start Scan", (_, _) => 
+                    new PopupSubMenu()
                     {
-                        Task.Run(()=>
+                        Text = StateManager.StringsManager.GetString("ScannerOption"),
+                        Items =
                         {
-                            DisplayManager.UIExtensions.Add("LibraryScanIndicator", () =>
+                            new PopupMenuItem(StateManager.StringsManager.GetString("FullScanOption"), (_, _) =>
                             {
-                                Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight));
-                            });
-                            MelonUI.endOptionsDisplay = true;
-                            MelonScanner.StartScan(false);
-                        });
-                        
-                    }),
-                    new PopupMenuItem("Show Console", (_, _) =>
-                    {
-                        Task.Run(ShowConsole);
-                    }),
-                    new PopupMenuItem("Check For Updates", (_, _) => Task.Run(UpdateMelon)),
-                    new PopupMenuItem("Exit Melon", (_, _) =>
+                                Task.Run(()=>
+                                {
+                                    MelonScanner.StartScan(false);
+                                });
+                            }),
+                            new PopupMenuItem(StateManager.StringsManager.GetString("ShortScanOption"), (_, _) =>
+                            {
+                                Task.Run(()=>
+                                {
+                                    MelonScanner.StartScan(true);
+                                });
+                            }),
+                        }
+                    },
+                    new PopupMenuItem(StateManager.StringsManager.GetString("ShowConsoleOption"), (_, _) => Task.Run(ShowConsole)),
+                    new PopupMenuItem(StateManager.StringsManager.GetString("CheckForUpdates"), (_, _) => Task.Run(UpdateMelon)),
+                    new PopupMenuItem(StateManager.StringsManager.GetString("ExitMelon"), (_, _) =>
                     {
                         trayIcon.Dispose();
                         Environment.Exit(0);
@@ -179,8 +104,11 @@ namespace Melon.DisplayClasses
             };
             trayIcon.Create();
         }
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        private static extern int MessageBox(IntPtr hWnd, String text, String caption, uint type);
+        public static void RemoveIcon()
+        {
+            trayIcon.Remove();
+            icon.Dispose();
+        }
         private static bool ShowMessageBox(string msg)
         {
             const uint MB_OKCANCEL = 0x00000001;
@@ -215,7 +143,6 @@ namespace Melon.DisplayClasses
                     return false;
             }
         }
-
         public static void UpdateMelon()
         {
             var release = SettingsUI.GetGithubRelease("latest").Result;
@@ -277,17 +204,6 @@ namespace Melon.DisplayClasses
                     "Make sure there are no collisions and the required file has the attribute \"Embedded resource\"",
                     exception);
             }
-        }
-        private static void ShowMessage(TrayIcon trayIcon, string message)
-        {
-            Console.WriteLine(message);
-        }
-
-        
-        public static void RemoveIcon()
-        {
-            trayIcon.Remove();
-            icon.Dispose();
         }
     }
 }

@@ -209,3 +209,6 @@ ReleaseNotes=Notas de la Versión:
 UpdateAvailable=Actualización Disponible
 UpdatePrompt=¿Te gustaría actualizar?
 MissingUpdater=No se pudo iniciar el actualizador, ¿falta?
+ScannerOption=Escáner
+ShowConsoleOption=Muestra la consola
+ExitMelon=Salir melón
