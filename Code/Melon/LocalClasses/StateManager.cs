@@ -265,10 +265,7 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => 
             {
-                //StateManager.RestartServer = true;
-                //MelonUI.endOptionsDisplay = true;
-                StateManager.ConsoleIsAlive = false;
-                TrayIconManager.HideConsole();
+                Environment.Exit(0);
             });
 
             if (!headless)
