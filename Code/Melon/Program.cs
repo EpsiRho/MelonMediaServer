@@ -17,7 +17,14 @@ namespace Melon
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             StateManager.ParseArgs(args);
-            StateManager.Version = StateManager.LaunchArgs["SetVer"];
+            try
+            {
+                StateManager.Version = StateManager.LaunchArgs["SetVer"];
+            }
+            catch(Exception)
+            {
+                StateManager.Version = "1.0.0.0";
+            }
             StateManager.Init(null, false, true);
 
             // Launch DisplayHome
