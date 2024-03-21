@@ -270,7 +270,14 @@ namespace MelonWebApi
                 lifetime.ApplicationStopping.Register(() =>
                 {
                     QueuesCleaner.CleanerActive = false;
-                    TrayIconManager.RemoveIcon();
+                    try
+                    {
+                        TrayIconManager.RemoveIcon();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
                 });
 
                 app.Run();
