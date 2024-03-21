@@ -106,8 +106,18 @@ namespace Melon.DisplayClasses
         }
         public static void RemoveIcon()
         {
-            trayIcon.Remove();
-            icon.Dispose();
+            if (OperatingSystem.IsWindows())
+            {
+                try
+                {
+                    trayIcon.Remove();
+                    icon.Dispose();
+                }
+                catch (Exception)
+                {
+
+                }
+            }
         }
         private static bool ShowMessageBox(string msg)
         {

@@ -28,6 +28,7 @@ using Microsoft.Extensions.Hosting.WindowsServices;
 using Microsoft.Identity.Client;
 using System.Runtime.Versioning;
 using Melon.PluginModels;
+using Microsoft.Extensions.FileSystemGlobbing;
 namespace MelonWebApi
 {
     public static class Program
@@ -35,6 +36,7 @@ namespace MelonWebApi
         //public static bool started = false;
         public static WebApplication app;
         public static MWebApi mWebApi;
+        public static FileSystemWatcher watcher;
         public const string Version = "1.0.80.209";
 
         public static async Task<int> Main(string[] args)
@@ -91,7 +93,7 @@ namespace MelonWebApi
                 // Watch for settings changes
                 _ = Task.Run(() =>
                 {
-                    var watcher = new FileSystemWatcher();
+                    watcher = new FileSystemWatcher();
                     watcher.Path = $"{StateManager.melonPath}/Configs/";
 
                     // Watch for changes in LastAccess and LastWrite times, and
@@ -107,6 +109,16 @@ namespace MelonWebApi
                     {
                         if(args.Name == "MelonSettings.json" || args.Name == "SSLConfig.json" || args.Name == "DisabledPlugins.json")
                         {
+                            // Check if settings have actually changed
+                            var temp = Storage.LoadConfigFile<Settings>(args.Name.Replace(".json",""), new[] { "JWTKey" }, out _);
+                            temp.JWTKey = StateManager.MelonSettings.JWTKey;
+                            if (StateManager.MelonSettings == null || temp == null || 
+                                Storage.PropertiesEqual(StateManager.MelonSettings, temp))
+                            {
+                                return;
+                            }
+
+                            // Restart Server
                             try
                             {
                                 StateManager.RestartServer = true;
@@ -122,14 +134,10 @@ namespace MelonWebApi
                     // Add event handlers.
                     watcher.Changed += func;
                     watcher.Created += func;
-                    watcher.Deleted += func;
+                    //watcher.Deleted += func;
 
                     // Begin watching.
                     watcher.EnableRaisingEvents = true;
-                    while (QueuesCleaner.CleanerActive)
-                    {
-                        Thread.Sleep(100);
-                    }
                 });
 
                 var builder = WebApplication.CreateBuilder();
@@ -270,14 +278,8 @@ namespace MelonWebApi
                 lifetime.ApplicationStopping.Register(() =>
                 {
                     QueuesCleaner.CleanerActive = false;
-                    try
-                    {
-                        TrayIconManager.RemoveIcon();
-                    }
-                    catch (Exception)
-                    {
-
-                    }
+                    watcher.Dispose();
+                    TrayIconManager.RemoveIcon();
                 });
 
                 app.Run();
