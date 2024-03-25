@@ -107,7 +107,7 @@ namespace MelonWebApi
 
                     FileSystemEventHandler func = (sender, args) =>
                     {
-                        if(args.Name == "MelonSettings.json" || args.Name == "SSLConfig.json" || args.Name == "DisabledPlugins.json")
+                        if(args.Name == "MelonSettings.json")
                         {
                             // Check if settings have actually changed
                             var temp = Storage.LoadConfigFile<Settings>(args.Name.Replace(".json",""), new[] { "JWTKey" }, out _);
@@ -117,17 +117,17 @@ namespace MelonWebApi
                             {
                                 return;
                             }
+                        }
 
-                            // Restart Server
-                            try
-                            {
-                                StateManager.RestartServer = true;
-                                app.StopAsync();
-                            }
-                            catch (Exception)
-                            {
+                        // Restart Server
+                        try
+                        {
+                            StateManager.RestartServer = true;
+                            app.StopAsync();
+                        }
+                        catch (Exception)
+                        {
 
-                            }
                         }
                     };
 
