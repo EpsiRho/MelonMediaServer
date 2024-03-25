@@ -24,7 +24,6 @@ namespace Melon.Interface
         IDisplayManager DisplayManager { get; }
         IMelonUI MelonUI { get; }
         ISettingsUI SettingsUI { get; }
-        IWebApi WebApi { get; set; }
     }
     public interface IMelonAPI
     {

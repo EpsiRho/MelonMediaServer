@@ -12,41 +12,17 @@ namespace MelonPlugin
 {
     public class EventPlugin : IPlugin
     {
-        public string Name => "Event Plugin";
+        public string Name => "Demo Plugin";
         public string Authors => "Epsi";
-        public string Version => "v1.2.0";
-        public string Description => "Demo plugin that displays api events";
+        public string Version => "v1.3.0";
+        public string Description => "Demo plugin";
         public IHost Host { get; set; }
-        public bool Display;
-        public List<string> Messages;
+        public IWebApi WebApi { get; set; }
         public EventConfig Config;
-        public int Load()
-        {
-            if (Host.StateManager.LaunchArgs.ContainsKey("resetEventSettings"))
-            {
-                Config = new EventConfig()
-                {
-                    Format = "[api] (userId): msg",
-                    TextColor = Color.FromArgb(255, 255, 255, 255),
-                    ShowArgs = false
-                };
-                Host.Storage.SaveConfigFile("EventConfig", Config, null);
-            }
-            else
-            {
-
-                LoadConfig();
-            }
-            SetupEventHandlers();
-            Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Events", EventMenu);
-            Host.SettingsUI.MenuOptions.Add("Events Settings", SettingsMenu);
-            Host.WebApi.UsePluginMiddleware(KeyValuePair.Create("EventMiddleware", EventsInfoMiddleware));
-
-            return 0;
-        }
+  
         public byte[] EventsInfoMiddleware(WebApiEventArgs args)
         {
-            if (args.Api == "/api/events/info")
+            if (args.Api == "/api/demo/info")
             {
                 var result = $"{Name}\n{Authors}\n{Version}\n{Description}";
                 return Encoding.ASCII.GetBytes(result);
@@ -55,17 +31,10 @@ namespace MelonPlugin
             return null;
         }
 
-        public int Unload()
-        {
-            Host.DisplayManager.MenuOptions.Remove("Events");
-            Host.SettingsUI.MenuOptions.Remove("Events Settings");
-            Host.WebApi.RemovePluginMiddleware("EventMiddleware");
-            return 0;
-        }
 
         private void LoadConfig()
         {
-            Config = Host.Storage.LoadConfigFile<EventConfig>("EventConfig", null, out _);
+            Config = Host.Storage.LoadConfigFile<EventConfig>("DemoConfig", null, out _);
 
             if(Config == null)
             {
@@ -75,16 +44,15 @@ namespace MelonPlugin
                     TextColor = Color.FromArgb(255, 255, 255, 255),
                     ShowArgs = false
                 };
-                Host.Storage.SaveConfigFile("EventConfig", Config, null);
+                Host.Storage.SaveConfigFile("DemoConfig", Config, null);
             }
         }
 
         public void SettingsMenu()
         {
-            Display = true;
-            while (Display)
+            while (true)
             {
-                Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Events Settings" });
+                Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Demo Plugin Settings" });
                 string args = Config.ShowArgs ? "Hide Args (Currently Shown)" : "Show Args (Currently Hidden)";
                 var choice = Host.MelonUI.OptionPicker(new List<string>()
                 {
@@ -106,18 +74,18 @@ namespace MelonPlugin
                         break;
                     case "Hide Args (Currently Shown)":
                         Config.ShowArgs = !Config.ShowArgs;
-                        Host.Storage.SaveConfigFile("EventConfig", Config, null);
+                        Host.Storage.SaveConfigFile("DemoConfig", Config, null);
                         break;
                     case "Show Args (Currently Hidden)":
                         Config.ShowArgs = !Config.ShowArgs;
-                        Host.Storage.SaveConfigFile("EventConfig", Config, null);
+                        Host.Storage.SaveConfigFile("DemoConfig", Config, null);
                         break;
                 }
             }
         }
         public void ChangeFormatMenu()
         {
-            Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Events Settings", "Change Format" });
+            Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Demo Plugin Settings", "Change Format" });
             Console.WriteLine("Format markers: api, statuscode, msg, userId".Pastel(Config.TextColor));
             Console.WriteLine($"Current format: {Config.Format}".Pastel(Config.TextColor));
             Console.WriteLine($"(Enter nothing to go back)".Pastel(Config.TextColor));
@@ -129,95 +97,39 @@ namespace MelonPlugin
             }
 
             Config.Format = input;
-            Host.Storage.SaveConfigFile("EventConfig", Config, null);
+            Host.Storage.SaveConfigFile("DemoConfig", Config, null);
         }
         public void ChangeColorMenu()
         {
-            Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Events Settings", "Change Color" });
+            Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Demo Plugin Settings", "Change Color" });
             var newColor = Host.MelonUI.ColorPicker(Config.TextColor);
             Config.TextColor = newColor;
-            Host.Storage.SaveConfigFile("EventConfig", Config, null);
+            Host.Storage.SaveConfigFile("DemoConfig", Config, null);
         }
 
         private void EventMenu()
         {
-            Display = true;
-            Thread t = new Thread(Controller);
-            t.Start();
-            Messages = new List<string>();
-            Host.MelonUI.BreadCrumbBar(new List<string>(){"Melon", "Events"});
+            Host.MelonUI.BreadCrumbBar(new List<string>(){"Melon", "Demo Plugin"});
+            Console.WriteLine($"Please answer the following question:");
+            var choice = Host.MelonUI.OptionPicker(new List<string>() { "Bark", "Meow" });
+            Host.MelonUI.ClearConsole();
+            Host.DisplayManager.MenuOptions.Remove("Plugin Demo");
+            Host.DisplayManager.MenuOptions.Remove("Bark Bark");
+            Host.DisplayManager.MenuOptions.Remove("Meow Mrrp");
+            if(choice == "Bark")
+            {
+                Console.WriteLine("Awruff!");
+                Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Bark Bark", EventMenu);
+            }
+            else
+            {
+                Console.WriteLine("Mrrow!");
+                Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Meow Mrrp", EventMenu);
+            }
+
             Host.MelonUI.ShowIndeterminateProgress();
-            while (Display)
-            {
-                if(Messages.Count != 0)
-                {
-                    Host.MelonUI.HideIndeterminateProgress();
-                    Thread.Sleep(20);
-                    Console.CursorLeft = 0;
-                    Console.WriteLine(Messages.First());
-                    Messages.RemoveAt(0);
-                    Host.MelonUI.ShowIndeterminateProgress();
-                }
-                Thread.Sleep(100);
-            }
+            Thread.Sleep(new Random().Next(1000,3000));
             Host.MelonUI.HideIndeterminateProgress();
-        }
-
-        private void MessageHandler(object sender, WebApiEventArgs e)
-        {
-            string msg = Config.Format;
-            msg = msg.Replace("api", e.Api).Replace("userId", e.User).Replace("statuscode", $"{e.StatusCode}").Replace("msg", e.Message);
-            if (Config.ShowArgs)
-            {
-                foreach(var arg in e.Args)
-                {
-                    try
-                    {
-                        if (arg.Value.GetType() == typeof(List<string>))
-                        {
-                            var lst = (List<string>)arg.Value;
-                            msg += $"\n    {arg.Key}: ";
-                            foreach (var item in lst)
-                            {
-                                msg += $"\n        - {item}";
-                            }
-                        }
-                        else
-                        {
-                            msg += $"\n    {arg.Key}: {arg.Value}";
-                        }
-                    }
-                    catch(Exception)
-                    {
-                        
-                    }
-                }
-            }
-
-            try
-            {
-                Messages.Add(msg.Pastel(Config.TextColor));
-            }
-            catch (Exception)
-            {
-
-            }
-        }
-
-        private void Controller()
-        {
-            while (Display)
-            {
-                if (Console.KeyAvailable)
-                {
-                    var k = Console.ReadKey(true);
-                    if (k.Key == ConsoleKey.Escape)
-                    {
-                        Display = false;
-                        return;
-                    }
-                }
-            }
         }
 
         public void LoadMelonCommands(IHost host)
@@ -225,164 +137,74 @@ namespace MelonPlugin
             Host = host;
         }
 
-        public void SetupEventHandlers()
-        {
-            Host.WebApi.ArtDeleteTrack += MessageHandler;
-            Host.WebApi.ArtDeleteAlbum += MessageHandler;
-            Host.WebApi.ArtDeleteArtistPfP += MessageHandler;
-            Host.WebApi.ArtDeleteArtistBanner += MessageHandler;
-            Host.WebApi.ArtDeletePlaylist += MessageHandler;
-            Host.WebApi.ArtDeleteCollection += MessageHandler;
-            Host.WebApi.ArtDeleteDefault += MessageHandler;
-
-            Host.WebApi.ArtUploadTrack += MessageHandler;
-            Host.WebApi.ArtUploadAlbum += MessageHandler;
-            Host.WebApi.ArtUploadArtistPfP += MessageHandler;
-            Host.WebApi.ArtUploadArtistBanner += MessageHandler;
-            Host.WebApi.ArtUploadPlaylist += MessageHandler;
-            Host.WebApi.ArtUploadCollection += MessageHandler;
-            Host.WebApi.ArtUploadDefault += MessageHandler;
-
-            Host.WebApi.AuthLogin += MessageHandler;
-            Host.WebApi.AuthInvite += MessageHandler;
-            Host.WebApi.AuthCodeAuthenticate += MessageHandler;
-
-            Host.WebApi.CollectionsCreate += MessageHandler;
-            Host.WebApi.CollectionsAddFilters += MessageHandler;
-            Host.WebApi.CollectionsRemoveFilters += MessageHandler;
-            Host.WebApi.CollectionsDelete += MessageHandler;
-            Host.WebApi.CollectionsUpdate += MessageHandler;
-            Host.WebApi.CollectionsGet += MessageHandler;
-            Host.WebApi.CollectionsSearch += MessageHandler;
-            Host.WebApi.CollectionsGetTracks += MessageHandler;
-
-            Host.WebApi.CreateAlbum += MessageHandler;
-            Host.WebApi.DeleteAlbum += MessageHandler;
-            Host.WebApi.CreateArtist += MessageHandler;
-            Host.WebApi.DeleteArtist += MessageHandler;
-
-            Host.WebApi.DbFormat += MessageHandler;
-            Host.WebApi.DbBitrate += MessageHandler;
-            Host.WebApi.DbSampleRate += MessageHandler;
-            Host.WebApi.DbBitsPerSample += MessageHandler;
-            Host.WebApi.DbChannel += MessageHandler;
-            Host.WebApi.DbReleaseStatus += MessageHandler;
-            Host.WebApi.DbReleaseType += MessageHandler;
-            Host.WebApi.DbPublisher += MessageHandler;
-            Host.WebApi.DbGenres += MessageHandler;
-
-            Host.WebApi.DiscoverTracks += MessageHandler;
-            Host.WebApi.DiscoverAlbums += MessageHandler;
-            Host.WebApi.DiscoverArtists += MessageHandler;
-            Host.WebApi.DiscoverTimeBasedTracks += MessageHandler;
-
-            Host.WebApi.DownloadTrack += MessageHandler;
-            Host.WebApi.DownloadTrackTranscode += MessageHandler;
-            Host.WebApi.DownloadTrackWave += MessageHandler;
-            Host.WebApi.DownloadTrackArt += MessageHandler;
-            Host.WebApi.DownloadAlbumArt += MessageHandler;
-            Host.WebApi.DownloadArtistPfp += MessageHandler;
-            Host.WebApi.DownloadArtistBanner += MessageHandler;
-            Host.WebApi.DownloadPlaylistArt += MessageHandler;
-            Host.WebApi.DownloadCollectionArt += MessageHandler;
-
-            Host.WebApi.GetTrack += MessageHandler;
-            Host.WebApi.GetTracks += MessageHandler;
-            Host.WebApi.GetAlbum += MessageHandler;
-            Host.WebApi.GetAlbums += MessageHandler;
-            Host.WebApi.GetAlbumTracks += MessageHandler;
-            Host.WebApi.GetArtist += MessageHandler;
-            Host.WebApi.GetArtists += MessageHandler;
-            Host.WebApi.GetArtistTracks += MessageHandler;
-            Host.WebApi.GetArtistReleases += MessageHandler;
-            Host.WebApi.GetArtistSeenOn += MessageHandler;
-            Host.WebApi.GetArtistConnections += MessageHandler;
-            Host.WebApi.GetLyrics += MessageHandler;
-
-            Host.WebApi.PlaylistsCreate += MessageHandler;
-            Host.WebApi.PlaylistsAddTracks += MessageHandler;
-            Host.WebApi.PlaylistsRemoveTracks += MessageHandler;
-            Host.WebApi.PlaylistsDelete += MessageHandler;
-            Host.WebApi.PlaylistsUpdate += MessageHandler;
-            Host.WebApi.PlaylistsMoveTrack += MessageHandler;
-            Host.WebApi.PlaylistsGet += MessageHandler;
-            Host.WebApi.PlaylistsSearch += MessageHandler;
-            Host.WebApi.PlaylistsGetTracks += MessageHandler;
-
-
-            Host.WebApi.QueuesCreateFromTracks += MessageHandler;
-            Host.WebApi.QueuesCreateFromAlbums += MessageHandler;
-            Host.WebApi.QueuesCreateFromArtists += MessageHandler;
-            Host.WebApi.QueuesCreateFromPlaylists += MessageHandler;
-            Host.WebApi.QueuesCreateFromCollections += MessageHandler;
-            Host.WebApi.QueuesAddTracks += MessageHandler;
-            Host.WebApi.QueuesRemoveTracks += MessageHandler;
-            Host.WebApi.QueuesDelete += MessageHandler;
-            Host.WebApi.QueuesUpdatePosition += MessageHandler;
-            Host.WebApi.QueuesUpdate += MessageHandler;
-            Host.WebApi.QueuesMoveTrack += MessageHandler;
-            Host.WebApi.QueuesGet += MessageHandler;
-            Host.WebApi.QueuesSearch += MessageHandler;
-            Host.WebApi.QueuesGetTracks += MessageHandler;
-            Host.WebApi.QueuesShuffle += MessageHandler;
-
-
-            Host.WebApi.ScanStart += MessageHandler;
-            Host.WebApi.ScanProgress += MessageHandler;
-
-
-            Host.WebApi.SearchTracks += MessageHandler;
-            Host.WebApi.SearchAlbums += MessageHandler;
-            Host.WebApi.SearchArtists += MessageHandler;
-
-
-            Host.WebApi.StatsLogPlay += MessageHandler;
-            Host.WebApi.StatsLogSkip += MessageHandler;
-            Host.WebApi.StatsListeningTime += MessageHandler;
-            Host.WebApi.StatsTopTracks += MessageHandler;
-            Host.WebApi.StatsTopAlbums += MessageHandler;
-            Host.WebApi.StatsTopArtists += MessageHandler;
-            Host.WebApi.StatsTopGenres += MessageHandler;
-            Host.WebApi.StatsRecentTrack += MessageHandler;
-            Host.WebApi.StatsRecentAlbums += MessageHandler;
-            Host.WebApi.StatsRecentArtists += MessageHandler;
-            Host.WebApi.StatsRateTrack += MessageHandler;
-            Host.WebApi.StatsRateAlbum += MessageHandler;
-            Host.WebApi.StatsRateArtist += MessageHandler;
-
-
-            Host.WebApi.StreamConnect += MessageHandler;
-            Host.WebApi.StreamGetExternal += MessageHandler;
-            Host.WebApi.StreamPlayExternal += MessageHandler;
-            Host.WebApi.StreamPauseExternal += MessageHandler;
-            Host.WebApi.StreamSkipExternal += MessageHandler;
-            Host.WebApi.StreamRewindExternal += MessageHandler;
-            Host.WebApi.StreamVolumeExternal += MessageHandler;
-
-
-            Host.WebApi.UpdateTrack += MessageHandler;
-            Host.WebApi.UpdateAlbum += MessageHandler;
-            Host.WebApi.UpdateArtist += MessageHandler;
-
-
-            Host.WebApi.UsersGet += MessageHandler;
-            Host.WebApi.UsersSearch += MessageHandler;
-            Host.WebApi.UsersAddFriend += MessageHandler;
-            Host.WebApi.UsersRemoveFriend += MessageHandler;
-            Host.WebApi.UsersCurrent += MessageHandler;
-            Host.WebApi.UsersCreate += MessageHandler;
-            Host.WebApi.UsersDelete += MessageHandler;
-            Host.WebApi.UsersUpdate += MessageHandler;
-            Host.WebApi.UsersChangeUsername += MessageHandler;
-            Host.WebApi.UsersChangePassword += MessageHandler;
-        }
-
         public Dictionary<string, string> GetHelpOptions()
         {
             return new Dictionary<string, string>()
             {
-                { "--resetEventSettings", "Resets the Event plugin's settings to their defaults." }
+                { "--resetDemoSettings", "Resets the Demo plugin's settings to their defaults." }
             };
+        }
+
+        public void LoadMelonServerCommands(IWebApi webapi)
+        {
+            WebApi = webapi;
+        }
+
+        public int LoadUI()
+        {
+            if (Host.StateManager.LaunchArgs.ContainsKey("resetDemoSettings"))
+            {
+                Config = new EventConfig()
+                {
+                    Format = "[api] (userId): msg",
+                    TextColor = Color.FromArgb(255, 255, 255, 255),
+                    ShowArgs = false
+                };
+                Host.Storage.SaveConfigFile("DemoConfig", Config, null);
+            }
+            else
+            {
+
+                LoadConfig();
+            }
+            Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Plugin Demo", EventMenu);
+            Host.SettingsUI.MenuOptions.Add("Demo Settings", SettingsMenu);
+            return 0;
+        }
+
+        public int UnloadUI()
+        {
+            Host.DisplayManager.MenuOptions.Remove("Plugin Demo");
+            Host.SettingsUI.MenuOptions.Remove("Demo Settings");
+            return 0;
+        }
+
+        public int Execute()
+        {
+            if (Host.StateManager.LaunchArgs.ContainsKey("resetDemoSettings"))
+            {
+                Config = new EventConfig()
+                {
+                    Format = "[api] (userId): msg",
+                    TextColor = Color.FromArgb(255, 255, 255, 255),
+                    ShowArgs = false
+                };
+                Host.Storage.SaveConfigFile("DemoConfig", Config, null);
+            }
+            else
+            {
+
+                LoadConfig();
+            }
+            WebApi.UsePluginMiddleware(KeyValuePair.Create("DemoMiddleware", EventsInfoMiddleware));
+
+            return 0;
+        }
+
+        public int Destroy()
+        {
+            WebApi.RemovePluginMiddleware("DemoMiddleware");
+            return 0;
         }
     }
 }

@@ -18,7 +18,7 @@ namespace Melon.PluginModels
 {
     public class MelonHost : IHost
     {
-        public string Version => "1.1.0";
+        public string Version => "1.2.0";
         public IMelonAPI Api => new API();
         public IMelonAPI MelonAPI => new API();
         public IStorageAPI Storage => new StorageAPI();
@@ -27,21 +27,7 @@ namespace Melon.PluginModels
         public IDisplayManager DisplayManager => new Display();
         public IMelonUI MelonUI => new UI();
         public ISettingsUI SettingsUI => new SettingsMenu();
-        private IWebApi _WebApi;
-        public IWebApi WebApi 
-        {
-            get
-            {
-                return _WebApi;
-            }
-            set
-            {
-                if (_WebApi != value)
-                {
-                    _WebApi = value;
-                }
-            }
-        }
+        
     }
     public class API : IMelonAPI
     {

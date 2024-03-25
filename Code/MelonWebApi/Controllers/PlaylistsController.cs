@@ -8,9 +8,6 @@ using Melon.LocalClasses;
 using System.Diagnostics;
 using Melon.Models;
 using System.Security.Claims;
-using ATL.Playlist;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 namespace MelonWebApi.Controllers
 {

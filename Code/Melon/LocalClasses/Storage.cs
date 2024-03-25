@@ -67,12 +67,22 @@ namespace Melon.LocalClasses
                         if (propertyInfo.PropertyType == typeof(string))
                         {
                             var data = (string)propertyInfo.GetValue(config);
+                            if (data == null)
+                            {
+                                propertyInfo.SetValue(config, "");
+                                continue;
+                            }
                             var unprotectedData = instance._protector.Unprotect(data);
                             propertyInfo.SetValue(config, unprotectedData);
                         }
                         else if (propertyInfo.PropertyType == typeof(byte[]))
                         {
                             var data = (byte[])propertyInfo.GetValue(config);
+                            if(data == null)
+                            {
+                                propertyInfo.SetValue(config, null);
+                                continue;
+                            }
                             var unprotectedData = instance._protector.Unprotect(data);
                             propertyInfo.SetValue(config, unprotectedData);
                         }
@@ -104,16 +114,25 @@ namespace Melon.LocalClasses
                     // Check if the property was found and is not null
                     if (propertyInfo != null)
                     {
-
                         if (propertyInfo.PropertyType == typeof(string))
                         {
                             var data = (string)propertyInfo.GetValue(config);
+                            if (data == null)
+                            {
+                                propertyInfo.SetValue(config, "");
+                                continue;
+                            }
                             var unprotectedData = instance._protector.Protect(data);
                             propertyInfo.SetValue(config, unprotectedData);
                         }
                         else if (propertyInfo.PropertyType == typeof(byte[]))
                         {
                             var data = (byte[])propertyInfo.GetValue(config);
+                            if (data == null)
+                            {
+                                propertyInfo.SetValue(config, null);
+                                continue;
+                            }
                             var unprotectedData = instance._protector.Protect(data);
                             propertyInfo.SetValue(config, unprotectedData);
                         }
@@ -138,6 +157,41 @@ namespace Melon.LocalClasses
                 return default(T);
             }
         }
+        public static bool PropertiesEqual<T>(this T self, T to, params string[] ignore) where T : class
+        {
+            if (self != null && to != null)
+            {
+                Type type = typeof(T);
+                List<string> ignoreList = new List<string>(ignore);
+                foreach (System.Reflection.PropertyInfo pi in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                {
+                    if (!ignoreList.Contains(pi.Name))
+                    {
+                        object selfValue = type.GetProperty(pi.Name).GetValue(self, null);
+                        object toValue = type.GetProperty(pi.Name).GetValue(to, null);
 
+                        if(selfValue.GetType() == typeof(string[]) || selfValue.GetType() == typeof(List<string>))
+                        {
+                            var check = Enumerable.SequenceEqual((IEnumerable<string>)selfValue, (IEnumerable<string>)toValue);
+                            if(check == false)
+                            {
+                                return false;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+
+                        if (selfValue != toValue && (selfValue == null || !selfValue.Equals(toValue)))
+                        {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            return self == to;
+        }
     }
 }

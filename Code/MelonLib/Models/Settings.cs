@@ -14,7 +14,6 @@ namespace Melon.Models
     public class Settings
     {
         public string? MongoDbConnectionString { get; set; }
-        public byte[]? JWTKey { get; set; }
         public List<string> LibraryPaths { get; set; }
         public string ListeningURL { get; set; }
         public string DefaultLanguage { get; set; }

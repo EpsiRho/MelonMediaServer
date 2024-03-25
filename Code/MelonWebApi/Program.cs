@@ -24,6 +24,11 @@ using System.Threading.RateLimiting;
 using Melon.Models;
 using NuGet.Protocol.Plugins;
 using MelonWebApi.Middleware;
+using Microsoft.Extensions.Hosting.WindowsServices;
+using Microsoft.Identity.Client;
+using System.Runtime.Versioning;
+using Melon.PluginModels;
+using Microsoft.Extensions.FileSystemGlobbing;
 namespace MelonWebApi
 {
     public static class Program
@@ -31,18 +36,16 @@ namespace MelonWebApi
         //public static bool started = false;
         public static WebApplication app;
         public static MWebApi mWebApi;
-        public const string Version = "1.0.68.843";
+        public static FileSystemWatcher watcher;
+        public const string Version = "1.0.84.279";
 
         public static async Task<int> Main(string[] args)
         {
             StateManager.Version = Version;
-
-            MelonColor.SetDefaults();
-
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.OutputEncoding = Encoding.UTF8;
-
             StateManager.ParseArgs(args);
+            StateManager.ServerIsAlive = true;
+            MelonColor.SetDefaults();
+            //StateManager.ConsoleIsAlive = true;
 
             if (StateManager.LaunchArgs.ContainsKey("openFolder"))
             {
@@ -50,19 +53,91 @@ namespace MelonWebApi
                 Environment.Exit(0);
             }
 
+            if (StateManager.LaunchArgs.ContainsKey("help") || StateManager.LaunchArgs.ContainsKey("version"))
+            {
+                StateManager.Init(null, true, false);
+                return 0;
+            }
+
+            if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
+            {
+                StateManager.ConsoleIsAlive = false;
+
+                TrayIconManager.HideConsole();
+                TrayIconManager.ShowConsole();
+            }
+            else if (!StateManager.LaunchArgs.ContainsKey("headless"))
+            {
+                TrayIconManager.ShowConsole();
+            }
+
             StateManager.RestartServer = true;
             while (StateManager.RestartServer)
             {
                 StateManager.RestartServer = false;
                 mWebApi = new MWebApi();
-                StateManager.Init(mWebApi);
-                //DisplayManager.UIExtensions.Add("Future", ()=> { Console.WriteLine("Hello this is a future version!"); });
+                StateManager.Init(mWebApi, true, false);
 
-                if (StateManager.LaunchArgs.ContainsKey("headless") && DisplayManager.UIExtensions.Contains("SetupUI"))
+                if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
                 {
-                    SetupUI.ShowSetupError();
-                    return 1;
+                    try
+                    {
+                        TrayIconManager.AddIcon();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
                 }
+
+                // Watch for settings changes
+                _ = Task.Run(() =>
+                {
+                    watcher = new FileSystemWatcher();
+                    watcher.Path = $"{StateManager.melonPath}/Configs/";
+
+                    // Watch for changes in LastAccess and LastWrite times, and
+                    // the renaming of files or directories.
+                    watcher.NotifyFilter = NotifyFilters.LastWrite
+                                         | NotifyFilters.FileName
+                                         | NotifyFilters.DirectoryName;
+
+                    // Only watch text files.
+                    watcher.Filter = "*.json";
+
+                    FileSystemEventHandler func = (sender, args) =>
+                    {
+                        if(args.Name == "MelonSettings.json")
+                        {
+                            // Check if settings have actually changed
+                            var temp = Storage.LoadConfigFile<Settings>(args.Name.Replace(".json",""), new[] { "JWTKey" }, out _);
+                            if (StateManager.MelonSettings == null || temp == null || 
+                                Storage.PropertiesEqual(StateManager.MelonSettings, temp))
+                            {
+                                return;
+                            }
+                        }
+
+                        // Restart Server
+                        try
+                        {
+                            StateManager.RestartServer = true;
+                            app.StopAsync();
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+                    };
+
+                    // Add event handlers.
+                    watcher.Changed += func;
+                    watcher.Created += func;
+                    //watcher.Deleted += func;
+
+                    // Begin watching.
+                    watcher.EnableRaisingEvents = true;
+                });
 
                 var builder = WebApplication.CreateBuilder();
 
@@ -91,23 +166,24 @@ namespace MelonWebApi
 
 
 
-                if (StateManager.LaunchArgs.ContainsKey("headless"))
+                if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
                 {
                     Log.Logger = new LoggerConfiguration()
                             .WriteTo.File($"{StateManager.melonPath}/MelonWebLogs.txt")
-                            .WriteTo.Console()
                             .CreateLogger();
                 }
                 else
                 {
                     Log.Logger = new LoggerConfiguration()
                             .WriteTo.File($"{StateManager.melonPath}/MelonWebLogs.txt")
+                            .WriteTo.Console()
                             .CreateLogger();
                 }
 
                 builder.Host.UseSerilog();
+                builder.Host.UseWindowsService();
 
-                var key = StateManager.MelonSettings.JWTKey;
+                var key = StateManager.JWTKey;
                 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                         .AddJwtBearer(x =>
                         {
@@ -201,23 +277,15 @@ namespace MelonWebApi
                 lifetime.ApplicationStopping.Register(() =>
                 {
                     QueuesCleaner.CleanerActive = false;
+                    watcher.Dispose();
+                    TrayIconManager.RemoveIcon();
                 });
 
-                app.RunAsync();
-
-                if (!StateManager.LaunchArgs.ContainsKey("headless"))
-                {
-                    // UI Startup
-                    DisplayManager.DisplayHome();
-                }
-                else
-                {
-                    StateManager.RestartServer = false;
-                    app.WaitForShutdown();
-                }
+                app.Run();
 
                 await app.StopAsync();
             }
+            TrayIconManager.RemoveIcon();
             return 0;
         }
     }

@@ -461,7 +461,7 @@ namespace Melon.DisplayClasses
         private static void ChangeListeningURL()
         {
             bool result = true;
-            while (!StateManager.RestartServer)
+            while (true)
             {
                 // Title
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("NetworkSettingsOption"), StringsManager.GetString("ListeningURLDisplay") });
@@ -500,12 +500,11 @@ namespace Melon.DisplayClasses
                     // Set and Save new conn string
                     StateManager.MelonSettings.ListeningURL = input;
                     Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
-                    StateManager.RestartServer = true;
                     foreach (var plugin in Plugins)
                     {
-                        plugin.Unload();
+                        plugin.UnloadUI();
                     }
-                    break;
+                    return;
                 }
 
             }
@@ -529,17 +528,16 @@ namespace Melon.DisplayClasses
                 {
                     Security.SetSSLConfig("", "");
                     Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
-                    StateManager.RestartServer = true;
                     foreach (var plugin in Plugins)
                     {
-                        plugin.Unload();
+                        plugin.UnloadUI();
                     }
                 }
 
             }
 
             bool result = true;
-            while (!StateManager.RestartServer)
+            while (true)
             {
                 // Get the Path to the pfx
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("NetworkSettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
@@ -587,12 +585,11 @@ namespace Melon.DisplayClasses
                     // Set and Save new conn string
                     Security.SetSSLConfig(pathToCert, password);
                     Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
-                    StateManager.RestartServer = true;
                     foreach (var plugin in Plugins)
                     {
-                        plugin.Unload();
+                        plugin.UnloadUI();
                     }
-                    break;
+                    return;
                 }
 
             }
@@ -664,12 +661,13 @@ namespace Melon.DisplayClasses
                 if (resources.Contains($"Melon.Strings.UIStrings{input.ToUpper()}.resources"))
                 {
                     MelonSettings.DefaultLanguage = input;
+                    LaunchArgs.Remove("lang");
                     StringsManager = StringsManager = new ResourceManager($"Melon.Strings.UIStrings{input.ToUpper()}", typeof(SettingsUI).Assembly);
                     Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
                     StateManager.RestartServer = true;
                     foreach (var plugin in Plugins)
                     {
-                        plugin.Unload();
+                        plugin.UnloadUI();
                     }
                     break;
                 }
@@ -691,7 +689,7 @@ namespace Melon.DisplayClasses
                     { $"{StringsManager.GetString("ColorSetPromptStart")} {StringsManager.GetString("ErrorColorSetting").Pastel(MelonColor.Error)}", 5 },
                     { StringsManager.GetString("DefaultColorReset"), 6 }
                 };
-                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("MenuCustomizationOption"), StringsManager.GetString("LibraryOption"), StringsManager.GetString("ColorOptions") });
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("MenuCustomizationOption"), StringsManager.GetString("ColorOptions") });
                 Console.WriteLine($"{StringsManager.GetString("ColorSelection")}:".Pastel(MelonColor.Text));
                 var choice = MelonUI.OptionPicker(ColorMenuOptions.Keys.ToList());
                 Thread.Sleep(100);
@@ -898,40 +896,42 @@ namespace Melon.DisplayClasses
                 }
                 else if (choice == StringsManager.GetString("DisablePluginOption"))
                 {
-                    plugin.Unload();
+                    plugin.UnloadUI();
                     DisabledPlugins.Add($"{plugin.Name}:{plugin.Authors}");
-                    Storage.SaveConfigFile("DisabledPlugins.json", DisabledPlugins, null);
+                    Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
                 }
                 else if (choice == StringsManager.GetString("EnablePluginOption"))
                 {
-                    plugin.Load();
+                    plugin.LoadUI();
                     DisabledPlugins.Remove($"{plugin.Name}:{plugin.Authors}");
-                    Storage.SaveConfigFile("DisabledPlugins.json", DisabledPlugins, null);
+                    Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
                 }
             }
         }
         private static void RescanPlugins()
         {
+            Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
             MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("RescanPluginsFolderOption") });
             MelonUI.ShowIndeterminateProgress();
             foreach (var plugin in Plugins)
             {
-                plugin.Unload();
+                plugin.UnloadUI();
             }
             PluginsManager.LoadPlugins();
             MelonUI.HideIndeterminateProgress();
         }
         private static void ReloadPlugins()
         {
+            Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
             MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("ReloadAllPluginsOption") });
             MelonUI.ShowIndeterminateProgress();
             foreach (var plugin in Plugins)
             {
-                plugin.Unload();
+                plugin.UnloadUI();
             }
             foreach (var plugin in Plugins)
             {
-                plugin.Load();
+                plugin.LoadUI();
             }
             MelonUI.HideIndeterminateProgress();
         }
