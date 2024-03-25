@@ -111,7 +111,6 @@ namespace MelonWebApi
                         {
                             // Check if settings have actually changed
                             var temp = Storage.LoadConfigFile<Settings>(args.Name.Replace(".json",""), new[] { "JWTKey" }, out _);
-                            temp.JWTKey = StateManager.MelonSettings.JWTKey;
                             if (StateManager.MelonSettings == null || temp == null || 
                                 Storage.PropertiesEqual(StateManager.MelonSettings, temp))
                             {
@@ -184,7 +183,7 @@ namespace MelonWebApi
                 builder.Host.UseSerilog();
                 builder.Host.UseWindowsService();
 
-                var key = StateManager.MelonSettings.JWTKey;
+                var key = StateManager.JWTKey;
                 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                         .AddJwtBearer(x =>
                         {

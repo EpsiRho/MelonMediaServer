@@ -83,7 +83,7 @@ namespace Melon.LocalClasses
                 ExpireInMinutes = StateManager.MelonSettings.JWTExpireInMinutes;
             }
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = StateManager.MelonSettings.JWTKey;
+            var key = StateManager.JWTKey;
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
