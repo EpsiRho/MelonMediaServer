@@ -95,7 +95,7 @@ namespace Melon.DisplayClasses
                     },
                     new PopupMenuItem(StateManager.StringsManager.GetString("ShowConsoleOption"), (_, _) => Task.Run(ShowConsole)),
                     new PopupMenuItem(StateManager.StringsManager.GetString("CheckForUpdates"), (_, _) => Task.Run(UpdateMelon)),
-                    new PopupMenuItem(StateManager.StringsManager.GetString("ExitMelon"), (_, _) =>
+                    new PopupMenuItem(StateManager.StringsManager.GetString("ExitMelonOption"), (_, _) =>
                     {
                         trayIcon.Dispose();
                         Environment.Exit(0);

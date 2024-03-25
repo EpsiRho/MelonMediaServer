@@ -50,6 +50,7 @@ namespace Melon.LocalClasses
         public static IWebApi WebApi { get; set; }
         public static string Version { get; set; }
         public static string Language { get; set; }
+        public static byte[] JWTKey { get; set; }
         public static bool RestartServer { get; set; }
         public static bool ServerIsAlive;
         public static bool ConsoleIsAlive;
@@ -70,6 +71,11 @@ namespace Melon.LocalClasses
                     "Load Plugins"
                 });
                 ChecklistUI.ChecklistDislayToggle();
+            }
+
+            if (!conUI)
+            {
+                JWTKey = Security.GenerateSecretKey();
             }
 
             Host = new MelonHost();
@@ -263,10 +269,7 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions.Add(StringsManager.GetString("FullScanOption"), MelonScanner.MemoryScan);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.MemoryScanShort);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
-            DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitOption"), () => 
-            {
-                Environment.Exit(0);
-            });
+            DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitUIOption"), () => { Environment.Exit(0); });
 
             if (!headless)
             {
@@ -303,7 +306,6 @@ namespace Melon.LocalClasses
                 {
                     MongoDbConnectionString = "mongodb://localhost:27017",
                     LibraryPaths = new List<string>(),
-                    JWTKey = Security.GenerateSecretKey(),
                     Text = Color.FromArgb(204, 204, 204),
                     ShadedText = Color.FromArgb(100, 100, 100),
                     BackgroundText = Color.FromArgb(66, 66, 66),
@@ -331,7 +333,6 @@ namespace Melon.LocalClasses
                     {
                         MongoDbConnectionString = "mongodb://localhost:27017",
                         LibraryPaths = new List<string>(),
-                        JWTKey = Security.GenerateSecretKey(),
                         Text = Color.FromArgb(204, 204, 204),
                         ShadedText = Color.FromArgb(100, 100, 100),
                         BackgroundText = Color.FromArgb(66, 66, 66),
@@ -354,11 +355,6 @@ namespace Melon.LocalClasses
                 if (MelonSettings.DefaultLanguage.IsNullOrEmpty())
                 {
                     MelonSettings.DefaultLanguage = "EN";
-                }
-
-                if (MelonSettings.JWTKey.IsNullOrEmpty())
-                {
-                    MelonSettings.JWTKey = Security.GenerateSecretKey();
                 }
 
                 if (MelonSettings.ListeningURL.IsNullOrEmpty())
