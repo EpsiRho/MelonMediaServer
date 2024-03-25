@@ -112,16 +112,24 @@ namespace MelonPlugin
             Host.MelonUI.BreadCrumbBar(new List<string>(){"Melon", "Demo Plugin"});
             Console.WriteLine($"Please answer the following question:");
             var choice = Host.MelonUI.OptionPicker(new List<string>() { "Bark", "Meow" });
+            Host.MelonUI.ClearConsole();
+            Host.DisplayManager.MenuOptions.Remove("Plugin Demo");
+            Host.DisplayManager.MenuOptions.Remove("Bark Bark");
+            Host.DisplayManager.MenuOptions.Remove("Meow Mrrp");
             if(choice == "Bark")
             {
                 Console.WriteLine("Awruff!");
+                Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Bark Bark", EventMenu);
             }
             else
             {
                 Console.WriteLine("Mrrow!");
+                Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Meow Mrrp", EventMenu);
             }
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadLine();
+
+            Host.MelonUI.ShowIndeterminateProgress();
+            Thread.Sleep(new Random().Next(1000,3000));
+            Host.MelonUI.HideIndeterminateProgress();
         }
 
         public void LoadMelonCommands(IHost host)
