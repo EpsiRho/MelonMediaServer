@@ -257,7 +257,7 @@ namespace Melon.LocalClasses
             }
 
             // Check for users
-            if (DbClient.GetDatabase("Melon").GetCollection<BsonDocument>("Users").CountDocuments(new BsonDocument()) == 0)
+            if (DbClient.GetDatabase("Melon").GetCollection<BsonDocument>("Users").CountDocuments(new BsonDocument()) == 0 || LaunchArgs.ContainsKey("setup"))
             {
                 DisplayManager.UIExtensions.Add("SetupUI", SetupUI.Display);
             }
