@@ -136,6 +136,34 @@ namespace MelonWebApi.Controllers
             args.SendEvent("Tracks sent", 200, Program.mWebApi);
             return new ObjectResult(tracks) { StatusCode = 200 };
         }
+        [Authorize(Roles = "Admin")]
+        [HttpGet("track/path")]
+        public ObjectResult GetTrackPath(string id)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/track/path", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+            var trackFilter = Builders<Track>.Filter.Eq("_id", id);
+
+            var track = TracksCollection.Find(trackFilter).FirstOrDefault();
+            if (track == null)
+            {
+                args.SendEvent("Track not found", 404, Program.mWebApi);
+                return new ObjectResult("Track not found") { StatusCode = 404 };
+            }
+
+            args.SendEvent("Track Path Sent", 200, Program.mWebApi);
+            return new ObjectResult(track.Path) { StatusCode = 200 };
+        }
 
         // Albums
         [Authorize(Roles = "Admin,User,Pass")]
