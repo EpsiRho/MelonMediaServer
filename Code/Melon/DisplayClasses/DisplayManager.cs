@@ -114,7 +114,7 @@ namespace Melon.Classes
         {
             //var assembly = Assembly.GetExecutingAssembly().GetName();
             var version = new Version(StateManager.Version);
-            DateTime buildDate = new DateTime(2024, 1, 1)
+            DateTime buildDate = new DateTime(2024, 1, 1) // Version release date
                 .AddDays(version.Build)
                 .AddMinutes(version.Revision);
 

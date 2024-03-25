@@ -183,7 +183,7 @@ namespace MelonInstaller.Classes
 
             // Get Build Number
             DateTime Time = DateTime.Now;
-            DateTime Start = new DateTime(2024, 1, 1);
+            DateTime Start = new DateTime(2024, 1, 1); // Initial version release
             var inbetween = Time - Start;
             build = inbetween.Days;
 
