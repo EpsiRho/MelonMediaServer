@@ -543,6 +543,29 @@ namespace Melon.LocalClasses
                 // Remove duplicates
                 cArtists = cArtists.Where(x => !aArtists.Select(y => y.Name).Contains(x.Name)).ToList();
 
+                foreach(var artist in aArtists)
+                {
+                    if (!artists.ContainsKey(artist.Name))
+                    {
+                        artists.TryAdd(artist.Name, new Artist(artist.Name, artist._id));
+                    }
+                    else
+                    {
+                        aArtists[aArtists.IndexOf(artist)]._id = artists[artist.Name]._id;
+                    }
+                }
+                foreach (var artist in cArtists)
+                {
+                    if (!artists.ContainsKey(artist.Name))
+                    {
+                        artists.TryAdd(artist.Name, new Artist(artist.Name, artist._id));
+                    }
+                    else
+                    {
+                        cArtists[cArtists.IndexOf(artist)]._id = artists[artist.Name]._id;
+                    }
+                }
+
                 // Check if the album exists, if it does, update it, otherwise create a new album
                 var foundAlbum = albums.Values.FirstOrDefault(x => x.Name == album.Name && x.AlbumArtists.Select(x => x.Name).Contains(artistName));
                 if (foundAlbum == null)
@@ -614,7 +637,7 @@ namespace Melon.LocalClasses
                     Genres = new List<string>(),
                     SeenOn = new List<DbLink>(),
                     Tracks = new List<DbLink>(),
-                    ConnectedArtists = new List<DbLink>(),
+                    ConnectedArtists = cArtists,
                     ArtistBannerArtCount = 0,
                     ArtistPfpArtCount = 0,
                     ArtistBannerArtDefault = 0,
@@ -636,7 +659,7 @@ namespace Melon.LocalClasses
                     Genres = new List<string>(),
                     SeenOn = new List<DbLink>(),
                     Tracks = new List<DbLink>(),
-                    ConnectedArtists = new List<DbLink>(),
+                    ConnectedArtists = aArtists,
                     ArtistBannerArtCount = 0,
                     ArtistPfpArtCount = 0,
                     ArtistBannerArtDefault = 0,
@@ -690,15 +713,20 @@ namespace Melon.LocalClasses
                 dbArtists[i].SeenOn = dbAlbums.Where(x => x.ContributingArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
                 dbArtists[i].Tracks = tracks.Values.Where(x => x.TrackArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).ThenBy(x => x.Disc).ThenBy(x => x.Position).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
                 dbArtists[i].Genres = tracks.Values.Where(x => x.TrackArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).SelectMany(x => x.TrackGenres).Distinct().ToList();
-                
                 // Try to add the artist, if you can't then update the artist
-                bool check = artists.TryAdd($"{dbArtists[i].Name} + {dbArtists[i]._id}", dbArtists[i]);
+                bool check = artists.TryAdd($"{dbArtists[i].Name}", dbArtists[i]);
                 if (!check)
                 {
-                    artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].Releases = dbArtists[i].Releases;
-                    artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].SeenOn = dbArtists[i].SeenOn;
-                    artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].Tracks = dbArtists[i].Tracks;
-                    artists[$"{dbArtists[i].Name} + {dbArtists[i]._id}"].Genres = dbArtists[i].Genres;
+                    artists[$"{dbArtists[i].Name}"].Releases.AddRange(dbArtists[i].Releases);
+                    artists[$"{dbArtists[i].Name}"].SeenOn.AddRange(dbArtists[i].SeenOn);
+                    artists[$"{dbArtists[i].Name}"].Tracks.AddRange(dbArtists[i].Tracks);
+                    artists[$"{dbArtists[i].Name}"].Genres.AddRange(dbArtists[i].Genres);
+                    artists[$"{dbArtists[i].Name}"].ConnectedArtists.AddRange(dbArtists[i].ConnectedArtists);
+                    artists[$"{dbArtists[i].Name}"].Releases = artists[$"{dbArtists[i].Name}"].Releases.DistinctBy(x=>x._id).ToList();
+                    artists[$"{dbArtists[i].Name}"].SeenOn = artists[$"{dbArtists[i].Name}"].SeenOn.DistinctBy(x=>x._id).ToList();
+                    artists[$"{dbArtists[i].Name}"].Tracks = artists[$"{dbArtists[i].Name}"].Tracks.DistinctBy(x=>x._id).ToList();
+                    artists[$"{dbArtists[i].Name}"].Genres = artists[$"{dbArtists[i].Name}"].Genres.DistinctBy(x => x).ToList();
+                    artists[$"{dbArtists[i].Name}"].ConnectedArtists = artists[$"{dbArtists[i].Name}"].ConnectedArtists.DistinctBy(x => x._id).ToList();
                 }
                 ScannedFiles++;
             }
@@ -960,7 +988,7 @@ namespace Melon.LocalClasses
         {
             // TODO: Allow changing the list of delimiters
             HashSet<string> genres = new HashSet<string>();
-            var gSplit = genresStr.Split(new string[] { ",", ";", "/" }, StringSplitOptions.TrimEntries);
+            var gSplit = genresStr.Split(new string[] { ",", ";", "/", @"\\", "//" }, StringSplitOptions.TrimEntries);
             foreach (var name in gSplit)
             {
                 if (name == "")
