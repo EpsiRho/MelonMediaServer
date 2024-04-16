@@ -210,6 +210,10 @@ namespace Melon.Models
         public List<Chapter> Chapters { get; set; }
         public List<string> TrackGenres { get; set; }
         public List<DbLink> TrackArtists { get; set; }
+        public ResponseTrack()
+        { 
+
+        }
         public ResponseTrack(Track t)
         {
             _id = t._id;

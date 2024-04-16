@@ -157,6 +157,7 @@ namespace MelonWebApi
                     // Configure Kestrel to use SSL
                     builder.WebHost.ConfigureKestrel(serverOptions =>
                     {
+                        serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(10);
                         serverOptions.ConfigureHttpsDefaults(httpsOptions =>
                         {
                             httpsOptions.ServerCertificate = certificate;
