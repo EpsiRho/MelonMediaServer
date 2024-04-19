@@ -754,13 +754,20 @@ namespace Melon.LocalClasses
             CurrentStatus = StateManager.StringsManager.GetString("UpdateLyricsStatus");
             foreach (var lyricFile in LyricFiles)
             {
-                var t = dbTracks.Where(x => x.Path.StartsWith(lyricFile.Replace(".lrc", "").Replace("\\", "/"))).FirstOrDefault();
-                int idx = dbTracks.IndexOf(t);
-                if (t != null)
+                try
                 {
-                    dbTracks[idx].LyricsPath = lyricFile;
+                    var t = dbTracks.Where(x => x.Path.StartsWith(lyricFile.Replace(".lrc", "").Replace("\\", "/"))).FirstOrDefault();
+                    int idx = dbTracks.IndexOf(t);
+                    if (t != null)
+                    {
+                        dbTracks[idx].LyricsPath = lyricFile;
+                    }
+                    ScannedFiles++;
                 }
-                ScannedFiles++;
+                catch (Exception)
+                {
+
+                }
             }
 
             // Bulk write to MongoDB

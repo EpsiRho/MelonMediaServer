@@ -38,5 +38,34 @@ namespace MelonLib.API
                 return 2;
             }
         }
+        public static async Task<int> CheckAuth()
+        {
+            if (string.IsNullOrEmpty(APIClient.BaseURL) || string.IsNullOrEmpty(APIClient.UserAgent))
+            {
+                throw new ClientException("BaseURL or UserAgent not set!");
+            }
+
+            if (string.IsNullOrEmpty(APIClient.JWT))
+            {
+                throw new ClientException("Client is not authenticated.");
+            }
+
+            try
+            {
+                var response = await APIClient.RequestClient.GetAsync($"{APIClient.BaseURL}check");
+                if (response.IsSuccessStatusCode)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return 1;
+                }
+            }
+            catch (Exception)
+            {
+                return 2;
+            }
+        }
     }
 }

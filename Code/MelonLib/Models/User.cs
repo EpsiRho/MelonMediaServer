@@ -28,6 +28,10 @@
         public bool PublicStats { get; set; }
         public List<string> Friends { get; set; }
         public DateTime LastLogin { get; set; }
+        public ResponseUser()
+        {
+
+        }
         public ResponseUser(User u)
         {
             _id = u._id;
