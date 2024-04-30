@@ -37,7 +37,7 @@ namespace MelonWebApi
         public static WebApplication app;
         public static MWebApi mWebApi;
         public static FileSystemWatcher watcher;
-        public const string Version = "1.0.120.191";
+        public const string Version = "1.0.120.200";
 
         public static async Task<int> Main(string[] args)
         {
@@ -244,13 +244,10 @@ namespace MelonWebApi
 
                 app = builder.Build();
 
-                app.UseHttpsRedirection();
-
-                app.UseAuthentication();
-
-                app.UseAuthorization();
-
                 app.UseMiddleware<JwtMiddleware>();
+                app.UseAuthentication();
+                app.UseAuthorization();
+                app.UseHttpsRedirection();
                 app.UseMiddleware<PluginMiddleware>();
 
                 var webSocketOptions = new WebSocketOptions

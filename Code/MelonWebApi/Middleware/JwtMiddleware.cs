@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace MelonWebApi.Middleware
@@ -31,12 +32,13 @@ namespace MelonWebApi.Middleware
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = StateManager.JWTKey;
+                var hmac = new HMACSHA512(StateManager.JWTKey);
+                var key = new SymmetricSecurityKey(hmac.Key);
                 tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
                     ValidAlgorithms = new List<string>() { SecurityAlgorithms.HmacSha256Signature },
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    IssuerSigningKey = key,
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     ClockSkew = TimeSpan.Zero
