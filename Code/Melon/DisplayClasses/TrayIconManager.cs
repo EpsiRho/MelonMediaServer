@@ -98,6 +98,7 @@ namespace Melon.DisplayClasses
                     new PopupMenuItem(StateManager.StringsManager.GetString("ExitMelonOption"), (_, _) =>
                     {
                         trayIcon.Dispose();
+                        icon.Dispose();
                         Environment.Exit(0);
                     }),
                 },

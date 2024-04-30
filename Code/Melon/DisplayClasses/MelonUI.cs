@@ -489,12 +489,20 @@ namespace Melon.Classes
                         {
                             place--;
                         }
+                        else
+                        {
+                            place = Choices.Count() - 1;
+                        }
                     }
                     else if (input.Key == ConsoleKey.DownArrow)
                     {
                         if (place < Choices.Count() - 1)
                         {
                             place++;
+                        }
+                        else
+                        {
+                            place = 0;
                         }
                     }
                     else if (input.Key == ConsoleKey.Enter)

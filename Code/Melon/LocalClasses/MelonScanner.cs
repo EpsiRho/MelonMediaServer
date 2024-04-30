@@ -990,7 +990,7 @@ namespace Melon.LocalClasses
         {
             // TODO: Allow changing the list of delimiters
             HashSet<string> artists = new HashSet<string>();
-            var aSplit = artistsStr.Split(new string[] { ",", ";", "/", "feat.", "ft." }, StringSplitOptions.TrimEntries);
+            var aSplit = artistsStr.Split(new string[] { ",", ";", "/", "feat.", "ft.", "&" }, StringSplitOptions.TrimEntries);
             foreach (var a in aSplit)
             {
                 string name = a;
