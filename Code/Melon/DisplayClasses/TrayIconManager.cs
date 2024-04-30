@@ -1,4 +1,5 @@
-﻿using Amazon.Util.Internal;
+﻿using Amazon.Runtime.Internal.Util;
+using Amazon.Util.Internal;
 using H.NotifyIcon.Core;
 using Melon.Classes;
 using Melon.LocalClasses;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
 using Microsoft.Win32.SafeHandles;
 using Pastel;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -104,7 +106,7 @@ namespace Melon.DisplayClasses
                 },
             };
             trayIcon.Create();
-            trayIcon.Removed += (_, _) => ShowMessageBox("Why");
+            trayIcon.Removed += (_, _) => Log.Warning("TrayIcon Removed");
         }
         public static void RemoveIcon()
         {
