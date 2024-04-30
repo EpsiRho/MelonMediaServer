@@ -164,11 +164,12 @@ namespace Melon.DisplayClasses
                             UseShellExecute = false
                         };
                         Process.Start(processInfo);
-
+                        File.Create($"{AppDomain.CurrentDomain.BaseDirectory}/GoAway.sdrq");
                         Environment.Exit(0);
                     }
                     catch (Exception)
                     {
+                        MelonUI.ClearConsole();
                         Console.WriteLine(StringsManager.GetString("MissingUpdater"));
                         Console.WriteLine(StringsManager.GetString("ContinuationPrompt"));
                         Console.ReadKey();

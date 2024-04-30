@@ -270,6 +270,13 @@ namespace Melon.LocalClasses
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ShortScanOption"), MelonScanner.MemoryScanShort);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("SettingsOption"), SettingsUI.Settings);
             DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitUIOption"), () => { Environment.Exit(0); });
+            DisplayManager.MenuOptions.Add(StringsManager.GetString("ExitMelonOption"), () => 
+            { 
+                var file = File.Create($"{AppDomain.CurrentDomain.BaseDirectory}/GoAway.sdrq"); 
+                file.Write(new byte[] { 0x00 }, 0, 1);
+                file.Close();
+                Environment.Exit(0); 
+            });
 
             if (!headless)
             {

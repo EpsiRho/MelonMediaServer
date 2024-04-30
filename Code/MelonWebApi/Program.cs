@@ -37,7 +37,8 @@ namespace MelonWebApi
         public static WebApplication app;
         public static MWebApi mWebApi;
         public static FileSystemWatcher watcher;
-        public const string Version = "1.0.120.200";
+        public static FileSystemWatcher shutdownWatcher;
+        public const string Version = "1.0.110.200";
 
         public static async Task<int> Main(string[] args)
         {
@@ -90,19 +91,16 @@ namespace MelonWebApi
                     }
                 }
 
-                // Watch for settings changes
                 _ = Task.Run(() =>
                 {
+                    // Watch for settings changes
                     watcher = new FileSystemWatcher();
                     watcher.Path = $"{StateManager.melonPath}/Configs/";
 
-                    // Watch for changes in LastAccess and LastWrite times, and
-                    // the renaming of files or directories.
                     watcher.NotifyFilter = NotifyFilters.LastWrite
                                          | NotifyFilters.FileName
                                          | NotifyFilters.DirectoryName;
 
-                    // Only watch text files.
                     watcher.Filter = "*.json";
 
                     FileSystemEventHandler func = (sender, args) =>
@@ -133,10 +131,32 @@ namespace MelonWebApi
                     // Add event handlers.
                     watcher.Changed += func;
                     watcher.Created += func;
-                    //watcher.Deleted += func;
 
-                    // Begin watching.
-                    watcher.EnableRaisingEvents = true;
+                    // And again for so I can detect a shutdown rq
+                    shutdownWatcher = new FileSystemWatcher();
+                    shutdownWatcher.Path = $"{AppDomain.CurrentDomain.BaseDirectory}";
+
+                    shutdownWatcher.NotifyFilter = NotifyFilters.LastWrite
+                                         | NotifyFilters.FileName
+                                         | NotifyFilters.DirectoryName;
+
+                    shutdownWatcher.Filter = "*.sdrq";
+
+                    FileSystemEventHandler updateFunc = (sender, args) =>
+                    {
+                        if (args.Name == "GoAway.sdrq")
+                        {
+                            StateManager.RestartServer = false;
+                            app.StopAsync();
+                            File.Delete($"{AppDomain.CurrentDomain.BaseDirectory}/GoAway.sdrq");
+                            Environment.Exit(0);
+                        }
+                    };
+
+                    shutdownWatcher.Changed += updateFunc;
+                    shutdownWatcher.Created += updateFunc;
+
+                    shutdownWatcher.EnableRaisingEvents = true;
                 });
 
                 var builder = WebApplication.CreateBuilder();

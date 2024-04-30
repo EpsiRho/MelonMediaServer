@@ -12,7 +12,7 @@ namespace MelonInstaller
         public static string installPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}/MelonInstall";
         public static string versionToFind = "latest";
         public static bool addAppIcons = false;
-        public static string Version = "1.1.4";
+        public static string Version = "1.1.5";
         public static ResourceManager StringsManager { get; set; }
         [DllImport("libc")]
         public static extern int system(string exec);
@@ -70,6 +70,7 @@ namespace MelonInstaller
 
             if(LaunchArgs.ContainsKey("update"))
             {
+                Thread.Sleep(1000);
                 await MelonInstallManager.Install(true);
                 return 1;
             }

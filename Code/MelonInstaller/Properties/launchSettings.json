@@ -2,7 +2,7 @@
   "profiles": {
     "MelonUpdater": {
       "commandName": "Project",
-      "commandLineArgs": "-build -buildPath C:\\Users\\jhset\\Documents\\GitHub\\MelonMediaServer\\Code\\MelonWebApi"
+      "commandLineArgs": "-update -restart -installPath C:\\Users\\jhset\\Documents\\GitHub\\MelonMediaServer\\Code\\MelonWebApi\\bin\\Release\\net8.0 -lang EN"
     }
   }
 }
