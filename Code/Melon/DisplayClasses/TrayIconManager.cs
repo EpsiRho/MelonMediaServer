@@ -103,6 +103,7 @@ namespace Melon.DisplayClasses
                 },
             };
             trayIcon.Create();
+            trayIcon.Removed += (_, _) => ShowMessageBox("Why");
         }
         public static void RemoveIcon()
         {

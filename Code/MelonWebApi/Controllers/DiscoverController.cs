@@ -132,8 +132,8 @@ namespace MelonWebApi.Controllers
 
             count = count <= finalTracks.Count ? count : finalTracks.Count;
 
-            args.SendEvent("Sent a List of DbLinks", 200, Program.mWebApi);
-            return new ObjectResult(finalTracks.Slice(0,count).Select(x=>new DbLink(x))) { StatusCode = 200 };
+            args.SendEvent("Sent a List of Tracks", 200, Program.mWebApi);
+            return new ObjectResult(finalTracks.Slice(0,count).Select(x=>new ResponseTrack(x))) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("albums")]

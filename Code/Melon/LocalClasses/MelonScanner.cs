@@ -2,6 +2,7 @@
 using Melon.Classes;
 using Melon.DisplayClasses;
 using Melon.Models;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Pastel;
@@ -166,7 +167,7 @@ namespace Melon.LocalClasses
             var DbArtists = artistsCollection.AsQueryable().ToList();
             tracks = new ConcurrentDictionary<string, ProtoTrack>(DbTracks.Select(x => KeyValuePair.Create(x.Path, new ProtoTrack(x))));
             albums = new ConcurrentDictionary<string, Album>(DbAlbums.Select(x => KeyValuePair.Create($"{x.Name} + {String.Join(",", x.AlbumArtists.Select(x => x.Name))}", x)));
-            artists = new ConcurrentDictionary<string, Artist>(DbArtists.Select(x => KeyValuePair.Create($"{x.Name} + {x._id}", x)));
+            artists = new ConcurrentDictionary<string, Artist>(DbArtists.Select(x => KeyValuePair.Create($"{x.Name}", x)));
             foreach (var track in tracks)
             {
                 track.Value.Album = albums.Values.Where(x => x._id == track.Value.Album._id).FirstOrDefault();
@@ -819,15 +820,26 @@ namespace Melon.LocalClasses
             var artistModels = new List<WriteModel<Artist>>();
             foreach (var artist in DbArtists)
             {
-                var filter = Builders<Artist>.Filter.Eq(a => a._id, artist._id);
-                var update = Builders<Artist>.Update.Set(a => a, artist);
 
-                artistModels.Add(new ReplaceOneModel<Artist>(filter, artist) { IsUpsert = true });
+                var filter = Builders<Artist>.Filter.Eq(a => a._id, artist._id);
+
+                var update = Builders<Artist>.Update
+                            .Set(a => a.Releases, artist.Releases)
+                            .Set(a => a.SeenOn, artist.SeenOn)
+                            .Set(a => a.Tracks, artist.Tracks)
+                            .Set(a => a.ConnectedArtists, artist.ConnectedArtists)
+                            .Set(a => a.Genres, artist.Genres);
+                artistModels.Add(new ReplaceOneModel<Artist>(
+                                 Builders<Artist>.Filter.Where(x => x._id.Equals(artist._id)), artist)
+                { IsUpsert = true });
             }
 
             if (artistModels.Count != 0)
             {
-                artistsCollection.BulkWrite(artistModels);
+                artistsCollection = newMelonDB.GetCollection<Artist>("Artists");
+                var result = artistsCollection.BulkWrite(artistModels);
+                //var art = artistsCollection.Find(x => x.Name == "Porter Robinson").ToList();
+                //Debug.WriteLine("Why");
             }
 
             ScannedFiles = 4;
