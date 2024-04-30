@@ -38,7 +38,7 @@ namespace MelonWebApi
         public static MWebApi mWebApi;
         public static FileSystemWatcher watcher;
         public static FileSystemWatcher shutdownWatcher;
-        public const string Version = "1.0.120.263";
+        public const string Version = "1.0.120.285";
 
         public static async Task<int> Main(string[] args)
         {
@@ -131,6 +131,8 @@ namespace MelonWebApi
                     // Add event handlers.
                     watcher.Changed += func;
                     watcher.Created += func;
+
+                    watcher.EnableRaisingEvents = true;
 
                     // And again for so I can detect a shutdown rq
                     shutdownWatcher = new FileSystemWatcher();

@@ -14,7 +14,7 @@ namespace MelonPlugin
     {
         public string Name => "Demo Plugin";
         public string Authors => "Epsi";
-        public string Version => "v1.3.0";
+        public string Version => "v1.4.0";
         public string Description => "Demo plugin";
         public IHost Host { get; set; }
         public IWebApi WebApi { get; set; }
@@ -40,7 +40,7 @@ namespace MelonPlugin
             {
                 Config = new EventConfig()
                 {
-                    Format = "[api] (userId): msg",
+                    Format = "flac",
                     TextColor = Color.FromArgb(255, 255, 255, 255),
                     ShowArgs = false
                 };
@@ -86,7 +86,6 @@ namespace MelonPlugin
         public void ChangeFormatMenu()
         {
             Host.MelonUI.BreadCrumbBar(new List<string>() { "Melon", "Demo Plugin Settings", "Change Format" });
-            Console.WriteLine("Format markers: api, statuscode, msg, userId".Pastel(Config.TextColor));
             Console.WriteLine($"Current format: {Config.Format}".Pastel(Config.TextColor));
             Console.WriteLine($"(Enter nothing to go back)".Pastel(Config.TextColor));
             Console.Write("> ");
@@ -119,12 +118,12 @@ namespace MelonPlugin
             if(choice == "Bark")
             {
                 Console.WriteLine("Awruff!");
-                Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Bark Bark", EventMenu);
+                Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 2, "Bark Bark", EventMenu);
             }
             else
             {
                 Console.WriteLine("Mrrow!");
-                Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Meow Mrrp", EventMenu);
+                Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 2, "Meow Mrrp", EventMenu);
             }
 
             Host.MelonUI.ShowIndeterminateProgress();
@@ -156,7 +155,7 @@ namespace MelonPlugin
             {
                 Config = new EventConfig()
                 {
-                    Format = "[api] (userId): msg",
+                    Format = "flac",
                     TextColor = Color.FromArgb(255, 255, 255, 255),
                     ShowArgs = false
                 };
@@ -167,7 +166,7 @@ namespace MelonPlugin
 
                 LoadConfig();
             }
-            Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 1, "Plugin Demo", EventMenu);
+            Host.DisplayManager.MenuOptions.Insert(Host.DisplayManager.MenuOptions.Count - 2, "Plugin Demo", EventMenu);
             Host.SettingsUI.MenuOptions.Add("Demo Settings", SettingsMenu);
             return 0;
         }
@@ -185,7 +184,7 @@ namespace MelonPlugin
             {
                 Config = new EventConfig()
                 {
-                    Format = "[api] (userId): msg",
+                    Format = "flac",
                     TextColor = Color.FromArgb(255, 255, 255, 255),
                     ShowArgs = false
                 };

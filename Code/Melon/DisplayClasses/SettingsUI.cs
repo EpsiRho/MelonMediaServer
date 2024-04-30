@@ -903,9 +903,17 @@ namespace Melon.DisplayClasses
                 }
                 else if (choice == StringsManager.GetString("EnablePluginOption"))
                 {
-                    plugin.LoadUI();
-                    DisabledPlugins.Remove($"{plugin.Name}:{plugin.Authors}");
-                    Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
+                    try
+                    {
+                        plugin.LoadMelonCommands(Host);
+                        plugin.LoadUI();
+                        DisabledPlugins.Remove($"{plugin.Name}:{plugin.Authors}");
+                        Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
+                    }
+                    catch (Exception)
+                    {
+
+                    }
                 }
             }
         }
@@ -932,6 +940,7 @@ namespace Melon.DisplayClasses
             }
             foreach (var plugin in Plugins)
             {
+                plugin.LoadMelonCommands(Host);
                 plugin.LoadUI();
             }
             MelonUI.HideIndeterminateProgress();
