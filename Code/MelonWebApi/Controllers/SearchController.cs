@@ -221,10 +221,10 @@ namespace MelonWebApi.Controllers
                     sortDefinition = Builders<Track>.Sort.Ascending(x => x.ReleaseDate);
                     break;
                 case "PlayCountDesc":
-                    sortDefinition = Builders<Track>.Sort.Descending(x => x.PlayCounts.Count);
+                    sortDefinition = Builders<Track>.Sort.Descending(x => x.PlayCounts.Find(x => x.UserId == curId).Value);
                     break;
                 case "PlayCountAsc":
-                    sortDefinition = Builders<Track>.Sort.Ascending(x => x.PlayCounts.Count);
+                    sortDefinition = Builders<Track>.Sort.Ascending(x => x.PlayCounts.Find(x => x.UserId == curId).Value);
                     break;
             }
 
@@ -417,10 +417,10 @@ namespace MelonWebApi.Controllers
                     sortDefinition = Builders<Album>.Sort.Ascending(x => x.ReleaseDate);
                     break;
                 case "PlayCountDesc":
-                    sortDefinition = Builders<Album>.Sort.Descending(x => x.PlayCounts.Count);
+                    sortDefinition = Builders<Album>.Sort.Descending(x => x.PlayCounts.Find(x => x.UserId == curId).Value);
                     break;
                 case "PlayCountAsc":
-                    sortDefinition = Builders<Album>.Sort.Ascending(x => x.PlayCounts.Count);
+                    sortDefinition = Builders<Album>.Sort.Ascending(x => x.PlayCounts.Find(x => x.UserId == curId).Value);
                     break;
             }
 
@@ -569,10 +569,10 @@ namespace MelonWebApi.Controllers
                     sortDefinition = Builders<Artist>.Sort.Ascending(x => x.DateAdded);
                     break;
                 case "PlayCountDesc":
-                    sortDefinition = Builders<Artist>.Sort.Descending(x => x.PlayCounts.Count);
+                    sortDefinition = Builders<Artist>.Sort.Descending(x => x.PlayCounts.Find(x => x.UserId == curId).Value);
                     break;                    
-                case "PlayCountAsc":          
-                    sortDefinition = Builders<Artist>.Sort.Ascending(x => x.PlayCounts.Count);
+                case "PlayCountAsc":
+                    sortDefinition = Builders<Artist>.Sort.Ascending(x => x.PlayCounts.Find(x => x.UserId == curId).Value);
                     break;
             }
 
