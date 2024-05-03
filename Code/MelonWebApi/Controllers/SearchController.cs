@@ -220,6 +220,12 @@ namespace MelonWebApi.Controllers
                 case "ReleaseDateAsc":
                     sortDefinition = Builders<Track>.Sort.Ascending(x => x.ReleaseDate);
                     break;
+                case "PlayCountDesc":
+                    sortDefinition = Builders<Track>.Sort.Descending(x => x.PlayCounts.Count);
+                    break;
+                case "PlayCountAsc":
+                    sortDefinition = Builders<Track>.Sort.Ascending(x => x.PlayCounts.Count);
+                    break;
             }
 
             var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
@@ -410,6 +416,12 @@ namespace MelonWebApi.Controllers
                 case "ReleaseDateAsc":
                     sortDefinition = Builders<Album>.Sort.Ascending(x => x.ReleaseDate);
                     break;
+                case "PlayCountDesc":
+                    sortDefinition = Builders<Album>.Sort.Descending(x => x.PlayCounts.Count);
+                    break;
+                case "PlayCountAsc":
+                    sortDefinition = Builders<Album>.Sort.Ascending(x => x.PlayCounts.Count);
+                    break;
             }
 
             var albumProjection = Builders<Album>.Projection.Exclude(x => x.AlbumArtPaths)
@@ -555,6 +567,12 @@ namespace MelonWebApi.Controllers
                     break;
                 case "DateAddedAsc":
                     sortDefinition = Builders<Artist>.Sort.Ascending(x => x.DateAdded);
+                    break;
+                case "PlayCountDesc":
+                    sortDefinition = Builders<Artist>.Sort.Descending(x => x.PlayCounts.Count);
+                    break;                    
+                case "PlayCountAsc":          
+                    sortDefinition = Builders<Artist>.Sort.Ascending(x => x.PlayCounts.Count);
                     break;
             }
 
