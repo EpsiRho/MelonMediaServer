@@ -304,6 +304,7 @@ namespace MelonWebApi.Controllers
                 {
                     case "PlayCountDesc":
                         var pipeline = TracksCollection.Aggregate()
+                                        .Match(combinedFilter)
                                         .Project(responseTrackProjection)
                                         .Sort(new BsonDocument("SortValue", -1))
                                         .Skip(page * count)
@@ -314,6 +315,7 @@ namespace MelonWebApi.Controllers
                         break;
                     case "PlayCountAsc":
                         var pipelineAsc = TracksCollection.Aggregate()
+                                        .Match(combinedFilter)
                                         .Project(responseTrackProjection)
                                         .Sort(new BsonDocument("SortValue", 1))
                                         .Skip(page * count)
