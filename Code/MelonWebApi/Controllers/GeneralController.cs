@@ -299,7 +299,15 @@ namespace MelonWebApi.Controllers
 
             count = count <= album.Tracks.Count() ? count : album.Tracks.Count();
 
-            var ids = album.Tracks.GetRange((int)(page * count), (int)count).Select(x=>x._id);
+            List<string> ids = new List<string>();
+            try
+            {
+                ids = album.Tracks.GetRange((int)(page * count), (int)count).Select(x => x._id).ToList();
+            }
+            catch (Exception)
+            {
+                return new ObjectResult("page or count lead to out of bounds index") { StatusCode = 400 };
+            }
 
             var filter = Builders<Track>.Filter.In("_id", ids);
             var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)

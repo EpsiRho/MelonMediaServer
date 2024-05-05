@@ -200,6 +200,7 @@ namespace MelonWebApi.Controllers
             }
 
             SortDefinition<Track> sortDefinition = null;
+            bool needsAggregate = false;
             switch (sort)
             {
                 case "NameDesc":
@@ -220,17 +221,120 @@ namespace MelonWebApi.Controllers
                 case "ReleaseDateAsc":
                     sortDefinition = Builders<Track>.Sort.Ascending(x => x.ReleaseDate);
                     break;
+                case "PlayCountDesc":
+                    needsAggregate = true;
+                    break;
+                case "PlayCountAsc":
+                    needsAggregate = true;
+                    break;
             }
 
             var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
                                                             .Exclude(x => x.LyricsPath);
-            var trackDocs = TracksCollection.Find(combinedFilter, new FindOptions() { Collation = new Collation("en", strength: CollationStrength.Secondary) })
-                                            .Project(trackProjection)
-                                            .Sort(sortDefinition)
-                                            .Skip(page * count)
-                                            .Limit(count)
-                                            .ToList()
-                                            .Select(x=>BsonSerializer.Deserialize<ResponseTrack>(x));
+            var projection = Builders<BsonDocument>.Projection.Include("Album")
+                    .Include("Position")
+                    .Include("Disc")
+                    .Include("Format")
+                    .Include("Bitrate")
+                    .Include("SampleRate")
+                    .Include("Channels")
+                    .Include("BitsPerSample")
+                    .Include("MusicBrainzID")
+                    .Include("ISRC")
+                    .Include("Year")
+                    .Include("Name")
+                    .Include("Duration")
+                    .Include("nextTrack")
+                    .Include("PlayCounts")
+                    .Include("SkipCounts")
+                    .Include("Ratings")
+                    .Include("TrackArtCount")
+                    .Include("TrackArtDefault")
+                    .Include("ServerURL")
+                    .Include("LastModified")
+                    .Include("DateAdded")
+                    .Include("ReleaseDate")
+                    .Include("Chapters")
+                    .Include("TrackGenres")
+                    .Include("TrackArtists")
+                    .Include("_id");
+
+            List<ResponseTrack> trackDocs = new List<ResponseTrack>();
+            if (needsAggregate)
+            {
+                combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.ElemMatch(x => x.PlayCounts, Builders<UserStat>.Filter.Eq(x => x.UserId, curId)));
+                var responseTrackProjection = new BsonDocument {
+                    { "_id", 1 },
+                    { "Album", 1 },
+                    { "Position", 1 },
+                    { "Disc", 1 },
+                    { "Format", 1 },
+                    { "Bitrate", 1 },
+                    { "SampleRate", 1 },
+                    { "Channels", 1 },
+                    { "BitsPerSample", 1 },
+                    { "MusicBrainzID", 1 },
+                    { "ISRC", 1 },
+                    { "Year", 1 },
+                    { "Name", 1 },
+                    { "Duration", 1 },
+                    { "nextTrack", 1 },
+                    { "SkipCounts", 1 },
+                    { "Ratings", 1 },
+                    { "TrackArtCount", 1 },
+                    { "TrackArtDefault", 1 },
+                    { "ServerURL", 1 },
+                    { "LastModified", 1 },
+                    { "DateAdded", 1 },
+                    { "ReleaseDate", 1 },
+                    { "Chapters", 1 },
+                    { "TrackGenres", 1 },
+                    { "TrackArtists", 1 },
+                    { "PlayCounts", 1 }, 
+                    { "SortValue", new BsonDocument("$let", new BsonDocument {
+                        { "vars", new BsonDocument("filteredItems", new BsonDocument("$filter", new BsonDocument {
+                            { "input", "$PlayCounts" },
+                            { "as", "item" },
+                            { "cond", new BsonDocument("$eq", new BsonArray { "$$item.UserId", curId }) }
+                        })) },
+                        { "in", new BsonDocument("$arrayElemAt", new BsonArray { "$$filteredItems.Value", 0 }) }
+                    }) }
+                };
+                switch (sort)
+                {
+                    case "PlayCountDesc":
+                        var pipeline = TracksCollection.Aggregate()
+                                        .Project(responseTrackProjection)
+                                        .Sort(new BsonDocument("SortValue", -1))
+                                        .Skip(page * count)
+                                        .Limit(count)
+                                        .Project<ResponseTrack>(projection);
+
+                        trackDocs = pipeline.ToList();
+                        break;
+                    case "PlayCountAsc":
+                        var pipelineAsc = TracksCollection.Aggregate()
+                                        .Project(responseTrackProjection)
+                                        .Sort(new BsonDocument("SortValue", 1))
+                                        .Skip(page * count)
+                                        .Limit(count)
+                                        .Project<ResponseTrack>(projection);
+
+                        trackDocs = pipelineAsc.ToList();
+                        break;
+                }
+            }
+            else
+            {
+                trackDocs = TracksCollection.Find(combinedFilter, new FindOptions() { Collation = new Collation("en", strength: CollationStrength.Secondary) })
+                                                .Project(trackProjection)
+                                                .Sort(sortDefinition)
+                                                .Skip(page * count)
+                                                .Limit(count)
+                                                .ToList()
+                                                .Select(x => BsonSerializer.Deserialize<ResponseTrack>(x))
+                                                .ToList();
+            }
             tracks.AddRange(trackDocs);
 
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
@@ -390,6 +494,7 @@ namespace MelonWebApi.Controllers
             }
 
             SortDefinition<Album> sortDefinition = null;
+            bool needsAggregate = false;
             switch (sort)
             {
                 case "NameDesc":
@@ -410,17 +515,106 @@ namespace MelonWebApi.Controllers
                 case "ReleaseDateAsc":
                     sortDefinition = Builders<Album>.Sort.Ascending(x => x.ReleaseDate);
                     break;
+                case "PlayCountDesc":
+                    needsAggregate = true;
+                    break;
+                case "PlayCountAsc":
+                    needsAggregate = true;
+                    break;
             }
 
             var albumProjection = Builders<Album>.Projection.Exclude(x => x.AlbumArtPaths)
                                                             .Exclude(x => x.Tracks);
-            var albumDocs = AlbumCollection.Find(combinedFilter, new FindOptions() { Collation = new Collation("en", strength: CollationStrength.Secondary)})
+            var projection = Builders<BsonDocument>.Projection
+                .Include("_id")
+                .Include("TotalDiscs")
+                .Include("TotalTracks")
+                .Include("Name")
+                .Include("Bio")
+                .Include("Publisher")
+                .Include("ReleaseStatus")
+                .Include("ReleaseType")
+                .Include("PlayCounts")
+                .Include("SkipCounts")
+                .Include("Ratings")
+                .Include("ServerURL")
+                .Include("DateAdded")
+                .Include("ReleaseDate")
+                .Include("AlbumArtCount")
+                .Include("AlbumArtDefault")
+                .Include("AlbumGenres")
+                .Include("AlbumArtists")
+                .Include("ContributingArtists");
+
+
+            List<ResponseAlbum> albumDocs = new List<ResponseAlbum>();
+            if (needsAggregate)
+            {
+                combinedFilter = Builders<Album>.Filter.And(combinedFilter, Builders<Album>.Filter.ElemMatch(x => x.PlayCounts, Builders<UserStat>.Filter.Eq(x => x.UserId, curId)));
+                var responseAlbumProjection = new BsonDocument {
+                    { "_id", 1 },
+                    { "TotalDiscs", 1 },
+                    { "TotalTracks", 1 },
+                    { "Name", 1 },
+                    { "Bio", 1 },
+                    { "Publisher", 1 },
+                    { "ReleaseStatus", 1 },
+                    { "ReleaseType", 1 },
+                    { "SkipCounts", 1 },
+                    { "Ratings", 1 },
+                    { "ServerURL", 1 },
+                    { "DateAdded", 1 },
+                    { "ReleaseDate", 1 },
+                    { "AlbumArtCount", 1 },
+                    { "AlbumArtDefault", 1 },
+                    { "AlbumGenres", 1 },
+                    { "AlbumArtists", 1 },
+                    { "ContributingArtists", 1 },
+                    { "PlayCounts", 1 }, 
+                    { "SortValue", new BsonDocument("$let", new BsonDocument {
+                        { "vars", new BsonDocument("filteredItems", new BsonDocument("$filter", new BsonDocument {
+                            { "input", "$PlayCounts" },
+                            { "as", "item" },
+                            { "cond", new BsonDocument("$eq", new BsonArray { "$$item.UserId", curId }) }
+                        })) },
+                        { "in", new BsonDocument("$arrayElemAt", new BsonArray { "$$filteredItems.Value", 0 }) }
+                    }) } 
+                };
+                switch (sort)
+                {
+                    case "PlayCountDesc":
+                        var pipeline = AlbumCollection.Aggregate()
+                                        .Project(responseAlbumProjection)
+                                        .Sort(new BsonDocument("SortValue", -1))
+                                        .Skip(page * count)
+                                        .Limit(count)
+                                        .Project<ResponseAlbum>(projection);
+
+                        albumDocs = pipeline.ToList();
+                        break;
+                    case "PlayCountAsc":
+                        var pipelineAsc = AlbumCollection.Aggregate()
+                                        .Project(responseAlbumProjection)
+                                        .Sort(new BsonDocument("SortValue", 1))
+                                        .Skip(page * count)
+                                        .Limit(count)
+                                        .Project<ResponseAlbum>(projection);
+
+                        albumDocs = pipelineAsc.ToList();
+                        break;
+                }
+            }
+            else
+            {
+                albumDocs = AlbumCollection.Find(combinedFilter, new FindOptions() { Collation = new Collation("en", strength: CollationStrength.Secondary) })
                                            .Project(albumProjection)
                                            .Sort(sortDefinition)
                                            .Skip(page * count)
                                            .Limit(count)
                                            .ToList()
-                                           .Select(x => BsonSerializer.Deserialize<ResponseAlbum>(x));
+                                           .Select(x => BsonSerializer.Deserialize<ResponseAlbum>(x))
+                                           .ToList();
+            }
 
             albums.AddRange(albumDocs);
 
@@ -542,6 +736,7 @@ namespace MelonWebApi.Controllers
             }
 
             SortDefinition<Artist> sortDefinition = null;
+            bool needsAggregate = false;
             switch (sort)
             {
                 case "NameDesc":
@@ -556,6 +751,12 @@ namespace MelonWebApi.Controllers
                 case "DateAddedAsc":
                     sortDefinition = Builders<Artist>.Sort.Ascending(x => x.DateAdded);
                     break;
+                case "PlayCountDesc":
+                    needsAggregate = true;
+                    break;
+                case "PlayCountAsc":
+                    needsAggregate = true;
+                    break;
             }
 
             var artistProjection = Builders<Artist>.Projection.Exclude(x => x.ArtistBannerPaths)
@@ -564,13 +765,85 @@ namespace MelonWebApi.Controllers
                                                               .Exclude(x => x.SeenOn)
                                                               .Exclude(x => x.Tracks)
                                                               .Exclude(x => x.ConnectedArtists);
-            var ArtistDocs = ArtistCollection.Find(combinedFilter, new FindOptions() { Collation = new Collation("en", strength: CollationStrength.Secondary) })
+            var projection = Builders<BsonDocument>.Projection
+                .Include("_id")
+                .Include("Name")
+                .Include("Bio")
+                .Include("ArtistPfpArtCount")
+                .Include("ArtistBannerArtCount")
+                .Include("ArtistPfpDefault")
+                .Include("ArtistBannerArtDefault")
+                .Include("PlayCounts")
+                .Include("SkipCounts")
+                .Include("Ratings")
+                .Include("ServerURL")
+                .Include("Genres")
+                .Include("DateAdded");
+
+
+
+            List<ResponseArtist> ArtistDocs = new List<ResponseArtist>();
+            if (needsAggregate)
+            {
+                combinedFilter = Builders<Artist>.Filter.And(combinedFilter, Builders<Artist>.Filter.ElemMatch(x => x.PlayCounts, Builders<UserStat>.Filter.Eq(x => x.UserId, curId)));
+                var responseAlbumProjection = new BsonDocument {
+                    { "_id", 1 },
+                    { "Name", 1 },
+                    { "Bio", 1 },
+                    { "ArtistPfpArtCount", 1 },
+                    { "ArtistBannerArtCount", 1 },
+                    { "ArtistPfpDefault", 1 },
+                    { "ArtistBannerArtDefault", 1 },
+                    { "SkipCounts", 1 },
+                    { "Ratings", 1 },
+                    { "ServerURL", 1 },
+                    { "Genres", 1 },
+                    { "DateAdded", 1 },
+                    { "PlayCounts", 1 },
+                    { "SortValue", new BsonDocument("$let", new BsonDocument {
+                        { "vars", new BsonDocument("filteredItems", new BsonDocument("$filter", new BsonDocument {
+                            { "input", "$PlayCounts" },
+                            { "as", "item" },
+                            { "cond", new BsonDocument("$eq", new BsonArray { "$$item.UserId", curId }) }
+                        })) },
+                        { "in", new BsonDocument("$arrayElemAt", new BsonArray { "$$filteredItems.Value", 0 }) }
+                    }) }
+                };
+                switch (sort)
+                {
+                    case "PlayCountDesc":
+                        var pipeline = ArtistCollection.Aggregate()
+                                        .Project(responseAlbumProjection)
+                                        .Sort(new BsonDocument("SortValue", -1))
+                                        .Skip(page * count)
+                                        .Limit(count)
+                                        .Project<ResponseArtist>(projection);
+
+                        ArtistDocs = pipeline.ToList();
+                        break;
+                    case "PlayCountAsc":
+                        var pipelineAsc = ArtistCollection.Aggregate()
+                                        .Project(responseAlbumProjection)
+                                        .Sort(new BsonDocument("SortValue", 1))
+                                        .Skip(page * count)
+                                        .Limit(count)
+                                        .Project<ResponseArtist>(projection);
+
+                        ArtistDocs = pipelineAsc.ToList();
+                        break;
+                }
+            }
+            else
+            {
+                ArtistDocs = ArtistCollection.Find(combinedFilter, new FindOptions() { Collation = new Collation("en", strength: CollationStrength.Secondary) })
                                              .Project(artistProjection)
                                              .Sort(sortDefinition)
                                              .Skip(page * count)
                                              .Limit(count)
                                              .ToList()
-                                             .Select(x => BsonSerializer.Deserialize<ResponseArtist>(x));
+                                             .Select(x => BsonSerializer.Deserialize<ResponseArtist>(x))
+                                             .ToList();
+            }
 
             artists.AddRange(ArtistDocs);
 
