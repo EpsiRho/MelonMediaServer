@@ -955,12 +955,12 @@ namespace Melon.LocalClasses
                 // Sort the album's and artist's tracks and releases
                 foreach (var collection in collections)
                 {
-                    var tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
+                    var tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner, -1, -1);
                     if (tracks == null)
                     {
                         continue;
                     }
-                    collection.Tracks = tracks;
+                    collection.Tracks = tracks.Select(x=>new DbLink(x)).ToList();
                     collection.TrackCount = collection.Tracks.Count();
                     ColCollection.ReplaceOne(Builders<Collection>.Filter.Eq(x => x._id, collection._id), collection);
                     ScannedFiles++;

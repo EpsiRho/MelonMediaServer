@@ -79,7 +79,7 @@ namespace MelonWebApi.Controllers
             col.PublicViewing = false;
             col.PublicEditing = false;
             col.ArtworkPath = "";
-            col.Tracks = MelonAPI.FindTracks(andFilters, orFilters, curId);
+            col.Tracks = MelonAPI.FindTracks(andFilters, orFilters, curId, -1, -1).Select(x => new DbLink(x)).ToList();
             col.TrackCount = col.Tracks.Count();
 
             if(col.Tracks == null)
@@ -171,13 +171,13 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            var tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
+            var tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner, -1, -1);
             if (tracks == null)
             {
                 args.SendEvent("Invalid Parameters", 400, Program.mWebApi);
                 return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
             }
-            collection.Tracks = tracks;
+            collection.Tracks = tracks.Select(x => new DbLink(x)).ToList();
             collection.TrackCount = collection.Tracks.Count();
 
             ColCollection.ReplaceOne(cFilter, collection);
@@ -256,7 +256,7 @@ namespace MelonWebApi.Controllers
                 collection.OrFilters.Remove(filter);
             }
 
-            collection.Tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner);
+            collection.Tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner, -1, -1).Select(x => new DbLink(x)).ToList();
             if (collection.Tracks == null)
             {
                 args.SendEvent("Invalid Parameters", 400, Program.mWebApi);

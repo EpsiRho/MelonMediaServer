@@ -225,7 +225,7 @@ namespace Melon.LocalClasses
                 case ShuffleType.ByTrackFavorites:
                     var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
                     var mongoDatabase = mongoClient.GetDatabase("Melon");
-                    var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+                    var TracksCollection = mongoDatabase.GetCollection<Artist>("Tracks");
 
                     Random rand = new Random();
 
@@ -312,11 +312,21 @@ namespace Melon.LocalClasses
 
             return null;
         }
-        public static List<DbLink> FindTracks(List<string> AndFilters, List<string> OrFilters, string UserId)
+        public static List<Track> FindTracks(List<string> AndFilters, List<string> OrFilters, string UserId, int page, int count, string sort = "NameAsc")
         {
+            if(AndFilters == null)
+            {
+                AndFilters = new List<string>();
+            }
+
+            if(OrFilters == null)
+            {
+                OrFilters = new List<string>();
+            }
+
             if (AndFilters.Count() == 0 && OrFilters.Count() == 0)
             {
-                return new List<DbLink>();
+                return new List<Track>();
             }
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -520,14 +530,809 @@ namespace Melon.LocalClasses
 
             try
             {
-                var trackProjection = Builders<Track>.Projection.Include(x => x._id)
-                                                                .Include(x => x.Name);
-                var trackDocs = TracksCollection.Find(combinedFilter)
-                                                .Project(trackProjection)
-                                                .ToList()
-                                                .Select(x => new DbLink() { _id = x["_id"].ToString(), Name = x["Name"].ToString() })
-                                                .ToList();
-                return trackDocs;
+                SortDefinition<Track> sortDefinition = null;
+                bool needsAggregate = false;
+                switch (sort)
+                {
+                    case "NameDesc":
+                        sortDefinition = Builders<Track>.Sort.Descending(x => x.Name);
+                        break;
+                    case "NameAsc":
+                        sortDefinition = Builders<Track>.Sort.Ascending(x => x.Name);
+                        break;
+                    case "DateAddedDesc":
+                        sortDefinition = Builders<Track>.Sort.Descending(x => x.DateAdded);
+                        break;
+                    case "DateAddedAsc":
+                        sortDefinition = Builders<Track>.Sort.Ascending(x => x.DateAdded);
+                        break;
+                    case "ReleaseDateDesc":
+                        sortDefinition = Builders<Track>.Sort.Descending(x => x.ReleaseDate);
+                        break;
+                    case "ReleaseDateAsc":
+                        sortDefinition = Builders<Track>.Sort.Ascending(x => x.ReleaseDate);
+                        break;
+                    case "PlayCountDesc":
+                        needsAggregate = true;
+                        break;
+                    case "PlayCountAsc":
+                        needsAggregate = true;
+                        break;
+                }
+
+                if (needsAggregate)
+                {
+                    combinedFilter = Builders<Track>.Filter.And(combinedFilter, Builders<Track>.Filter.ElemMatch(x => x.PlayCounts, Builders<UserStat>.Filter.Eq(x => x.UserId, UserId)));
+                    var responseTrackProjection = new BsonDocument {
+                        { "_id", 1 },
+                        { "Album", 1 },
+                        { "Position", 1 },
+                        { "Disc", 1 },
+                        { "Format", 1 },
+                        { "Bitrate", 1 },
+                        { "SampleRate", 1 },
+                        { "Channels", 1 },
+                        { "BitsPerSample", 1 },
+                        { "MusicBrainzID", 1 },
+                        { "ISRC", 1 },
+                        { "Year", 1 },
+                        { "Name", 1 },
+                        { "Duration", 1 },
+                        { "nextTrack", 1 },
+                        { "SkipCounts", 1 },
+                        { "Ratings", 1 },
+                        { "TrackArtCount", 1 },
+                        { "TrackArtDefault", 1 },
+                        { "ServerURL", 1 },
+                        { "LastModified", 1 },
+                        { "DateAdded", 1 },
+                        { "ReleaseDate", 1 },
+                        { "Chapters", 1 },
+                        { "TrackGenres", 1 },
+                        { "TrackArtists", 1 },
+                        { "PlayCounts", 1 },
+                        { "SortValue", new BsonDocument("$let", new BsonDocument {
+                            { "vars", new BsonDocument("filteredItems", new BsonDocument("$filter", new BsonDocument {
+                                { "input", "$PlayCounts" },
+                                { "as", "item" },
+                                { "cond", new BsonDocument("$eq", new BsonArray { "$$item.UserId", UserId }) }
+                            })) },
+                            { "in", new BsonDocument("$arrayElemAt", new BsonArray { "$$filteredItems.Value", 0 }) }
+                        }) }
+                    };
+                    var projection = Builders<BsonDocument>.Projection.Include("Album")
+                    .Include("Position")
+                    .Include("Disc")
+                    .Include("Format")
+                    .Include("Bitrate")
+                    .Include("SampleRate")
+                    .Include("Channels")
+                    .Include("BitsPerSample")
+                    .Include("MusicBrainzID")
+                    .Include("ISRC")
+                    .Include("Year")
+                    .Include("Name")
+                    .Include("Duration")
+                    .Include("nextTrack")
+                    .Include("PlayCounts")
+                    .Include("SkipCounts")
+                    .Include("Ratings")
+                    .Include("TrackArtCount")
+                    .Include("TrackArtDefault")
+                    .Include("ServerURL")
+                    .Include("LastModified")
+                    .Include("DateAdded")
+                    .Include("ReleaseDate")
+                    .Include("Chapters")
+                    .Include("TrackGenres")
+                    .Include("TrackArtists")
+                    .Include("_id");
+                    switch (sort)
+                    {
+                        case "PlayCountDesc":
+                            var pipeline = TracksCollection.Aggregate()
+                                            .Match(combinedFilter)
+                                            .Project(responseTrackProjection)
+                                            .Sort(new BsonDocument("SortValue", -1))
+                                            .Skip(page * count)
+                                            .Limit(count)
+                                            .Project<Track>(projection);
+
+                            return pipeline.ToList();
+                        case "PlayCountAsc":
+                            var pipelineAsc = TracksCollection.Aggregate()
+                                            .Match(combinedFilter)
+                                            .Project(responseTrackProjection)
+                                            .Sort(new BsonDocument("SortValue", 1))
+                                            .Skip(page * count)
+                                            .Limit(count)
+                                            .Project<Track>(projection);
+
+                            return pipelineAsc.ToList();
+                    }
+                }
+
+                if (page == -1 || count == -1)
+                {
+                    return TracksCollection.Find(combinedFilter)
+                                           .Sort(sortDefinition)
+                                           .ToList();
+                }
+                return TracksCollection.Find(combinedFilter)
+                                       .Skip(page * count)
+                                       .Sort(sortDefinition)
+                                       .Limit(count)
+                                       .ToList();
+            }
+            catch (Exception)
+            {
+
+            }
+            return null;
+        }
+
+        public static List<Album> FindAlbums(List<string> AndFilters, List<string> OrFilters, string UserId, int page, int count, string sort = "NameAsc")
+        {
+            if (AndFilters == null)
+            {
+                AndFilters = new List<string>();
+            }
+
+            if (OrFilters == null)
+            {
+                OrFilters = new List<string>();
+            }
+
+            if (AndFilters.Count() == 0 && OrFilters.Count() == 0)
+            {
+                return new List<Album>();
+            }
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
+            var PlaylistsCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+
+            List<FilterDefinition<Album>> AndDefs = new List<FilterDefinition<Album>>();
+            foreach (var filter in AndFilters)
+            {
+                string property = filter.Split(";")[0];
+                string type = filter.Split(";")[1];
+                object value = filter.Split(";")[2];
+
+                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                {
+                    if (type == "Contains")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        AndDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Eq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        AndDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
+                        AndDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Lt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
+                        AndDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Gt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
+                        AndDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                    }
+                }
+                else if (property.Contains("Playlist"))
+                {
+                    if (type == "Contains")
+                    {
+                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                        if (playlist == null)
+                        {
+                            continue;
+                        }
+
+                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                        AndDefs.Add(Builders<Album>.Filter.AnyIn(x => x.Tracks.Select(x=>x._id), tracks));
+                    }
+                }
+                else
+                {
+                    if (property.Contains("Date") || property.Contains("Modified"))
+                    {
+                        try
+                        {
+                            value = DateTime.Parse(value.ToString());
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
+                    if (type == "Contains")
+                    {
+                        AndDefs.Add(Builders<Album>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                    }
+                    else if (type == "Eq")
+                    {
+                        AndDefs.Add(Builders<Album>.Filter.Eq(property, value));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        AndDefs.Add(Builders<Album>.Filter.Ne(property, value));
+                    }
+                    else if (type == "Lt")
+                    {
+                        AndDefs.Add(Builders<Album>.Filter.Lt(property, value));
+                    }
+                    else if (type == "Gt")
+                    {
+                        AndDefs.Add(Builders<Album>.Filter.Gt(property, value));
+                    }
+                }
+            }
+
+            List<FilterDefinition<Album>> OrDefs = new List<FilterDefinition<Album>>();
+            foreach (var filter in OrFilters)
+            {
+                string property = filter.Split(";")[0];
+                string type = filter.Split(";")[1];
+                object value = filter.Split(";")[2];
+
+                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                {
+                    if (type == "Contains")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        OrDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Eq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        OrDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
+                        OrDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Lt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
+                        OrDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Gt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
+                        OrDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                    }
+                }
+                else if (property.Contains("Playlist"))
+                {
+                    if (type == "Contains")
+                    {
+                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                        if (playlist == null)
+                        {
+                            continue;
+                        }
+
+                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                        OrDefs.Add(Builders<Album>.Filter.AnyIn(x => x.Tracks.Select(x => x._id), tracks));
+                    }
+                }
+                else
+                {
+                    if (property.Contains("Date") || property.Contains("Modified"))
+                    {
+                        try
+                        {
+                            value = DateTime.Parse(value.ToString());
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
+                    if (type == "Contains")
+                    {
+                        OrDefs.Add(Builders<Album>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                    }
+                    else if (type == "Eq")
+                    {
+                        OrDefs.Add(Builders<Album>.Filter.Eq(property, value));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        OrDefs.Add(Builders<Album>.Filter.Ne(property, value));
+                    }
+                    else if (type == "Lt")
+                    {
+                        OrDefs.Add(Builders<Album>.Filter.Lt(property, value));
+                    }
+                    else if (type == "Gt")
+                    {
+                        OrDefs.Add(Builders<Album>.Filter.Gt(property, value));
+                    }
+                }
+            }
+
+            FilterDefinition<Album> combinedFilter = null;
+            foreach (var filter in AndDefs)
+            {
+                if (combinedFilter == null)
+                {
+                    combinedFilter = filter;
+                }
+                else
+                {
+                    combinedFilter = Builders<Album>.Filter.And(combinedFilter, filter);
+                }
+            }
+            foreach (var filter in OrDefs)
+            {
+                if (combinedFilter == null)
+                {
+                    combinedFilter = filter;
+                }
+                else
+                {
+                    combinedFilter = Builders<Album>.Filter.Or(combinedFilter, filter);
+                }
+            }
+
+            try
+            {
+                SortDefinition<Album> sortDefinition = null;
+                bool needsAggregate = false;
+                switch (sort)
+                {
+                    case "NameDesc":
+                        sortDefinition = Builders<Album>.Sort.Descending(x => x.Name);
+                        break;
+                    case "NameAsc":
+                        sortDefinition = Builders<Album>.Sort.Ascending(x => x.Name);
+                        break;
+                    case "DateAddedDesc":
+                        sortDefinition = Builders<Album>.Sort.Descending(x => x.DateAdded);
+                        break;
+                    case "DateAddedAsc":
+                        sortDefinition = Builders<Album>.Sort.Ascending(x => x.DateAdded);
+                        break;
+                    case "ReleaseDateDesc":
+                        sortDefinition = Builders<Album>.Sort.Descending(x => x.ReleaseDate);
+                        break;
+                    case "ReleaseDateAsc":
+                        sortDefinition = Builders<Album>.Sort.Ascending(x => x.ReleaseDate);
+                        break;
+                    case "PlayCountDesc":
+                        needsAggregate = true;
+                        break;
+                    case "PlayCountAsc":
+                        needsAggregate = true;
+                        break;
+                }
+
+                if (needsAggregate)
+                {
+                    combinedFilter = Builders<Album>.Filter.And(combinedFilter, Builders<Album>.Filter.ElemMatch(x => x.PlayCounts, Builders<UserStat>.Filter.Eq(x => x.UserId, UserId)));
+                    var responseAlbumProjection = new BsonDocument {
+                        { "_id", 1 },
+                        { "TotalDiscs", 1 },
+                        { "TotalTracks", 1 },
+                        { "Name", 1 },
+                        { "Bio", 1 },
+                        { "Publisher", 1 },
+                        { "ReleaseStatus", 1 },
+                        { "ReleaseType", 1 },
+                        { "SkipCounts", 1 },
+                        { "Ratings", 1 },
+                        { "ServerURL", 1 },
+                        { "DateAdded", 1 },
+                        { "ReleaseDate", 1 },
+                        { "AlbumArtCount", 1 },
+                        { "AlbumArtDefault", 1 },
+                        { "AlbumGenres", 1 },
+                        { "AlbumArtists", 1 },
+                        { "ContributingArtists", 1 },
+                        { "PlayCounts", 1 },
+                        { "SortValue", new BsonDocument("$let", new BsonDocument {
+                            { "vars", new BsonDocument("filteredItems", new BsonDocument("$filter", new BsonDocument {
+                                { "input", "$PlayCounts" },
+                                { "as", "item" },
+                                { "cond", new BsonDocument("$eq", new BsonArray { "$$item.UserId", UserId }) }
+                            })) },
+                            { "in", new BsonDocument("$arrayElemAt", new BsonArray { "$$filteredItems.Value", 0 }) }
+                        }) }
+                    };
+                    var projection = Builders<BsonDocument>.Projection
+                        .Include("_id")
+                        .Include("TotalDiscs")
+                        .Include("TotalTracks")
+                        .Include("Name")
+                        .Include("Bio")
+                        .Include("Publisher")
+                        .Include("ReleaseStatus")
+                        .Include("ReleaseType")
+                        .Include("PlayCounts")
+                        .Include("SkipCounts")
+                        .Include("Ratings")
+                        .Include("ServerURL")
+                        .Include("DateAdded")
+                        .Include("ReleaseDate")
+                        .Include("AlbumArtCount")
+                        .Include("AlbumArtDefault")
+                        .Include("AlbumGenres")
+                        .Include("AlbumArtists")
+                        .Include("ContributingArtists");
+
+                    switch (sort)
+                    {
+                        case "PlayCountDesc":
+                            var pipeline = AlbumsCollection.Aggregate()
+                                            .Match(combinedFilter)
+                                            .Project(responseAlbumProjection)
+                                            .Sort(new BsonDocument("SortValue", -1))
+                                            .Skip(page * count)
+                                            .Limit(count)
+                                            .Project<Album>(projection);
+
+                            return pipeline.ToList();
+                        case "PlayCountAsc":
+                            var pipelineAsc = AlbumsCollection.Aggregate()
+                                            .Match(combinedFilter)
+                                            .Project(responseAlbumProjection)
+                                            .Sort(new BsonDocument("SortValue", 1))
+                                            .Skip(page * count)
+                                            .Limit(count)
+                                            .Project<Album>(projection);
+
+                            return pipelineAsc.ToList();
+                    }
+                }
+
+                if (page == -1 || count == -1)
+                {
+                    return AlbumsCollection.Find(combinedFilter)
+                                           .Sort(sortDefinition)
+                                           .ToList();
+                }
+                return AlbumsCollection.Find(combinedFilter)
+                                        .Sort(sortDefinition)
+                                        .Skip(page * count)
+                                        .Limit(count)
+                                        .ToList();
+            }
+            catch (Exception)
+            {
+
+            }
+            return null;
+        }
+        public static List<Artist> FindArtists(List<string> AndFilters, List<string> OrFilters, string UserId, int page, int count, string sort = "NameAsc")
+        {
+            if (AndFilters == null)
+            {
+                AndFilters = new List<string>();
+            }
+
+            if (OrFilters == null)
+            {
+                OrFilters = new List<string>();
+            }
+
+            if (AndFilters.Count() == 0 && OrFilters.Count() == 0)
+            {
+                return new List<Artist>();
+            }
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
+            var PlaylistsCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
+
+            List<FilterDefinition<Artist>> AndDefs = new List<FilterDefinition<Artist>>();
+            foreach (var filter in AndFilters)
+            {
+                string property = filter.Split(";")[0];
+                string type = filter.Split(";")[1];
+                object value = filter.Split(";")[2];
+
+                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                {
+                    if (type == "Contains")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Eq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
+                        AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Lt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
+                        AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Gt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
+                        AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                    }
+                }
+                else if (property.Contains("Playlist"))
+                {
+                    if (type == "Contains")
+                    {
+                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                        if (playlist == null)
+                        {
+                            continue;
+                        }
+
+                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                        AndDefs.Add(Builders<Artist>.Filter.AnyIn(x => x.Tracks.Select(x => x._id), tracks));
+                    }
+                }
+                else
+                {
+                    if (property.Contains("Date") || property.Contains("Modified"))
+                    {
+                        try
+                        {
+                            value = DateTime.Parse(value.ToString());
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
+                    if (type == "Contains")
+                    {
+                        AndDefs.Add(Builders<Artist>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                    }
+                    else if (type == "Eq")
+                    {
+                        AndDefs.Add(Builders<Artist>.Filter.Eq(property, value));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        AndDefs.Add(Builders<Artist>.Filter.Ne(property, value));
+                    }
+                    else if (type == "Lt")
+                    {
+                        AndDefs.Add(Builders<Artist>.Filter.Lt(property, value));
+                    }
+                    else if (type == "Gt")
+                    {
+                        AndDefs.Add(Builders<Artist>.Filter.Gt(property, value));
+                    }
+                }
+            }
+
+            List<FilterDefinition<Artist>> OrDefs = new List<FilterDefinition<Artist>>();
+            foreach (var filter in OrFilters)
+            {
+                string property = filter.Split(";")[0];
+                string type = filter.Split(";")[1];
+                object value = filter.Split(";")[2];
+
+                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                {
+                    if (type == "Contains")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Eq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
+                        OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
+                        OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Lt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
+                        OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                    }
+                    else if (type == "Gt")
+                    {
+                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
+                        OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                    }
+                }
+                else if (property.Contains("Playlist"))
+                {
+                    if (type == "Contains")
+                    {
+                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                        if (playlist == null)
+                        {
+                            continue;
+                        }
+
+                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                        OrDefs.Add(Builders<Artist>.Filter.AnyIn(x => x.Tracks.Select(x => x._id), tracks));
+                    }
+                }
+                else
+                {
+                    if (property.Contains("Date") || property.Contains("Modified"))
+                    {
+                        try
+                        {
+                            value = DateTime.Parse(value.ToString());
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
+                    if (type == "Contains")
+                    {
+                        OrDefs.Add(Builders<Artist>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                    }
+                    else if (type == "Eq")
+                    {
+                        OrDefs.Add(Builders<Artist>.Filter.Eq(property, value));
+                    }
+                    else if (type == "NotEq")
+                    {
+                        OrDefs.Add(Builders<Artist>.Filter.Ne(property, value));
+                    }
+                    else if (type == "Lt")
+                    {
+                        OrDefs.Add(Builders<Artist>.Filter.Lt(property, value));
+                    }
+                    else if (type == "Gt")
+                    {
+                        OrDefs.Add(Builders<Artist>.Filter.Gt(property, value));
+                    }
+                }
+            }
+
+            FilterDefinition<Artist> combinedFilter = null;
+            foreach (var filter in AndDefs)
+            {
+                if (combinedFilter == null)
+                {
+                    combinedFilter = filter;
+                }
+                else
+                {
+                    combinedFilter = Builders<Artist>.Filter.And(combinedFilter, filter);
+                }
+            }
+            foreach (var filter in OrDefs)
+            {
+                if (combinedFilter == null)
+                {
+                    combinedFilter = filter;
+                }
+                else
+                {
+                    combinedFilter = Builders<Artist>.Filter.Or(combinedFilter, filter);
+                }
+            }
+
+            try
+            {
+                SortDefinition<Artist> sortDefinition = null;
+                bool needsAggregate = false;
+                switch (sort)
+                {
+                    case "NameDesc":
+                        sortDefinition = Builders<Artist>.Sort.Descending(x => x.Name);
+                        break;
+                    case "NameAsc":
+                        sortDefinition = Builders<Artist>.Sort.Ascending(x => x.Name);
+                        break;
+                    case "DateAddedDesc":
+                        sortDefinition = Builders<Artist>.Sort.Descending(x => x.DateAdded);
+                        break;
+                    case "DateAddedAsc":
+                        sortDefinition = Builders<Artist>.Sort.Ascending(x => x.DateAdded);
+                        break;
+                    case "PlayCountDesc":
+                        needsAggregate = true;
+                        break;
+                    case "PlayCountAsc":
+                        needsAggregate = true;
+                        break;
+                }
+
+                if (needsAggregate)
+                {
+                    combinedFilter = Builders<Artist>.Filter.And(combinedFilter, Builders<Artist>.Filter.ElemMatch(x => x.PlayCounts, Builders<UserStat>.Filter.Eq(x => x.UserId, UserId)));
+                    var responseAlbumProjection = new BsonDocument {
+                        { "_id", 1 },
+                        { "Name", 1 },
+                        { "Bio", 1 },
+                        { "ArtistPfpArtCount", 1 },
+                        { "ArtistBannerArtCount", 1 },
+                        { "ArtistPfpDefault", 1 },
+                        { "ArtistBannerArtDefault", 1 },
+                        { "SkipCounts", 1 },
+                        { "Ratings", 1 },
+                        { "ServerURL", 1 },
+                        { "Genres", 1 },
+                        { "DateAdded", 1 },
+                        { "PlayCounts", 1 },
+                        { "SortValue", new BsonDocument("$let", new BsonDocument {
+                            { "vars", new BsonDocument("filteredItems", new BsonDocument("$filter", new BsonDocument {
+                                { "input", "$PlayCounts" },
+                                { "as", "item" },
+                                { "cond", new BsonDocument("$eq", new BsonArray { "$$item.UserId", UserId }) }
+                            })) },
+                            { "in", new BsonDocument("$arrayElemAt", new BsonArray { "$$filteredItems.Value", 0 }) }
+                        }) }
+                    };
+                    var projection = Builders<BsonDocument>.Projection
+                        .Include("_id")
+                        .Include("Name")
+                        .Include("Bio")
+                        .Include("ArtistPfpArtCount")
+                        .Include("ArtistBannerArtCount")
+                        .Include("ArtistPfpDefault")
+                        .Include("ArtistBannerArtDefault")
+                        .Include("PlayCounts")
+                        .Include("SkipCounts")
+                        .Include("Ratings")
+                        .Include("ServerURL")
+                        .Include("Genres")
+                        .Include("DateAdded");
+                    switch (sort)
+                    {
+                        case "PlayCountDesc":
+                            var pipeline = ArtistsCollection.Aggregate()
+                                            .Match(combinedFilter)
+                                            .Project(responseAlbumProjection)
+                                            .Sort(new BsonDocument("SortValue", -1))
+                                            .Skip(page * count)
+                                            .Limit(count)
+                                            .Project<Artist>(projection);
+
+                            return pipeline.ToList();
+                        case "PlayCountAsc":
+                            var pipelineAsc = ArtistsCollection.Aggregate()
+                                            .Match(combinedFilter)
+                                            .Project(responseAlbumProjection)
+                                            .Sort(new BsonDocument("SortValue", 1))
+                                            .Skip(page * count)
+                                            .Limit(count)
+                                            .Project<Artist>(projection);
+
+                            return pipelineAsc.ToList();
+                    }
+                }
+
+                if (page == -1 || count == -1)
+                {
+                    return ArtistsCollection.Find(combinedFilter)
+                                           .Sort(sortDefinition)
+                                           .ToList();
+                }
+                return ArtistsCollection.Find(combinedFilter)
+                                        .Sort(sortDefinition)
+                                        .Skip(page * count)
+                                        .Limit(count)
+                                        .ToList();
             }
             catch (Exception)
             {

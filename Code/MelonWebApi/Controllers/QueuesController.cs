@@ -526,7 +526,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("search")]
-        public ObjectResult SearchQueues(int page = 0, int count = 100, string name = "")
+        public ObjectResult SearchQueues(int page = 0, int count = 100, string name = "", bool sortByLastListen = true)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -552,14 +552,33 @@ namespace MelonWebApi.Controllers
             var orFilter = Builders<PlayQueue>.Filter.Or(ownerFilter, viewersFilter, publicViewingFilter, EditorsFilter);
             var andFilter = Builders<PlayQueue>.Filter.And(orFilter, nameFilter);
             var qProjection = Builders<PlayQueue>.Projection.Exclude(x => x.Tracks)
-                                                            .Exclude(x => x.OriginalTrackOrder);
+                                                            .Exclude(x => x.OriginalTrackOrder)
+                                                            .Exclude(x => x.LastListen);
+            List<ResponseQueue> Queues = new List<ResponseQueue>();
+            if (sortByLastListen)
+            {
+                var sort = Builders<PlayQueue>.Sort.Descending(x => x.LastListen);
+                Queues = QCollection.Find(andFilter)
+                                    .Project(qProjection)
+                                    .Skip(page * count)
+                                    .Sort(sort)
+                                    .Limit(count)
+                                    .ToList()
+                                    .Select(x => BsonSerializer.Deserialize<ResponseQueue>(x))
+                                    .ToList();
 
-            var Queues = QCollection.Find(andFilter)
+            }
+            else
+            {
+                Queues = QCollection.Find(andFilter)
                                     .Project(qProjection)
                                     .Skip(page * count)
                                     .Limit(count)
                                     .ToList()
-                                    .Select(x => BsonSerializer.Deserialize<ResponseQueue>(x));
+                                    .Select(x => BsonSerializer.Deserialize<ResponseQueue>(x))
+                                    .ToList();
+
+            }
 
             args.SendEvent("Queues sent", 200, Program.mWebApi);
             return new ObjectResult(Queues) { StatusCode = 200 };
@@ -648,6 +667,7 @@ namespace MelonWebApi.Controllers
         [HttpPost("add-tracks")]
         public ObjectResult AddToQueue(string id, [FromQuery] List<string> trackIds, string position = "end", int place = 0)
         {
+            id= id.Replace("\"", "");
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
@@ -659,13 +679,13 @@ namespace MelonWebApi.Controllers
                     { "place", place }
                 });
 
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var mongoDatabase = StateManager.DbClient.GetDatabase("Melon");
             var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
 
             var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
-            var queues = QCollection.Find(qFilter).ToList();
+            var queues = QCollection.AsQueryable().Where(x=> x._id == id).ToList();
+            //var queues = queuesA.Where(x=>x._id == id).ToList();
             if(queues.Count() == 0)
             {
                 args.SendEvent("Queue not found", 404, Program.mWebApi);
