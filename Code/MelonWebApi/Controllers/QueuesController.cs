@@ -664,6 +664,85 @@ namespace MelonWebApi.Controllers
             return new ObjectResult(orderedTracks) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
+        [HttpGet("get-track")]
+        public ObjectResult GetTrackByIndex(string id, int index)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/get-tracks", curId, new Dictionary<string, object>()
+                {
+                    { "index", index },
+                    { "id", id }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
+            var UsersCollection = mongoDatabase.GetCollection<User>("Users");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+            var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
+
+            var Queues = QCollection.Find(qFilter).ToList();
+            if (Queues.Count() == 0)
+            {
+                args.SendEvent("Queue not found", 404, Program.mWebApi);
+                return new ObjectResult("Queue not found") { StatusCode = 404 };
+            }
+            var queue = Queues[0];
+
+            if (queue.PublicEditing == false)
+            {
+                if (queue.Owner != curId && !queue.Editors.Contains(curId) && !queue.Viewers.Contains(curId))
+                {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+            }
+
+            queue.LastListen = DateTime.Now.ToUniversalTime();
+            QCollection.ReplaceOne(qFilter, queue);
+
+            var tracks = Queues[0].Tracks.Take(new Range(index, index + 1));
+
+            var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
+                                                            .Exclude(x => x.LyricsPath);
+
+            List<ResponseTrack> fullTracks = TracksCollection.Find(Builders<Track>.Filter.In(x => x._id, tracks.Select(x => x._id)))
+                                                     .Project(trackProjection).ToList().Select(x => BsonSerializer.Deserialize<ResponseTrack>(x)).ToList();
+
+            var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
+            userIds.Add(curId);
+
+            List<ResponseTrack> orderedTracks = new List<ResponseTrack>();
+            foreach (var sTrack in tracks)
+            {
+                ResponseTrack track = fullTracks.Where(x => x._id == sTrack._id).FirstOrDefault();
+
+                // Check for null or empty collections to avoid exceptions
+                if (track.PlayCounts != null)
+                {
+                    track.PlayCounts = track.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                }
+
+                if (track.SkipCounts != null)
+                {
+                    track.SkipCounts = track.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                }
+
+                if (track.Ratings != null)
+                {
+                    track.Ratings = track.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
+                }
+
+                orderedTracks.Add(track);
+            }
+
+            args.SendEvent("Tracks sent", 200, Program.mWebApi);
+            return new ObjectResult(orderedTracks.FirstOrDefault()) { StatusCode = 200 };
+        }
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("add-tracks")]
         public ObjectResult AddToQueue(string id, [FromQuery] List<string> trackIds, string position = "end", int place = 0)
         {

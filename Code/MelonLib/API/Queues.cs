@@ -293,6 +293,43 @@ namespace MelonLib.API
                 return new List<ResponseTrack>() { new ResponseTrack() { Name = e.Message } };
             }
         }
+        public static async Task<ResponseTrack> GetTrack(string id = "", int index = 0)
+        {
+            if (string.IsNullOrEmpty(APIClient.BaseURL) || string.IsNullOrEmpty(APIClient.UserAgent))
+            {
+                throw new ClientException("BaseURL or UserAgent not set!");
+            }
+
+            if (string.IsNullOrEmpty(APIClient.JWT))
+            {
+                throw new ClientException("Client is not authenticated.");
+            }
+
+            try
+            {
+                string str = $"{APIClient.BaseURL}api/queues/get-track?index={index}&id={id}";
+                var response = await APIClient.RequestClient.GetAsync(str);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+                    ResponseTrack track = JsonSerializer.Deserialize<ResponseTrack>(jsonResponse, options);
+
+                    return track;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
         public static async Task<string> AddToQueue(string id, List<string> trackIds, string position = "end", int place = 0)
         {
             if (string.IsNullOrEmpty(APIClient.BaseURL) || string.IsNullOrEmpty(APIClient.UserAgent))

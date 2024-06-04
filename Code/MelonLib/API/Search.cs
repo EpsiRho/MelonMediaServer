@@ -15,13 +15,7 @@ namespace MelonLib.API
 {
     public static class Search
     {
-        public static async Task<List<ResponseTrack>> Tracks(int page = 0, int count = 100, string trackName = "", string format = "", string bitrate = "",
-                                                string sampleRate = "", string channels = "", string bitsPerSample = "", string year = "",
-                                                long ltPlayCount = -1, long gtPlayCount = -1, long ltSkipCount = -1, long gtSkipCount = -1, 
-                                                int ltYear = -1, int ltMonth = -1, int ltDay = -1,
-                                                int gtYear = -1, int gtMonth = -1, int gtDay = -1, 
-                                                long ltRating = -1, long gtRating = -1, List<string> genres = null,
-                                                bool searchOr = false, string sort = "NameAsc", string albumName = "", string artistName = "")
+        public static async Task<List<ResponseTrack>> Tracks(int page = 0, int count = 100, List<string> andFilters = null, List<string> orFilters = null, string sort = "NameAsc")
         {
             if (string.IsNullOrEmpty(APIClient.BaseURL) || string.IsNullOrEmpty(APIClient.UserAgent))
             {
@@ -36,37 +30,21 @@ namespace MelonLib.API
             string url = $"{APIClient.BaseURL}api/search/tracks?";
             url += $"page={page}&";
             url += $"count={count}&";
-            url += $"trackName={trackName}&";
-            url += $"format={format}&";
-            url += $"bitrate={bitrate}&";
-            url += $"sampleRate={sampleRate}&";
-            url += $"channels={channels}&";
-            url += $"bitsPerSample={bitsPerSample}&";
-            url += $"ltPlayCount={ltPlayCount}&";
-            url += $"gtPlayCount={gtPlayCount}&";
-            url += $"ltSkipCount={ltSkipCount}&";
-            url += $"gtSkipCount={gtSkipCount}&";
-            url += $"ltYear={ltYear}&";
-            url += $"ltMonth={ltMonth}&";
-            url += $"ltDay={ltDay}&";
-            url += $"gtYear={gtYear}&";
-            url += $"gtMonth={gtMonth}&";
-            url += $"gtDay={gtDay}&";
-            url += $"gtMonth={gtMonth}&";
-            url += $"gtMonth={ltRating}&";
-            url += $"gtMonth={gtRating}&";
-            url += $"searchOr={searchOr}&";
-            url += $"sort={sort}&";
-            url += $"albumName={albumName}&";
-            url += $"artistName={artistName}&";
-            if (genres != null)
+            url += $"sort={sort}";
+            if (andFilters != null)
             {
-                foreach (var g in genres)
+                foreach (var f in andFilters)
                 {
-                    url += $"genres={g}&";
+                    url += $"&andFilters={f}";
                 }
             }
-            url = url.Substring(0, url.Length-1);
+            if (orFilters != null)
+            {
+                foreach (var f in orFilters)
+                {
+                    url += $"&orFilters={f}";
+                }
+            }
 
             try
             {
@@ -92,12 +70,7 @@ namespace MelonLib.API
                 return null;
             }
         }
-        public static async Task<List<ResponseAlbum>> Albums(int page = 0, int count = 100, string albumName = "", string publisher = "", 
-                                                            string releaseType = "", string releaseStatus = "",
-                                                            long ltPlayCount = -1, long gtPlayCount = -1, long ltRating = -1, long gtRating = -1, 
-                                                            int ltYear = -1, int ltMonth = -1, int ltDay = -1,
-                                                            int gtYear = -1, int gtMonth = -1, int gtDay = -1, 
-                                                            List<string> genres = null, bool searchOr = false, string sort = "NameAsc")
+        public static async Task<List<ResponseAlbum>> Albums(int page = 0, int count = 100, List<string> andFilters = null, List<string> orFilters = null, string sort = "NameAsc")
         {
             if (string.IsNullOrEmpty(APIClient.BaseURL) || string.IsNullOrEmpty(APIClient.UserAgent))
             {
@@ -112,31 +85,21 @@ namespace MelonLib.API
             string url = $"{APIClient.BaseURL}api/search/albums?";
             url += $"page={page}&";
             url += $"count={count}&";
-            url += $"albumName={albumName}&";
-            url += $"publisher={publisher}&";
-            url += $"releaseType={releaseType}&";
-            url += $"releaseStatus={releaseStatus}&";
-            url += $"ltPlayCount={ltPlayCount}&";
-            url += $"gtPlayCount={gtPlayCount}&";
-            url += $"ltYear={ltYear}&";
-            url += $"ltMonth={ltMonth}&";
-            url += $"ltDay={ltDay}&";
-            url += $"gtYear={gtYear}&";
-            url += $"gtMonth={gtMonth}&";
-            url += $"gtDay={gtDay}&";
-            url += $"gtMonth={gtMonth}&";
-            url += $"gtMonth={ltRating}&";
-            url += $"gtMonth={gtRating}&";
-            url += $"searchOr={searchOr}&";
-            url += $"sort={sort}&";
-            if (genres != null)
+            url += $"sort={sort}";
+            if (andFilters != null)
             {
-                foreach (var g in genres)
+                foreach (var f in andFilters)
                 {
-                    url += $"genres={g}&";
+                    url += $"&andFilters={f}";
                 }
             }
-            url = url.Substring(0, url.Length - 1);
+            if (orFilters != null)
+            {
+                foreach (var f in orFilters)
+                {
+                    url += $"&orFilters={f}";
+                }
+            }
 
             try
             {
@@ -162,9 +125,7 @@ namespace MelonLib.API
                 return null;
             }
         }
-        public static async Task<List<ResponseArtist>> Artists(int page = 0, int count = 100, string artistName = "", 
-                                                             long ltPlayCount = -1, long gtPlayCount = -1, long ltRating = -1,
-                                                             long gtRating = -1, List<string> genres = null, bool searchOr = false, string sort = "NameAsc")
+        public static async Task<List<ResponseArtist>> Artists(int page = 0, int count = 100, List<string> andFilters = null, List<string> orFilters = null, string sort = "NameAsc")
         {
             if (string.IsNullOrEmpty(APIClient.BaseURL) || string.IsNullOrEmpty(APIClient.UserAgent))
             {
@@ -179,21 +140,21 @@ namespace MelonLib.API
             string url = $"{APIClient.BaseURL}api/search/artists?";
             url += $"page={page}&";
             url += $"count={count}&";
-            url += $"artistName={artistName}&";
-            url += $"ltPlayCount={ltPlayCount}&";
-            url += $"gtPlayCount={gtPlayCount}&";
-            url += $"gtMonth={ltRating}&";
-            url += $"gtMonth={gtRating}&";
-            url += $"searchOr={searchOr}&";
-            url += $"sort={sort}&";
-            if (genres != null)
+            url += $"sort={sort}";
+            if (andFilters != null)
             {
-                foreach (var g in genres)
+                foreach (var f in andFilters)
                 {
-                    url += $"genres={g}&";
+                    url += $"&andFilters={f}";
                 }
             }
-            url = url.Substring(0, url.Length - 1);
+            if (orFilters != null)
+            {
+                foreach (var f in orFilters)
+                {
+                    url += $"&orFilters={f}";
+                }
+            }
 
             try
             {
