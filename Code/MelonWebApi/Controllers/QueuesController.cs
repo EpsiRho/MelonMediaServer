@@ -152,12 +152,17 @@ namespace MelonWebApi.Controllers
                 var album = ACollection.Find(aFilter).FirstOrDefault();
                 if(album != null)
                 {
-                    var fFilter = Builders<Track>.Filter.In(a => a._id, album.Tracks.Select(x => x._id));
-                    var fTracks = TCollection.Find(fFilter).ToList();
-                    foreach (var t in album.Tracks)
+                    var filter = Builders<Track>.Filter.Eq(x => x.Album._id, id);
+                    var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
+                                                            .Exclude(x => x.LyricsPath);
+                    var trackDocs = TCollection.Find(filter).Project(trackProjection)
+                                                    .SortBy(track => track.Disc).ThenBy(track => track.Position)
+                                                    .ToList();
+
+                    var foundTracks = trackDocs.Select(x => BsonSerializer.Deserialize<Track>(x)).ToList();
+                    foreach (var t in foundTracks)
                     {
-                        Track track = fTracks.Where(x => x._id == t._id).FirstOrDefault();
-                        tracks.Add(track);
+                        tracks.Add(t);
                     }
                 }
                 else
@@ -245,12 +250,17 @@ namespace MelonWebApi.Controllers
                 var artist = ACollection.Find(aFilter).FirstOrDefault();
                 if (artist != null)
                 {
-                    var fFilter = Builders<Track>.Filter.In(a => a._id, artist.Tracks.Select(x => x._id));
-                    var fTracks = TCollection.Find(fFilter).ToList();
-                    foreach (var t in artist.Tracks)
+                    var filter = Builders<Track>.Filter.AnyIn("TrackArtists._id", id);
+                    var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
+                                                            .Exclude(x => x.LyricsPath);
+                    var trackDocs = TCollection.Find(filter).Project(trackProjection)
+                                                    .SortBy(track => track.Disc).ThenBy(track => track.Position)
+                                                    .ToList();
+
+                    var foundTracks = trackDocs.Select(x => BsonSerializer.Deserialize<Track>(x)).ToList();
+                    foreach (var t in foundTracks)
                     {
-                        Track track = fTracks.Where(x => x._id == t._id).FirstOrDefault();
-                        tracks.Add(track);
+                        tracks.Add(t);
                     }
                 }
                 else

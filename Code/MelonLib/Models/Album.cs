@@ -22,7 +22,6 @@
         public List<string> AlbumGenres { get; set; }
         public List<DbLink> AlbumArtists { get; set; }
         public List<DbLink> ContributingArtists { get; set; }
-        public List<DbLink> Tracks { get; set; }
     }
     public class ResponseAlbum
     {
@@ -45,6 +44,32 @@
         public List<string> AlbumGenres { get; set; }
         public List<DbLink> AlbumArtists { get; set; }
         public List<DbLink> ContributingArtists { get; set; }
+        public ResponseAlbum()
+        {
+
+        }
+        public ResponseAlbum(Album a)
+        {
+            _id = a._id;
+            TotalDiscs = a.TotalDiscs;
+            TotalTracks = a.TotalTracks;
+            Name = a.Name;
+            Bio = a.Bio;
+            Publisher = a.Publisher;
+            ReleaseStatus = a.ReleaseStatus;
+            ReleaseType = a.ReleaseType;
+            PlayCounts = a.PlayCounts;
+            SkipCounts = a.SkipCounts;
+            Ratings = a.Ratings;
+            ServerURL = a.ServerURL;
+            DateAdded = a.DateAdded;
+            ReleaseDate = a.ReleaseDate;
+            AlbumArtCount = a.AlbumArtCount;
+            AlbumArtDefault = a.AlbumArtDefault;
+            AlbumGenres = a.AlbumGenres;
+            AlbumArtists = a.AlbumArtists;
+            ContributingArtists = a.ContributingArtists;
+        }
     }
 }
 

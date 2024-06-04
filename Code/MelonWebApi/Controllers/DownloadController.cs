@@ -24,6 +24,7 @@ using Azure;
 using System;
 using MongoDB.Driver.Core.Events;
 using System.Security.Claims;
+using MongoDB.Bson.Serialization;
 
 namespace MelonWebApi.Controllers
 {
@@ -286,7 +287,10 @@ namespace MelonWebApi.Controllers
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
 
-            foreach (var track in album.Tracks)
+            var filter = Builders<Track>.Filter.Eq(x => x.Album._id, album._id);
+            var trackDocs = TCollection.Find(filter).SortBy(track => track.Disc).ThenBy(track => track.Position).ToList();
+
+            foreach (var track in trackDocs)
             {
                 var tFilter = Builders<Track>.Filter.Eq(x => x._id, track._id);
                 var found = TCollection.Find(tFilter).FirstOrDefault();

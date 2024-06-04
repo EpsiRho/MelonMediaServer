@@ -677,8 +677,7 @@ namespace MelonWebApi.Controllers
             List<string> albumIds = TracksCollection.Find(Builders<Track>.Filter.In(x => x._id, tracks.Select(x => x._id)))
                                                     .Project(trackProjection).ToList().Select(x => (string)x["Album"]["_id"]).Distinct().ToList();
 
-            var albumProjection = Builders<Album>.Projection.Exclude(x => x.AlbumArtPaths)
-                                                            .Exclude(x => x.Tracks);
+            var albumProjection = Builders<Album>.Projection.Exclude(x => x.AlbumArtPaths);
             List<ResponseAlbum> albums = AlbumsCollection.Find(Builders<Album>.Filter.In(x => x._id, albumIds))
                                                          .Project(albumProjection).ToList().Select(x => BsonSerializer.Deserialize<ResponseAlbum>(x))
                                                          .Take(new Range(page * count, (page * count) + count)).ToList();
@@ -761,9 +760,6 @@ namespace MelonWebApi.Controllers
 
             var artistProjection = Builders<Artist>.Projection.Exclude(x => x.ArtistBannerPaths)
                                                               .Exclude(x => x.ArtistPfpPaths)
-                                                              .Exclude(x => x.Releases)
-                                                              .Exclude(x => x.SeenOn)
-                                                              .Exclude(x => x.Tracks)
                                                               .Exclude(x => x.ConnectedArtists);
             List<ResponseArtist> artists = ArtistsCollection.Find(Builders<Artist>.Filter.In(x => x._id, artistIds))
                                                            .Project(artistProjection).ToList().Select(x => BsonSerializer.Deserialize<ResponseArtist>(x))

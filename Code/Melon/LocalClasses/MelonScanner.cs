@@ -381,7 +381,6 @@ namespace Melon.LocalClasses
                         ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
                         AlbumArtists = albumArtists.Select(x => new DbLink() { Name = x }).ToList(),
                         AlbumArtPaths = new List<string>(),
-                        Tracks = new List<DbLink>(),
                         ContributingArtists = trackArtists.Select(x => new DbLink() { Name = x }).ToList(),
                         AlbumGenres = trackGenres ?? new List<string>(),
                         AlbumArtCount = 0,
@@ -466,7 +465,6 @@ namespace Melon.LocalClasses
                         ReleaseDate = fileMetadata.Date ?? DateTime.MinValue,
                         AlbumArtists = albumArtists.Select(x => new DbLink() { Name = x }).ToList(),
                         AlbumArtPaths = new List<string>(),
-                        Tracks = new List<DbLink>(),
                         ContributingArtists = trackArtists.Select(x => new DbLink() { Name = x }).ToList(),
                         AlbumGenres = trackGenres ?? new List<string>(),
                         AlbumArtCount = 0,
@@ -585,7 +583,6 @@ namespace Melon.LocalClasses
                         ReleaseDate = album.ReleaseDate,
                         AlbumArtists = aArtists,
                         AlbumArtPaths = new List<string>(),
-                        Tracks = sTracks.Select(t => new DbLink() { _id = t._id, Name = t.Name }).ToList(),
                         ContributingArtists = cArtists,
                         AlbumGenres = sTracks.SelectMany(t => t.TrackGenres).Distinct().ToList(),
                         AlbumArtCount = 0,
@@ -613,7 +610,6 @@ namespace Melon.LocalClasses
                         ReleaseDate = album.ReleaseDate,
                         AlbumArtists = aArtists,
                         AlbumArtPaths = foundAlbum.AlbumArtPaths,
-                        Tracks = sTracks.Select(t => new DbLink() { _id = t._id, Name = t.Name }).ToList(),
                         ContributingArtists = cArtists,
                         AlbumGenres = sTracks.SelectMany(t => t.TrackGenres).Distinct().ToList(),
                         AlbumArtCount = foundAlbum.AlbumArtCount,
@@ -634,10 +630,7 @@ namespace Melon.LocalClasses
                     Bio = "",
                     Ratings = new List<UserStat>(),
                     DateAdded = DateTime.Now.ToUniversalTime(),
-                    Releases = new List<DbLink>(),
                     Genres = new List<string>(),
-                    SeenOn = new List<DbLink>(),
-                    Tracks = new List<DbLink>(),
                     ConnectedArtists = cArtists,
                     ArtistBannerArtCount = 0,
                     ArtistPfpArtCount = 0,
@@ -656,10 +649,7 @@ namespace Melon.LocalClasses
                     Bio = "",
                     Ratings = new List<UserStat>(),
                     DateAdded = DateTime.Now.ToUniversalTime(),
-                    Releases = new List<DbLink>(),
                     Genres = new List<string>(),
-                    SeenOn = new List<DbLink>(),
-                    Tracks = new List<DbLink>(),
                     ConnectedArtists = aArtists,
                     ArtistBannerArtCount = 0,
                     ArtistPfpArtCount = 0,
@@ -683,7 +673,6 @@ namespace Melon.LocalClasses
                 {
                     albums[n].AlbumArtists = dbAlbums[i].AlbumArtists;
                     albums[n].AlbumGenres = dbAlbums[i].AlbumGenres;
-                    albums[n].Tracks = dbAlbums[i].Tracks;
                     albums[n].AlbumGenres = dbAlbums[i].AlbumGenres;
                     albums[n].ContributingArtists = dbAlbums[i].ContributingArtists;
                     albums[n].Publisher = dbAlbums[i].Publisher;
@@ -710,22 +699,13 @@ namespace Melon.LocalClasses
             for (int i = 0; i < dbArtists.Count(); i++)
             {
                 // Set artist info
-                dbArtists[i].Releases = dbAlbums.Where(x => x.AlbumArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
-                dbArtists[i].SeenOn = dbAlbums.Where(x => x.ContributingArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
-                dbArtists[i].Tracks = tracks.Values.Where(x => x.TrackArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).OrderBy(x => x.ReleaseDate).ThenBy(x => x.Disc).ThenBy(x => x.Position).Select(x => new DbLink() { _id = x._id, Name = x.Name }).ToList();
                 dbArtists[i].Genres = tracks.Values.Where(x => x.TrackArtists.Select(a => a.Name).Contains(dbArtists[i].Name)).SelectMany(x => x.TrackGenres).Distinct().ToList();
                 // Try to add the artist, if you can't then update the artist
                 bool check = artists.TryAdd($"{dbArtists[i].Name}", dbArtists[i]);
                 if (!check)
                 {
-                    artists[$"{dbArtists[i].Name}"].Releases.AddRange(dbArtists[i].Releases);
-                    artists[$"{dbArtists[i].Name}"].SeenOn.AddRange(dbArtists[i].SeenOn);
-                    artists[$"{dbArtists[i].Name}"].Tracks.AddRange(dbArtists[i].Tracks);
                     artists[$"{dbArtists[i].Name}"].Genres.AddRange(dbArtists[i].Genres);
                     artists[$"{dbArtists[i].Name}"].ConnectedArtists.AddRange(dbArtists[i].ConnectedArtists);
-                    artists[$"{dbArtists[i].Name}"].Releases = artists[$"{dbArtists[i].Name}"].Releases.DistinctBy(x=>x._id).ToList();
-                    artists[$"{dbArtists[i].Name}"].SeenOn = artists[$"{dbArtists[i].Name}"].SeenOn.DistinctBy(x=>x._id).ToList();
-                    artists[$"{dbArtists[i].Name}"].Tracks = artists[$"{dbArtists[i].Name}"].Tracks.DistinctBy(x=>x._id).ToList();
                     artists[$"{dbArtists[i].Name}"].Genres = artists[$"{dbArtists[i].Name}"].Genres.DistinctBy(x => x).ToList();
                     artists[$"{dbArtists[i].Name}"].ConnectedArtists = artists[$"{dbArtists[i].Name}"].ConnectedArtists.DistinctBy(x => x._id).ToList();
                 }
@@ -820,26 +800,15 @@ namespace Melon.LocalClasses
             var artistModels = new List<WriteModel<Artist>>();
             foreach (var artist in DbArtists)
             {
-
                 var filter = Builders<Artist>.Filter.Eq(a => a._id, artist._id);
+                var update = Builders<Artist>.Update.Set(a => a, artist);
 
-                var update = Builders<Artist>.Update
-                            .Set(a => a.Releases, artist.Releases)
-                            .Set(a => a.SeenOn, artist.SeenOn)
-                            .Set(a => a.Tracks, artist.Tracks)
-                            .Set(a => a.ConnectedArtists, artist.ConnectedArtists)
-                            .Set(a => a.Genres, artist.Genres);
-                artistModels.Add(new ReplaceOneModel<Artist>(
-                                 Builders<Artist>.Filter.Where(x => x._id.Equals(artist._id)), artist)
-                { IsUpsert = true });
+                artistModels.Add(new ReplaceOneModel<Artist>(filter, artist) { IsUpsert = true });
             }
 
             if (artistModels.Count != 0)
             {
-                artistsCollection = newMelonDB.GetCollection<Artist>("Artists");
-                var result = artistsCollection.BulkWrite(artistModels);
-                //var art = artistsCollection.Find(x => x.Name == "Porter Robinson").ToList();
-                //Debug.WriteLine("Why");
+                artistsCollection.BulkWrite(artistModels);
             }
 
             ScannedFiles = 4;
@@ -866,70 +835,10 @@ namespace Melon.LocalClasses
                     var filter = Builders<Album>.Filter.Eq(x => x._id, track.Album._id);
                     var albums = AlbumCollection.Find(filter).ToList();
 
-                    List<string> zeroed = new List<string>();
-                    if (albums.Count() != 0)
-                    {
-                        var album = albums[0];
-                        var query = (from t in album.Tracks
-                                     where t._id == track._id
-                                     select t).FirstOrDefault();
-                        album.Tracks.Remove(query);
-                        if (album.Tracks.Count == 0)
-                        {
-                            zeroed.Add(album._id);
-                            AlbumCollection.DeleteOne(filter);
-                        }
-                        else
-                        {
-                            AlbumCollection.ReplaceOne(filter, album);
-                        }
-                    }
+                    // TODO, remove album if no tracks are left
 
-                    // remove from artists
-                    foreach (var artist in track.TrackArtists)
-                    {
-                        var aFilter = Builders<Artist>.Filter.Eq(x => x._id, artist._id);
-                        var artists = ArtistCollection.Find(aFilter).ToList();
-                        Artist dbArtist = null;
+                    // TODO, remove artists if no tracks are left
 
-                        if (artists.Count() != 0)
-                        {
-                            dbArtist = artists[0];
-                            var query = (from t in dbArtist.Tracks
-                                         where t._id == track._id
-                                         select t).FirstOrDefault();
-                            dbArtist.Tracks.Remove(query);
-
-                            if (dbArtist.Tracks.Count() == 0)
-                            {
-                                ArtistCollection.DeleteOne(aFilter);
-                            }
-                            else
-                            {
-                                foreach (var z in zeroed)
-                                {
-                                    var q = (from a in dbArtist.Releases
-                                             where a._id == z
-                                             select a).ToList();
-
-                                    foreach (var a in q)
-                                    {
-                                        dbArtist.Releases.Remove(a);
-                                    }
-
-                                    q = (from a in dbArtist.SeenOn
-                                         where a._id == z
-                                         select a).ToList();
-
-                                    foreach (var a in q)
-                                    {
-                                        dbArtist.SeenOn.Remove(a);
-                                    }
-                                }
-                                ArtistCollection.ReplaceOne(aFilter, dbArtist);
-                            }
-                        }
-                    }
                     // Remove Track
                     var tFilter = Builders<Track>.Filter.Eq(x => x._id, track._id);
                     TracksCollection.DeleteOne(tFilter);

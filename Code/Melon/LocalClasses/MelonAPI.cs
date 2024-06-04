@@ -383,6 +383,14 @@ namespace Melon.LocalClasses
                         AndDefs.Add(Builders<Track>.Filter.In(x => x._id, tracks));
                     }
                 }
+                else if (property.Contains("TrackArtists"))
+                {
+                    if (type == "Eq")
+                    {
+                        var f = Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, artist => artist._id == value);
+                        AndDefs.Add(f);
+                    }
+                }
                 else
                 {
                     if (property.Contains("Date") || property.Contains("Modified"))
@@ -466,6 +474,14 @@ namespace Melon.LocalClasses
 
                         var tracks = playlist.Tracks.Select(x => x._id).ToList();
                         OrDefs.Add(Builders<Track>.Filter.In(x => x._id, tracks));
+                    }
+                }
+                else if (property.Contains("TrackArtists"))
+                {
+                    if (type == "Eq")
+                    {
+                        var f = Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, artist => artist._id == value);
+                        OrDefs.Add(f);
                     }
                 }
                 else
@@ -557,6 +573,12 @@ namespace Melon.LocalClasses
                         break;
                     case "PlayCountAsc":
                         needsAggregate = true;
+                        break;
+                    case "AlbumPositionAsc":
+                        sortDefinition = Builders<Track>.Sort.Ascending(x => x.Disc).Ascending(x=>x.Position);
+                        break;
+                    case "AlbumPositionDesc":
+                        sortDefinition = Builders<Track>.Sort.Descending(x => x.Disc).Descending(x=>x.Position);
                         break;
                 }
 
@@ -730,16 +752,32 @@ namespace Melon.LocalClasses
                 }
                 else if (property.Contains("Playlist"))
                 {
-                    if (type == "Contains")
+                    //if (type == "Contains")
+                    //{
+                    //    var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                    //    if (playlist == null)
+                    //    {
+                    //        continue;
+                    //    }
+                    //
+                    //    var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                    //    AndDefs.Add(Builders<Album>.Filter.AnyIn(x => x.Tracks.Select(x=>x._id), tracks));
+                    //}
+                }
+                else if (property.Contains("AlbumArtists"))
+                {
+                    if (type == "Eq")
                     {
-                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
-                        if (playlist == null)
-                        {
-                            continue;
-                        }
-
-                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
-                        AndDefs.Add(Builders<Album>.Filter.AnyIn(x => x.Tracks.Select(x=>x._id), tracks));
+                        var f = Builders<Album>.Filter.ElemMatch(x => x.AlbumArtists, artist => artist._id == value);
+                        AndDefs.Add(f);
+                    }
+                }
+                else if (property.Contains("ContributingArtists"))
+                {
+                    if (type == "Eq")
+                    {
+                        var f = Builders<Album>.Filter.ElemMatch(x => x.ContributingArtists, artist => artist._id == value);
+                        AndDefs.Add(f);
                     }
                 }
                 else
@@ -815,16 +853,32 @@ namespace Melon.LocalClasses
                 }
                 else if (property.Contains("Playlist"))
                 {
-                    if (type == "Contains")
+                    //if (type == "Contains")
+                    //{
+                    //    var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                    //    if (playlist == null)
+                    //    {
+                    //        continue;
+                    //    }
+                    //
+                    //    var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                    //    OrDefs.Add(Builders<Album>.Filter.AnyIn(x => x.Tracks.Select(x => x._id), tracks));
+                    //}
+                }
+                else if (property.Contains("AlbumArtists"))
+                {
+                    if (type == "Eq")
                     {
-                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
-                        if (playlist == null)
-                        {
-                            continue;
-                        }
-
-                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
-                        OrDefs.Add(Builders<Album>.Filter.AnyIn(x => x.Tracks.Select(x => x._id), tracks));
+                        var f = Builders<Album>.Filter.ElemMatch(x => x.AlbumArtists, artist => artist._id == value);
+                        OrDefs.Add(f);
+                    }
+                }
+                else if (property.Contains("ContributingArtists"))
+                {
+                    if (type == "Eq")
+                    {
+                        var f = Builders<Album>.Filter.ElemMatch(x => x.ContributingArtists, artist => artist._id == value);
+                        OrDefs.Add(f);
                     }
                 }
                 else
@@ -1072,20 +1126,20 @@ namespace Melon.LocalClasses
                         AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
                     }
                 }
-                else if (property.Contains("Playlist"))
-                {
-                    if (type == "Contains")
-                    {
-                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
-                        if (playlist == null)
-                        {
-                            continue;
-                        }
-
-                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
-                        AndDefs.Add(Builders<Artist>.Filter.AnyIn(x => x.Tracks.Select(x => x._id), tracks));
-                    }
-                }
+                //else if (property.Contains("Playlist"))
+                //{
+                //    if (type == "Contains")
+                //    {
+                //        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                //        if (playlist == null)
+                //        {
+                //            continue;
+                //        }
+                //
+                //        var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                //        AndDefs.Add(Builders<Artist>.Filter.AnyIn(x => x.Tracks.Select(x => x._id), tracks));
+                //    }
+                //}
                 else
                 {
                     if (property.Contains("Date") || property.Contains("Modified"))
@@ -1157,20 +1211,20 @@ namespace Melon.LocalClasses
                         OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
                     }
                 }
-                else if (property.Contains("Playlist"))
-                {
-                    if (type == "Contains")
-                    {
-                        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
-                        if (playlist == null)
-                        {
-                            continue;
-                        }
-
-                        var tracks = playlist.Tracks.Select(x => x._id).ToList();
-                        OrDefs.Add(Builders<Artist>.Filter.AnyIn(x => x.Tracks.Select(x => x._id), tracks));
-                    }
-                }
+                //else if (property.Contains("Playlist"))
+                //{
+                //    if (type == "Contains")
+                //    {
+                //        var playlist = PlaylistsCollection.Find(Builders<Playlist>.Filter.Eq(x => x._id, value)).FirstOrDefault();
+                //        if (playlist == null)
+                //        {
+                //            continue;
+                //        }
+                //
+                //        var tracks = playlist.Tracks.Select(x => x._id).ToList();
+                //        OrDefs.Add(Builders<Artist>.Filter.AnyIn(x => x.Tracks.Select(x => x._id), tracks));
+                //    }
+                //}
                 else
                 {
                     if (property.Contains("Date") || property.Contains("Modified"))
