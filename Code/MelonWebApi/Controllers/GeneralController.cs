@@ -321,7 +321,8 @@ namespace MelonWebApi.Controllers
             }
 
             args.SendEvent("album tracks sent", 200, Program.mWebApi);
-            return new ObjectResult(tracks.GetRange((int)(page * count), (int)count).ToList()) { StatusCode = 200 };
+
+            return new ObjectResult(tracks) { StatusCode = 200 };
         }
 
         // Artists
