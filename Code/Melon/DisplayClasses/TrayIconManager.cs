@@ -106,7 +106,12 @@ namespace Melon.DisplayClasses
                 },
             };
             trayIcon.Create();
-            trayIcon.Removed += (_, _) => Log.Warning("TrayIcon Removed");
+            trayIcon.Removed += TrayIcon_Removed;
+        }
+
+        private static void TrayIcon_Removed(object? sender, EventArgs e)
+        {
+            Log.Warning("TrayIcon Removed");
         }
         public static void RemoveIcon()
         {

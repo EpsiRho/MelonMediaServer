@@ -675,7 +675,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get-track")]
-        public ObjectResult GetTrackByIndex(string id, int index)
+        public ObjectResult GetTrackByIndex(string id, uint index)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -714,7 +714,7 @@ namespace MelonWebApi.Controllers
             queue.LastListen = DateTime.Now.ToUniversalTime();
             QCollection.ReplaceOne(qFilter, queue);
 
-            var tracks = Queues[0].Tracks.Take(new Range(index, index + 1));
+            var tracks = Queues[0].Tracks.Take(new Range((int)index, (int)index + 1));
 
             var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
                                                             .Exclude(x => x.LyricsPath);

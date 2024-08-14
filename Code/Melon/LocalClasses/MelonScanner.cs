@@ -5,6 +5,7 @@ using Melon.Models;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 using Pastel;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -567,6 +568,10 @@ namespace Melon.LocalClasses
 
                 // Check if the album exists, if it does, update it, otherwise create a new album
                 var foundAlbum = albums.Values.FirstOrDefault(x => x.Name == album.Name && x.AlbumArtists.Select(x => x.Name).Contains(artistName));
+                if(album.Name == "Alive")
+                {
+                    Debug.WriteLine("What");
+                }
                 if (foundAlbum == null)
                 {
                     var a = new Album()
@@ -719,7 +724,29 @@ namespace Melon.LocalClasses
             foreach (var track in tracks.Values)
             {
                 Track t = new Track(track);
-                t.Album = dbAlbums.Select(x => new DbLink() { _id = x._id, Name = x.Name }).FirstOrDefault(x => x.Name == t.Album.Name);
+                //TODO
+                var album = dbAlbums.FirstOrDefault(x => x.Name == t.Album.Name && x.AlbumArtists.Any(y => t.TrackArtists.Select(z => z.Name).Contains(y.Name)));
+                if (album == null)
+                {
+                    album = dbAlbums.FirstOrDefault(x => x.Name == t.Album.Name);
+                    if (album == null)
+                    {
+                        if(t.Album.Name != "")
+                        {
+                            album = new Album() { Name = t.Album.Name, _id = ObjectId.GenerateNewId().ToString() };
+                            dbAlbums.Add(album);
+                        }
+                        album = dbAlbums.FirstOrDefault(x => x.Name == "Ukwn");
+                        if (album == null)
+                        {
+                            album = new Album() { Name = "Ukwn", _id = ObjectId.GenerateNewId().ToString() };
+                            dbAlbums.Add(album);
+                        }
+                    }
+                }
+                t.Album = new DbLink(album);
+
+                //t.Album = dbAlbums.Select(x => new DbLink() { _id = x._id, Name = x.Name }).FirstOrDefault(x => x.Name == t.Album.Name);
                 for (int i = 0; i < t.TrackArtists.Count(); i++)
                 {
                     t.TrackArtists[i] = artists.Values.Where(x => x.Name == t.TrackArtists[i].Name).Select(x => new DbLink() { _id = x._id, Name = x.Name }).FirstOrDefault();
