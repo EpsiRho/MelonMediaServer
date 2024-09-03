@@ -33,6 +33,11 @@ namespace Melon.LocalClasses
                 var queues = collection.AsQueryable();
                 foreach(var queue in queues)
                 {
+                    if (queue.Favorite)
+                    {
+                        continue;
+                    }
+
                     var time = DateTime.Now.ToUniversalTime() - queue.LastListen;
                     if(time > TimeSpan.FromHours(StateManager.MelonSettings.QueueCleanupWaitInHours))
                     {

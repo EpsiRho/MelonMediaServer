@@ -98,7 +98,8 @@ namespace Melon.LocalClasses
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+            var rToken = tokenHandler.WriteToken(token);
+            return rToken;
         }
         public static string CreateInviteCode()
         {

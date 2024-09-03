@@ -1207,5 +1207,59 @@ namespace MelonWebApi.Controllers
             args.SendEvent("Tracks Shuffled", 200, Program.mWebApi);
             return new ObjectResult("Tracks Shuffled") { StatusCode = 200 };
         }
+        
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("favorite")]
+        public ObjectResult ToggleFavorite(string id)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/favorite", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
+            //var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+            var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
+            var queues = QCollection.Find(qFilter).ToList();
+            if (queues.Count() == 0)
+            {
+                args.SendEvent("Queue not found", 404, Program.mWebApi);
+                return new ObjectResult("Queue not found") { StatusCode = 404 };
+            }
+            var queue = queues[0];
+
+            if (queue.PublicEditing == false)
+            {
+                if (queue.Owner != curId && !queue.Editors.Contains(curId))
+                {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+            }
+
+            if (queue.Favorite)
+            {
+                queue.Favorite = false;
+                QCollection.ReplaceOne(qFilter, queue);
+                StreamManager.AlertQueueUpdate(queue._id);
+                args.SendEvent("Queue Unfavorited", 200, Program.mWebApi);
+                return new ObjectResult("Queue Unfavorited") { StatusCode = 200 };
+            }
+            else
+            {
+                queue.Favorite = true;
+                QCollection.ReplaceOne(qFilter, queue);
+                StreamManager.AlertQueueUpdate(queue._id);
+                args.SendEvent("Queue Favorited", 200, Program.mWebApi);
+                return new ObjectResult("Queue Favorited") { StatusCode = 200 };
+            }
+        }
+
     }
 }
