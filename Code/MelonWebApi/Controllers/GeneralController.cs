@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Web.Http.Filters;
 using MongoDB.Bson.Serialization;
 using System.Security.Claims;
+using MelonLib.API;
 
 namespace MelonWebApi.Controllers
 {
@@ -184,8 +185,7 @@ namespace MelonWebApi.Controllers
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             var albumFilter = Builders<Album>.Filter.Eq("_id", id);
-            var albumProjection = Builders<Album>.Projection.Exclude(x=>x.AlbumArtPaths)
-                                                            .Exclude(x=>x.Tracks);
+            var albumProjection = Builders<Album>.Projection.Exclude(x=>x.AlbumArtPaths);
             var albumDocs = AlbumsCollection.Find(albumFilter).Project(albumProjection)
                                             .ToList();
 
@@ -246,8 +246,7 @@ namespace MelonWebApi.Controllers
             foreach (var id in ids)
             {
                 var albumFilter = Builders<Album>.Filter.Eq("_id", id);
-                var albumProjection = Builders<Album>.Projection.Exclude(x => x.AlbumArtPaths)
-                                                            .Exclude(x => x.Tracks);
+                var albumProjection = Builders<Album>.Projection.Exclude(x => x.AlbumArtPaths);
                 var albumDocs = AlbumCollection.Find(albumFilter).Project(albumProjection)
                                                 .ToList();
 
@@ -267,7 +266,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album/tracks")]
-        public ObjectResult GetAlbumTracks(string id, int page = 0, int count = 100)
+        public ObjectResult GetAlbumTracks(string id, int page = 0, int count = 100, string sort = "AlbumPositionAsc")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -297,26 +296,7 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
 
-            count = count <= album.Tracks.Count() ? count : album.Tracks.Count();
-
-            List<string> ids = new List<string>();
-            try
-            {
-                ids = album.Tracks.GetRange((int)(page * count), (int)count).Select(x => x._id).ToList();
-            }
-            catch (Exception)
-            {
-                return new ObjectResult("page or count lead to out of bounds index") { StatusCode = 400 };
-            }
-
-            var filter = Builders<Track>.Filter.In("_id", ids);
-            var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
-                                                    .Exclude(x => x.LyricsPath);
-            var trackDocs = TracksCollection.Find(filter).Project(trackProjection)
-                                            .SortBy(track => track.Disc).ThenBy(track => track.Position)
-                                            .ToList();
-
-            var tracks = trackDocs.Select(x => BsonSerializer.Deserialize<ResponseTrack>(x)).ToList();
+            var tracks = MelonAPI.FindTracks(new List<string>() { $"Album._id;Eq;{id}" }, null, curId, page, count, sort);
 
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
@@ -341,6 +321,7 @@ namespace MelonWebApi.Controllers
             }
 
             args.SendEvent("album tracks sent", 200, Program.mWebApi);
+
             return new ObjectResult(tracks) { StatusCode = 200 };
         }
 
@@ -365,9 +346,6 @@ namespace MelonWebApi.Controllers
             var artistFilter = Builders<Artist>.Filter.Eq(x=>x._id, id);
             var artistProjection = Builders<Artist>.Projection.Exclude(x => x.ArtistBannerPaths)
                                                               .Exclude(x => x.ArtistPfpPaths)
-                                                              .Exclude(x => x.Releases)
-                                                              .Exclude(x => x.SeenOn)
-                                                              .Exclude(x => x.Tracks)
                                                               .Exclude(x => x.ConnectedArtists);
             var artistDocs = ArtistCollection.Find(artistFilter).Project(artistProjection)
                                             .ToList();
@@ -417,9 +395,6 @@ namespace MelonWebApi.Controllers
                 var artistFilter = Builders<Artist>.Filter.Eq(x => x._id, id);
                 var artistProjection = Builders<Artist>.Projection.Exclude(x => x.ArtistBannerPaths)
                                                                   .Exclude(x => x.ArtistPfpPaths)
-                                                                  .Exclude(x => x.Releases)
-                                                                  .Exclude(x => x.SeenOn)
-                                                                  .Exclude(x => x.Tracks)
                                                                   .Exclude(x => x.ConnectedArtists);
                 var albumDocs = ArtistCollection.Find(artistFilter).Project(artistProjection)
                                                 .ToList();
@@ -452,7 +427,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/tracks")]
-        public ObjectResult GetArtistTracks(string id, uint page = 0, uint count = 100)
+        public ObjectResult GetArtistTracks(string id, int page = 0, int count = 100, string sort = "ReleaseDateDesc")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -485,36 +460,37 @@ namespace MelonWebApi.Controllers
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
-            List<ResponseTrack> tracks = new List<ResponseTrack>();
-            for (uint i = (page * count); i < ((page * count) + count); i++)
+            List<ResponseTrack> fixedTracks = new List<ResponseTrack>();
+            //var f = Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, artist => artist._id == id);
+            //var tracks = TracksCollection.Find(f).ToList();
+            var tracks = MelonAPI.FindTracks(new List<string>() { $"TrackArtists;Eq;{id}" }, null, curId, page, count, sort);
+
+            if(tracks == null)
+            {
+                args.SendEvent("No tracks found", 404, Program.mWebApi);
+                return new ObjectResult("No Tracks Found") { StatusCode = 404 };
+            }
+
+            foreach (var track in tracks)
             {
                 try
                 {
-                    var filter = Builders<Track>.Filter.Eq(x => x._id, artist.Tracks[(int)i]._id);
-                    var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
-                                                            .Exclude(x => x.LyricsPath);
-                    var trackDocs = TracksCollection.Find(filter).Project(trackProjection)
-                                                    .ToList();
-
-                    var fullTrack = trackDocs.Select(x => BsonSerializer.Deserialize<ResponseTrack>(x)).FirstOrDefault();
-
-
-                    if (fullTrack.PlayCounts != null)
+                    if (track.PlayCounts != null)
                     {
-                        fullTrack.PlayCounts = fullTrack.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                        track.PlayCounts = track.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
                     }
 
-                    if (fullTrack.SkipCounts != null)
+                    if (track.SkipCounts != null)
                     {
-                        fullTrack.SkipCounts = fullTrack.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                        track.SkipCounts = track.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList();
                     }
 
-                    if (fullTrack.Ratings != null)
+                    if (track.Ratings != null)
                     {
-                        fullTrack.Ratings = fullTrack.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
+                        track.Ratings = track.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
                     }
 
-                    tracks.Add(fullTrack);
+                    fixedTracks.Add(new ResponseTrack(track));
                 }
                 catch (Exception)
                 {
@@ -523,11 +499,11 @@ namespace MelonWebApi.Controllers
             }
 
             args.SendEvent("Artist tracks sent", 200, Program.mWebApi);
-            return new ObjectResult(tracks) { StatusCode = 200 };
+            return new ObjectResult(fixedTracks) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/releases")]
-        public ObjectResult GetArtistReleases(string id, uint page = 0, uint count = 100)
+        public ObjectResult GetArtistReleases(string id, int page = 0, int count = 100, string sort = "ReleaseDateDesc")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -560,36 +536,32 @@ namespace MelonWebApi.Controllers
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
-            List<ResponseAlbum> albums = new List<ResponseAlbum>();
-            for (uint i = (page * count); i < ((page * count) + count); i++)
+            List<ResponseAlbum> fixedAlbums = new List<ResponseAlbum>();
+            //var f = Builders<Album>.Filter.ElemMatch(x => x.AlbumArtists, artist => artist._id == id);
+            //var albums = AlbumCollection.Find(f).ToList();
+
+            var albums = MelonAPI.FindAlbums(new List<string>() { $"AlbumArtists;Eq;{id}" }, null, curId, page, count, sort);
+
+            foreach (var album in albums)
             {
                 try
                 {
-                    var filter = Builders<Album>.Filter.Eq(x => x._id, artist.Releases[(int)i]._id);
-                    var albumProjection = Builders<Album>.Projection.Exclude(x => x.AlbumArtPaths)
-                                                                    .Exclude(x => x.Tracks);
-                    var albumDocs = AlbumCollection.Find(filter).Project(albumProjection)
-                                                   .ToList();
-
-                    var fullAlbum = albumDocs.Select(x => BsonSerializer.Deserialize<ResponseAlbum>(x)).FirstOrDefault();
-
-
-                    if (fullAlbum.PlayCounts != null)
+                    if (album.PlayCounts != null)
                     {
-                        fullAlbum.PlayCounts = fullAlbum.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                        album.PlayCounts = album.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
                     }
 
-                    if (fullAlbum.SkipCounts != null)
+                    if (album.SkipCounts != null)
                     {
-                        fullAlbum.SkipCounts = fullAlbum.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                        album.SkipCounts = album.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList();
                     }
 
-                    if (fullAlbum.Ratings != null)
+                    if (album.Ratings != null)
                     {
-                        fullAlbum.Ratings = fullAlbum.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
+                        album.Ratings = album.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
                     }
 
-                    albums.Add(fullAlbum);
+                    fixedAlbums.Add(new ResponseAlbum(album));
                 }
                 catch (Exception)
                 {
@@ -602,7 +574,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/seen-on")]
-        public ObjectResult GetArtistSeenOn(string id, uint page = 0, uint count = 100)
+        public ObjectResult GetArtistSeenOn(string id, int page = 0, int count = 100, string sort = "ReleaseDateDesc")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -618,6 +590,7 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
             var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
+            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var UsersCollection = mongoDatabase.GetCollection<User>("Users");
 
             var artistFilter = Builders<Artist>.Filter.Eq(x=>x._id, id);
@@ -635,36 +608,32 @@ namespace MelonWebApi.Controllers
             var userIds = new HashSet<string>(UsersCollection.Find(Builders<User>.Filter.Eq(x => x.PublicStats, true)).ToList().Select(x => x._id));
             userIds.Add(curId);
 
-            List<ResponseAlbum> albums = new List<ResponseAlbum>();
-            for (uint i = (page * count); i < ((page * count) + count); i++)
+            List<ResponseAlbum> fixedAlbums = new List<ResponseAlbum>();
+            //var f = Builders<Album>.Filter.ElemMatch(x => x.ContributingArtists, artist => artist._id == id);
+            //var albums = AlbumCollection.Find(f).ToList();
+
+            var albums = MelonAPI.FindAlbums(new List<string>() { $"ContributingArtists;Eq;{id}" }, null, curId, page, count, sort);
+
+            foreach (var album in albums)
             {
                 try
                 {
-                    var filter = Builders<Album>.Filter.Eq(x => x._id, artist.SeenOn[(int)i]._id);
-                    var albumProjection = Builders<Album>.Projection.Exclude(x => x.AlbumArtPaths)
-                                                                    .Exclude(x => x.Tracks);
-                    var albumDocs = AlbumCollection.Find(filter).Project(albumProjection)
-                                                   .ToList();
-
-                    var fullAlbum = albumDocs.Select(x => BsonSerializer.Deserialize<ResponseAlbum>(x)).FirstOrDefault();
-
-
-                    if (fullAlbum.PlayCounts != null)
+                    if (album.PlayCounts != null)
                     {
-                        fullAlbum.PlayCounts = fullAlbum.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                        album.PlayCounts = album.PlayCounts.Where(x => userIds.Contains(x.UserId)).ToList();
                     }
 
-                    if (fullAlbum.SkipCounts != null)
+                    if (album.SkipCounts != null)
                     {
-                        fullAlbum.SkipCounts = fullAlbum.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList();
+                        album.SkipCounts = album.SkipCounts.Where(x => userIds.Contains(x.UserId)).ToList();
                     }
 
-                    if (fullAlbum.Ratings != null)
+                    if (album.Ratings != null)
                     {
-                        fullAlbum.Ratings = fullAlbum.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
+                        album.Ratings = album.Ratings.Where(x => userIds.Contains(x.UserId)).ToList();
                     }
 
-                    albums.Add(fullAlbum);
+                    fixedAlbums.Add(new ResponseAlbum(album));
                 }
                 catch (Exception)
                 {
@@ -673,7 +642,7 @@ namespace MelonWebApi.Controllers
             }
 
             args.SendEvent("Artist seen-on sent", 200, Program.mWebApi);
-            return new ObjectResult(albums) { StatusCode = 200 };
+            return new ObjectResult(fixedAlbums) { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist/connections")]
@@ -719,9 +688,6 @@ namespace MelonWebApi.Controllers
                     var filter = Builders<Artist>.Filter.Eq(x => x._id, artist.ConnectedArtists[(int)i]._id);
                     var artistProjection = Builders<Artist>.Projection.Exclude(x => x.ArtistBannerPaths)
                                                               .Exclude(x => x.ArtistPfpPaths)
-                                                              .Exclude(x => x.Releases)
-                                                              .Exclude(x => x.SeenOn)
-                                                              .Exclude(x => x.Tracks)
                                                               .Exclude(x => x.ConnectedArtists);
                     var connDocs = ArtistsCollection.Find(filter).Project(artistProjection)
                                                    .ToList();

@@ -20,10 +20,7 @@ namespace Melon.Models
         public List<string> ArtistBannerPaths { get; set; }
         public List<string> Genres { get; set; }
         public DateTime DateAdded { get; set; }
-        public List<DbLink> Releases { get; set; }
-        public List<DbLink> SeenOn { get; set; }
         public List<DbLink> ConnectedArtists { get; set; }
-        public List<DbLink> Tracks { get; set; }
         public Artist()
         {
 
@@ -35,10 +32,7 @@ namespace Melon.Models
             Bio = "";
             Ratings = new List<UserStat>();
             DateAdded = DateTime.Now.ToUniversalTime();
-            Releases = new List<DbLink>();
             Genres = new List<string>();
-            SeenOn = new List<DbLink>();
-            Tracks = new List<DbLink>();
             ConnectedArtists = new List<DbLink>();
             ArtistBannerArtCount = 0;
             ArtistPfpArtCount = 0;
@@ -57,10 +51,7 @@ namespace Melon.Models
             Bio = "";
             Ratings = new List<UserStat>();
             DateAdded = DateTime.Now.ToUniversalTime();
-            Releases = new List<DbLink>();
             Genres = new List<string>();
-            SeenOn = new List<DbLink>();
-            Tracks = new List<DbLink>();
             ConnectedArtists = new List<DbLink>();
             ArtistBannerArtCount = 0;
             ArtistPfpArtCount = 0;

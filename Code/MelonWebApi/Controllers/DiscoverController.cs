@@ -29,7 +29,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpGet("tracks")]
-        public ObjectResult DiscoverTracks([FromQuery] List<string> ids, bool orderByFavorites = false, bool orderByDiscovery = false, int count = 100, 
+        public ObjectResult DiscoverTracks([FromQuery] List<string> ids, bool orderByFavorites = false, bool orderByDiscovery = false, int count = 100,
                                            bool enableTrackLinks = true, bool includeArtists = true, bool includeGenres = true)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
@@ -93,7 +93,8 @@ namespace MelonWebApi.Controllers
 
                 foreach (var artist in artists)
                 {
-                    foreach (var track in artist.Tracks)
+                    var artistTracks = TracksCollection.Find(x => x.TrackArtists.Any(y=>y._id == artist._id)).ToList();
+                    foreach (var track in artistTracks)
                     {
                         NewTrackIds.Add(track._id);
                     }
@@ -133,11 +134,12 @@ namespace MelonWebApi.Controllers
             count = count <= finalTracks.Count ? count : finalTracks.Count;
 
             args.SendEvent("Sent a List of Tracks", 200, Program.mWebApi);
-            return new ObjectResult(finalTracks.Slice(0,count).Select(x=>new ResponseTrack(x))) { StatusCode = 200 };
+            return new ObjectResult(finalTracks.Slice(0, count).Select(x => new ResponseTrack(x))) { StatusCode = 200 };
+            return new ObjectResult("") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("albums")]
-        public ObjectResult DiscoverAlbums([FromQuery] List<string> ids, bool shuffle = true, int count = 100, int page = 0, 
+        public ObjectResult DiscoverAlbums([FromQuery] List<string> ids, bool shuffle = true, int count = 100, int page = 0,
                                            bool includeArtists = true, bool includeGenres = true)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
@@ -190,11 +192,13 @@ namespace MelonWebApi.Controllers
 
                 foreach (var artist in artists)
                 {
-                    foreach (var album in artist.Releases)
+                    var artistReleases = AlbumsCollection.Find(x => x.AlbumArtists.Any(x=>x._id == artist._id)).ToList();
+                    foreach (var album in artistReleases)
                     {
                         NewAlbumIds.Add(album._id);
                     }
-                    foreach (var album in artist.SeenOn)
+                    var artistSeenOns = AlbumsCollection.Find(x => x.ContributingArtists.Any(x => x._id == artist._id)).ToList();
+                    foreach (var album in artistSeenOns)
                     {
                         NewAlbumIds.Add(album._id);
                     }
@@ -211,11 +215,13 @@ namespace MelonWebApi.Controllers
                 {
                     if (!artists.Where(x => x._id == artist._id).Any())
                     {
-                        foreach (var album in artist.Releases)
+                        var artistReleases = AlbumsCollection.Find(x => x.AlbumArtists.Any(x => x._id == artist._id)).ToList();
+                        foreach (var album in artistReleases)
                         {
                             NewAlbumIds.Add(album._id);
                         }
-                        foreach (var album in artist.SeenOn)
+                        var artistSeenOns = AlbumsCollection.Find(x => x.ContributingArtists.Any(x => x._id == artist._id)).ToList();
+                        foreach (var album in artistSeenOns)
                         {
                             NewAlbumIds.Add(album._id);
                         }
@@ -273,11 +279,12 @@ namespace MelonWebApi.Controllers
             count = count <= finalAlbums.Count ? count : finalAlbums.Count;
             var end = (count * page) + count <= finalAlbums.Count ? (count * page) + count : finalAlbums.Count;
             args.SendEvent("Sent a List of DbLinks", 200, Program.mWebApi);
-            return new ObjectResult(finalAlbums.Take(new Range(count*page, end)).Select(x=>new DbLink(x))) { StatusCode = 200 };
+            return new ObjectResult(finalAlbums.Take(new Range(count * page, end)).Select(x => new DbLink(x))) { StatusCode = 200 };
+            return new ObjectResult("") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("artists")]
-        public ObjectResult DiscoverArtists([FromQuery] List<string> ids, int count = 100, int page = 0, bool shuffle = true, 
+        public ObjectResult DiscoverArtists([FromQuery] List<string> ids, int count = 100, int page = 0, bool shuffle = true,
                                             bool includeConnections = true, bool includeGenres = true)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
@@ -313,7 +320,7 @@ namespace MelonWebApi.Controllers
             Dictionary<DbLink, double> finalArtists = new Dictionary<DbLink, double>();
             if (includeConnections)
             {
-                finalArtists.AddRange(Artists.Select(x=>KeyValuePair.Create(x,0.2)));
+                finalArtists.AddRange(Artists.Select(x => KeyValuePair.Create(x, 0.2)));
             }
 
             if (includeGenres)
@@ -322,7 +329,7 @@ namespace MelonWebApi.Controllers
                 var genreBasedArtists = ArtistsCollection.Find(genrefilter).ToList();
 
                 genreBasedArtists = genreBasedArtists.Where(x => ids.Contains(x._id) == false).ToList();
-                finalArtists.AddRange(genreBasedArtists.Select(x=> KeyValuePair.Create(new DbLink(x), 0.0)));
+                finalArtists.AddRange(genreBasedArtists.Select(x => KeyValuePair.Create(new DbLink(x), 0.0)));
             }
 
             string username = User.Identity.Name;
@@ -334,7 +341,7 @@ namespace MelonWebApi.Controllers
                                            .Select(item => item)
                                            .ToList();
 
-                return new ObjectResult(shuffledArtists.Take(new Range(count * page, end)).Select(x=>x.Key)) { StatusCode = 200 };
+                return new ObjectResult(shuffledArtists.Take(new Range(count * page, end)).Select(x => x.Key)) { StatusCode = 200 };
             }
 
             args.SendEvent("Sent a List of DbLinks", 200, Program.mWebApi);
@@ -415,7 +422,8 @@ namespace MelonWebApi.Controllers
 
                 foreach (var artist in artists)
                 {
-                    foreach (var track in artist.Tracks)
+                    var artistTracks = TracksCollection.Find(x => x.TrackArtists.Any(x => x._id == artist._id)).ToList();
+                    foreach (var track in artistTracks)
                     {
                         NewTrackIds.Add(track._id);
                     }
@@ -476,6 +484,7 @@ namespace MelonWebApi.Controllers
             count = count <= shuffledList.Count ? count : shuffledList.Count;
             args.SendEvent("Sent a List of DbLinks", 200, Program.mWebApi);
             return new ObjectResult(shuffledList.Slice(0, count).Select(x => new DbLink(x))) { StatusCode = 200 };
+            return new ObjectResult("") { StatusCode = 200 };
         }
     }
 }

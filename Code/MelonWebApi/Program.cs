@@ -29,6 +29,7 @@ using Microsoft.Identity.Client;
 using System.Runtime.Versioning;
 using Melon.PluginModels;
 using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.Options;
 namespace MelonWebApi
 {
     public static class Program
@@ -219,6 +220,29 @@ namespace MelonWebApi
                                 ValidateIssuer = false,
                                 ValidateAudience = false
                             };
+                            x.Events = new JwtBearerEvents
+                            {
+                                OnMessageReceived = context =>
+                                {
+                                    // First, check if the token is present in the Authorization header
+                                    var authHeader = context.Request.Headers["Authorization"].ToString();
+                                    if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                                    }
+                                    else
+                                    {
+                                        // If not found, check if the token is present in the query string
+                                        var token = context.Request.Query["jwt"];
+                                        if (!string.IsNullOrEmpty(token))
+                                        {
+                                            context.Token = token;
+                                        }
+                                    }
+
+                                    return Task.CompletedTask;
+                                }
+                            };
                         });
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen(c =>
@@ -266,7 +290,7 @@ namespace MelonWebApi
 
                 app = builder.Build();
 
-                app.UseMiddleware<JwtMiddleware>();
+                //app.UseMiddleware<JwtMiddleware>();
                 app.UseAuthentication();
                 app.UseAuthorization();
                 app.UseHttpsRedirection();

@@ -92,29 +92,14 @@ namespace MelonWebApi.Controllers
             {
                 var aFilter = Builders<Album>.Filter.Eq(x=>x._id, albumId);
                 newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
+
                 if (newAlbum == null)
                 {
                     args.SendEvent("Album Not Found", 404, Program.mWebApi);
                     return new ObjectResult("Album Not Found") { StatusCode = 404 };
                 }
-                newAlbum.Tracks.Add(new DbLink(foundTrack));
-                var tFilter = Builders<Track>.Filter.In(a => a._id, newAlbum.Tracks.Select(x => x._id));
-                var fullTracks = TracksCollection.Find(tFilter).ToList();
-                newAlbum.Tracks = fullTracks.OrderBy(x => x.Disc).ThenBy(x => x.Position).Select(x=>new DbLink() { _id = x._id, Name = x.Name }).ToList();
+
                 newShortAlbum = new DbLink(newAlbum);
-                AlbumsCollection.ReplaceOne(aFilter, newAlbum);
-
-                try
-                {
-                    var bFilter = Builders<Album>.Filter.Eq(x => x._id, foundTrack.Album._id);
-                    var oldAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
-                    oldAlbum.Tracks.Remove(new DbLink(foundTrack));
-                    AlbumsCollection.ReplaceOne(bFilter, oldAlbum);
-                }
-                catch (Exception)
-                {
-
-                }
             }
             else
             {
@@ -132,35 +117,10 @@ namespace MelonWebApi.Controllers
                         args.SendEvent("Artist Not Found", 404, Program.mWebApi);
                         return new ObjectResult("Artist Not Found") { StatusCode = 404 };
                     }
-
-                    var items = (from artist in foundTrack.TrackArtists
-                                where artist._id == id
-                                select id).ToList();
-                    if (items.Count() == 0) 
-                    {
-                        newArtist.Tracks.Add(new DbLink(foundTrack));
-                        ArtistsCollection.ReplaceOne(aFilter, newArtist);
-                    }
+                    newShortArtists.Add(new DbLink(newArtist));
 
                     newArtists.Add(newArtist);
                     newShortArtists.Add(new DbLink(newArtist));
-                }
-                var missing = (from artist in foundTrack.TrackArtists
-                              where !artistIds.Contains(artist._id)
-                              select artist).ToList();
-                foreach(var mArtist in missing)
-                {
-                    try
-                    {
-                        var aFilter = Builders<Artist>.Filter.Eq(x => x._id, mArtist._id);
-                        var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
-                        newArtist.Tracks.Remove(new DbLink(foundTrack));
-                        ArtistsCollection.ReplaceOne(aFilter, newArtist);
-                    }
-                    catch(Exception ex)
-                    {
-
-                    }
                 }
             }
             else
@@ -209,13 +169,6 @@ namespace MelonWebApi.Controllers
 
             // Replace objects
             TracksCollection.ReplaceOne(trackFilter, newTrack);
-            var albumFilter = Builders<Album>.Filter.ElemMatch(x => x.Tracks, Builders<DbLink>.Filter.Eq(x => x._id, foundTrack._id));
-            var artistFilter = Builders<Artist>.Filter.ElemMatch(x => x.Tracks, Builders<DbLink>.Filter.Eq(x => x._id, foundTrack._id));
-            var albumnUpdate = Builders<Album>.Update.Set("Tracks.$", newShortTrack);
-            var artistUpdate = Builders<Artist>.Update.Set("Tracks.$", newShortTrack);
-
-            AlbumsCollection.UpdateMany(albumFilter, albumnUpdate);
-            ArtistsCollection.UpdateMany(artistFilter, artistUpdate);
 
             // Update File
             var fileMetadata = new ATL.Track(foundTrack.Path);
@@ -368,7 +321,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPatch("album/update")]
-        public ObjectResult UpdateAlbum(string albumId, [FromQuery] string[] trackIds = null, string totalDiscs = "", string totalTracks = "", string releaseDate = "", string albumName = "",
+        public ObjectResult UpdateAlbum(string albumId, string totalDiscs = "", string totalTracks = "", string releaseDate = "", string albumName = "",
                                         [FromQuery] string[] albumGenres = null, string bio = "", string publisher = "", string releaseStatus = "", string releaseType = "", int defaultAlbumArt = -1,
                                         [FromQuery] string[] contributingAristsIds = null, [FromQuery] string[] albumArtistIds = null)
         {
@@ -378,7 +331,6 @@ namespace MelonWebApi.Controllers
             var args = new WebApiEventArgs("api/album/update", curId, new Dictionary<string, object>()
             {
                 { "albumId", albumId },
-                { "trackIds", trackIds },
                 { "totalDiscs", totalDiscs },
                 { "totalTracks", totalTracks },
                 { "releaseDate", releaseDate },
@@ -427,34 +379,8 @@ namespace MelonWebApi.Controllers
                         return new ObjectResult("Artist Not Found") { StatusCode = 404 };
                     }
 
-                    var items = (from artist in foundAlbum.AlbumArtists
-                                   where artist._id == id
-                                   select artist).ToList();
-                    if(items.Count() == 0)
-                    {
-                        newArtist.Releases.Add(new DbLink(foundAlbum));
-                        ArtistsCollection.ReplaceOne(aFilter, newArtist);
-                    }
-
                     newAlbumArtists.Add(newArtist);
                     newAlbumShortArtists.Add(new DbLink(newArtist));
-                }
-                var missing = (from artist in foundAlbum.AlbumArtists
-                               where !albumArtistIds.Contains(artist._id)
-                               select artist).ToList();
-                foreach (var mArtist in missing)
-                {
-                    try
-                    {
-                        var aFilter = Builders<Artist>.Filter.Eq(x => x._id, mArtist._id);
-                        var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
-                        newArtist.Releases.Remove(new DbLink(foundAlbum));
-                        ArtistsCollection.ReplaceOne(aFilter, newArtist);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
                 }
             }
             else
@@ -474,34 +400,8 @@ namespace MelonWebApi.Controllers
                         return new ObjectResult("Artist Not Found") { StatusCode = 404 };
                     }
 
-                    var items = (from artist in foundAlbum.ContributingArtists
-                                 where artist._id == id
-                                 select artist).ToList();
-                    if (items.Count() == 0)
-                    {
-                        newArtist.SeenOn.Add(new DbLink(foundAlbum));
-                        ArtistsCollection.ReplaceOne(aFilter, newArtist);
-                    }
-
                     newConArtists.Add(newArtist);
                     newConShortArtists.Add(new DbLink(newArtist));
-                }
-                var missing = (from artist in foundAlbum.ContributingArtists
-                               where !albumArtistIds.Contains(artist._id)
-                               select artist).ToList();
-                foreach (var mArtist in missing)
-                {
-                    try
-                    {
-                        var aFilter = Builders<Artist>.Filter.Eq(x => x._id, mArtist._id);
-                        var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
-                        newArtist.SeenOn.Remove(new DbLink(foundAlbum));
-                        ArtistsCollection.ReplaceOne(aFilter, newArtist);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
                 }
             }
             else
@@ -525,60 +425,10 @@ namespace MelonWebApi.Controllers
                 Name = albumName
             };
 
-            if (trackIds != null)
-            {
-                foreach (var id in trackIds)
-                {
-                    var tFilter = Builders<Track>.Filter.Eq(x => x._id, id);
-                    var newTrack = TracksCollection.Find(tFilter).FirstOrDefault();
-                    if (newTrack == null)
-                    {
-                        args.SendEvent("Track Not Found", 404, Program.mWebApi);
-                        return new ObjectResult("Track Not Found") { StatusCode = 404 };
-                    }
-
-                    var items = (from track in foundAlbum.Tracks
-                                 where track._id == id
-                                 select track).ToList();
-                    if (items.Count() == 0)
-                    {
-                        newTrack.Album = newShortAlbum;
-                        TracksCollection.ReplaceOne(tFilter, newTrack);
-                    }
-
-                    newTracks.Add(newTrack);
-                    newShortTracks.Add(new DbLink(newTrack));
-                }
-                var missing = (from track in foundAlbum.Tracks
-                               where !trackIds.Contains(track._id)
-                               select track).ToList();
-                foreach (var mTrack in missing)
-                {
-                    try
-                    {
-                        var tFilter = Builders<Track>.Filter.Eq(x => x._id, mTrack._id);
-                        var newTrack = TracksCollection.Find(tFilter).FirstOrDefault();
-                        newTrack.Album = null;
-                        TracksCollection.ReplaceOne(tFilter, newTrack);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-                }
-            }
-            else
-            {
-                newShortTracks.AddRange(foundAlbum.Tracks);
-            }
-
-            
-
             if (albumGenres == null)
             {
                 albumGenres = foundAlbum.AlbumGenres.ToArray();
             }
-
 
             // Create new objects
             var newAlbum = new Album()
@@ -601,66 +451,21 @@ namespace MelonWebApi.Controllers
                 ServerURL = foundAlbum.ServerURL,
                 TotalDiscs = Convert.ToInt32(totalDiscs),
                 TotalTracks = Convert.ToInt32(totalTracks),
-                Tracks = newShortTracks.ToList(),
                 AlbumArtDefault = defaultAlbumArt,
                 AlbumArtCount = foundAlbum.AlbumArtCount
             };
-
-            
 
             // Replace objects
             AlbumsCollection.ReplaceOne(albumFilter, newAlbum);
 
             var trackFilter = Builders<Track>.Filter.Eq(x => x.Album._id, foundAlbum._id);
-            var artistFilter = Builders<Artist>.Filter.ElemMatch(x => x.Releases, Builders<DbLink>.Filter.Eq(x => x._id, foundAlbum._id));
-            var conArtistFilter = Builders<Artist>.Filter.ElemMatch(x => x.SeenOn, Builders<DbLink>.Filter.Eq(x => x._id, foundAlbum._id));
             var trackUpdate = Builders<Track>.Update.Set(x=>x.Album, newShortAlbum);
             var artistUpdate = Builders<Artist>.Update.Set("Releases.$", newShortAlbum);
             var conArtistUpdate = Builders<Artist>.Update.Set("SeenOn.$", newShortAlbum);
 
             TracksCollection.UpdateMany(trackFilter, trackUpdate);
-            ArtistsCollection.UpdateMany(artistFilter, artistUpdate);
-            ArtistsCollection.UpdateMany(conArtistFilter, conArtistUpdate);
 
-            // Update File
-            Task.Run(() =>
-            {
-                var ftFilter = Builders<Track>.Filter.In(a => a._id, newAlbum.Tracks.Select(x => x._id));
-                var fullTracks = TracksCollection.Find(ftFilter).ToList();
-                foreach (var track in fullTracks)
-                {
-                    var fileMetadata = new ATL.Track(track.Path);
-
-                    fileMetadata.DiscTotal = totalDiscs == "" ? fileMetadata.DiscTotal : Convert.ToInt32(totalDiscs);
-                    fileMetadata.TrackTotal = totalTracks == "" ? fileMetadata.TrackTotal : Convert.ToInt32(totalTracks);
-                    fileMetadata.Album = albumName == "" ? fileMetadata.Album : albumName;
-                    fileMetadata.Publisher = publisher == "" ? fileMetadata.Publisher : publisher;
-
-                    if (!fileMetadata.AdditionalFields.ContainsKey("RELEASETYPE"))
-                    {
-                        fileMetadata.AdditionalFields.Add("RELEASETYPE", releaseType);
-                    }
-                    fileMetadata.AdditionalFields["RELEASETYPE"] = releaseType == "" ? fileMetadata.AdditionalFields["RELEASETYPE"] : releaseType;
-                    if (!fileMetadata.AdditionalFields.ContainsKey("RELEASESTATUS"))
-                    {
-                        fileMetadata.AdditionalFields.Add("RELEASESTATUS", releaseType);
-                    }
-                    fileMetadata.AdditionalFields["RELEASESTATUS"] = releaseStatus == "" ? fileMetadata.AdditionalFields["RELEASESTATUS"] : releaseStatus;
-
-                    if (newAlbumArtists.Count() != 0)
-                    {
-                        string artistStr = "";
-                        foreach (var artist in newAlbumArtists)
-                        {
-                            artistStr += $"{artist.Name};";
-                        }
-                        artistStr = artistStr.Substring(0, artistStr.Length - 1);
-                        fileMetadata.AlbumArtist = artistStr;
-                    }
-
-                    fileMetadata.Save();
-                }
-            });
+            // TODO: Update File
 
             Thread t = new Thread(MelonScanner.UpdateCollections);
             t.Start();
@@ -671,8 +476,7 @@ namespace MelonWebApi.Controllers
         
         [Authorize(Roles = "Admin")]
         [HttpPatch("artist/update")]
-        public ObjectResult UpdateArtist(string artistId, [FromQuery] string[] trackIds = null, [FromQuery] string[] releaseIds = null, [FromQuery] string[] seenOnIds = null,
-                                         string artistName = "", string bio = "", [FromQuery] string[] artistGenres = null, int defaultArtistPfp = -1, int defaultArtistBanner = -1)
+        public ObjectResult UpdateArtist(string artistId, string artistName = "", string bio = "", [FromQuery] string[] artistGenres = null, int defaultArtistPfp = -1, int defaultArtistBanner = -1)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                         .Where(c => c.Type == ClaimTypes.UserData)
@@ -680,9 +484,6 @@ namespace MelonWebApi.Controllers
             var args = new WebApiEventArgs("api/artist/update", curId, new Dictionary<string, object>()
             {
                 { "artistId", artistId },
-                { "trackIds", trackIds },
-                { "releaseIds", releaseIds },
-                { "seenOnIds", seenOnIds },
                 { "artistName", artistName },
                 { "bio", bio },
                 { "artistGenres", artistGenres },
@@ -717,153 +518,6 @@ namespace MelonWebApi.Controllers
             List<DbLink> newSeenOns = new List<DbLink>();
             List<DbLink> ConnectedArtists = new List<DbLink>();
 
-
-            if (releaseIds != null)
-            {
-                foreach (var id in releaseIds)
-                {
-                    var aFilter = Builders<Album>.Filter.Eq(x => x._id, id);
-                    var newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
-                    if (newAlbum == null)
-                    {
-                        args.SendEvent("Album Not Found", 404, Program.mWebApi);
-                        return new ObjectResult("Album Not Found") { StatusCode = 404 };
-                    }
-
-                    if (foundArtist.Releases.Any(x => x._id == id))
-                    {
-                        newAlbum.AlbumArtists.Add(new DbLink(foundArtist));
-                        AlbumsCollection.ReplaceOne(aFilter, newAlbum);
-                    }
-
-                    newReleases.Add(new DbLink(newAlbum));
-                    foreach (var art in newAlbum.AlbumArtists)
-                    {
-                        if (!ConnectedArtists.Any(x => x._id == art._id))
-                        {
-                            ConnectedArtists.Add(art);
-                        }
-                    }
-                    newFullReleases.Add(newAlbum);
-                }
-                var missing = (from album in foundArtist.Releases
-                               where !trackIds.Contains(album._id)
-                               select album).ToList();
-                foreach (var mAlbum in missing)
-                {
-                    try
-                    {
-                        var aFilter = Builders<Album>.Filter.Eq(x => x._id, mAlbum._id);
-                        var newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
-                        newAlbum.AlbumArtists.Remove(new DbLink(foundArtist));
-                        foreach(var art in newAlbum.AlbumArtists)
-                        {
-                            ConnectedArtists.Remove(ConnectedArtists.Where(x=>x._id == art._id).FirstOrDefault());
-                        }
-                        AlbumsCollection.ReplaceOne(aFilter, newAlbum);
-                        missingReleases.Add(newAlbum);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-                }
-            }
-            else
-            {
-                newReleases.AddRange(foundArtist.Releases);
-            }
-
-            if (seenOnIds != null)
-            {
-                foreach (var id in seenOnIds)
-                {
-                    var aFilter = Builders<Album>.Filter.Eq(x => x._id, id);
-                    var newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
-                    if (newAlbum == null)
-                    {
-                        args.SendEvent("Album Not Found", 404, Program.mWebApi);
-                        return new ObjectResult("Album Not Found") { StatusCode = 404 };
-                    }
-
-                    if (foundArtist.SeenOn.Any(x=>x._id == id))
-                    {
-                        newAlbum.ContributingArtists.Add(new DbLink(foundArtist));
-                        AlbumsCollection.ReplaceOne(aFilter, newAlbum);
-                    }
-
-                    foreach (var art in newAlbum.ContributingArtists)
-                    {
-                        if (!ConnectedArtists.Any(x => x._id == art._id))
-                        {
-                            ConnectedArtists.Add(art);
-                        }
-                    }
-                    newSeenOns.Add(new DbLink(newAlbum));
-                }
-                var missing = (from album in foundArtist.Releases
-                               where !trackIds.Contains(album._id)
-                               select album).ToList();
-                foreach (var mAlbum in missing)
-                {
-                    try
-                    {
-                        var aFilter = Builders<Album>.Filter.Eq(x => x._id, mAlbum._id);
-                        var newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
-                        newAlbum.ContributingArtists.Remove(new DbLink(foundArtist));
-                        foreach (var art in newAlbum.ContributingArtists)
-                        {
-                            ConnectedArtists.Remove(ConnectedArtists.Where(x => x._id == art._id).FirstOrDefault());
-                        }
-                        AlbumsCollection.ReplaceOne(aFilter, newAlbum);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-                }
-            }
-            else
-            {
-                newSeenOns.AddRange(foundArtist.SeenOn);
-            }
-
-            if (trackIds != null)
-            {
-                foreach (var id in trackIds)
-                {
-                    var tFilter = Builders<Track>.Filter.Eq(x => x._id, id);
-                    var newTrack = TracksCollection.Find(tFilter).FirstOrDefault();
-                    if (newTrack == null)
-                    {
-                        args.SendEvent("Track Not Found", 404, Program.mWebApi);
-                        return new ObjectResult("Track Not Found") { StatusCode = 404 };
-                    }
-
-                    var items = (from track in foundArtist.Tracks
-                                 where track._id == id
-                                 select track).ToList();
-                    if (items.Count() == 0)
-                    {
-                        newTrack.TrackArtists.Add(new DbLink(foundArtist));
-                        TracksCollection.ReplaceOne(tFilter, newTrack);
-                    }
-
-                    foreach (var art in newTrack.TrackArtists)
-                    {
-                        if (!ConnectedArtists.Any(x => x._id == art._id))
-                        {
-                            ConnectedArtists.Add(art);
-                        }
-                    }
-                    newTracks.Add(new DbLink(newTrack));
-                }
-            }
-            else
-            {
-                newTracks.AddRange(foundArtist.Tracks);
-            }
-
             artistName = artistName == "" ? foundArtist.Name : artistName;
             bio = bio == "" ? foundArtist.Bio : bio;
             defaultArtistPfp = defaultArtistPfp == -1 ? foundArtist.ArtistPfpDefault : defaultArtistPfp;
@@ -889,9 +543,6 @@ namespace MelonWebApi.Controllers
                 ArtistBannerPaths = foundArtist.ArtistBannerPaths,
                 Genres = artistGenres.ToList(),
                 DateAdded = foundArtist.DateAdded,
-                Releases = newReleases,
-                SeenOn = newSeenOns,
-                Tracks = newTracks,
                 ConnectedArtists = ConnectedArtists.ToList(),
                 ArtistBannerArtCount = foundArtist.ArtistBannerArtCount,
                 ArtistPfpArtCount = foundArtist.ArtistPfpArtCount,
@@ -919,81 +570,11 @@ namespace MelonWebApi.Controllers
             AlbumsCollection.UpdateMany(albumArtistFilter, artistUpdate);
             AlbumsCollection.UpdateMany(conArtistFilter, conArtistUpdate);
 
-            // Update File
-            Task.Run(() =>
-            {
-                if (foundArtist.Name != newArtist.Name)
-                {
-                    var ftFilter = Builders<Track>.Filter.In(a => a._id, newArtist.Tracks.Select(x => x._id));
-                    var fullTracks = TracksCollection.Find(ftFilter).ToList();
-                    foreach (var track in fullTracks)
-                    {
-                        var fileMetadata = new ATL.Track(track.Path);
-                        string artistStr = fileMetadata.Artist;
-
-                        if (!artistStr.Contains(newArtist.Name))
-                        {
-                            artistStr += $";{newArtist.Name}";
-                        }
-                        else
-                        {
-                            artistStr = artistStr.Replace(foundArtist.Name, newArtist.Name);
-                        }
-                        fileMetadata.Artist = artistStr;
-                        fileMetadata.Save();
-
-                    }
-
-                    foreach (var item in missingTracks)
-                    {
-                        var fileMetadata = new ATL.Track(item.Path);
-                        string artistStr = fileMetadata.Artist;
-
-                        artistStr = artistStr.Replace(foundArtist.Name, "").Replace(";;", ";");
-                        fileMetadata.Artist = artistStr;
-
-                        fileMetadata.Save();
-                    }
-                }
-
-                if (foundArtist.Releases != newArtist.Releases)
-                {
-                    foreach (var item in missingReleases)
-                    {
-                        var fFilter = Builders<Track>.Filter.In(a => a._id, item.Tracks.Select(x => x._id));
-                        var fTracks = TracksCollection.Find(fFilter).ToList();
-                        foreach (var track in fTracks)
-                        {
-                            var fileMetadata = new ATL.Track(track.Path);
-                            string artistStr = fileMetadata.AlbumArtist;
-
-                            artistStr = artistStr.Replace(foundArtist.Name, "").Replace(";;", ";");
-                            fileMetadata.AlbumArtist = artistStr;
-
-                            fileMetadata.Save();
-                        }
-                    }
-
-                    foreach (var item in newFullReleases)
-                    {
-                        var fFilter = Builders<Track>.Filter.In(a => a._id, item.Tracks.Select(x => x._id));
-                        var fTracks = TracksCollection.Find(fFilter).ToList();
-                        foreach (var track in fTracks)
-                        {
-                            var fileMetadata = new ATL.Track(track.Path);
-                            string artistStr = fileMetadata.AlbumArtist;
-
-                            if (!artistStr.Contains(newArtist.Name))
-                            {
-                                artistStr += $";{newArtist.Name}";
-                                fileMetadata.AlbumArtist = artistStr;
-                                fileMetadata.Save();
-                            }
-
-                        }
-                    }
-                }
-            });
+            // TODO: Update File
+            //Task.Run(() =>
+            //{
+            //    
+            //});
 
             Thread t = new Thread(MelonScanner.UpdateCollections);
             t.Start();

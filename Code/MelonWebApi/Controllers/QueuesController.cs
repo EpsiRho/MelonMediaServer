@@ -152,12 +152,17 @@ namespace MelonWebApi.Controllers
                 var album = ACollection.Find(aFilter).FirstOrDefault();
                 if(album != null)
                 {
-                    var fFilter = Builders<Track>.Filter.In(a => a._id, album.Tracks.Select(x => x._id));
-                    var fTracks = TCollection.Find(fFilter).ToList();
-                    foreach (var t in album.Tracks)
+                    var filter = Builders<Track>.Filter.Eq(x => x.Album._id, id);
+                    var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
+                                                            .Exclude(x => x.LyricsPath);
+                    var trackDocs = TCollection.Find(filter).Project(trackProjection)
+                                                    .SortBy(track => track.Disc).ThenBy(track => track.Position)
+                                                    .ToList();
+
+                    var foundTracks = trackDocs.Select(x => BsonSerializer.Deserialize<Track>(x)).ToList();
+                    foreach (var t in foundTracks)
                     {
-                        Track track = fTracks.Where(x => x._id == t._id).FirstOrDefault();
-                        tracks.Add(track);
+                        tracks.Add(t);
                     }
                 }
                 else
@@ -245,12 +250,17 @@ namespace MelonWebApi.Controllers
                 var artist = ACollection.Find(aFilter).FirstOrDefault();
                 if (artist != null)
                 {
-                    var fFilter = Builders<Track>.Filter.In(a => a._id, artist.Tracks.Select(x => x._id));
-                    var fTracks = TCollection.Find(fFilter).ToList();
-                    foreach (var t in artist.Tracks)
+                    var filter = Builders<Track>.Filter.AnyIn("TrackArtists._id", id);
+                    var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
+                                                            .Exclude(x => x.LyricsPath);
+                    var trackDocs = TCollection.Find(filter).Project(trackProjection)
+                                                    .SortBy(track => track.Disc).ThenBy(track => track.Position)
+                                                    .ToList();
+
+                    var foundTracks = trackDocs.Select(x => BsonSerializer.Deserialize<Track>(x)).ToList();
+                    foreach (var t in foundTracks)
                     {
-                        Track track = fTracks.Where(x => x._id == t._id).FirstOrDefault();
-                        tracks.Add(track);
+                        tracks.Add(t);
                     }
                 }
                 else
@@ -665,7 +675,7 @@ namespace MelonWebApi.Controllers
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("get-track")]
-        public ObjectResult GetTrackByIndex(string id, int index)
+        public ObjectResult GetTrackByIndex(string id, uint index)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -704,7 +714,7 @@ namespace MelonWebApi.Controllers
             queue.LastListen = DateTime.Now.ToUniversalTime();
             QCollection.ReplaceOne(qFilter, queue);
 
-            var tracks = Queues[0].Tracks.Take(new Range(index, index + 1));
+            var tracks = Queues[0].Tracks.Take(new Range((int)index, (int)index + 1));
 
             var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
                                                             .Exclude(x => x.LyricsPath);
@@ -1197,5 +1207,59 @@ namespace MelonWebApi.Controllers
             args.SendEvent("Tracks Shuffled", 200, Program.mWebApi);
             return new ObjectResult("Tracks Shuffled") { StatusCode = 200 };
         }
+        
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("favorite")]
+        public ObjectResult ToggleFavorite(string id)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/queues/favorite", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var QCollection = mongoDatabase.GetCollection<PlayQueue>("Queues");
+            //var TCollection = mongoDatabase.GetCollection<Track>("Tracks");
+
+            var qFilter = Builders<PlayQueue>.Filter.Eq(x => x._id, id);
+            var queues = QCollection.Find(qFilter).ToList();
+            if (queues.Count() == 0)
+            {
+                args.SendEvent("Queue not found", 404, Program.mWebApi);
+                return new ObjectResult("Queue not found") { StatusCode = 404 };
+            }
+            var queue = queues[0];
+
+            if (queue.PublicEditing == false)
+            {
+                if (queue.Owner != curId && !queue.Editors.Contains(curId))
+                {
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
+                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                }
+            }
+
+            if (queue.Favorite)
+            {
+                queue.Favorite = false;
+                QCollection.ReplaceOne(qFilter, queue);
+                StreamManager.AlertQueueUpdate(queue._id);
+                args.SendEvent("Queue Unfavorited", 200, Program.mWebApi);
+                return new ObjectResult("Queue Unfavorited") { StatusCode = 200 };
+            }
+            else
+            {
+                queue.Favorite = true;
+                QCollection.ReplaceOne(qFilter, queue);
+                StreamManager.AlertQueueUpdate(queue._id);
+                args.SendEvent("Queue Favorited", 200, Program.mWebApi);
+                return new ObjectResult("Queue Favorited") { StatusCode = 200 };
+            }
+        }
+
     }
 }

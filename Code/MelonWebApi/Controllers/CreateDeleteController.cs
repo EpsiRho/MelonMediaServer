@@ -74,7 +74,6 @@ namespace MelonWebApi.Controllers
                 ReleaseType = "",
                 TotalDiscs = 0,
                 TotalTracks = 0,
-                Tracks = new List<DbLink>(),
                 AlbumArtDefault = 0
             };
 
@@ -122,38 +121,6 @@ namespace MelonWebApi.Controllers
 
             var page = 0;
             var count = 100;
-            while (true)
-            {
-                var artists = ArtistsCollection.Find(Builders<Artist>.Filter.Empty).Skip(page * count).Limit(count).ToList();
-                bool update = false;
-                foreach (var artist in artists)
-                {
-                    update = false;
-                    if (artist.Releases.Any(x => x._id == id))
-                    {
-                        artist.Releases.Remove(artist.Releases.Where(x => x._id == id).FirstOrDefault());
-                        update = true;
-                    }
-
-                    if (artist.SeenOn.Any(x => x._id == id))
-                    {
-                        artist.SeenOn.Remove(artist.SeenOn.Where(x => x._id == id).FirstOrDefault());
-                        update = true;
-                    }
-
-                    if (update)
-                    {
-                        ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, artist._id), artist);
-                    }
-                }
-
-                page++;
-                if (artists.Count() != 100)
-                {
-                    break;
-                }
-            }
-            page = 0;
             while (true)
             {
                 var tracks = TracksCollection.Find(Builders<Track>.Filter.Empty).Skip(page * count).Limit(count).ToList();
@@ -226,20 +193,17 @@ namespace MelonWebApi.Controllers
                 _id = ObjectId.GenerateNewId().ToString(),
                 Name = name,
                 Bio = "",
-                Releases = new List<DbLink>(),
                 ArtistPfpPaths = new List<string>(),
                 ArtistBannerPaths = new List<string>(),
                 ArtistPfpArtCount = 0,
                 ArtistBannerArtCount = 0,
                 ConnectedArtists = new List<DbLink>(),
                 Genres = new List<string>(),
-                SeenOn = new List<DbLink>(),
                 PlayCounts = new List<UserStat>(),
                 SkipCounts = new List<UserStat>(),
                 Ratings = new List<UserStat>(),
                 ServerURL = "",
                 DateAdded = DateTime.UtcNow,
-                Tracks = new List<DbLink>(),
                 ArtistBannerArtDefault = 0,
                 ArtistPfpDefault = 0,
             };
