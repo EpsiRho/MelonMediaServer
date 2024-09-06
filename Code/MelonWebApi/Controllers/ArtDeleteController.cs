@@ -141,7 +141,8 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Invalid position") { StatusCode = 400 };
             }
 
-            var filePath = $"{StateManager.melonPath}/ArtistPfps/{artist._id}-{pos}.jpg";
+            var files = System.IO.Directory.GetFiles($"{StateManager.melonPath}/ArtistPfps/");
+            var filePath = files.FirstOrDefault(x=>x.Contains($"{StateManager.melonPath}/ArtistPfps/{artist._id}-{pos}"));
 
             try
             {
@@ -206,7 +207,8 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Invalid position") { StatusCode = 400 };
             }
 
-            var filePath = $"{StateManager.melonPath}/ArtistBanners/{artist._id}-{pos}.jpg";
+            var files = System.IO.Directory.GetFiles($"{StateManager.melonPath}/ArtistBanners/");
+            var filePath = files.FirstOrDefault(x => x.Contains($"{StateManager.melonPath}/ArtistBanners/{artist._id}-{pos}"));
 
             try
             {
@@ -262,7 +264,8 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Playlist not found") { StatusCode = 404 };
             }
 
-            var filePath = $"{StateManager.melonPath}/PlaylistArts/{playlist._id}.jpg";
+            var files = System.IO.Directory.GetFiles($"{StateManager.melonPath}/PlaylistArts/");
+            var filePath = files.FirstOrDefault(x => x.Contains($"{StateManager.melonPath}/PlaylistArts/{playlist._id}"));
 
             try
             {
@@ -316,7 +319,8 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Collection not found") { StatusCode = 404 };
             }
 
-            var filePath = $"{StateManager.melonPath}/CollectionArts/{collection._id}.jpg";
+            var files = System.IO.Directory.GetFiles($"{StateManager.melonPath}/CollectionArts/");
+            var filePath = files.FirstOrDefault(x => x.Contains($"{StateManager.melonPath}/CollectionArts/{collection._id}"));
 
             try
             {
@@ -355,7 +359,8 @@ namespace MelonWebApi.Controllers
                       .Select(c => c.Value).FirstOrDefault();
             var args = new WebApiEventArgs("api/art/delete/default-art", curId, new Dictionary<string, object>());
 
-            var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.jpg";
+            var files = System.IO.Directory.GetFiles($"{StateManager.melonPath}/Assets/");
+            var filePath = files.FirstOrDefault(x => x.Contains($"{StateManager.melonPath}/Assets/defaultArtwork"));
 
             try
             {

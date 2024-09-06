@@ -484,7 +484,6 @@ namespace MelonWebApi.Controllers
             count = count <= shuffledList.Count ? count : shuffledList.Count;
             args.SendEvent("Sent a List of DbLinks", 200, Program.mWebApi);
             return new ObjectResult(shuffledList.Slice(0, count).Select(x => new DbLink(x))) { StatusCode = 200 };
-            return new ObjectResult("") { StatusCode = 200 };
         }
     }
 }

@@ -251,7 +251,7 @@ namespace MelonWebApi.Controllers
                 MemoryStream ms = new MemoryStream(pic.PictureData);
                 ms.Seek(0, SeekOrigin.Begin);
                 args.SendEvent("Track artwork sent", 200, Program.mWebApi);
-                return File(ms, $"image/jpeg");
+                return File(ms, $"{pic.MimeType}");
             }
             catch(Exception)
             {
@@ -267,7 +267,7 @@ namespace MelonWebApi.Controllers
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
-            var args = new WebApiEventArgs("api/download/track-art", curId, new Dictionary<string, object>()
+            var args = new WebApiEventArgs("api/download/album-art", curId, new Dictionary<string, object>()
             {
                 { "id", id },
                 { "index", index }
@@ -283,10 +283,31 @@ namespace MelonWebApi.Controllers
 
             if(album == null)
             {
-                args.SendEvent("Default artwork sent", 200, Program.mWebApi);
+                args.SendEvent("Default artwork sent", 000, Program.mWebApi);
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
 
+            // If Album has uploaded art, use index to get it.
+            if(album.AlbumArtCount >= 1)
+            {
+                try
+                {
+                    index = index == -1 ? album.AlbumArtDefault : index;
+                    FileStream file = new FileStream($"{StateManager.melonPath}/AlbumArts/{album.AlbumArtPaths[index]}", FileMode.Open, FileAccess.Read);
+                    byte[] bytes = new byte[file.Length];
+                    file.Read(bytes, 0, (int)file.Length);
+                    args.SendEvent("Album artwork sent", 200, Program.mWebApi);
+                    file.Dispose();
+                    var mime = album.AlbumArtPaths[index].Split(".")[1];
+                    return File(bytes, $"image/{mime}");
+                }
+                catch (Exception)
+                {
+                    Serilog.Log.Error($"[MWAPI] ({DateTime.Now}) Album artwork should have override on <{album._id}> with index <{index}> and album artwork count <{album.AlbumArtCount}>");
+                }
+            }
+
+            // Otherwise, get album art by track, using index on that track
             var filter = Builders<Track>.Filter.Eq(x => x.Album._id, album._id);
             var trackDocs = TCollection.Find(filter).SortBy(track => track.Disc).ThenBy(track => track.Position).ToList();
 
@@ -309,7 +330,7 @@ namespace MelonWebApi.Controllers
                     MemoryStream ms = new MemoryStream(pic.PictureData);
                     ms.Seek(0, SeekOrigin.Begin);
                     args.SendEvent("Album artwork sent", 200, Program.mWebApi);
-                    return File(ms, $"image/jpeg");
+                    return File(ms, $"{pic.MimeType}");
                 }
                 catch (Exception)
                 {
@@ -347,7 +368,9 @@ namespace MelonWebApi.Controllers
                 byte[] bytes = new byte[file.Length];
                 file.Read(bytes, 0, (int)file.Length);
                 args.SendEvent("Artist pfp sent", 200, Program.mWebApi);
-                return File(bytes, "image/jpeg");
+                file.Dispose();
+                var mime = artist.ArtistPfpPaths[index].Split(".")[1];
+                return File(bytes, $"image/{mime}");
             }
             catch (Exception)
             {
@@ -382,7 +405,9 @@ namespace MelonWebApi.Controllers
                 byte[] bytes = new byte[file.Length];
                 file.Read(bytes, 0, (int)file.Length);
                 args.SendEvent("Artist banner sent", 200, Program.mWebApi);
-                return File(bytes, "image/jpeg");
+                file.Dispose();
+                var mime = artist.ArtistPfpPaths[index].Split(".")[1];
+                return File(bytes, $"image/{mime}");
             }
             catch (Exception)
             {
@@ -415,7 +440,9 @@ namespace MelonWebApi.Controllers
                 byte[] bytes = new byte[file.Length];
                 file.Read(bytes, 0, (int)file.Length);
                 args.SendEvent("Playlist artwork sent", 200, Program.mWebApi);
-                return File(bytes, "image/jpeg");
+                file.Dispose();
+                var mime = playlist.ArtworkPath.Split(".")[1];
+                return File(bytes, $"image/{mime}");
             }
             catch (Exception)
             {
@@ -448,7 +475,9 @@ namespace MelonWebApi.Controllers
                 byte[] bytes = new byte[file.Length];
                 file.Read(bytes, 0, (int)file.Length);
                 args.SendEvent("Collection artwork sent", 200, Program.mWebApi);
-                return File(bytes, "image/jpeg");
+                file.Dispose();
+                var mime = collection.ArtworkPath.Split(".")[1];
+                return File(bytes, $"image/{mime}");
             }
             catch (Exception)
             {

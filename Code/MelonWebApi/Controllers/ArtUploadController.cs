@@ -137,8 +137,9 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
+            var contentType = image.ContentType.Replace("image/", "");
             // Save the file
-            var filePath = $"{StateManager.melonPath}/ArtistPfps/{artist._id}-{artist.ArtistPfpArtCount}.jpg";
+            var filePath = $"{StateManager.melonPath}/ArtistPfps/{artist._id}-{artist.ArtistPfpArtCount}.{contentType}";
             if (!Directory.Exists($"{StateManager.melonPath}/ArtistPfps"))
             {
                 Directory.CreateDirectory($"{StateManager.melonPath}/ArtistPfps");
@@ -162,7 +163,7 @@ namespace MelonWebApi.Controllers
                 artist.ArtistPfpPaths = new List<string>();
             }
 
-            artist.ArtistPfpPaths.Add($"{artist._id}-{artist.ArtistPfpArtCount}.jpg");
+            artist.ArtistPfpPaths.Add($"{artist._id}-{artist.ArtistPfpArtCount}.{contentType}");
             artist.ArtistPfpArtCount++;
             ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, id), artist);
 
@@ -209,7 +210,8 @@ namespace MelonWebApi.Controllers
             }
 
             // Save the file
-            var filePath = $"{StateManager.melonPath}/ArtistBanners/{artist._id}-{artist.ArtistBannerArtCount}.jpg";
+            var contentType = image.ContentType.Replace("image/", "");
+            var filePath = $"{StateManager.melonPath}/ArtistBanners/{artist._id}-{artist.ArtistBannerArtCount}.{contentType}";
             if (!Directory.Exists($"{StateManager.melonPath}/ArtistBanners"))
             {
                 Directory.CreateDirectory($"{StateManager.melonPath}/ArtistBanners");
@@ -233,12 +235,84 @@ namespace MelonWebApi.Controllers
                 artist.ArtistBannerPaths = new List<string>();
             }
 
-            artist.ArtistBannerPaths.Add($"{artist._id}-{artist.ArtistBannerArtCount}.jpg");
+            artist.ArtistBannerPaths.Add($"{artist._id}-{artist.ArtistBannerArtCount}.{contentType}");
             artist.ArtistBannerArtCount++;
             ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, id), artist);
 
             args.SendEvent("Artist banner uploaded", 200, Program.mWebApi);
             return new ObjectResult("Artist banner uploaded") { StatusCode = 200 };
+        }
+
+        /// <summary>
+        /// Uploads an album artwork for a specific album.
+        /// </summary>
+        /// <param name="id">The unique identifier of the album.</param>
+        /// <param name="image">The artwork to be uploaded.</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <returns>Returns an object result indicating the success or failure of the operation.</returns>
+        /// <response code="200">If the artwork is successfully uploaded.</response>
+        /// <response code="400">If the input parameters are invalid.</response>
+        /// <response code="401">If the user does not have permission to perform this action.</response>
+        /// <response code="404">If the artist is not found.</response>
+        [Authorize(Roles = "Admin")]
+        [HttpPost("album-art")]
+        [Consumes("multipart/form-data")]
+        public ObjectResult UploadAlbumArtwork(string id, IFormFile image)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("api/art/upload/album-art", curId, new Dictionary<string, object>()
+                {
+                    { "id", id }
+                });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var AlbumCollection = mongoDatabase.GetCollection<Album>("Albums");
+
+            var album = AlbumCollection.Find(Builders<Album>.Filter.Eq(x => x._id, id)).FirstOrDefault();
+            if (album == null)
+            {
+                args.SendEvent("Album not found", 404, Program.mWebApi);
+                return new ObjectResult("Album not found") { StatusCode = 404 };
+            }
+
+            // Save the file
+            var contentType = image.ContentType.Replace("image/", "");
+            var filePath = $"{StateManager.melonPath}/AlbumArts/{album._id}-{album.AlbumArtCount}.{contentType}";
+            if (!Directory.Exists($"{StateManager.melonPath}/AlbumArts"))
+            {
+                Directory.CreateDirectory($"{StateManager.melonPath}/ArtistBanners");
+            }
+
+            try
+            {
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    image.CopyTo(stream);
+                }
+            }
+            catch (Exception)
+            {
+                args.SendEvent("Image error", 400, Program.mWebApi);
+                return new ObjectResult("Image error") { StatusCode = 400 };
+            }
+
+            if (album.AlbumArtists == null)
+            {
+                album.AlbumArtPaths = new List<string>();
+            }
+
+            album.AlbumArtPaths.Add($"{album._id}-{album.AlbumArtCount}.{contentType}");
+            album.AlbumArtCount++;
+            AlbumCollection.ReplaceOne(Builders<Album>.Filter.Eq(x => x._id, id), album);
+
+            args.SendEvent("Album artwork uploaded", 200, Program.mWebApi);
+            return new ObjectResult("Album artwork uploaded") { StatusCode = 200 };
         }
 
         /// <summary>
@@ -280,7 +354,8 @@ namespace MelonWebApi.Controllers
             }
 
             // Save the file
-            var filePath = $"{StateManager.melonPath}/PlaylistArts/{playlist._id}.jpg";
+            var contentType = image.ContentType.Replace("image/", "");
+            var filePath = $"{StateManager.melonPath}/PlaylistArts/{playlist._id}.{contentType}";
             if (!Directory.Exists($"{StateManager.melonPath}/PlaylistArts"))
             {
                 Directory.CreateDirectory($"{StateManager.melonPath}/PlaylistArts");
@@ -299,7 +374,7 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Image error") { StatusCode = 400 };
             }
 
-            playlist.ArtworkPath = $"{playlist._id}.jpg";
+            playlist.ArtworkPath = $"{playlist._id}.{contentType}";
             PlaylistsCollection.ReplaceOne(Builders<Playlist>.Filter.Eq(x => x._id, id), playlist);
 
             args.SendEvent("Playlist art uploaded", 200, Program.mWebApi);
@@ -345,7 +420,8 @@ namespace MelonWebApi.Controllers
             }
 
             // Save the file
-            var filePath = $"{StateManager.melonPath}/CollectionArts/{collection._id}.jpg";
+            var contentType = image.ContentType.Replace("image/", "");
+            var filePath = $"{StateManager.melonPath}/CollectionArts/{collection._id}.{contentType}";
             if (!Directory.Exists($"{StateManager.melonPath}/CollectionArts"))
             {
                 Directory.CreateDirectory($"{StateManager.melonPath}/CollectionArts");
@@ -364,7 +440,7 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Image error") { StatusCode = 400 };
             }
 
-            collection.ArtworkPath = $"{collection._id}.jpg";
+            collection.ArtworkPath = $"{collection._id}.{contentType}";
             CollectionsCollection.ReplaceOne(Builders<Collection>.Filter.Eq(x => x._id, id), collection);
 
             args.SendEvent("Collection art uploaded", 200, Program.mWebApi);
@@ -394,7 +470,8 @@ namespace MelonWebApi.Controllers
             var args = new WebApiEventArgs("api/art/upload/default-art", curId, new Dictionary<string, object>());
 
             // Save the file
-            var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.jpg";
+            var contentType = image.ContentType.Replace("image/", "");
+            var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.{contentType}";
             if (!Directory.Exists($"{StateManager.melonPath}/Assets"))
             {
                 Directory.CreateDirectory($"{StateManager.melonPath}/Assets");
