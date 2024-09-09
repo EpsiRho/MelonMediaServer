@@ -116,16 +116,29 @@ namespace MelonWebApi
                                 return;
                             }
                         }
-
-                        // Restart Server
-                        try
+                        else if (args.Name == "SSLConfig.json")
                         {
-                            StateManager.RestartServer = true;
-                            app.StopAsync();
+                            try
+                            {
+                                StateManager.RestartServer = true;
+                                app.StopAsync();
+                            }
+                            catch (Exception)
+                            {
+
+                            }
                         }
-                        catch (Exception)
+                        else if (args.Name == "restartServer.json")
                         {
-
+                            try
+                            {
+                                System.IO.File.Delete(args.FullPath);
+                                StateManager.RestartServer = true;
+                                app.StopAsync();
+                            }
+                            catch (Exception)
+                            {
+                            }
                         }
                     };
 
@@ -328,6 +341,7 @@ namespace MelonWebApi
                 app.Run();
 
                 await app.StopAsync();
+                watcher.Dispose();
             }
             TrayIconManager.RemoveIcon();
             return 0;

@@ -500,11 +500,12 @@ namespace Melon.DisplayClasses
                 {
                     // Set and Save new conn string
                     StateManager.MelonSettings.ListeningURL = input;
-                    Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
+                    Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, null);
                     foreach (var plugin in Plugins)
                     {
                         plugin.UnloadUI();
                     }
+                    File.WriteAllText($"{StateManager.melonPath}/Configs/restartServer.json", "1");
                     return;
                 }
 
@@ -919,31 +920,47 @@ namespace Melon.DisplayClasses
         }
         private static void RescanPlugins()
         {
-            Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
-            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("RescanPluginsFolderOption") });
-            MelonUI.ShowIndeterminateProgress();
-            foreach (var plugin in Plugins)
+            try
             {
-                plugin.UnloadUI();
+                Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("RescanPluginsFolderOption") });
+                MelonUI.ShowIndeterminateProgress();
+                File.WriteAllText($"{StateManager.melonPath}/Configs/restartServer.json", "1");
+                foreach (var plugin in Plugins)
+                {
+                    plugin.UnloadUI();
+                }
+                PluginsManager.LoadPlugins();
+                MelonUI.HideIndeterminateProgress();
             }
-            PluginsManager.LoadPlugins();
-            MelonUI.HideIndeterminateProgress();
+            catch (Exception)
+            {
+                MelonUI.HideIndeterminateProgress();
+            }
         }
         private static void ReloadPlugins()
         {
-            Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
-            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("ReloadAllPluginsOption") });
-            MelonUI.ShowIndeterminateProgress();
-            foreach (var plugin in Plugins)
+            try
             {
-                plugin.UnloadUI();
+                Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("ReloadAllPluginsOption") });
+                MelonUI.ShowIndeterminateProgress();
+                File.WriteAllText($"{StateManager.melonPath}/Configs/restartServer.json", "1");
+                foreach (var plugin in Plugins)
+                {
+                    plugin.UnloadUI();
+                }
+                foreach (var plugin in Plugins)
+                {
+                    plugin.LoadMelonCommands(Host);
+                    plugin.LoadUI();
+                }
+                MelonUI.HideIndeterminateProgress();
             }
-            foreach (var plugin in Plugins)
+            catch (Exception)
             {
-                plugin.LoadMelonCommands(Host);
-                plugin.LoadUI();
+                MelonUI.HideIndeterminateProgress();
             }
-            MelonUI.HideIndeterminateProgress();
         }
 
     }
