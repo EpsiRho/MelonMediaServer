@@ -38,25 +38,6 @@ namespace MelonWebApi.Controllers
         {
             _logger = logger;
         }
-        private string GetMimeType(string extension)
-        {
-            switch (extension.ToLower())
-            {
-                case "mp3":
-                    return "audio/mpeg";
-                case "m4a":
-                case "mp4":
-                    return "audio/mp4";
-                case "wav":
-                    return "audio/wav";
-                case "wma":
-                    return "audio/x-ms-wma";
-                case "flac":
-                    return "audio/flac";
-                default:
-                    return "application/octet-stream"; // Fallback MIME type
-            }
-        }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("track")]
         public async Task<IActionResult> DownloadTrack(string id)
@@ -91,7 +72,7 @@ namespace MelonWebApi.Controllers
 
             string filename = Path.GetFileName(track.Path);
             args.SendEvent("Sent track file", 200, Program.mWebApi);
-            return new FileStreamResult(fileStream, $"{GetMimeType(track.Format)}")
+            return new FileStreamResult(fileStream, $"audio/{track.Format.Replace(".", "")}")
             {
                 EnableRangeProcessing = true,
                 FileDownloadName = filename

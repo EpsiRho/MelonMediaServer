@@ -122,8 +122,8 @@ namespace Melon.LocalClasses
                                 propertyInfo.SetValue(config, "");
                                 continue;
                             }
-                            var protectedData = instance._protector.Protect(data);
-                            propertyInfo.SetValue(config, protectedData);
+                            var unprotectedData = instance._protector.Protect(data);
+                            propertyInfo.SetValue(config, unprotectedData);
                         }
                         else if (propertyInfo.PropertyType == typeof(byte[]))
                         {
@@ -133,8 +133,8 @@ namespace Melon.LocalClasses
                                 propertyInfo.SetValue(config, null);
                                 continue;
                             }
-                            var protectedData = instance._protector.Protect(data);
-                            propertyInfo.SetValue(config, protectedData);
+                            var unprotectedData = instance._protector.Protect(data);
+                            propertyInfo.SetValue(config, unprotectedData);
                         }
                     }
                 }
