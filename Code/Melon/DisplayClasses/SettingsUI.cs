@@ -1017,6 +1017,7 @@ namespace Melon.DisplayClasses
                     {
                         plugin.LoadMelonCommands(Host);
                         plugin.LoadUI();
+                        plugin.Destroy();
                         DisabledPlugins.Remove($"{plugin.Name}:{plugin.Authors}");
                         Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
                     }

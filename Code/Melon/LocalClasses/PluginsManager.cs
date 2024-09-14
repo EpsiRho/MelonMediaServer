@@ -36,6 +36,7 @@ namespace Melon.LocalClasses
 
                 }
             }
+            DisplayManager.HelpOptions.Clear();
             foreach (var plugin in Plugins)
             {
                 if (DisabledPlugins.Contains($"{plugin.Name}:{plugin.Authors}"))

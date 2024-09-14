@@ -32,6 +32,7 @@ using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.Options;
 using Amazon.Util.Internal;
 using Pastel;
+using Melon.Interface;
 namespace MelonWebApi
 {
     public static class Program
@@ -125,6 +126,22 @@ namespace MelonWebApi
                             {
                                 StateManager.RestartServer = true;
                                 app.StopAsync();
+                            }
+                            catch (Exception)
+                            {
+
+                            }
+                        }
+                        else if (args.Name == "DisabledPlugins.json")
+                        {
+                            try
+                            {
+                                foreach (var plugin in StateManager.Plugins)
+                                {
+                                    plugin.Destroy();
+                                }
+                                PluginsManager.LoadPlugins();
+                                PluginsManager.ExecutePlugins();
                             }
                             catch (Exception)
                             {
