@@ -111,12 +111,13 @@ namespace MelonWebApi
                         if(args.Name == "MelonSettings.json")
                         {
                             // Check if settings have actually changed
-                            var temp = Storage.LoadConfigFile<Settings>(args.Name.Replace(".json",""), new[] { "JWTKey" }, out _);
+                            var temp = Storage.LoadConfigFile<Settings>("MelonSettings", null, out _);
                             if (StateManager.MelonSettings == null || temp == null || 
                                 Storage.PropertiesEqual(StateManager.MelonSettings, temp))
                             {
                                 return;
                             }
+                            StateManager.MelonSettings = temp;
                         }
                         else if (args.Name == "SSLConfig.json")
                         {
@@ -179,7 +180,9 @@ namespace MelonWebApi
 
                 var builder = WebApplication.CreateBuilder();
 
-                builder.Services.AddControllers();
+                builder.Services.AddControllers().AddNewtonsoftJson();
+
+
 
                 builder.Logging.ClearProviders();
 
