@@ -1,4 +1,5 @@
 ﻿using Amazon.Runtime.Internal.Transform;
+using Amazon.Util;
 using Melon.Classes;
 using Melon.Interface;
 using Melon.LocalClasses;
@@ -285,7 +286,9 @@ namespace Melon.DisplayClasses
             var settings = new OrderedDictionary()
                 {
                     { StringsManager.GetString("BackNavigation"), () => { LockUI = false; } },
-                    { StringsManager.GetString("LibraryPathEditOption") , LibraryPathSettings }
+                    { StringsManager.GetString("LibraryPathEditOption") , LibraryPathSettings },
+                    { StringsManager.GetString("ArtistSplitIndicatorsOption") , ArtistSplitIndicatorSettings },
+                    { StringsManager.GetString("GenreSplitIndicatorsOption") , GenreSplitIndicatorSettings }
                 };
             while (LockUI && !StateManager.RestartServer)
             {
@@ -376,6 +379,95 @@ namespace Melon.DisplayClasses
                     StateManager.MelonSettings.LibraryPaths.Remove(input);
                     Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
                 }
+            }
+        }
+        private static void ArtistSplitIndicatorSettings()
+        {
+            while (true)
+            {
+                // Title + Desc
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("ScannerSettingsOption"), StringsManager.GetString("ArtistSplitIndicatorsOption") });
+                Console.WriteLine(StringsManager.GetString("ArtistSplitIndicatorsDescOne").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ArtistSplitIndicatorsDescTwo").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("CurrentListOfIndicators").Pastel(MelonColor.Highlight));
+
+
+                // Show Current Indicators
+                int count = 0;
+                foreach(var item in MelonSettings.ArtistSplitIndicators)
+                {
+                    Console.WriteLine($"{count}) {item}");
+                    count++;
+                }
+
+                // Show User Input
+                Console.WriteLine(StringsManager.GetString("ListEntryDesc").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ImportPlaylistControls").Pastel(MelonColor.Text));
+                Console.Write("> ".Pastel(MelonColor.Text));
+                string? input = Console.ReadLine();
+
+                int numOut = -1;
+                if(int.TryParse(input, out numOut)) // Is number?
+                {
+                    if(numOut >= 0 && numOut < MelonSettings.ArtistSplitIndicators.Count) // Is valid in array
+                    {
+                        // Delete
+                        MelonSettings.ArtistSplitIndicators.RemoveAt(numOut);
+                    }
+                }
+                else if (input != "")
+                {
+                    MelonSettings.ArtistSplitIndicators.Add(input);
+                }
+                else
+                {
+                    return;
+                }
+                Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, null);
+            }
+        }
+        private static void GenreSplitIndicatorSettings()
+        {
+            while (true)
+            {
+                // Title + Desc
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("ScannerSettingsOption"), StringsManager.GetString("GenreSplitIndicatorsOption") });
+                Console.WriteLine(StringsManager.GetString("GenreSplitIndicatorsDescOne").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("GenreSplitIndicatorsDescTwo").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("CurrentListOfIndicators").Pastel(MelonColor.Highlight));
+
+                // Show Current Indicators
+                int count = 0;
+                foreach (var item in MelonSettings.GenreSplitIndicators)
+                {
+                    Console.WriteLine($"{count}) {item}");
+                    count++;
+                }
+
+                // Show User Input
+                Console.WriteLine(StringsManager.GetString("ListEntryDesc").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ImportPlaylistControls").Pastel(MelonColor.Text));
+                Console.Write("> ".Pastel(MelonColor.Text));
+                string? input = Console.ReadLine();
+
+                int numOut = -1;
+                if (int.TryParse(input, out numOut)) // Is number?
+                {
+                    if (numOut >= 0 && numOut < MelonSettings.GenreSplitIndicators.Count) // Is valid in array
+                    {
+                        // Delete
+                        MelonSettings.GenreSplitIndicators.RemoveAt(numOut);
+                    }
+                }
+                else if (input != "")
+                {
+                    MelonSettings.GenreSplitIndicators.Add(input);
+                }
+                else
+                {
+                    return;
+                }
+                Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, null);
             }
         }
 
@@ -500,11 +592,12 @@ namespace Melon.DisplayClasses
                 {
                     // Set and Save new conn string
                     StateManager.MelonSettings.ListeningURL = input;
-                    Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
+                    Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, null);
                     foreach (var plugin in Plugins)
                     {
                         plugin.UnloadUI();
                     }
+                    File.WriteAllText($"{StateManager.melonPath}/Configs/restartServer.json", "1");
                     return;
                 }
 
@@ -513,46 +606,57 @@ namespace Melon.DisplayClasses
         }
         private static void HTTPSSetup()
         {
-            // Check if ssl is setup already
+            // Get ssl config
             var config = Security.GetSSLConfig();
-            if (config.PathToCert != "")
-            {
-                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("NetworkSettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
-                Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
-                Console.WriteLine(StringsManager.GetString("SSLConfigStatus").Pastel(MelonColor.Text));
-                var opt = MelonUI.OptionPicker(new List<string>() { StringsManager.GetString("BackNavigation"), StringsManager.GetString("SSLDisableOption"), StringsManager.GetString("SSLConfigEditOption") });
-                if (opt == StringsManager.GetString("BackNavigation"))
-                {
-                    return;
-                }
-                else if (opt == StringsManager.GetString("SSLDisableOption"))
-                {
-                    Security.SetSSLConfig("", "");
-                    Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
-                    foreach (var plugin in Plugins)
-                    {
-                        plugin.UnloadUI();
-                    }
-                }
-
-            }
 
             bool result = true;
             while (true)
             {
-                // Get the Path to the pfx
+                if (!String.IsNullOrEmpty(config.PathToCert) && !String.IsNullOrEmpty(config.Password)) // Is config empty?
+                {
+                    // Config is not empty, check validity
+                    MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("NetworkSettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
+                    Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
+                    Console.WriteLine(StringsManager.GetString("HTTPSRequirementNote").Pastel(MelonColor.Text));
+                    Console.WriteLine($"{StringsManager.GetString("SSLCertificatePathEntryFirst")} {".pfx".Pastel(MelonColor.Highlight)} {StringsManager.GetString("SSLCertificatePathEntrySecond")}:".Pastel(MelonColor.Text));
+                    var res = Security.VerifySSLConfig(config);
+                    if (res == "Expired")
+                    {
+                        Console.WriteLine("The SSL Certificate is Expired, Please link a new one.".Pastel(MelonColor.Error));
+                    }
+                    else if (res == "Invalid")
+                    {
+                        Console.WriteLine($"[{StringsManager.GetString("CertificatePasswordError")}]".Pastel(MelonColor.Error));
+                    }
+                    else
+                    {
+                        Console.WriteLine(StringsManager.GetString("SSLConfigStatus").Pastel(MelonColor.Text));
+                    }
+
+                    // Options
+                    var opt = MelonUI.OptionPicker(new List<string>() { StringsManager.GetString("BackNavigation"), StringsManager.GetString("SSLDisableOption"), StringsManager.GetString("SSLConfigEditOption") });
+                    if (opt == StringsManager.GetString("BackNavigation"))
+                    {
+                        return;
+                    }
+                    else if (opt == StringsManager.GetString("SSLDisableOption"))
+                    {
+                        Security.SetSSLConfig("", "");
+                        Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
+                        return;
+                    }
+                }
+
+                // Setup SSL
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("NetworkSettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
                 Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
                 Console.WriteLine(StringsManager.GetString("HTTPSRequirementNote").Pastel(MelonColor.Text));
                 Console.WriteLine($"{StringsManager.GetString("SSLCertificatePathEntryFirst")} {".pfx".Pastel(MelonColor.Highlight)} {StringsManager.GetString("SSLCertificatePathEntrySecond")}:".Pastel(MelonColor.Text));
-                if (!result)
-                {
-                    Console.WriteLine($"[{StringsManager.GetString("CertificatePasswordError")}]".Pastel(MelonColor.Error));
-                }
+                
                 result = false;
 
                 Console.Write("> ".Pastel(MelonColor.Text));
-                string pathToCert = Console.ReadLine();
+                string pathToCert = Console.ReadLine().Replace("\"", "");
                 if (pathToCert == "")
                 {
                     return;
@@ -570,14 +674,20 @@ namespace Melon.DisplayClasses
                 }
 
                 // Check if cert and password are valid
-                try
-                {
-                    var certificate = new X509Certificate2(pathToCert, password);
-                    result = true;
-                }
-                catch (Exception)
+                config.PathToCert = pathToCert;
+                config.Password = password;
+                var check = Security.VerifySSLConfig(config);
+                if (check == "Expired")
                 {
                     result = false;
+                }
+                else if (check == "Invalid")
+                {
+                    result = false;
+                }
+                else
+                {
+                    result = true;
                 }
 
 
@@ -585,11 +695,11 @@ namespace Melon.DisplayClasses
                 {
                     // Set and Save new conn string
                     Security.SetSSLConfig(pathToCert, password);
-                    Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
-                    foreach (var plugin in Plugins)
-                    {
-                        plugin.UnloadUI();
-                    }
+                    Storage.SaveConfigFile("SSLConfig", config, new[] { "Password" });
+                    //foreach (var plugin in Plugins)
+                    //{
+                    //    plugin.UnloadUI();
+                    //}
                     return;
                 }
 
@@ -907,6 +1017,7 @@ namespace Melon.DisplayClasses
                     {
                         plugin.LoadMelonCommands(Host);
                         plugin.LoadUI();
+                        plugin.Destroy();
                         DisabledPlugins.Remove($"{plugin.Name}:{plugin.Authors}");
                         Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
                     }
@@ -919,31 +1030,47 @@ namespace Melon.DisplayClasses
         }
         private static void RescanPlugins()
         {
-            Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
-            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("RescanPluginsFolderOption") });
-            MelonUI.ShowIndeterminateProgress();
-            foreach (var plugin in Plugins)
+            try
             {
-                plugin.UnloadUI();
+                Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("RescanPluginsFolderOption") });
+                MelonUI.ShowIndeterminateProgress();
+                File.WriteAllText($"{StateManager.melonPath}/Configs/restartServer.json", "1");
+                foreach (var plugin in Plugins)
+                {
+                    plugin.UnloadUI();
+                }
+                PluginsManager.LoadPlugins();
+                MelonUI.HideIndeterminateProgress();
             }
-            PluginsManager.LoadPlugins();
-            MelonUI.HideIndeterminateProgress();
+            catch (Exception)
+            {
+                MelonUI.HideIndeterminateProgress();
+            }
         }
         private static void ReloadPlugins()
         {
-            Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
-            MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("ReloadAllPluginsOption") });
-            MelonUI.ShowIndeterminateProgress();
-            foreach (var plugin in Plugins)
+            try
             {
-                plugin.UnloadUI();
+                Storage.SaveConfigFile("DisabledPlugins", DisabledPlugins, null);
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("PluginsOption"), StringsManager.GetString("ReloadAllPluginsOption") });
+                MelonUI.ShowIndeterminateProgress();
+                File.WriteAllText($"{StateManager.melonPath}/Configs/restartServer.json", "1");
+                foreach (var plugin in Plugins)
+                {
+                    plugin.UnloadUI();
+                }
+                foreach (var plugin in Plugins)
+                {
+                    plugin.LoadMelonCommands(Host);
+                    plugin.LoadUI();
+                }
+                MelonUI.HideIndeterminateProgress();
             }
-            foreach (var plugin in Plugins)
+            catch (Exception)
             {
-                plugin.LoadMelonCommands(Host);
-                plugin.LoadUI();
+                MelonUI.HideIndeterminateProgress();
             }
-            MelonUI.HideIndeterminateProgress();
         }
 
     }

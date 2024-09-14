@@ -30,6 +30,9 @@ using System.Runtime.Versioning;
 using Melon.PluginModels;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.Options;
+using Amazon.Util.Internal;
+using Pastel;
+using Melon.Interface;
 namespace MelonWebApi
 {
     public static class Program
@@ -39,7 +42,7 @@ namespace MelonWebApi
         public static MWebApi mWebApi;
         public static FileSystemWatcher watcher;
         public static FileSystemWatcher shutdownWatcher;
-        public const string Version = "1.0.137.997";
+        public const string Version = "1.0.257.131";
 
         public static async Task<int> Main(string[] args)
         {
@@ -109,23 +112,53 @@ namespace MelonWebApi
                         if(args.Name == "MelonSettings.json")
                         {
                             // Check if settings have actually changed
-                            var temp = Storage.LoadConfigFile<Settings>(args.Name.Replace(".json",""), new[] { "JWTKey" }, out _);
+                            var temp = Storage.LoadConfigFile<Settings>("MelonSettings", null, out _);
                             if (StateManager.MelonSettings == null || temp == null || 
                                 Storage.PropertiesEqual(StateManager.MelonSettings, temp))
                             {
                                 return;
                             }
+                            StateManager.MelonSettings = temp;
                         }
-
-                        // Restart Server
-                        try
+                        else if (args.Name == "SSLConfig.json")
                         {
-                            StateManager.RestartServer = true;
-                            app.StopAsync();
+                            try
+                            {
+                                StateManager.RestartServer = true;
+                                app.StopAsync();
+                            }
+                            catch (Exception)
+                            {
+
+                            }
                         }
-                        catch (Exception)
+                        else if (args.Name == "DisabledPlugins.json")
                         {
+                            try
+                            {
+                                foreach (var plugin in StateManager.Plugins)
+                                {
+                                    plugin.Destroy();
+                                }
+                                PluginsManager.LoadPlugins();
+                                PluginsManager.ExecutePlugins();
+                            }
+                            catch (Exception)
+                            {
 
+                            }
+                        }
+                        else if (args.Name == "restartServer.json")
+                        {
+                            try
+                            {
+                                System.IO.File.Delete(args.FullPath);
+                                StateManager.RestartServer = true;
+                                app.StopAsync();
+                            }
+                            catch (Exception)
+                            {
+                            }
                         }
                     };
 
@@ -164,7 +197,9 @@ namespace MelonWebApi
 
                 var builder = WebApplication.CreateBuilder();
 
-                builder.Services.AddControllers();
+                builder.Services.AddControllers().AddNewtonsoftJson();
+
+
 
                 builder.Logging.ClearProviders();
 
@@ -173,22 +208,43 @@ namespace MelonWebApi
                 // Load SSL Certificate
                 var sslConfig = Security.GetSSLConfig();
 
-                if (sslConfig.PathToCert != "")
+                // Verify SSL Cert
+                if(!String.IsNullOrEmpty(sslConfig.PathToCert) && !String.IsNullOrEmpty(sslConfig.Password)) // No Cert set, skip and used http
                 {
-                    var certificate = new X509Certificate2(sslConfig.PathToCert, sslConfig.Password);
+                    var res = Security.VerifySSLConfig(sslConfig);
 
-                    // Configure Kestrel to use SSL
-                    builder.WebHost.ConfigureKestrel(serverOptions =>
+                    if (res == "Expired") // Expired, notify
                     {
-                        serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(10);
-                        serverOptions.ConfigureHttpsDefaults(httpsOptions =>
+                        if (OperatingSystem.IsWindows())
                         {
-                            httpsOptions.ServerCertificate = certificate;
+                            TrayIconManager.ShowMessageBox("The SSL Certificate is expired, please generate a new SSL Certificate.");
+                        }
+                        Console.WriteLine("The SSL Certificate is expired, please generate a new SSL Certificate.");
+                    }
+                    else if (res == "Invalid") // Path or Password is wrong, notify
+                    {
+                        if (OperatingSystem.IsWindows())
+                        {
+                            TrayIconManager.ShowMessageBox("The SSL Certificate is invalid, please link a new SSL Certificate.");
+                        }
+                        Console.WriteLine("The SSL Certificate is invalid, please generate a new SSL Certificate.");
+                    }
+
+                    if (res != "Invalid")
+                    {
+                        var certificate = new X509Certificate2(sslConfig.PathToCert, sslConfig.Password);
+
+                        // Configure Kestrel to use SSL
+                        builder.WebHost.ConfigureKestrel(serverOptions =>
+                        {
+                            serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(10);
+                            serverOptions.ConfigureHttpsDefaults(httpsOptions =>
+                            {
+                                httpsOptions.ServerCertificate = certificate;
+                            });
                         });
-                    });
+                    }
                 }
-
-
 
                 if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
                 {
@@ -328,6 +384,7 @@ namespace MelonWebApi
                 app.Run();
 
                 await app.StopAsync();
+                watcher.Dispose();
             }
             TrayIconManager.RemoveIcon();
             return 0;

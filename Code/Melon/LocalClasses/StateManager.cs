@@ -29,6 +29,7 @@ using Amazon.Runtime.Internal.Transform;
 using Serilog;
 using Microsoft.Owin.Hosting;
 using MongoDB.Bson;
+using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace Melon.LocalClasses
 {
@@ -39,6 +40,7 @@ namespace Melon.LocalClasses
     {
         public static string melonPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}/Melon";
         public static MongoClient DbClient;
+        public static FileSystemWatcher SettingsWatcher;
         public static Settings MelonSettings { get; set; }
         public static Flags MelonFlags { get; set; }
         public static ResourceManager StringsManager { get; set; }
@@ -283,6 +285,36 @@ namespace Melon.LocalClasses
                 ChecklistUI.UpdateChecklist(1, true);
             }
 
+            StateManager.SettingsWatcher = new FileSystemWatcher();
+            StateManager.SettingsWatcher.Path = $"{StateManager.melonPath}/Configs/";
+
+            StateManager.SettingsWatcher.NotifyFilter = NotifyFilters.LastWrite
+                                 | NotifyFilters.FileName
+                                 | NotifyFilters.DirectoryName;
+
+            StateManager.SettingsWatcher.Filter = "*.json";
+
+            FileSystemEventHandler func = (sender, args) =>
+            {
+                if (args.Name == "MelonSettings.json")
+                {
+                    // Check if settings have actually changed
+                    var temp = Storage.LoadConfigFile<Settings>("MelonSettings", null, out _);
+                    if (StateManager.MelonSettings == null || temp == null ||
+                        Storage.PropertiesEqual(StateManager.MelonSettings, temp))
+                    {
+                        return;
+                    }
+                    StateManager.MelonSettings = temp;
+                }
+            };
+
+            // Add event handlers.
+            StateManager.SettingsWatcher.Changed += func;
+            StateManager.SettingsWatcher.Created += func;
+
+            StateManager.SettingsWatcher.EnableRaisingEvents = true;
+
             // Plugins
             if (!MelonFlags.DisablePlugins && !LaunchArgs.ContainsKey("disablePlugins"))
             {
@@ -293,6 +325,7 @@ namespace Melon.LocalClasses
                 else
                 {
                     PluginsManager.ExecutePlugins();
+                    LaunchArgs.TryAdd("headless", "svr");
                 }
             }
 
@@ -323,7 +356,9 @@ namespace Melon.LocalClasses
                     DefaultLanguage = "EN",
                     JWTExpireInMinutes = 60,
                     UseMenuColor = true,
-                    QueueCleanupWaitInHours = 48
+                    QueueCleanupWaitInHours = 48,
+                    ArtistSplitIndicators = new List<string>() { ",", ";", "/", "feat.", "ft.", "&" },
+                    GenreSplitIndicators = new List<string>() { ",", ";", "/", @"\\", "//" }
                 };
                 MelonColor.SetDefaults(); 
                 Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
@@ -350,7 +385,9 @@ namespace Melon.LocalClasses
                         DefaultLanguage = "EN",
                         JWTExpireInMinutes = 60,
                         UseMenuColor = true,
-                        QueueCleanupWaitInHours = 48
+                        QueueCleanupWaitInHours = 48,
+                        ArtistSplitIndicators = new List<string>() { ",", ";", "/", "feat.", "ft.", "&" },
+                        GenreSplitIndicators = new List<string>() { ",", ";", "/", @"\\", "//" }
                     };
                 }
 
@@ -367,6 +404,15 @@ namespace Melon.LocalClasses
                 if (MelonSettings.ListeningURL.IsNullOrEmpty())
                 {
                     MelonSettings.ListeningURL = "https://*:14524";
+                }
+
+                if(MelonSettings.ArtistSplitIndicators == null)
+                {
+                    MelonSettings.ArtistSplitIndicators = new List<string>() { ",", ";", "/", "feat.", "ft.", "&" };
+                }
+                if(MelonSettings.GenreSplitIndicators == null)
+                {
+                    MelonSettings.GenreSplitIndicators = new List<string>() { ",", ";", "/", @"\\", "//" };
                 }
 
                 // Set Colors

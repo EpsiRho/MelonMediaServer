@@ -67,7 +67,7 @@ namespace Melon.LocalClasses
         }
         public static void ResetDb()
         {
-            MelonUI.ShowIndeterminateProgress();
+            //MelonUI.ShowIndeterminateProgress();
             newMelonDB = StateManager.DbClient.GetDatabase("Melon");
 
             var TracksCollection = newMelonDB.GetCollection<Track>("Tracks");
@@ -143,7 +143,7 @@ namespace Melon.LocalClasses
                 }
             }
 
-            MelonUI.HideIndeterminateProgress();
+            //MelonUI.HideIndeterminateProgress();
         }
 
         // Main Scanning Functions
@@ -926,7 +926,7 @@ namespace Melon.LocalClasses
         {
             // TODO: Allow changing the list of delimiters
             HashSet<string> artists = new HashSet<string>();
-            var aSplit = artistsStr.Split(new string[] { ",", ";", "/", "feat.", "ft.", "&" }, StringSplitOptions.TrimEntries);
+            var aSplit = artistsStr.Split(StateManager.MelonSettings.ArtistSplitIndicators.ToArray(), StringSplitOptions.TrimEntries);
             foreach (var a in aSplit)
             {
                 string name = a;
@@ -943,7 +943,7 @@ namespace Melon.LocalClasses
         {
             // TODO: Allow changing the list of delimiters
             HashSet<string> genres = new HashSet<string>();
-            var gSplit = genresStr.Split(new string[] { ",", ";", "/", @"\\", "//" }, StringSplitOptions.TrimEntries);
+            var gSplit = genresStr.Split(StateManager.MelonSettings.GenreSplitIndicators.ToArray(), StringSplitOptions.TrimEntries);
             foreach (var name in gSplit)
             {
                 if (name == "")

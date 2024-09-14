@@ -11,6 +11,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.DataProtection;
 using Melon.Models;
+using Melon.DisplayClasses;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Melon.LocalClasses
 {
@@ -39,6 +41,28 @@ namespace Melon.LocalClasses
         public static SSLConfig GetSSLConfig()
         {
             return sslConfig;
+        }
+        public static string VerifySSLConfig(SSLConfig config)
+        {
+            try
+            {
+                var certificate = new X509Certificate2(config.PathToCert, config.Password);
+
+                var expiry = certificate.GetExpirationDateString();
+
+                var expiryDate = DateTime.Parse(expiry);
+
+                if (expiryDate < DateTime.Now)
+                {
+                    return "Expired";
+                }
+
+                return "Valid";
+            }
+            catch (Exception)
+            {
+                return "Invalid";
+            }
         }
         public static string HashPassword(string password, out byte[] salt)
         {

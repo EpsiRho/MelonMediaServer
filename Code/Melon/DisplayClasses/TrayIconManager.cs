@@ -128,7 +128,7 @@ namespace Melon.DisplayClasses
                 }
             }
         }
-        private static bool ShowMessageBox(string msg)
+        public static bool ShowMessageBox(string msg)
         {
             const uint MB_OKCANCEL = 0x00000001;
             const uint MB_ICONINFORMATION = 0x00000040;
@@ -145,7 +145,7 @@ namespace Melon.DisplayClasses
                     return false;
             }
         }
-        private static bool ShowMessageBox(string title, string msg)
+        public static bool ShowMessageBox(string title, string msg)
         {
             const uint MB_OKCANCEL = 0x00000001;
             const uint MB_ICONINFORMATION = 0x00000040;
