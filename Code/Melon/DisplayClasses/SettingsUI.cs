@@ -286,7 +286,9 @@ namespace Melon.DisplayClasses
             var settings = new OrderedDictionary()
                 {
                     { StringsManager.GetString("BackNavigation"), () => { LockUI = false; } },
-                    { StringsManager.GetString("LibraryPathEditOption") , LibraryPathSettings }
+                    { StringsManager.GetString("LibraryPathEditOption") , LibraryPathSettings },
+                    { StringsManager.GetString("ArtistSplitIndicatorsOption") , ArtistSplitIndicatorSettings },
+                    { StringsManager.GetString("GenreSplitIndicatorsOption") , GenreSplitIndicatorSettings }
                 };
             while (LockUI && !StateManager.RestartServer)
             {
@@ -377,6 +379,95 @@ namespace Melon.DisplayClasses
                     StateManager.MelonSettings.LibraryPaths.Remove(input);
                     Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
                 }
+            }
+        }
+        private static void ArtistSplitIndicatorSettings()
+        {
+            while (true)
+            {
+                // Title + Desc
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("ScannerSettingsOption"), StringsManager.GetString("ArtistSplitIndicatorsOption") });
+                Console.WriteLine(StringsManager.GetString("ArtistSplitIndicatorsDescOne").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ArtistSplitIndicatorsDescTwo").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("CurrentListOfIndicators").Pastel(MelonColor.Highlight));
+
+
+                // Show Current Indicators
+                int count = 0;
+                foreach(var item in MelonSettings.ArtistSplitIndicators)
+                {
+                    Console.WriteLine($"{count}) {item}");
+                    count++;
+                }
+
+                // Show User Input
+                Console.WriteLine(StringsManager.GetString("ListEntryDesc").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ImportPlaylistControls").Pastel(MelonColor.Text));
+                Console.Write("> ".Pastel(MelonColor.Text));
+                string? input = Console.ReadLine();
+
+                int numOut = -1;
+                if(int.TryParse(input, out numOut)) // Is number?
+                {
+                    if(numOut >= 0 && numOut < MelonSettings.ArtistSplitIndicators.Count) // Is valid in array
+                    {
+                        // Delete
+                        MelonSettings.ArtistSplitIndicators.RemoveAt(numOut);
+                    }
+                }
+                else if (input != "")
+                {
+                    MelonSettings.ArtistSplitIndicators.Add(input);
+                }
+                else
+                {
+                    return;
+                }
+                Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, null);
+            }
+        }
+        private static void GenreSplitIndicatorSettings()
+        {
+            while (true)
+            {
+                // Title + Desc
+                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("ScannerSettingsOption"), StringsManager.GetString("GenreSplitIndicatorsOption") });
+                Console.WriteLine(StringsManager.GetString("GenreSplitIndicatorsDescOne").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("GenreSplitIndicatorsDescTwo").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("CurrentListOfIndicators").Pastel(MelonColor.Highlight));
+
+                // Show Current Indicators
+                int count = 0;
+                foreach (var item in MelonSettings.GenreSplitIndicators)
+                {
+                    Console.WriteLine($"{count}) {item}");
+                    count++;
+                }
+
+                // Show User Input
+                Console.WriteLine(StringsManager.GetString("ListEntryDesc").Pastel(MelonColor.Text));
+                Console.WriteLine(StringsManager.GetString("ImportPlaylistControls").Pastel(MelonColor.Text));
+                Console.Write("> ".Pastel(MelonColor.Text));
+                string? input = Console.ReadLine();
+
+                int numOut = -1;
+                if (int.TryParse(input, out numOut)) // Is number?
+                {
+                    if (numOut >= 0 && numOut < MelonSettings.GenreSplitIndicators.Count) // Is valid in array
+                    {
+                        // Delete
+                        MelonSettings.GenreSplitIndicators.RemoveAt(numOut);
+                    }
+                }
+                else if (input != "")
+                {
+                    MelonSettings.GenreSplitIndicators.Add(input);
+                }
+                else
+                {
+                    return;
+                }
+                Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, null);
             }
         }
 

@@ -15,6 +15,8 @@ namespace Melon.Models
     {
         public string? MongoDbConnectionString { get; set; }
         public List<string> LibraryPaths { get; set; }
+        public List<string> ArtistSplitIndicators { get; set; }
+        public List<string> GenreSplitIndicators { get; set; }
         public string ListeningURL { get; set; }
         public string DefaultLanguage { get; set; }
         public int JWTExpireInMinutes { get; set; }
@@ -31,6 +33,8 @@ namespace Melon.Models
     {
         public string? MongoDbConnectionString { get; set; }
         public List<string> LibraryPaths { get; set; }
+        public List<string> ArtistSplitIndicators { get; set; }
+        public List<string> GenreSplitIndicators { get; set; }
         public string ListeningURL { get; set; }
         public string DefaultLanguage { get; set; }
         public Color Text { get; set; }

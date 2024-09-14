@@ -323,7 +323,9 @@ namespace Melon.LocalClasses
                     DefaultLanguage = "EN",
                     JWTExpireInMinutes = 60,
                     UseMenuColor = true,
-                    QueueCleanupWaitInHours = 48
+                    QueueCleanupWaitInHours = 48,
+                    ArtistSplitIndicators = new List<string>() { ",", ";", "/", "feat.", "ft.", "&" },
+                    GenreSplitIndicators = new List<string>() { ",", ";", "/", @"\\", "//" }
                 };
                 MelonColor.SetDefaults(); 
                 Storage.SaveConfigFile<Settings>("MelonSettings", MelonSettings, new[] { "JWTKey" });
@@ -350,7 +352,9 @@ namespace Melon.LocalClasses
                         DefaultLanguage = "EN",
                         JWTExpireInMinutes = 60,
                         UseMenuColor = true,
-                        QueueCleanupWaitInHours = 48
+                        QueueCleanupWaitInHours = 48,
+                        ArtistSplitIndicators = new List<string>() { ",", ";", "/", "feat.", "ft.", "&" },
+                        GenreSplitIndicators = new List<string>() { ",", ";", "/", @"\\", "//" }
                     };
                 }
 
@@ -367,6 +371,15 @@ namespace Melon.LocalClasses
                 if (MelonSettings.ListeningURL.IsNullOrEmpty())
                 {
                     MelonSettings.ListeningURL = "https://*:14524";
+                }
+
+                if(MelonSettings.ArtistSplitIndicators == null)
+                {
+                    MelonSettings.ArtistSplitIndicators = new List<string>() { ",", ";", "/", "feat.", "ft.", "&" };
+                }
+                if(MelonSettings.GenreSplitIndicators == null)
+                {
+                    MelonSettings.GenreSplitIndicators = new List<string>() { ",", ";", "/", @"\\", "//" };
                 }
 
                 // Set Colors
