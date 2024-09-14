@@ -89,14 +89,17 @@ namespace MelonInstaller
                 Console.WriteLine($"({StringsManager.GetString("DefaultPrompt")} {installPath})");
                 var input = Console.ReadLine();
 
-                if(Directory.CreateDirectory(input).Exists)
+                if (!string.IsNullOrEmpty(input))
                 {
-                    installPath = input;
-                }
-                else
-                {
-                    Console.WriteLine($"[!] {StringsManager.GetString("InvalidLocation")}");
-                    return 3;
+                    if (Directory.Exists(input))
+                    {
+                        installPath = input;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[!] {StringsManager.GetString("InvalidLocation")}");
+                        return 3;
+                    }
                 }
             }
             else
