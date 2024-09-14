@@ -165,7 +165,8 @@ namespace Melon.DisplayClasses
                             UseShellExecute = false
                         };
                         Process.Start(processInfo);
-                        File.Create($"{AppDomain.CurrentDomain.BaseDirectory}/GoAway.sdrq");
+                        //File.Create($"{AppDomain.CurrentDomain.BaseDirectory}/GoAway.sdrq");
+                        File.WriteAllText($"{StateManager.melonPath}/Configs/GoAway.json", "1");
                         Environment.Exit(0);
                     }
                     catch (Exception)

@@ -188,7 +188,6 @@ namespace Melon.DisplayClasses
                             UseShellExecute = false
                         };
                         Process.Start(processInfo);
-
                         Environment.Exit(0);
                     }
                     catch (Exception)

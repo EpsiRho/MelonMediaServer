@@ -42,7 +42,7 @@ namespace MelonWebApi
         public static MWebApi mWebApi;
         public static FileSystemWatcher watcher;
         public static FileSystemWatcher shutdownWatcher;
-        public const string Version = "1.0.257.131";
+        public const string Version = "1.0.257.182";
 
         public static async Task<int> Main(string[] args)
         {
@@ -155,6 +155,19 @@ namespace MelonWebApi
                                 System.IO.File.Delete(args.FullPath);
                                 StateManager.RestartServer = true;
                                 app.StopAsync();
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        }
+                        else if (args.Name == "GoAway.json")
+                        {
+                            try
+                            {
+                                StateManager.RestartServer = false;
+                                app.StopAsync();
+                                File.Delete($"{AppDomain.CurrentDomain.BaseDirectory}/GoAway.sdrq");
+                                Environment.Exit(0);
                             }
                             catch (Exception)
                             {
