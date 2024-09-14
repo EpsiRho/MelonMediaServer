@@ -42,7 +42,7 @@ namespace MelonWebApi
         public static MWebApi mWebApi;
         public static FileSystemWatcher watcher;
         public static FileSystemWatcher shutdownWatcher;
-        public const string Version = "1.0.027.997";
+        public const string Version = "1.0.257.131";
 
         public static async Task<int> Main(string[] args)
         {
