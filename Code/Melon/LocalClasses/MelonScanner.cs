@@ -67,7 +67,7 @@ namespace Melon.LocalClasses
         }
         public static void ResetDb()
         {
-            MelonUI.ShowIndeterminateProgress();
+            //MelonUI.ShowIndeterminateProgress();
             newMelonDB = StateManager.DbClient.GetDatabase("Melon");
 
             var TracksCollection = newMelonDB.GetCollection<Track>("Tracks");
@@ -143,7 +143,7 @@ namespace Melon.LocalClasses
                 }
             }
 
-            MelonUI.HideIndeterminateProgress();
+            //MelonUI.HideIndeterminateProgress();
         }
 
         // Main Scanning Functions

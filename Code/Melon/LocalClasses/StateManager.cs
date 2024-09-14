@@ -325,6 +325,7 @@ namespace Melon.LocalClasses
                 else
                 {
                     PluginsManager.ExecutePlugins();
+                    LaunchArgs.TryAdd("headless", "svr");
                 }
             }
 
