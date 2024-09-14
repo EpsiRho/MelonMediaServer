@@ -1,4 +1,5 @@
 ﻿using Amazon.Runtime.Internal.Transform;
+using Amazon.Util;
 using Melon.Classes;
 using Melon.Interface;
 using Melon.LocalClasses;
@@ -514,46 +515,57 @@ namespace Melon.DisplayClasses
         }
         private static void HTTPSSetup()
         {
-            // Check if ssl is setup already
+            // Get ssl config
             var config = Security.GetSSLConfig();
-            if (config.PathToCert != "")
-            {
-                MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("NetworkSettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
-                Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
-                Console.WriteLine(StringsManager.GetString("SSLConfigStatus").Pastel(MelonColor.Text));
-                var opt = MelonUI.OptionPicker(new List<string>() { StringsManager.GetString("BackNavigation"), StringsManager.GetString("SSLDisableOption"), StringsManager.GetString("SSLConfigEditOption") });
-                if (opt == StringsManager.GetString("BackNavigation"))
-                {
-                    return;
-                }
-                else if (opt == StringsManager.GetString("SSLDisableOption"))
-                {
-                    Security.SetSSLConfig("", "");
-                    Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
-                    foreach (var plugin in Plugins)
-                    {
-                        plugin.UnloadUI();
-                    }
-                }
-
-            }
 
             bool result = true;
             while (true)
             {
-                // Get the Path to the pfx
+                if (!String.IsNullOrEmpty(config.PathToCert) && !String.IsNullOrEmpty(config.Password)) // Is config empty?
+                {
+                    // Config is not empty, check validity
+                    MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("NetworkSettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
+                    Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
+                    Console.WriteLine(StringsManager.GetString("HTTPSRequirementNote").Pastel(MelonColor.Text));
+                    Console.WriteLine($"{StringsManager.GetString("SSLCertificatePathEntryFirst")} {".pfx".Pastel(MelonColor.Highlight)} {StringsManager.GetString("SSLCertificatePathEntrySecond")}:".Pastel(MelonColor.Text));
+                    var res = Security.VerifySSLConfig(config);
+                    if (res == "Expired")
+                    {
+                        Console.WriteLine("The SSL Certificate is Expired, Please link a new one.".Pastel(MelonColor.Error));
+                    }
+                    else if (res == "Invalid")
+                    {
+                        Console.WriteLine($"[{StringsManager.GetString("CertificatePasswordError")}]".Pastel(MelonColor.Error));
+                    }
+                    else
+                    {
+                        Console.WriteLine(StringsManager.GetString("SSLConfigStatus").Pastel(MelonColor.Text));
+                    }
+
+                    // Options
+                    var opt = MelonUI.OptionPicker(new List<string>() { StringsManager.GetString("BackNavigation"), StringsManager.GetString("SSLDisableOption"), StringsManager.GetString("SSLConfigEditOption") });
+                    if (opt == StringsManager.GetString("BackNavigation"))
+                    {
+                        return;
+                    }
+                    else if (opt == StringsManager.GetString("SSLDisableOption"))
+                    {
+                        Security.SetSSLConfig("", "");
+                        Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
+                        return;
+                    }
+                }
+
+                // Setup SSL
                 MelonUI.BreadCrumbBar(new List<string>() { StringsManager.GetString("MelonTitle"), StringsManager.GetString("SettingsOption"), StringsManager.GetString("NetworkSettingsOption"), StringsManager.GetString("HTTPSConfigOption") });
                 Console.WriteLine(StringsManager.GetString("ServerRestartWarning").Pastel(MelonColor.Highlight));
                 Console.WriteLine(StringsManager.GetString("HTTPSRequirementNote").Pastel(MelonColor.Text));
                 Console.WriteLine($"{StringsManager.GetString("SSLCertificatePathEntryFirst")} {".pfx".Pastel(MelonColor.Highlight)} {StringsManager.GetString("SSLCertificatePathEntrySecond")}:".Pastel(MelonColor.Text));
-                if (!result)
-                {
-                    Console.WriteLine($"[{StringsManager.GetString("CertificatePasswordError")}]".Pastel(MelonColor.Error));
-                }
+                
                 result = false;
 
                 Console.Write("> ".Pastel(MelonColor.Text));
-                string pathToCert = Console.ReadLine();
+                string pathToCert = Console.ReadLine().Replace("\"", "");
                 if (pathToCert == "")
                 {
                     return;
@@ -571,14 +583,20 @@ namespace Melon.DisplayClasses
                 }
 
                 // Check if cert and password are valid
-                try
-                {
-                    var certificate = new X509Certificate2(pathToCert, password);
-                    result = true;
-                }
-                catch (Exception)
+                config.PathToCert = pathToCert;
+                config.Password = password;
+                var check = Security.VerifySSLConfig(config);
+                if (check == "Expired")
                 {
                     result = false;
+                }
+                else if (check == "Invalid")
+                {
+                    result = false;
+                }
+                else
+                {
+                    result = true;
                 }
 
 
@@ -586,11 +604,11 @@ namespace Melon.DisplayClasses
                 {
                     // Set and Save new conn string
                     Security.SetSSLConfig(pathToCert, password);
-                    Storage.SaveConfigFile("SSLConfig", Security.GetSSLConfig(), new[] { "Password" });
-                    foreach (var plugin in Plugins)
-                    {
-                        plugin.UnloadUI();
-                    }
+                    Storage.SaveConfigFile("SSLConfig", config, new[] { "Password" });
+                    //foreach (var plugin in Plugins)
+                    //{
+                    //    plugin.UnloadUI();
+                    //}
                     return;
                 }
 

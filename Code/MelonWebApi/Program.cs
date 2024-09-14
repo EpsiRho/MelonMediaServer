@@ -30,6 +30,8 @@ using System.Runtime.Versioning;
 using Melon.PluginModels;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.Options;
+using Amazon.Util.Internal;
+using Pastel;
 namespace MelonWebApi
 {
     public static class Program
@@ -186,22 +188,43 @@ namespace MelonWebApi
                 // Load SSL Certificate
                 var sslConfig = Security.GetSSLConfig();
 
-                if (sslConfig.PathToCert != "")
+                // Verify SSL Cert
+                if(!String.IsNullOrEmpty(sslConfig.PathToCert) && !String.IsNullOrEmpty(sslConfig.Password)) // No Cert set, skip and used http
                 {
-                    var certificate = new X509Certificate2(sslConfig.PathToCert, sslConfig.Password);
+                    var res = Security.VerifySSLConfig(sslConfig);
 
-                    // Configure Kestrel to use SSL
-                    builder.WebHost.ConfigureKestrel(serverOptions =>
+                    if (res == "Expired") // Expired, notify
                     {
-                        serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(10);
-                        serverOptions.ConfigureHttpsDefaults(httpsOptions =>
+                        if (OperatingSystem.IsWindows())
                         {
-                            httpsOptions.ServerCertificate = certificate;
+                            TrayIconManager.ShowMessageBox("The SSL Certificate is expired, please generate a new SSL Certificate.");
+                        }
+                        Console.WriteLine("The SSL Certificate is expired, please generate a new SSL Certificate.");
+                    }
+                    else if (res == "Invalid") // Path or Password is wrong, notify
+                    {
+                        if (OperatingSystem.IsWindows())
+                        {
+                            TrayIconManager.ShowMessageBox("The SSL Certificate is invalid, please link a new SSL Certificate.");
+                        }
+                        Console.WriteLine("The SSL Certificate is invalid, please generate a new SSL Certificate.");
+                    }
+
+                    if (res != "Invalid")
+                    {
+                        var certificate = new X509Certificate2(sslConfig.PathToCert, sslConfig.Password);
+
+                        // Configure Kestrel to use SSL
+                        builder.WebHost.ConfigureKestrel(serverOptions =>
+                        {
+                            serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(10);
+                            serverOptions.ConfigureHttpsDefaults(httpsOptions =>
+                            {
+                                httpsOptions.ServerCertificate = certificate;
+                            });
                         });
-                    });
+                    }
                 }
-
-
 
                 if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
                 {
