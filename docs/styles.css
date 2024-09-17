@@ -223,7 +223,7 @@ pre code {
 
 
 /* Responsive Design */
-@media screen and (max-width: 900px) {
+@media screen and (max-width: 1200px) and (any-pointer: coarse) {
     .container {
         flex-direction: column;
     }
@@ -243,7 +243,7 @@ pre code {
         margin: 0;
         padding: 0;
         line-height: 1.6;
-        font-size: 2em;
+        font-size: 1.8em;
     }
     .sidebar summary {
         cursor: pointer;
@@ -252,6 +252,21 @@ pre code {
         list-style: none;
         position: relative;
         padding-left: 40px; /* Space for the arrow */
+    }
+    
+}
+@media screen and (max-width: 700px) {
+    .container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding-right: 20px;
+    }
+    .content {
+        margin-left: 0;
     }
     
 }
