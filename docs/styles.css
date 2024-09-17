@@ -223,7 +223,7 @@ pre code {
 
 
 /* Responsive Design */
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 900px) {
     .container {
         flex-direction: column;
     }
@@ -236,4 +236,22 @@ pre code {
     .content {
         margin-left: 0;
     }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #121212; /* Dark mode background */
+        color: #FFFFFF; /* Light text for contrast */
+        margin: 0;
+        padding: 0;
+        line-height: 1.6;
+        font-size: 2em;
+    }
+    .sidebar summary {
+        cursor: pointer;
+        font-weight: bold;
+        color: rgb(26, 225, 19);
+        list-style: none;
+        position: relative;
+        padding-left: 40px; /* Space for the arrow */
+    }
+    
 }
