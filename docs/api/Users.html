@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>User API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="user-apis-documentation">User APIs Documentation</h1>
+      <p>
+        The <code>UserController</code> handles user-related actions, such as
+        retrieving user information, managing friendships, and updating user
+        data. See the <a href="/Guides/Users.html">User Guide</a> for more info.
+      </p>
+      <h2 id="controller-route-api-users-">
+        Controller Route: <code>/api/users</code>
+      </h2>
+      <p>
+        All routes within the <code>UserController</code> are prefixed by
+        <code>/api/users</code>.
+      </p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/users/get</code></td>
+            <td>GET</td>
+            <td>Fetches user details by user ID.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/users/search</code></td>
+            <td>GET</td>
+            <td>Searches users by username.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/users/add-friend</code></td>
+            <td>POST</td>
+            <td>Adds a user as a friend.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/users/remove-friend</code></td>
+            <td>POST</td>
+            <td>Removes a user from friends.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/users/current</code></td>
+            <td>GET</td>
+            <td>Retrieves the current logged-in user&#39;s details.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/users/create</code></td>
+            <td>POST</td>
+            <td>Creates a new user with specified role.</td>
+            <td>Admin, Server</td>
+          </tr>
+          <tr>
+            <td><code>/api/users/delete</code></td>
+            <td>POST</td>
+            <td>Deletes a user by ID.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/users/update</code></td>
+            <td>PATCH</td>
+            <td>Updates a user&#39;s profile information.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/users/change-username</code></td>
+            <td>PATCH</td>
+            <td>Changes the username for a user.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/users/change-password</code></td>
+            <td>PATCH</td>
+            <td>Changes the password for a user.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h3 id="get-user-by-id">Get User by ID</h3>
+      <p>Fetches the details of a user by their user ID.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/users/get</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the user.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns the user details.</li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+        <li>
+          <strong>401 Unauthorized</strong>: If access is restricted based on
+          user privacy settings.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/users/get?id=66bc99b8ab7ba419497e21af"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="search-users">Search Users</h3>
+      <p>Searches for users by their username.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/users/search</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>username</strong> (string, optional): The username to search
+          for (supports partial matches).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns a list of matching users.</li>
+        <li>
+          <strong>404 Not Found</strong>: If no users match the search criteria.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/users/search?username=Epsi"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="add-friend">Add Friend</h3>
+      <p>Adds a user to the current user&#39;s friend list.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/users/add-friend</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>id</strong> (string, required): The ID of the user to add as a
+          friend.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the user is added as a
+          friend.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+        <li>
+          <strong>401 Unauthorized</strong>: If the action is not authorized.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/users/add-friend?id=66bc99b8ab7ba419497e21af"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="remove-friend">Remove Friend</h3>
+      <p>Removes a user from the current user&#39;s friend list.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/users/remove-friend</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>id</strong> (string, required): The ID of the user to remove
+          as a friend.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the user is removed from
+          friends.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+        <li>
+          <strong>401 Unauthorized</strong>: If the action is not authorized.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/users/remove-friend?id=user123"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-current-user">Get Current User</h3>
+      <p>Retrieves the details of the currently logged-in user.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/users/current</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns the current user&#39;s details.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/users/current"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="create-user">Create User</h3>
+      <p>Creates a new user with a username, password, and role.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/users/create</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, Server)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>username</strong> (string, required): The username for the new
+          user.
+        </li>
+        <li>
+          <strong>password</strong> (string, required): The password for the new
+          user.
+        </li>
+        <li>
+          <strong>role</strong> (string, optional): The role for the new user
+          (defaults to <code>User</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns the user ID of the created user.
+        </li>
+        <li><strong>400 Bad Request</strong>: If the password is empty.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/users/<span class="hljs-keyword">create</span>?username=newuser&amp;<span class="hljs-keyword">password</span>=Password123&amp;<span class="hljs-keyword">role</span>=<span class="hljs-keyword">User</span><span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+      <hr />
+      <h3 id="delete-user">Delete User</h3>
+      <p>Deletes a user by their user ID.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/users/delete</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>id</strong> (string, required): The ID of the user to delete.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the user is deleted.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+        <li>
+          <strong>401 Unauthorized</strong>: If the action is not authorized.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/users/delete?id=user123"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="update-user">Update User</h3>
+      <p>Updates the profile information of a user.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/users/update</code></li>
+        <li><strong>Method</strong>: <code>PATCH</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the user.</li>
+        <li><strong>bio</strong> (string, optional): The bio for the user.</li>
+        <li>
+          <strong>role</strong> (string, optional): The role for the user (Admin
+          only).
+        </li>
+        <li>
+          <strong>publicStats</strong> (string, optional): Whether the
+          user&#39;s stats are public.
+        </li>
+        <li>
+          <strong>favTrackId</strong> (string, optional): The ID of the
+          user&#39;s favorite track.
+        </li>
+        <li>
+          <strong>favAlbumId</strong> (string, optional): The ID of the
+          user&#39;s favorite album.
+        </li>
+        <li>
+          <strong>favArtistId</strong> (string, optional): The ID of the
+          user&#39;s favorite artist.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the user profile is
+          updated.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+        <li>
+          <strong>401 Unauthorized</strong>: If the action is not authorized.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X PATCH "https://your-api-url.com/api/users/<span class="hljs-keyword">update</span>?<span class="hljs-keyword">id</span>=user123&amp;bio=<span class="hljs-keyword">New</span> bio<span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+      <hr />
+      <h3 id="change-username">Change Username</h3>
+      <p>Changes the username of a user.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/users/change-username</code>
+        </li>
+        <li><strong>Method</strong>: <code>PATCH</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the user.</li>
+        <li>
+          <strong>username</strong> (string, required): The new username for the
+          user.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the username is updated.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+        <li>
+          <strong>401 Unauthorized</strong>: If the action is not authorized.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X PATCH <span class="hljs-string">"https://your-api-url.com/api/users/change-username?id=user123&amp;username=newusername"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="change-password">Change Password</h3>
+      <p>Changes the password of a user.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/users/change-password</code>
+        </li>
+        <li><strong>Method</strong>: <code>PATCH</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the user.</li>
+        <li>
+          <strong>password</strong> (string, required): The new password for the
+          user.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the password is updated.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+        <li><strong>401 Unauthorized</strong></li>
+      </ul>
+      <p>: If the action is not authorized.</p>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X PATCH "https://your-api-url.com/api/users/<span class="hljs-keyword">change</span>-<span class="hljs-keyword">password</span>?<span class="hljs-keyword">id</span>=user123&amp;<span class="hljs-keyword">password</span>=newpassword<span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+    </div>
+  </body>
+</html>

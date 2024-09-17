@@ -508,7 +508,7 @@ namespace MelonWebApi.Controllers
             {
                 if (!roles.Contains("Admin"))
                 {
-                    args.SendEvent("Password Changed", 401, Program.mWebApi);
+                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
                 }
             }

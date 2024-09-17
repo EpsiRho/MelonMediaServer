@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Artist Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="artist">Artist</h1>
+        <p>The <code>Artist</code> class represents an artist in the Melon library, including metadata, user statistics,
+            artwork, and associated genres and connected artists.</p>
+        <h2 id="properties">Properties</h2>
+        <h3 id="identification">Identification</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>_id</code></td>
+                    <td><code>string</code></td>
+                    <td>The unique identifier for the artist in the database.</td>
+                </tr>
+            </tbody>
+        </table>
+        <h3 id="basic-information">Basic Information</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Name</code></td>
+                    <td><code>string</code></td>
+                    <td>The name of the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>Bio</code></td>
+                    <td><code>string</code></td>
+                    <td>A detailed biography or background information.</td>
+                </tr>
+                <tr>
+                    <td><code>Genres</code></td>
+                    <td><code>List&lt;string&gt;</code></td>
+                    <td>Genres associated with the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>DateAdded</code></td>
+                    <td><code>DateTime</code></td>
+                    <td>The date and time when the artist was added to the system.</td>
+                </tr>
+            </tbody>
+        </table>
+        <h3 id="artwork">Artwork</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>ArtistPfpArtCount</code></td>
+                    <td><code>int</code></td>
+                    <td>Number of profile pictures available for the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>ArtistBannerArtCount</code></td>
+                    <td><code>int</code></td>
+                    <td>Number of banner images available for the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>ArtistPfpDefault</code></td>
+                    <td><code>int</code></td>
+                    <td>Index of the default profile picture.</td>
+                </tr>
+                <tr>
+                    <td><code>ArtistBannerArtDefault</code></td>
+                    <td><code>int</code></td>
+                    <td>Index of the default banner image.</td>
+                </tr>
+                <tr>
+                    <td><code>ArtistPfpPaths</code></td>
+                    <td><code>List&lt;string&gt;</code></td>
+                    <td>File paths or URLs to the artist&#39;s profile pictures.</td>
+                </tr>
+                <tr>
+                    <td><code>ArtistBannerPaths</code></td>
+                    <td><code>List&lt;string&gt;</code></td>
+                    <td>File paths or URLs to the artist&#39;s banner images.</td>
+                </tr>
+            </tbody>
+        </table>
+        <h3 id="user-statistics">User Statistics</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>PlayCounts</code></td>
+                    <td><code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code></td>
+                    <td>Play count statistics for the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>SkipCounts</code></td>
+                    <td><code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code></td>
+                    <td>Skip count statistics for the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>Ratings</code></td>
+                    <td><code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code></td>
+                    <td>User ratings for the artist.</td>
+                </tr>
+            </tbody>
+        </table>
+        <h3 id="associations">Associations</h3>
+        <p>Used in api/discovery functions</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>ConnectedArtists</code></td>
+                    <td><code>List&lt;<a href="/models/DbLink.html">DbLink</a>&gt;</code></td>
+                    <td>Artists connected or related to this artist.</td>
+                </tr>
+            </tbody>
+        </table>
+        <h3 id="server-information">Server Information</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>ServerURL</code></td>
+                    <td><code>string</code></td>
+                    <td>The base URL of the server hosting the artist&#39;s resources.</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>This value is unused. It is planned for use with listening parties in v2.</p>
+        <hr>
+        <h1 id="responseartist">ResponseArtist</h1>
+        <p>The <code>ResponseArtist</code> class is used for HTTP responses, providing a trimmed version of the artist
+            data suitable for client consumption.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>_id</code></td>
+                    <td><code>string</code></td>
+                    <td>The unique identifier for the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>Name</code></td>
+                    <td><code>string</code></td>
+                    <td>The name of the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>Bio</code></td>
+                    <td><code>string</code></td>
+                    <td>A biography or background information about the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>ArtistPfpArtCount</code></td>
+                    <td><code>int</code></td>
+                    <td>Number of profile pictures available.</td>
+                </tr>
+                <tr>
+                    <td><code>ArtistBannerArtCount</code></td>
+                    <td><code>int</code></td>
+                    <td>Number of banner images available.</td>
+                </tr>
+                <tr>
+                    <td><code>ArtistPfpDefault</code></td>
+                    <td><code>int</code></td>
+                    <td>Index of the default profile picture.</td>
+                </tr>
+                <tr>
+                    <td><code>ArtistBannerArtDefault</code></td>
+                    <td><code>int</code></td>
+                    <td>Index of the default banner image.</td>
+                </tr>
+                <tr>
+                    <td><code>PlayCounts</code></td>
+                    <td><code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code></td>
+                    <td>User play count statistics.</td>
+                </tr>
+                <tr>
+                    <td><code>SkipCounts</code></td>
+                    <td><code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code></td>
+                    <td>User skip count statistics.</td>
+                </tr>
+                <tr>
+                    <td><code>Ratings</code></td>
+                    <td><code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code></td>
+                    <td>User ratings for the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>ServerURL</code></td>
+                    <td><code>string</code></td>
+                    <td>Server URL hosting the artist&#39;s resources.</td>
+                </tr>
+                <tr>
+                    <td><code>Genres</code></td>
+                    <td><code>List&lt;string&gt;</code></td>
+                    <td>Genres associated with the artist.</td>
+                </tr>
+                <tr>
+                    <td><code>DateAdded</code></td>
+                    <td><code>DateTime</code></td>
+                    <td>Date when the artist was added to the system.</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</body>

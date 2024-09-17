@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Artwork Architecture Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="artwork-management">Artwork Management</h1>
+<p>Melon does not download any images automatically currently (though it might in the future). Melon comes with a default artwork, but otherwise pulls artwork from within track file metadata. Using the <a href="/api/ArtUpload.html">ArtUpload</a> endpoints users can upload artwork to tracks, albums, artists (pfps + banners), playlists, collections, and a custom default artwork. <a href="/api/ArtDeletion.html">ArtDeletion</a> endpoints allows you to delete artwork. Downloading artwork from the server is done with the <a href="/api/Download.html">Download</a> endpoints.</p>
+<p>Artwork is stored on disk under the linked object&#39;s id + index position, except for track artwork which is stored inside the track&#39;s file metadata. <code>Example: Melon/ArtistPfps/66bc9aadab7ba419497e6a97-0.jpeg</code></p>
+<p>When an album has no specific artwork set, it pulls from the first track in it that has artwork. By default, albums are not given their own artwork, so all albums by default pull the artwork from the first track that has artwork. When calling for an album image that doesn&#39;t have one set, the index you call for will be based on the track. Example: <code>https://your-melon-server.com/api/art/delete/album-art?id=66bc9aadab7ba419497e6a97&amp;index=2</code> will get the 3rd image from the first track found to have any artwork. If 2 is out of bounds, you&#39;ll be sent the default artwork.</p>
+<p>If no artwork can be found for an object, the default artwork is sent. Melon&#39;s Default artwork is stored in the exe, but can be overridden by uploading a custom one. Custom default artwork is stored on disk. The default internal artwork cannot be removed or changed (without rebuilding Melon with a different one).</p>
+<p>Tracks, Albums, Artist pfps and Artist banners can all have multiple images, and Tracks/Albums/Artists have properties for setting the default image to pick. </p>
+<p>Playlists, Collections, and the default artwork can only have one set at a time.</p>
+
+    </div>  
+</body>

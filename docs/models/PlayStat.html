@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>PlayStat Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="playstat-class">PlayStat Class</h1>
+        <p>The <code>PlayStat</code> class holds info about a play event, like when <code>api/stats/log-play</code> or <code>api/stats/log-skip</code> are called</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>_id</code></td>
+        <td><code>string</code></td>
+        <td>Unique identifier for the play event.</td>
+        </tr>
+        <tr>
+        <td><code>TrackId</code></td>
+        <td><code>string</code></td>
+        <td>ID of the track that was played.</td>
+        </tr>
+        <tr>
+        <td><code>AlbumId</code></td>
+        <td><code>string</code></td>
+        <td>ID of the album containing the track.</td>
+        </tr>
+        <tr>
+        <td><code>ArtistIds</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>List of artist IDs associated with the track.</td>
+        </tr>
+        <tr>
+        <td><code>Genres</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>Genres associated with the track.</td>
+        </tr>
+        <tr>
+        <td><code>Device</code></td>
+        <td><code>string</code></td>
+        <td>Device from which the track was played.</td>
+        </tr>
+        <tr>
+        <td><code>UserId</code></td>
+        <td><code>string</code></td>
+        <td>ID of the user who played the track.</td>
+        </tr>
+        <tr>
+        <td><code>Duration</code></td>
+        <td><code>string</code></td>
+        <td>Duration of the play event.</td>
+        </tr>
+        <tr>
+        <td><code>Type</code></td>
+        <td><code>string</code></td>
+        <td>Type of play event (e.g., &quot;Play&quot;, &quot;Skip&quot;).</td>
+        </tr>
+        <tr>
+        <td><code>LogDate</code></td>
+        <td><code>DateTime</code></td>
+        <td>Date and time when the play event was logged.</td>
+        </tr>
+        </tbody>
+        </table>
+        
+    </div>  
+</body>

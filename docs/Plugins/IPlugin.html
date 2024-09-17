@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>IPlugin Model Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1>IPlugin Interface Documentation</h1>
+      <p>
+        The <code>IPlugin</code> interface is the core contract that all plugins
+        must implement to integrate with Melon.
+      </p>
+      <h2>Interface Definition</h2>
+      <pre><code class="language-C#">
+    public interface IPlugin
+    {
+        string Name { get; }
+        string Version { get; }
+        string Authors { get; }
+        string Description { get; }
+        IHost Host { get; set; }
+        IWebApi WebApi { get; set; }
+    
+        Dictionary&lt;string, string&gt; GetHelpOptions();
+        void LoadMelonCommands(IHost host);
+        void LoadMelonServerCommands(IWebApi webapi);
+        int LoadUI();
+        int UnloadUI();
+        int Execute();
+        int Destroy();
+    }
+        </code></pre>
+      <h3>Properties</h3>
+      <ul>
+        <li><strong>Name</strong>: Name of the plugin.</li>
+        <li><strong>Version</strong>: Version number.</li>
+        <li><strong>Authors</strong>: Comma-separated list of authors.</li>
+        <li><strong>Description</strong>: Brief description.</li>
+        <li>
+          <strong>Host</strong>: Provides access to Melon&#39;s host services.
+        </li>
+        <li>
+          <strong>WebApi</strong>: Provides access to Melon&#39;s web API.
+        </li>
+      </ul>
+      <h3>Methods</h3>
+      <ul>
+        <li>
+          <strong>GetHelpOptions()</strong>:
+          <ul>
+            <li>Returns command-line options and descriptions.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>LoadMelonCommands(IHost host)</strong>:
+          <ul>
+            <li>Called to initialize the plugin with the Melon host.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>LoadMelonServerCommands(IWebApi webapi)</strong>:
+          <ul>
+            <li>Called to initialize the plugin with the Melon web API.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>LoadUI()</strong>:
+          <ul>
+            <li>Load UI elements into Melon.</li>
+            <li>
+              <strong>Returns</strong>: An integer indicating success
+              (<code>0</code>) or failure.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <strong>UnloadUI()</strong>:
+          <ul>
+            <li>Remove UI elements from Melon.</li>
+            <li>
+              <strong>Returns</strong>: An integer indicating success
+              (<code>0</code>) or failure.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <strong>Execute()</strong>:
+          <ul>
+            <li>Start any background processes or middleware.</li>
+            <li>
+              <strong>Returns</strong>: An integer indicating success
+              (<code>0</code>) or failure.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <strong>Destroy()</strong>:
+          <ul>
+            <li>Clean up resources and stop processes.</li>
+            <li>
+              <strong>Returns</strong>: An integer indicating success
+              (<code>0</code>) or failure.
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

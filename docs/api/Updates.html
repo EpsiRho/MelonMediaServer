@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Update API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="update-controller-documentation">
+        Update Controller Documentation
+      </h1>
+      <p>
+        The <code>CheckForUpdateUpdateController</code> provides two endpoints
+        for checking for updates and updating Melon. It calls GitHub to check
+        for the latest release and triggers an update process if required.
+      </p>
+      <p>
+        For more details on how Melon managing updates, refer to the
+        <a href="/Architecture/MelonInstaller.html">MelonInstaller Architecture</a>.
+      </p>
+      <p>
+        This is apart of the <a href="/api/Settings.html">Settings Endpoints</a>,
+        which are scattered across a couple of controllers that group them by
+        similarity.
+      </p>
+      <h2 id="controller-route-api-settings-">
+        Controller Route: <code>/api/settings</code>
+      </h2>
+      <p>
+        All routes within the <code>CheckForUpdateUpdateController</code> are
+        prefixed by <code>/api/settings</code>.
+      </p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/settings/check-for-updates</code></td>
+            <td>GET</td>
+            <td>Checks if a newer version of the Melon server is available.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/settings/update-melon</code></td>
+            <td>POST</td>
+            <td>Initiates the process of updating the Melon server.</td>
+            <td>Admin</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h3 id="check-for-updates">Check for Updates</h3>
+      <p>
+        This endpoint checks if a new version of the Melon server is available
+        by comparing the current version of the server with the latest release
+        available on GitHub.
+      </p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>:
+          <code>/api/settings/check-for-updates</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        <li><strong>Consumes</strong>: <code>application/json</code></li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns whether an update is available, along
+          with version information and release notes.
+          <ul>
+            <li>
+              <strong>UpdateAvailable</strong>: Indicates if there is a newer
+              version.
+            </li>
+            <li>
+              <strong>CurrentVersion</strong>: The version of the server
+              currently running.
+            </li>
+            <li>
+              <strong>LatestVersion</strong>: The latest version available on
+              GitHub.
+            </li>
+            <li>
+              <strong>ReleaseNotes</strong>: Notes related to the latest release
+              (if applicable).
+              <ul>
+                <li>Release notes will be in markdown</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li><strong>400 Bad Request</strong>: Failed to check for updates.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X GET "https://your-melon-server.com/api/settings/<span class="hljs-keyword">check</span>-<span class="hljs-keyword">for</span>-updates<span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;<span class="hljs-keyword">Admin</span>-<span class="hljs-keyword">or</span>-<span class="hljs-keyword">User</span>-JWT&gt;<span class="hljs-string">"</span>
+        </code></pre>
+      <p><strong>Example Response</strong>:</p>
+      <pre><code class="lang-json">{
+            <span class="hljs-attr">"UpdateAvailable"</span>: <span class="hljs-literal">true</span>,
+            <span class="hljs-attr">"CurrentVersion"</span>: <span class="hljs-string">"1.0.0"</span>,
+            <span class="hljs-attr">"LatestVersion"</span>: <span class="hljs-string">"1.1.0"</span>,
+            <span class="hljs-attr">"ReleaseNotes"</span>: <span class="hljs-string">"Bug fixes and performance improvements."</span>
+        }
+        </code></pre>
+      <hr />
+      <h3 id="update-melon">Update Melon</h3>
+      <p>
+        This endpoint triggers the update process for the Melon server. It
+        downloads the latest version and initiates the update process using
+        <code>MelonInstaller.exe</code>.
+      </p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/settings/update-melon</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT with Admin role</li>
+        <li><strong>Consumes</strong>: <code>application/json</code></li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Update process initiated successfully.
+          <ul>
+            <li>
+              If the server is already up-to-date, &quot;Melon is up to
+              date&quot; will be returned.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <strong>400 Bad Request</strong>: If the update process fails or an
+          error occurs.
+        </li>
+        <li>
+          <strong>404 Not Found</strong>: No update found if the GitHub release
+          is unavailable.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-melon-server.com/api/settings/update-melon"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="notes">Notes</h3>
+      <ul>
+        <li>
+          The <code>check-for-updates</code> endpoint compares the current
+          server version with the latest release on GitHub.
+        </li>
+        <li>
+          The <code>update-melon</code> endpoint starts the update process,
+          which involves running the <code>MelonInstaller.exe</code> and exiting
+          the current application.
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

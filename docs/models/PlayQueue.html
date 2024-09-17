@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>PlayQueue Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="playqueue">PlayQueue</h1>
+        <p>The <code>PlayQueue</code> class represents a queue of tracks to be played, including the current position, owner, and access permissions.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>_id</code></td>
+        <td><code>string</code></td>
+        <td>Unique identifier for the play queue.</td>
+        </tr>
+        <tr>
+        <td><code>Name</code></td>
+        <td><code>string</code></td>
+        <td>Name of the queue.</td>
+        </tr>
+        <tr>
+        <td><code>CurPosition</code></td>
+        <td><code>int</code></td>
+        <td>Current position in the queue.</td>
+        </tr>
+        <tr>
+        <td><code>Owner</code></td>
+        <td><code>string</code></td>
+        <td>UserId of the queue owner.</td>
+        </tr>
+        <tr>
+        <td><code>Editors</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>Usernames who can edit the queue.</td>
+        </tr>
+        <tr>
+        <td><code>Viewers</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>Usernames who can view the queue.</td>
+        </tr>
+        <tr>
+        <td><code>PublicViewing</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the queue is publicly viewable.  (not including the owner, who can always view)</td>
+        </tr>
+        <tr>
+        <td><code>PublicEditing</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the queue is publicly editable.  (not including the owner, who can always edit)</td>
+        </tr>
+        <tr>
+        <td><code>TrackCount</code></td>
+        <td><code>int</code></td>
+        <td>Number of tracks in the queue.</td>
+        </tr>
+        <tr>
+        <td><code>Favorite</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the queue is marked as favorite.</td>
+        </tr>
+        <tr>
+        <td><code>LastListen</code></td>
+        <td><code>DateTime</code></td>
+        <td>Timestamp of the last time the queue was accessed.</td>
+        </tr>
+        <tr>
+        <td><code>Tracks</code></td>
+        <td><code>List&lt;<a href="/models/DbLink.html">DbLink</a>&gt;</code></td>
+        <td>Tracks in the queue.</td>
+        </tr>
+        <tr>
+        <td><code>OriginalTrackOrder</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>Original order of track IDs in the queue.</td>
+        </tr>
+        </tbody>
+        </table>
+        <hr>
+        <h1 id="responsequeue">ResponseQueue</h1>
+        <p>The <code>ResponseQueue</code> class is used for HTTP responses, providing a trimmed version of the queue data suitable for client consumption.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>_id</code></td>
+        <td><code>string</code></td>
+        <td>Unique identifier for the queue.</td>
+        </tr>
+        <tr>
+        <td><code>CurPosition</code></td>
+        <td><code>int</code></td>
+        <td>Current position in the queue.</td>
+        </tr>
+        <tr>
+        <td><code>Name</code></td>
+        <td><code>string</code></td>
+        <td>Name of the queue.</td>
+        </tr>
+        <tr>
+        <td><code>Owner</code></td>
+        <td><code>string</code></td>
+        <td>UserId of the queue owner.</td>
+        </tr>
+        <tr>
+        <td><code>TrackCount</code></td>
+        <td><code>int</code></td>
+        <td>Number of tracks in the queue.</td>
+        </tr>
+        <tr>
+        <td><code>Favorite</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the queue is marked as favorite.</td>
+        </tr>
+        <tr>
+        <td><code>Editors</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>UserIds of who can edit the queue. (not including the owner, who can always edit)</td>
+        </tr>
+        <tr>
+        <td><code>Viewers</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>UserIds of who can view the queue. (not including the owner, who can always view)</td>
+        </tr>
+        <tr>
+        <td><code>PublicViewing</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the queue is publicly viewable.</td>
+        </tr>
+        <tr>
+        <td><code>PublicEditing</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the queue is publicly editable.</td>
+        </tr>
+        </tbody>
+        </table>
+        
+    </div>  
+</body>

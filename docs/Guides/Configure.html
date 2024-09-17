@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Configuration Guide</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="configure-melon">Configure Melon</h1>
+      <p>
+        Configuring melon is super easy. Once you&#39;ve run through the console
+        setup once, you&#39;ll have access to the Console Settings Menu from the
+        Console Main Menu. You can control most of Melon&#39;s Settings from
+        within this submenu. Many of these settings also have endpoints for
+        controlling them as well.
+      </p>
+      <h2 id="melon-scanner-settings">Melon Scanner Settings</h2>
+      <p>
+        The MSS Settings submenu has options for controlling how the scanner
+        operates.
+      </p>
+      <ul>
+        <li>
+          Edit Library Paths
+          <ul>
+            <li>
+              Change the paths that Melon will look through to find music files.
+            </li>
+            <li>
+              <strong>Endpoint:</strong>
+              <code>api/settings/scanner/library-paths</code> (GET/POST)
+            </li>
+          </ul>
+        </li>
+        <li>
+          Artist Split Indicators
+          <ul>
+            <li>
+              Change the indicators the scanner uses to detect where to split
+              artist names. For example:
+              <code>artist 1, artist 2; artist 3 // artist 4</code>
+            </li>
+            <li>
+              Endpoint
+              <code>api/settings/scanner/artist-split-indicators</code>
+              (GET/POST)
+            </li>
+          </ul>
+        </li>
+        <li>
+          Genre Split Indicators
+          <ul>
+            <li>
+              Change the indicators the scanner uses to detect where to split
+              genre names. For example:
+              <code>genre 1, genre 2; genre 3 // genre 4</code>
+            </li>
+            <li>
+              Endpoint
+              <code>api/settings/scanner/genre-split-indicators</code>
+              (GET/POST)
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h2 id="network-settings">Network Settings</h2>
+      <ul>
+        <li>
+          Edit MongoDb Connection
+          <ul>
+            <li>
+              This allows you to change the URL that points to your MongoDb
+              instance. Required for Melon to work.
+            </li>
+          </ul>
+        </li>
+        <li>
+          Edit Listening URL
+          <ul>
+            <li>
+              Change the URL + Port that the server is listening to traffic on.
+              Must be a valid http(s) url type, wildcards are supported. Default
+              is <code>http://*:14524</code>
+            </li>
+          </ul>
+        </li>
+        <li>
+          Configure HTTPS
+          <ul>
+            <li>
+              HTTPS enables a secure connection to your server by encrypting
+              your traffic. To do this, you&#39;ll need to setup an SSL
+              certificate. For more information, check out
+              <a href="https://certbot.eff.org/">CertBot</a>.
+            </li>
+            <li>
+              Once you have an SSL Certificate, follow the Console Menu
+              instructions and point melon to your .pfx file along with your
+              password.
+            </li>
+            <li>You can edit or disable SSL from here anytime.</li>
+            <li>
+              **You will be notified when your SSL Cert expires on launch / when
+              attempting to configure HTTPS.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h2 id="menu-customization">Menu Customization</h2>
+      <ul>
+        <li>
+          Change Default Language
+          <ul>
+            <li>
+              Melon has support for translations, by simply copying the EN
+              strings and replacing them with localized ones, you can help
+              contribute to the support languages. Right now, only English and
+              Spanish(Experimental) are supported.
+            </li>
+          </ul>
+        </li>
+        <li>
+          Edit Colors
+          <ul>
+            <li>
+              The Melon Console interface uses different colors for highlights,
+              title bars, text, etc. These colors can be set using arrow-key
+              controlled RGB sliders.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h2 id="plugins">Plugins</h2>
+      <ul>
+        <li>
+          View Plugins
+          <ul>
+            <li>See loaded plugins, and enable/disable them</li>
+            <li>
+              <strong>Endpoint:</strong>
+              <code>api/settings/plugins/list</code> /
+              <code>api/settings/plugins/enable</code> /
+              <code>api/settings/plugins/disable</code>
+            </li>
+          </ul>
+        </li>
+        <li>
+          Plugins Settings
+          <ul>
+            <li>Holds any custom added settings UI</li>
+          </ul>
+        </li>
+        <li>
+          Rescan plugins folder
+          <ul>
+            <li>Checks the plugins folder for new plugins</li>
+            <li>
+              <strong>Endpoint:</strong>
+              <code>api/settings/plugins/rescan</code>
+            </li>
+          </ul>
+        </li>
+        <li>
+          Reload all plugins
+          <ul>
+            <li>Unloads and reloads all currently loaded plugins</li>
+            <li>
+              <strong>Endpoint:</strong>
+              <code>api/settings/plugins/reload</code>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h2 id="database-settings">Database Settings</h2>
+      <ul>
+        <li>
+          Backup Database
+          <ul>
+            <li>
+              Makes a backup up the MongoDB database to a folder in
+              Melon/Exports/DbBackups
+            </li>
+            <li>Quick Operations even with thousands of files</li>
+            <li>
+              <strong>Endpoint:</strong> <code>api/settings/db/backup</code>
+            </li>
+          </ul>
+        </li>
+        <li>
+          Load from Backup
+          <ul>
+            <li>View backups and pick one to load and override the db with</li>
+            <li>
+              <strong>Endpoint:</strong>
+              <code>api/settings/db/view-backups</code> /
+              <code>api/settings/db/load-backup</code>
+            </li>
+          </ul>
+        </li>
+        <li>
+          Reset DB
+          <ul>
+            <li>
+              Resets the entire database, except for User Accounts. User stats
+              such as plays and ratings, playlists, etc will all be lost.
+            </li>
+            <li>
+              <strong>Endpoint:</strong> <code>api/settings/db/reset</code>
+            </li>
+          </ul>
+        </li>
+        <li>
+          Export Playlist
+          <ul>
+            <li>Exports a playlist to a m3u/pls/xml file.</li>
+            <li>
+              <strong>Endpoint:</strong>
+              <code>api/settings/db/export-playlist</code>
+            </li>
+          </ul>
+        </li>
+        <li>
+          Import Playlist
+          <ul>
+            <li>Imports a playlist file into Melon, accepts m3u/pls/xml</li>
+            <li>
+              <strong>Endpoint:</strong>
+              <code>api/settings/db/import-playlist</code>
+            </li>
+          </ul>
+        </li>
+        <li>
+          Queue Cleanup Frequency
+          <ul>
+            <li>
+              Queues get auto deleted after X amount of time (default 48 hours)
+              Unless you favorite them, or set this value to -1.
+            </li>
+            <li>
+              <strong>Endpoint:</strong>
+              `api/settings/db/queue-cleanup-frequency (GET/POST)
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h2 id="open-melon-folder">Open Melon Folder</h2>
+      <p>
+        This opens the folder where melon&#39;s configs, assets, and logs are
+        stored.
+      </p>
+      <h2 id="checking-for-updates">Checking For Updates</h2>
+      <p>
+        Melon can check for updates when asked to. It will pull from the
+        GitHub&#39;s latest releases and compare version numbers. It can shut
+        down the server on it&#39;s own and restart it when the update is
+        applied.
+      </p>
+      <h1 id="melon-launch-configuration">Melon Launch Configuration</h1>
+      <h2 id="flags">Flags</h2>
+      <p>
+        Melon has a flags.json file used to mark flags that can be set for
+        debugging or troubleshooting. The flags available are:
+      </p>
+      <ul>
+        <li>
+          ForceOOBE
+          <ul>
+            <li>
+              Forces the Out Of Box Experience, where you&#39;ll be taken back
+              through first time setup.
+            </li>
+          </ul>
+        </li>
+        <li>
+          DisablePlugins
+          <ul>
+            <li>Disables all loading of plugins.</li>
+          </ul>
+        </li>
+      </ul>
+      <h2 id="launch-args">Launch Args</h2>
+      <p>
+        There are a few launch arguments you can use to customize Melon before
+        launch. Plugins can also add their own launch args to the help menu, and
+        listen to for them. So you may want to try
+        <code>MelonWebApi.exe --help</code> just to see what you can do.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Arg</th>
+            <th>Description</th>
+            <th>Field</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>--help</td>
+            <td>Shows a help menu</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>--headless / -h</td>
+            <td>Disables Console Menus and just outputs logs to the console</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>--setup / -s</td>
+            <td>Force launch into the OOBE</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>--disablePlugins, / -d</td>
+            <td>Force disable plugins</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>--version / -v</td>
+            <td>Show the current Version of Melon</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>--lang / -l</td>
+            <td>Set the launch language for the console</td>
+            <td>string langCode</td>
+          </tr>
+          <tr>
+            <td>--allowConversion / -c</td>
+            <td>
+              Automatically allow conversion of mismatched database object
+              versions instead of asking. (required if you launch in headless
+              and need to convert)
+            </td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

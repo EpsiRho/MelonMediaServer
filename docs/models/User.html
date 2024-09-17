@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>User Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="user">User</h1>
+        <p>The <code>User</code> class represents a user of the Melon Server.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>_id</code></td>
+        <td><code>string</code></td>
+        <td>Unique identifier for the user.</td>
+        </tr>
+        <tr>
+        <td><code>Username</code></td>
+        <td><code>string</code></td>
+        <td>Username of the user.</td>
+        </tr>
+        <tr>
+        <td><code>Password</code></td>
+        <td><code>string</code></td>
+        <td>Hashed password of the user.</td>
+        </tr>
+        <tr>
+        <td><code>Bio</code></td>
+        <td><code>string</code></td>
+        <td>Biography or description provided by the user.</td>
+        </tr>
+        <tr>
+        <td><code>Salt</code></td>
+        <td><code>byte[]</code></td>
+        <td>Salt used for password hashing.</td>
+        </tr>
+        <tr>
+        <td><code>Type</code></td>
+        <td><code>string</code></td>
+        <td>User type or role (e.g., &quot;Admin&quot;, &quot;User&quot;).</td>
+        </tr>
+        <tr>
+        <td><code>FavTrack</code></td>
+        <td><code>string</code></td>
+        <td>ID of the user&#39;s favorite track.</td>
+        </tr>
+        <tr>
+        <td><code>FavAlbum</code></td>
+        <td><code>string</code></td>
+        <td>ID of the user&#39;s favorite album.</td>
+        </tr>
+        <tr>
+        <td><code>FavArtist</code></td>
+        <td><code>string</code></td>
+        <td>ID of the user&#39;s favorite artist.</td>
+        </tr>
+        <tr>
+        <td><code>PublicStats</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the user&#39;s stats are public.</td>
+        </tr>
+        <tr>
+        <td><code>Friends</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>List of user IDs who are friends with this user.</td>
+        </tr>
+        <tr>
+        <td><code>LastLogin</code></td>
+        <td><code>DateTime</code></td>
+        <td>Timestamp of the user&#39;s last login.</td>
+        </tr>
+        </tbody>
+        </table>
+        <hr>
+        <h1 id="responseuser">ResponseUser</h1>
+        <p>The <code>ResponseUser</code> class is used for HTTP responses, providing a trimmed version of the user data without sensitive information.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>_id</code></td>
+        <td><code>string</code></td>
+        <td>Unique identifier for the user.</td>
+        </tr>
+        <tr>
+        <td><code>Username</code></td>
+        <td><code>string</code></td>
+        <td>Username of the user.</td>
+        </tr>
+        <tr>
+        <td><code>Bio</code></td>
+        <td><code>string</code></td>
+        <td>User&#39;s biography.</td>
+        </tr>
+        <tr>
+        <td><code>Type</code></td>
+        <td><code>string</code></td>
+        <td>User type or role.</td>
+        </tr>
+        <tr>
+        <td><code>FavTrack</code></td>
+        <td><code>string</code></td>
+        <td>ID of the user&#39;s favorite track.</td>
+        </tr>
+        <tr>
+        <td><code>FavAlbum</code></td>
+        <td><code>string</code></td>
+        <td>ID of the user&#39;s favorite album.</td>
+        </tr>
+        <tr>
+        <td><code>FavArtist</code></td>
+        <td><code>string</code></td>
+        <td>ID of the user&#39;s favorite artist.</td>
+        </tr>
+        <tr>
+        <td><code>PublicStats</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the user&#39;s stats are public.</td>
+        </tr>
+        <tr>
+        <td><code>Friends</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>List of user IDs who are friends with this user.</td>
+        </tr>
+        <tr>
+        <td><code>LastLogin</code></td>
+        <td><code>DateTime</code></td>
+        <td>Timestamp of the user&#39;s last login.</td>
+        </tr>
+        </tbody>
+        </table>
+        
+    </div>  
+</body>

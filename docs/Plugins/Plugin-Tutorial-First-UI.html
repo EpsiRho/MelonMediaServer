@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Plugin Tutorial: First Console UI</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+  </head>
+
+  <script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1>Plugin Tutorial: First Console UI</h1>
+      <p>
+        Now that we&#39;ve set up the basic structure, let&#39;s create a plugin
+        that interacts with Melon in a meaningful way. We&#39;ll make our plugin
+        add an option to Melon&#39;s main menu.
+      </p>
+      <h2>Step-by-Step Guide</h2>
+      <h3>1. Add a Menu Option to Melon&#39;s UI</h3>
+      <p>
+        We&#39;ll use <code>Host.DisplayManager.MenuOptions</code> to add a new
+        option.
+      </p>
+      <h4>a. Update the LoadUI Method</h4>
+      <pre><code class="language-csharp">
+    public int LoadUI()
+    {
+        // Add a new menu option
+        Host.DisplayManager.MenuOptions.Add(&quot;My Plugin Option&quot;, MyPluginMenu);
+        return 0;
+    }
+        </code></pre>
+      <h4>b. Implement the Menu Method</h4>
+      <pre><code class="language-csharp">
+    private void MyPluginMenu()
+    {
+        Console.WriteLine(&quot;Welcome to My First Plugin!&quot;);
+        Console.WriteLine(&quot;Press any key to return to the main menu...&quot;);
+        Console.ReadKey();
+    }
+        </code></pre>
+      <h4>c. Understanding the Code</h4>
+      <ul>
+        <li>
+          <strong>Host.DisplayManager.MenuOptions</strong>:
+          <ul>
+            <li>
+              This is an ordered dictionary representing Melon&#39;s main menu
+              options.
+            </li>
+            <li>
+              By adding a key-value pair, we&#39;re adding a new option and
+              specifying the method to call when selected.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <strong>&quot;My Plugin Option&quot;</strong>:
+          <ul>
+            <li>The text that will appear in Melon&#39;s main menu.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>MyPluginMenu</strong>:
+          <ul>
+            <li>
+              The method that gets called when the user selects &quot;My Plugin
+              Option&quot;.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h3>2. Rebuild and Test</h3>
+      <h4>a. Rebuild Your Plugin</h4>
+      <ul>
+        <li>Build the solution to compile the updated DLL.</li>
+      </ul>
+      <h4>b. Update the DLL in Melon</h4>
+      <ul>
+        <li>
+          Copy the new <code>MyFirstMelonPlugin.dll</code> into Melon&#39;s
+          <code>Plugins</code> directory, replacing the old one.
+        </li>
+      </ul>
+      <h4>c. Restart Melon</h4>
+      <ul>
+        <li>Close and reopen Melon to load the updated plugin.</li>
+      </ul>
+      <h4>d. Verify the Menu Option</h4>
+      <ul>
+        <li>Navigate through Melon&#39;s UI.</li>
+        <li>You should see &quot;My Plugin Option&quot; in the main menu.</li>
+        <li>
+          Selecting it should display &quot;Welcome to My First Plugin!&quot;
+          and wait for a key press.
+        </li>
+      </ul>
+      <h3>3. Enhance the Menu Interaction</h3>
+      <p>Let&#39;s make our plugin&#39;s menu more interactive.</p>
+      <h4>a. Update the MyPluginMenu Method</h4>
+      <pre><code class="language-csharp">
+    private void MyPluginMenu()
+    {
+        while (true)
+        {
+            Host.MelonUI.BreadCrumbBar(new List&lt;string&gt; { &quot;Melon&quot;, &quot;My First Plugin&quot; });
+            var choice = Host.MelonUI.OptionPicker(new List&lt;string&gt;
+            {
+                &quot;Back&quot;,
+                &quot;Greet&quot;,
+                &quot;Show Date&quot;,
+                &quot;Perform Calculation&quot;
+            });
+    
+            switch (choice)
+            {
+                case &quot;Back&quot;:
+                    return;
+                case &quot;Greet&quot;:
+                    Console.WriteLine(&quot;Hello from My First Plugin!&quot;);
+                    break;
+                case &quot;Show Date&quot;:
+                    Console.WriteLine($&quot;Today&#39;s date is {DateTime.Now.ToShortDateString()}&quot;);
+                    break;
+                case &quot;Perform Calculation&quot;:
+                    PerformCalculation();
+                    break;
+            }
+    
+            Console.WriteLine(&quot;Press any key to continue...&quot;);
+            Console.ReadKey();
+        }
+    }
+        </code></pre>
+      <h4>b. Add a Method for Calculation</h4>
+      <pre><code class="language-csharp">
+    private void PerformCalculation()
+    {
+        Console.Write(&quot;Enter a number: &quot;);
+        if (double.TryParse(Console.ReadLine(), out double number))
+        {
+            double result = Math.Pow(number, 2);
+            Console.WriteLine($&quot;The square of {number} is {result}&quot;);
+        }
+        else
+        {
+            Console.WriteLine(&quot;Invalid number entered.&quot;);
+        }
+    }
+        </code></pre>
+      <h4>c. Understanding the Code</h4>
+      <ul>
+        <li>
+          <strong>Host.MelonUI.BreadCrumbBar</strong>:
+          <ul>
+            <li>Displays the current navigation path in the UI.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Host.MelonUI.OptionPicker</strong>:
+          <ul>
+            <li>Presents a list of options for the user to select from.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Switch Statement</strong>:
+          <ul>
+            <li>Handles the user&#39;s selection.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>PerformCalculation Method</strong>:
+          <ul>
+            <li>Asks the user for a number and calculates its square.</li>
+          </ul>
+        </li>
+      </ul>
+      <h3>4. Add Help Options</h3>
+      <p>
+        You can add options to the help menu that shows when calling
+        MelonWebApi.exe(dll) --help.
+      </p>
+      <pre><code class="language-csharp">
+    public Dictionary&lt;string, string&gt; GetHelpOptions()
+    {
+        return new Dictionary&lt;string, string&gt;()
+        {
+            { &quot;--disableDemoMenu&quot;, &quot;Tells the plugin not to set it&#39;s main menu option.&quot; }
+        };
+    }
+        </code></pre>
+      <p>Then make sure to listen for that Launch Arg like this</p>
+      <pre><code class="language-csharp">
+    public int LoadUI()
+    {
+        // Add a new menu option
+        if (!Host.StateManager.LaunchArgs.ContainsKey(&quot;disableDemoMenu&quot;))
+        {
+            Host.DisplayManager.MenuOptions.Add(&quot;My Plugin Option&quot;, MyPluginMenu);
+            return 0;
+        }
+    }
+        </code></pre>
+      <h3>5. Rebuild and Test Again</h3>
+      <ul>
+        <li>Rebuild your plugin.</li>
+        <li>Copy the DLL into Melon&#39;s <code>Plugins</code> directory.</li>
+        <li>Restart Melon.</li>
+        <li>
+          Navigate to &quot;My Plugin Option&quot; and test the new features.
+        </li>
+      </ul>
+      <h3>6. Extra Considerations</h3>
+      <ul>
+        <li>
+          Melon uses Pastel to color it&#39;s console text, and has settings for
+          the user to customize these colors. They are stored in the settings,
+          and you can use them in your UI like so:
+        </li>
+      </ul>
+      <pre><code class="language-csharp">
+    Console.WriteLine(&quot;This is some text.&quot;.Pastel(Host.StateManager.MelonSettings.Text));
+    Console.WriteLine(&quot;Oh no! Something has gone wrong.&quot;.Pastel(Host.StateManager.MelonSettings.Error));
+        </code></pre>
+      <ul>
+        <li>
+          You should not write to the console any time outside of being called
+          as a menu option, either on the main menu or settings. This is because
+          Melon&#39;s UI will break if written out of order.
+        </li>
+        <li>
+          <code
+            >Host.MelonUI.BreadCrumbBar(new List&lt;string&gt;() {
+            &quot;Melon&quot;, &quot;Settings&quot; });</code
+          >
+          clears the screen and sets the top breadcrumb bar. This should always
+          stay accurate to where you are in the menu chain.
+        </li>
+        <li>
+          You shouldn&#39;t run any background focused functions or WebApi
+          focused functions in the LoadUI function, only in Execute
+        </li>
+      </ul>
+      <h3>7. MelonUI Special Functions</h3>
+      <h4>Displaying Progress Bars</h4>
+      <p>You might want to show progress during long operations.</p>
+      <pre><code class="language-csharp">
+    private void LongRunningOperation()
+    {
+        for (int i = 0; i &lt;= 100; i++)
+        {
+            Host.MelonUI.DisplayProgressBar(i, 100, &#39;=&#39;, &#39;-&#39;);
+            Thread.Sleep(50); // Simulate work
+        }
+        Console.WriteLine(&quot;\nOperation completed.&quot;);
+    }
+        </code></pre>
+      <h4>Color Picker</h4>
+      <p>Allow users to pick colors.</p>
+      <pre><code class="language-csharp">
+    private void ColorSelection()
+    {
+        var currentColor = Color.White;
+        var selectedColor = Host.MelonUI.ColorPicker(currentColor);
+        Console.WriteLine($&quot;You selected color: {selectedColor}&quot;);
+    }
+        </code></pre>
+      <h4>Hidden Input</h4>
+      <p>Useful for password fields.</p>
+      <pre><code class="language-csharp">
+    private void SecureInput()
+    {
+        Console.Write(&quot;Enter your password: &quot;);
+        var password = Host.MelonUI.HiddenInput();
+        Console.WriteLine(&quot;\nPassword entered.&quot;);
+    }
+        </code></pre>
+      <h4>Clear Console</h4>
+      <p>Provides a fully working cross platform way to clear the screen</p>
+      <pre><code class="language-C#">Host.MelonUI.ClearConsole();</code></pre>
+      <p>
+        <a href="/Plugins/Plugin-Tutorial-Getting-Started.html"
+          >Last Tutorial: Getting Started</a
+        >
+        &lt;--- ---&gt;
+        <a href="/Plugins/Plugin-Tutorial-Managing-Settings.html"
+          >Next Tutorial: Managing Settings</a
+        >
+      </p>
+    </div>
+  </body>
+</html>

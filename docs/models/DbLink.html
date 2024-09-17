@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>DbLink Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="dblink">DbLink</h1>
+        <p>The <code>DbLink</code> class is a simple reference to another object in the database, containing its <code>_id</code> and <code>Name</code>.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>_id</code></td>
+        <td><code>string</code></td>
+        <td>The unique identifier of the referenced object.</td>
+        </tr>
+        <tr>
+        <td><code>Name</code></td>
+        <td><code>string</code></td>
+        <td>The name of the referenced object.</td>
+        </tr>
+        </tbody>
+        </table>
+        <h2 id="constructors">Constructors</h2>
+        <ul>
+        <li><code>DbLink()</code>: Initializes a new instance of the <code>DbLink</code> class.</li>
+        <li><code>DbLink(Track t)</code>: Creates a <code>DbLink</code> from a <code>Track</code> object.</li>
+        <li><code>DbLink(Album a)</code>: Creates a <code>DbLink</code> from an <code>Album</code> object.</li>
+        <li><code>DbLink(Artist a)</code>: Creates a <code>DbLink</code> from an <code>Artist</code> object.</li>
+        </ul>
+        
+    </div>  
+</body>

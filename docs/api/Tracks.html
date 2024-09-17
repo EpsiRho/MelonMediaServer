@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Track API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="track-apis-documentation">Track APIs Documentation</h1>
+      <p>
+        The <code>GeneralController</code> handles getting information about
+        media objects. This documentation covers the Tracks related endpoints.
+      </p>
+      <h2 id="controller-route-api-">Controller Route: <code>/api</code></h2>
+      <p>
+        All routes within the <code>GeneralController</code> are prefixed by
+        <code>/api</code>.
+      </p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/track</code></td>
+            <td>GET</td>
+            <td>Fetch the details of a specific track by its ID.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/tracks</code></td>
+            <td>POST</td>
+            <td>Fetch details of multiple tracks using a list of track IDs.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/track/path</code></td>
+            <td>GET</td>
+            <td>Fetch the file path of a specific track by its ID.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/lyrics</code></td>
+            <td>GET</td>
+            <td>Fetch the lyrics of a specific track by its ID.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h4 id="get-track-details">Get Track Details</h4>
+      <p>Fetch the details of a specific track by its ID.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/track</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the track.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns the track details excluding the path
+          and lyrics path.
+        </li>
+        <li><strong>404 Not Found</strong>: If the track does not exist.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/track?id=66bc99b8ab7ba419497e21af"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h4 id="get-multiple-tracks">Get Multiple Tracks</h4>
+      <p>Fetch details of multiple tracks using a list of track IDs.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/tracks</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>ids</strong> (<code>List&lt;string&gt;</code>, required): A
+          list of track IDs.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns a list of tracks with details
+          excluding the path and lyrics path.
+        </li>
+        <li><strong>404 Not Found</strong>: If none of the tracks exist.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/tracks?ids=66bc9a9cab7ba419497e616c&amp;ids=66bc9aadab7ba419497e7088"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h4 id="get-track-path">Get Track Path</h4>
+      <p>Fetch the file path of a specific track by its ID.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/track/path</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the track.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns the file path of the track.</li>
+        <li><strong>404 Not Found</strong>: If the track does not exist.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/track/path?id=66bc9a9cab7ba419497e616c"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h4 id="get-track-lyrics">Get Track Lyrics</h4>
+      <p>Fetch the lyrics of a specific track by its ID.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/lyrics</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the track.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns the lyrics of the track.</li>
+        <li>
+          <strong>404 Not Found</strong>: If the track or its lyrics do not
+          exist.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/lyrics?id=66bc9a9cab7ba419497e616c"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+    </div>
+  </body>
+</html>

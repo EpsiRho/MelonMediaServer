@@ -64,7 +64,15 @@ namespace YourNamespace.Controllers
 
                 try
                 {
-                    var updaterPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MelonInstaller.exe");
+                    string updaterPath = "";
+                    if (OperatingSystem.IsWindows())
+                    {
+                        updaterPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MelonInstaller.exe");
+                    }
+                    else
+                    {
+                        updaterPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MelonInstaller.dll");
+                    }
                     var processInfo = new ProcessStartInfo
                     {
                         FileName = updaterPath,

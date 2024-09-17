@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Settings Endpoints Overview</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="settings-endpoints">Settings Endpoints</h1>
+      <p>
+        Many of Melon&#39;s settings can be changed via an Endpoint, but not all
+        of them. Currently, the following settings are exposed via an Endpoint:
+      </p>
+      <h3 id="melon-scanner-settings">Melon Scanner Settings</h3>
+      <ul>
+        <li><a href="/api/ScannerSettings.html#fetch-library-paths">View Library Paths</a></li>
+        <li><a href="/api/ScannerSettings.html#set-library-paths">Set Library Paths</a></li>
+        <li><a href="/api/ScannerSettings.html#fetch-artist-split-indicators">View Artist Split indicators</a></li>
+        <li><a href="/api/ScannerSettings.html#set-artist-split-indicators">Set Artist Split indicators</a></li>
+        <li><a href="/api/ScannerSettings.html#fetch-genre-split-indicators">View Genre Split Indicators</a></li>
+        <li><a href="/api/ScannerSettings.html#set-genre-split-indicators">Set Genre Split Indicators</a></li>
+      </ul>
+      <h3 id="plugin-settings">Plugin Settings</h3>
+      <ul>
+        <li><a href="/api/PluginSettings.html#view-plugins">View Plugins</a></li>
+        <li><a href="/api/PluginSettings.html#disable-plugin">Disable Plugin</a></li>
+        <li><a href="/api/PluginSettings.html#enable-plugin">Enable Plugin</a></li>
+        <li><a href="/api/PluginSettings.html#rescan-plugins-folder">Rescan Plugins folder</a></li>
+        <li><a href="/api/PluginSettings.html#reload-plugins">Reload Plugins</a></li>
+      </ul>
+      <h3 id="database-settings">Database Settings</h3>
+      <ul>
+        <li><a href="/api/DatabaseSettings.html#backup-database">Backup Database</a></li>
+        <li><a href="/api/DatabaseSettings.html#view-backups">View Backups</a></li>
+        <li><a href="/api/DatabaseSettings.html#load-database-from-backup">Load from backup</a></li>
+        <li><a href="/api/DatabaseSettings.html#reset-database">Reset DB</a></li>
+        <li><a href="/api/DatabaseSettings.html#export-playlist">Export Playlist</a></li>
+        <li><a href="/api/DatabaseSettings.html#import-playlist">Import Playlist</a></li>
+        <li><a href="/api/DatabaseSettings.html#get-queue-cleanup-frequency">Queue Cleanup Frequency</a></li>
+      </ul>
+      <h3 id="updates">Updates</h3>
+      <ul>
+        <li><a href="/api/Updates.html#check-for-updates">Check For Updates</a></li>
+        <li><a href="/api/Updates.html#update-melon">Update Melon</a></li>
+      </ul>
+      <hr />
+      <h2 id="missing-settings">Missing Settings</h2>
+      <p>
+        The following settings are not exposed via an endpoint, but can be
+        changed via the Console Menu:
+      </p>
+      <h3 id="plugins">Plugins</h3>
+      <ul>
+        <li>
+          Plugins can expose their own settings UI, but have no standardized way
+          of exposing endpoints for settings. Plugins <em>can</em> make settings
+          endpoints, but unless the client suppose plugins too, default Melon
+          clients wont know about them.
+          <ul>
+            <li>
+              In the future, I&#39;d like to make a standardized way for plugins
+              to expose settings.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h3 id="network-settings">Network Settings</h3>
+      <p>
+        These settings affect the Melon server, or require a server restart.
+      </p>
+      <ul>
+        <li>Edit MongoDb Connection</li>
+        <li>Edit Listening URL</li>
+        <li>Configure HTTPS</li>
+      </ul>
+      <h3 id="console-customization">Console Customization</h3>
+      <ul>
+        <li>
+          The console has settings for language and console colors, but these
+          are not exposed with an endpoint.
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

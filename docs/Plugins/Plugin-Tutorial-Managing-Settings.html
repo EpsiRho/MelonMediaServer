@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Plugin Tutorial: Managing Settings</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css"
+    />
+  </head>
+
+  <script>
+    hljs.highlightAll();
+  </script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1>Plugin Tutorial: Managing Settings</h1>
+      <p>
+        Most plugins will need to save and load settings. Melon provides
+        <code>IStorageAPI</code> for this purpose. It allows you to define an
+        object as your settings class and save/load it in one line, along with
+        built in security with encrypted fields. This saves the object to the
+        Melon/Configs folder as <code>&lt;name&gt;.json</code>.
+      </p>
+      <h2>Step-by-Step Guide</h2>
+      <h3>1. Create a Configuration Class</h3>
+      <p>
+        Define a class to hold your plugin&#39;s settings. This can support any
+        values json supports.
+      </p>
+      <pre><code class="language-C#">
+    public class MyPluginConfig
+    {
+        public string GreetingMessage { get; set; }
+        public bool EnableFeatureX { get; set; }
+    }
+        </code></pre>
+      <h3>2. Load and Save Settings Using IStorageAPI</h3>
+      <h4>a. Load Settings</h4>
+      <pre><code class="language-C#">
+    public MyPluginConfig Config { get; set; }
+    private void LoadConfig()
+    {
+        Config = Host.Storage.LoadConfigFile&lt;MyPluginConfig&gt;(&quot;MyPluginConfig&quot;, null, out bool converted);
+        if (Config == null)
+        {
+            Config = new MyPluginConfig
+            {
+                GreetingMessage = &quot;Hello from My First Plugin!&quot;,
+                EnableFeatureX = true
+            };
+            Host.Storage.SaveConfigFile(&quot;MyPluginConfig&quot;, Config, null);
+        }
+    }
+        </code></pre>
+      <h4>b. Save Settings</h4>
+      <pre><code class="language-C#">
+    private void SaveConfig()
+    {
+        Host.Storage.SaveConfigFile(&quot;MyPluginConfig&quot;, Config, null);
+    }
+        </code></pre>
+      <h3>3. Use Settings in Your Plugin</h3>
+      <p>Modify your plugin main menu code to use the greeting setting.</p>
+      <pre><code class="language-C#">
+    private void MyPluginMenu()
+    {
+        while (true)
+        {
+            Host.MelonUI.BreadCrumbBar(new List&lt;string&gt; { &quot;Melon&quot;, &quot;My First Plugin&quot; });
+            var choice = Host.MelonUI.OptionPicker(new List&lt;string&gt;
+            {
+                &quot;Back&quot;,
+                &quot;Greet&quot;,
+                &quot;Show Date&quot;,
+                &quot;Perform Calculation&quot;
+            });
+    
+            switch (choice)
+            {
+                case &quot;Back&quot;:
+                    return;
+                case &quot;Greet&quot;:
+                    // Use the new config set greeting 
+                    Console.WriteLine(Config.GreetingMessage);
+                    break;
+                case &quot;Show Date&quot;:
+                    Console.WriteLine($&quot;Today&#39;s date is {DateTime.Now.ToShortDateString()}&quot;);
+                    break;
+                case &quot;Perform Calculation&quot;:
+                    PerformCalculation();
+                    break;
+            }
+    
+            Console.WriteLine(&quot;Press any key to continue...&quot;);
+            Console.ReadKey();
+        }
+    }
+        </code></pre>
+      <h3>4. Create a Settings Menu</h3>
+      <p>Allow users to modify settings.</p>
+      <pre><code class="language-C#">
+    private void SettingsMenu()
+    {
+        while (true)
+        {
+            Host.MelonUI.BreadCrumbBar(new List&lt;string&gt; { &quot;Melon&quot;, &quot;My First Plugin Settings&quot; });
+            var choice = Host.MelonUI.OptionPicker(new List&lt;string&gt;
+            {
+                &quot;Back&quot;,
+                &quot;Change Greeting Message&quot;,
+                Config.EnableFeatureX ? &quot;Disable Feature X&quot; : &quot;Enable Feature X&quot;
+            });
+    
+            switch (choice)
+            {
+                case &quot;Back&quot;:
+                    return;
+                case &quot;Change Greeting Message&quot;:
+                    Console.Write(&quot;Enter new greeting message: &quot;);
+                    var input = Console.ReadLine();
+                    if (!string.IsNullOrWhiteSpace(input))
+                    {
+                        Config.GreetingMessage = input;
+                        SaveConfig();
+                    }
+                    break;
+                case &quot;Disable Feature X&quot;:
+                case &quot;Enable Feature X&quot;:
+                    Config.EnableFeatureX = !Config.EnableFeatureX;
+                    SaveConfig();
+                    break;
+            }
+        }
+    }
+        </code></pre>
+      <h3>5. Update LoadUI Method to Include Settings Menu</h3>
+      <pre><code class="language-C#">
+    public int LoadUI()
+    {
+        Host.DisplayManager.MenuOptions.Add(&quot;My First Plugin&quot;, MyPluginMenu);
+        Host.SettingsUI.MenuOptions.Add(&quot;My First Plugin Settings&quot;, SettingsMenu); // Add new Settings Menu Option to the SettinsUI.MenuOptions
+        return 0;
+    }
+        </code></pre>
+      <h3>6. Initialize Config</h3>
+      <p>
+        Ensure you load the config when the plugin is initialized. Plugins get
+        initialized twice, once for UI and once for Server processes, but
+        you&#39;ll want to load your config both times.
+      </p>
+      <pre><code class="language-C#">
+    public void LoadMelonCommands(IHost host)
+    {
+        Host = host;
+        LoadConfig();
+    }
+    public void LoadMelonServerCommands(IWebApi webapi)
+    {
+        WebApi = webapi;
+        LoadConfig();
+    }
+        </code></pre>
+      <h3>7. Watching for changes</h3>
+      <p>
+        When you update the config file through the console, or with a text
+        editor, the server wont have a way to know the config has changed unless
+        you tell it.
+      </p>
+      <pre><code class="language-C#">
+    watcher = new FileSystemWatcher();
+    watcher.Path = $&quot;{Host.StateManager.melonPath}/Configs/&quot;;
+    
+    watcher.NotifyFilter = NotifyFilters.LastWrite
+                            | NotifyFilters.FileName
+                            | NotifyFilters.DirectoryName;
+    
+    watcher.Filter = &quot;*.json&quot;;
+    
+    FileSystemEventHandler func = (sender, args) =&gt;
+    {
+        if(args.Name == &quot;MyPluginConfig.json&quot;)
+        {
+            // Check if settings have actually changed
+            var temp = Storage.LoadConfigFile&lt;Settings&gt;(&quot;MelonSettings&quot;, null, out _);
+            if (StateManager.MelonSettings == null || temp == null || 
+                Storage.PropertiesEqual(StateManager.MelonSettings, temp))
+            {
+                return;
+            }
+            StateManager.MelonSettings = temp;
+        }
+    };
+    
+    // Add event handlers.
+    watcher.Changed += func;
+    watcher.Created += func;
+    
+    watcher.EnableRaisingEvents = true;
+        </code></pre>
+      <p>
+        Make sure to make the watcher variable global, if it is disposed it will
+        stop watching.
+      </p>
+      <h3>8. Rebuild and Test</h3>
+      <ul>
+        <li>Rebuild your plugin.</li>
+        <li>Copy the DLL to Melon&#39;s <code>Plugins</code> directory.</li>
+        <li>Restart Melon.</li>
+        <li>
+          Navigate to &quot;My First Plugin Settings&quot; to modify settings.
+        </li>
+        <li>Verify changes take effect in your plugin.</li>
+      </ul>
+      <p>
+        <a href="/Plugins/Plugin-Tutorial-First-UI.html"
+          >Last Tutorial: First UI</a
+        >
+        &lt;--- ---&gt;
+        <a href="/Plugins/Plugin-Tutorial-Custom-Endpoints.html"
+          >Next Tutorial: Custom Endpoints</a
+        >
+      </p>
+    </div>
+  </body>
+</html>

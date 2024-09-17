@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Album API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="albums-apis-documentation">Album APIs Documentation</h1>
+        <p>The <code>GeneralController</code> handles getting information about media objects. This documentation covers
+            the
+            Albums related endpoints.</p>
+        <h2 id="controller-route-api-">Controller Route: <code>/api</code></h2>
+        <p>All routes within the <code>GeneralController</code> are prefixed by <code>/api</code>.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/album</code></td>
+                    <td>GET</td>
+                    <td>Fetch the details of a specific album by its ID.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/albums</code></td>
+                    <td>GET</td>
+                    <td>Fetch details of multiple albums using a list of album IDs.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/album/tracks</code></td>
+                    <td>GET</td>
+                    <td>Fetch a paginated list of tracks from a specific album.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h4 id="get-album-details">Get Album Details</h4>
+        <p>Fetch the details of a specific album by its ID.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/album</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the album.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the album details excluding the album art paths.</li>
+            <li><strong>404 Not Found</strong>: If the album does not exist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/album?id=66bc9aadab7ba419497e6a97"</span> \
+     -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+</code></pre>
+        <hr>
+        <h4 id="get-multiple-albums">Get Multiple Albums</h4>
+        <p>Fetch details of multiple albums using a list of album IDs.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/albums</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>ids</strong> (<code>List&lt;string&gt;</code>, required): A list of album IDs.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a list of albums with details excluding the album art paths.</li>
+            <li><strong>404 Not Found</strong>: If none of the albums exist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/albums?ids=66bc9aadab7ba419497e6a97&amp;ids=66bc99b8ab7ba419497e21af"</span> \
+     -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+</code></pre>
+        <hr>
+        <h4 id="get-album-tracks">Get Album Tracks</h4>
+        <p>Fetch a paginated list of tracks from a specific album.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/album/tracks</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the album.</li>
+            <li><strong>page</strong> (int, optional): The page number of tracks (default is 0).</li>
+            <li><strong>count</strong> (int, optional): Number of tracks to return (default is 100).</li>
+            <li><strong>sort</strong> (string, optional): Sorting option for tracks (default is
+                &quot;AlbumPositionAsc&quot;).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a list of tracks for the specified album.</li>
+            <li><strong>404 Not Found</strong>: If the album does not exist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/album/tracks?id=66bc99b8ab7ba419497e21af&amp;page=&lt;page-number&gt;&amp;count=&lt;count&gt;"</span> \
+     -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+</code></pre>
+    </div>
+</body>

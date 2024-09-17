@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>WebApiEventArgs Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="webapieventargs">WebApiEventArgs</h1>
+        <p>The <code>WebApiEventArgs</code> class contains information about a web API event, which occurs any time an API endpoint is hit. For more info see <a href="/Plugins/Introduction.html">Plugins</a></p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>Api</code></td>
+        <td><code>string</code></td>
+        <td>API endpoint that was called.</td>
+        </tr>
+        <tr>
+        <td><code>StatusCode</code></td>
+        <td><code>int</code></td>
+        <td>HTTP status code of the response.</td>
+        </tr>
+        <tr>
+        <td><code>Message</code></td>
+        <td><code>string</code></td>
+        <td>Message associated with the event.</td>
+        </tr>
+        <tr>
+        <td><code>User</code></td>
+        <td><code>string</code></td>
+        <td>Username of the requester.</td>
+        </tr>
+        <tr>
+        <td><code>Role</code></td>
+        <td><code>string</code></td>
+        <td>Role of the user (e.g., &quot;Admin&quot;, &quot;User&quot;).</td>
+        </tr>
+        <tr>
+        <td><code>Args</code></td>
+        <td><code>Dictionary&lt;string, object&gt;</code></td>
+        <td>Additional arguments or parameters of the request.</td>
+        </tr>
+        </tbody>
+        </table>
+        <h2 id="methods">Methods</h2>
+        <ul>
+        <li><code>SendEvent(string message, int statusCode, MWebApi webApi)</code>: Sends the event to be handled, triggering any plugin hooks. </li>
+        </ul>
+        
+    </div>  
+</body>

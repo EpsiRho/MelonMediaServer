@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>IHost Interface Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1>IHost Interface Documentation</h1>
+      <p>
+        The <code>IHost</code> interface provides plugins with access to
+        Melon&#39;s core services and functionalities. It acts as a gateway to
+        interact with various aspects of the application.
+      </p>
+      <h2>Interface Definition</h2>
+      <pre><code class="language-C#">
+        public interface IHost
+        {
+            string Version { get; }
+            IMelonAPI MelonAPI { get; }
+            IStorageAPI Storage { get; }
+            IMelonScanner MelonScanner { get; }
+            IStateManager StateManager { get; }
+            IDisplayManager DisplayManager { get; }
+            IMelonUI MelonUI { get; }
+            ISettingsUI SettingsUI { get; }
+        }
+        </code></pre>
+      <h2>Properties and Sub-Interfaces</h2>
+      <h3>Version</h3>
+      <ul>
+        <li><strong>Type</strong>: <code>string</code></li>
+        <li>
+          <strong>Description</strong>: Gets the current version of the Plugin
+          Interface.
+        </li>
+      </ul>
+      <h3>IMelonAPI</h3>
+      <p>
+        Provides access to database functionalities. Limited, and will likely
+        include track/album/artist search soon.
+      </p>
+      <h4>IMelonAPI Interface</h4>
+      <pre><code class="language-C#">
+        public interface IMelonAPI
+        {
+            List&lt;Track&gt; ShuffleTracks(List&lt;Track&gt; tracks, string UserId, ShuffleType type, bool fullRandom = false, bool enableTrackLinks = true);
+        }
+        </code></pre>
+      <ul>
+        <li>
+          <strong>Methods</strong>:
+          <ul>
+            <li>
+              <strong>ShuffleTracks</strong>:
+              <ul>
+                <li>
+                  <strong>Parameters</strong>:
+                  <ul>
+                    <li><code>tracks</code>: List of tracks to shuffle.</li>
+                    <li>
+                      <code>UserId</code>: ID of the user requesting the
+                      shuffle.
+                    </li>
+                    <li>
+                      <code>type</code>: The type of shuffle algorithm to use.
+                    </li>
+                    <li>
+                      <code>fullRandom</code>: If true, shuffles tracks
+                      completely randomly.
+                    </li>
+                    <li>
+                      <code>enableTrackLinks</code>: If true, considers track
+                      links when shuffling.
+                    </li>
+                  </ul>
+                </li>
+                <li><strong>Returns</strong>: A shuffled list of tracks.</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h3>IStorageAPI</h3>
+      <p>Interface for loading and saving configuration files.</p>
+      <h4>IStorageAPI Interface</h4>
+      <pre><code class="language-C#">
+        public interface IStorageAPI
+        {
+            T LoadConfigFile&lt;T&gt;(string filename, string[] protectedProperties, out bool converted);
+            void SaveConfigFile&lt;T&gt;(string filename, T config, string[] protectedProperties);
+        }
+        </code></pre>
+      <ul>
+        <li>
+          <strong>Methods</strong>:
+          <ul>
+            <li>
+              <strong>LoadConfigFile</strong>:
+              <ul>
+                <li>
+                  <strong>Parameters</strong>:
+                  <ul>
+                    <li>
+                      <code>filename</code>: Name of the config file (without
+                      extension).
+                    </li>
+                    <li>
+                      <code>protectedProperties</code>: Properties to exclude
+                      from serialization.
+                    </li>
+                    <li>
+                      <code>converted</code>: Out parameter indicating if the
+                      file was converted from an older format.
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <strong>Returns</strong>: Deserialized config object of type
+                  <code>T</code>.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>SaveConfigFile</strong>:
+              <ul>
+                <li>
+                  <strong>Parameters</strong>:
+                  <ul>
+                    <li>
+                      <code>filename</code>: Name of the config file (without
+                      extension).
+                    </li>
+                    <li><code>config</code>: The config object to save.</li>
+                    <li>
+                      <code>protectedProperties</code>: Properties to exclude
+                      from serialization.
+                    </li>
+                  </ul>
+                </li>
+                <li>Saves the config object to a file.</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h3>IMelonScanner</h3>
+      <p>Access to the media library scanner.</p>
+      <h4>IMelonScanner Interface</h4>
+      <pre><code class="language-C#">
+        public interface IMelonScanner
+        {
+            string CurrentFolder { get; set; }
+            string CurrentFile { get; set; }
+            string CurrentStatus { get; set; }
+            double ScannedFiles { get; set; }
+            double FoundFiles { get; set; }
+            long averageMilliseconds { get; set; }
+            bool Indexed { get; set; }
+            bool endDisplay { get; set; }
+            bool Scanning { get; set; }
+            void StartScan(bool skip);
+            void UpdateCollections();
+            void ResetDB();
+        }
+        </code></pre>
+      <ul>
+        <li>
+          <strong>Properties</strong>: Provide real-time status of the scanner.
+        </li>
+        <li>
+          <strong>Methods</strong>:
+          <ul>
+            <li>
+              <strong>StartScan</strong>: Initiates a scan of the media library.
+            </li>
+            <li>
+              <strong>UpdateCollections</strong>: Updates dynamic collections.
+            </li>
+            <li><strong>ResetDB</strong>: Resets the database.</li>
+          </ul>
+        </li>
+      </ul>
+      <h3>IStateManager</h3>
+      <p>Access to application state and settings.</p>
+      <h4>IStateManager Interface</h4>
+      <pre><code class="language-C#">
+        public interface IStateManager
+        {
+            string melonPath { get; }
+            ShortSettings MelonSettings { get; }
+            Flags MelonFlags { get; }
+            ResourceManager StringsManager { get; }
+            List&lt;IPlugin&gt; Plugins { get; }
+            Dictionary&lt;string, string&gt; LaunchArgs { get; }
+            byte[] GetDefaultImage();
+        }
+        </code></pre>
+      <ul>
+        <li>
+          <strong>Properties</strong>:
+          <ul>
+            <li>
+              <strong>melonPath</strong>: The path where Melon is installed.
+            </li>
+            <li><strong>MelonSettings</strong>: Current settings.</li>
+            <li><strong>MelonFlags</strong>: Debug flags.</li>
+            <li><strong>StringsManager</strong>: Manages localized strings.</li>
+            <li><strong>Plugins</strong>: List of loaded plugins.</li>
+            <li>
+              <strong>LaunchArgs</strong>: Command-line arguments set when
+              launching Melon.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <strong>Methods</strong>:
+          <ul>
+            <li>
+              <strong>GetDefaultImage</strong>: Returns the default image as a
+              byte array. This is used when no album/artist/track art is set.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h3>IDisplayManager</h3>
+      <p>Manage UI elements and menu options.</p>
+      <h4>IDisplayManager Interface</h4>
+      <pre><code class="language-C#">
+        public interface IDisplayManager
+        {
+            OrderedDictionary MenuOptions { get; set; }
+            OrderedDictionary UIExtensions { get; set; }
+        }
+        </code></pre>
+      <ul>
+        <li>
+          <strong>Properties</strong>:
+          <ul>
+            <li><strong>MenuOptions</strong>: Main menu options.</li>
+            <li>
+              <strong>UIExtensions</strong>: Additional UI elements or
+              extensions. This is intended for popup messages after menu flows,
+              for example after starting a download leaving a message on the
+              main menu that says &quot;download started&quot;. UI extensions
+              should be cleaned up properly by removing the extension from
+              within the extension&#39;s function.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h3>IMelonUI</h3>
+      <p>Access to UI components like input methods and display functions.</p>
+      <h4>IMelonUI Interface</h4>
+      <pre><code class="language-C#">
+        public interface IMelonUI
+        {
+            void BreadCrumbBar(List&lt;string&gt; list);
+            void ClearConsole();
+            void ClearConsole(int left, int top, int width, int height);
+            Color ColorPicker(Color CurColor);
+            string HiddenInput();
+            void DisplayProgressBar(double count, double max, char foreground, char background);
+            void ShowIndeterminateProgress();
+            void HideIndeterminateProgress();
+            string OptionPicker(List&lt;string&gt; Choices);
+            string StringInput(bool UsePred, bool AutoCorrect, bool FreeInput, bool ShowChoices, List&lt;string&gt; Choices = null);
+            void ChecklistDisplayToggle();
+            void SetChecklistItems(string[] list);
+            void InsertInChecklist(string item, int place, bool check);
+            void UpdateChecklist(int place, bool check);
+        }
+        </code></pre>
+      <ul>
+        <li>
+          <strong>Methods</strong>:
+          <ul>
+            <li>
+              <strong>BreadCrumbBar</strong>: Displays navigation breadcrumbs.
+            </li>
+            <li><strong>ClearConsole</strong>: Clears the console screen.</li>
+            <li>
+              <strong>ColorPicker</strong>: Opens a color selection interface.
+            </li>
+            <li>
+              <strong>HiddenInput</strong>: Reads input without displaying it.
+            </li>
+            <li><strong>DisplayProgressBar</strong>: Shows a progress bar.</li>
+            <li>
+              <strong>OptionPicker</strong>: Presents a list of options to the
+              user.
+            </li>
+            <li>
+              <strong>StringInput</strong>: Reads a string input with optional
+              features. (Experimental)
+            </li>
+            <li>
+              <strong>Checklist Methods</strong>: Manage checklist UI elements.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h3>ISettingsUI</h3>
+      <p>Manage settings menu options.</p>
+      <h4>ISettingsUI Interface</h4>
+      <pre><code class="language-C#">
+        public interface ISettingsUI
+        {
+            OrderedDictionary MenuOptions { get; set; }
+        }
+        </code></pre>
+      <ul>
+        <li>
+          <strong>Properties</strong>:
+          <ul>
+            <li>
+              <strong>MenuOptions</strong>: Options available in the settings
+              menu.
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

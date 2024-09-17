@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Track Model Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+  </head>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="track">Track</h1>
+      <p>
+        The <code>Track</code> class represents a track as it appears in the
+        database after processing.
+      </p>
+      <h2 id="properties">Properties</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>_id</code></td>
+            <td><code>string</code></td>
+            <td>Unique identifier for the track.</td>
+          </tr>
+          <tr>
+            <td><code>Album</code></td>
+            <td><code><a href="/models/DbLink.html">DbLink</a></code></td>
+            <td>Link to the associated album.</td>
+          </tr>
+          <tr>
+            <td><code>Position</code></td>
+            <td><code>int</code></td>
+            <td>Position of the track on the disc.</td>
+          </tr>
+          <tr>
+            <td><code>Disc</code></td>
+            <td><code>int</code></td>
+            <td>Disc number the track is on.</td>
+          </tr>
+          <tr>
+            <td><code>Format</code></td>
+            <td><code>string</code></td>
+            <td>Audio format of the track.</td>
+          </tr>
+          <tr>
+            <td><code>Bitrate</code></td>
+            <td><code>string</code></td>
+            <td>Bitrate of the track.</td>
+          </tr>
+          <tr>
+            <td><code>SampleRate</code></td>
+            <td><code>string</code></td>
+            <td>Sample rate of the track.</td>
+          </tr>
+          <tr>
+            <td><code>Channels</code></td>
+            <td><code>string</code></td>
+            <td>Number of audio channels.</td>
+          </tr>
+          <tr>
+            <td><code>BitsPerSample</code></td>
+            <td><code>string</code></td>
+            <td>Bits per sample of the audio.</td>
+          </tr>
+          <tr>
+            <td><code>MusicBrainzID</code></td>
+            <td><code>string</code></td>
+            <td>MusicBrainz ID of the track.</td>
+          </tr>
+          <tr>
+            <td><code>ISRC</code></td>
+            <td><code>string</code></td>
+            <td>International Standard Recording Code.</td>
+          </tr>
+          <tr>
+            <td><code>Year</code></td>
+            <td><code>string</code></td>
+            <td>Year the track was released.</td>
+          </tr>
+          <tr>
+            <td><code>Name</code></td>
+            <td><code>string</code></td>
+            <td>Title of the track.</td>
+          </tr>
+          <tr>
+            <td><code>Path</code></td>
+            <td><code>string</code></td>
+            <td>File path to the track.</td>
+          </tr>
+          <tr>
+            <td><code>Duration</code></td>
+            <td><code>string</code></td>
+            <td>Duration of the track.</td>
+          </tr>
+          <tr>
+            <td><code>nextTrack</code></td>
+            <td><code>string</code></td>
+            <td>ID of the next track, if any.</td>
+          </tr>
+          <tr>
+            <td><code>PlayCounts</code></td>
+            <td>
+              <code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code>
+            </td>
+            <td>Play count statistics.</td>
+          </tr>
+          <tr>
+            <td><code>SkipCounts</code></td>
+            <td>
+              <code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code>
+            </td>
+            <td>Skip count statistics.</td>
+          </tr>
+          <tr>
+            <td><code>Ratings</code></td>
+            <td>
+              <code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code>
+            </td>
+            <td>User ratings for the track.</td>
+          </tr>
+          <tr>
+            <td><code>TrackArtCount</code></td>
+            <td><code>int</code></td>
+            <td>Number of artwork images for the track.</td>
+          </tr>
+          <tr>
+            <td><code>TrackArtDefault</code></td>
+            <td><code>int</code></td>
+            <td>Default artwork index for the track.</td>
+          </tr>
+          <tr>
+            <td><code>LyricsPath</code></td>
+            <td><code>string</code></td>
+            <td>File path to the track&#39;s lyrics.</td>
+          </tr>
+          <tr>
+            <td><code>ServerURL</code></td>
+            <td><code>string</code></td>
+            <td>
+              Server URL hosting the track&#39;s resources. This value is
+              unused. It is planned for use with listening parties in v2.
+            </td>
+          </tr>
+          <tr>
+            <td><code>LastModified</code></td>
+            <td><code>DateTime</code></td>
+            <td>Last modified timestamp of the track file.</td>
+          </tr>
+          <tr>
+            <td><code>DateAdded</code></td>
+            <td><code>DateTime</code></td>
+            <td>Date when the track was added.</td>
+          </tr>
+          <tr>
+            <td><code>ReleaseDate</code></td>
+            <td><code>DateTime</code></td>
+            <td>Release date of the track.</td>
+          </tr>
+          <tr>
+            <td><code>Chapters</code></td>
+            <td>
+              <code>List&lt;<a href="/models/Chapter.html">Chapter</a>&gt;</code>
+            </td>
+            <td>Chapters within the track.</td>
+          </tr>
+          <tr>
+            <td><code>TrackGenres</code></td>
+            <td><code>List&lt;string&gt;</code></td>
+            <td>Genres associated with the track.</td>
+          </tr>
+          <tr>
+            <td><code>TrackArtists</code></td>
+            <td><code>List&lt;<a href="/models/DbLink.html">DbLink</a>&gt;</code></td>
+            <td>Links to artists associated with the track.</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h1 id="responsetrack">ResponseTrack</h1>
+      <p>
+        The <code>ResponseTrack</code> class is a trimmed version of the
+        <code>Track</code> class for use in HTTP responses.
+      </p>
+      <h2 id="properties">Properties</h2>
+      <p>
+        All properties are the same as in the Track class, except the internal
+        properties <code>Path</code> and <code>LyricsPath</code> are excluded.
+      </p>
+      <hr />
+      <h1 id="prototrack-class">ProtoTrack Class</h1>
+      <p>
+        The <code>ProtoTrack</code> class is used during the scanning process.
+        It represents a track before it is fully processed and saved into the
+        database.
+      </p>
+      <h2 id="properties">Properties</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>_id</code></td>
+            <td><code>string</code></td>
+            <td>Unique identifier for the proto track.</td>
+          </tr>
+          <tr>
+            <td><code>Album</code></td>
+            <td><code><a href="/models/Album.html">Album</a></code></td>
+            <td>Album associated with the track.</td>
+          </tr>
+          <tr>
+            <td><code>Position</code></td>
+            <td><code>int</code></td>
+            <td>Position of the track on the disc.</td>
+          </tr>
+          <tr>
+            <td><code>Disc</code></td>
+            <td><code>int</code></td>
+            <td>Disc number the track is on.</td>
+          </tr>
+          <tr>
+            <td><code>Format</code></td>
+            <td><code>string</code></td>
+            <td>Audio format of the track.</td>
+          </tr>
+          <tr>
+            <td><code>Bitrate</code></td>
+            <td><code>string</code></td>
+            <td>Bitrate of the track.</td>
+          </tr>
+          <tr>
+            <td><code>SampleRate</code></td>
+            <td><code>string</code></td>
+            <td>Sample rate of the track.</td>
+          </tr>
+          <tr>
+            <td><code>Channels</code></td>
+            <td><code>string</code></td>
+            <td>Number of audio channels.</td>
+          </tr>
+          <tr>
+            <td><code>BitsPerSample</code></td>
+            <td><code>string</code></td>
+            <td>Bits per sample of the audio.</td>
+          </tr>
+          <tr>
+            <td><code>MusicBrainzID</code></td>
+            <td><code>string</code></td>
+            <td>MusicBrainz ID of the track.</td>
+          </tr>
+          <tr>
+            <td><code>ISRC</code></td>
+            <td><code>string</code></td>
+            <td>International Standard Recording Code.</td>
+          </tr>
+          <tr>
+            <td><code>Year</code></td>
+            <td><code>string</code></td>
+            <td>Year the track was released.</td>
+          </tr>
+          <tr>
+            <td><code>Name</code></td>
+            <td><code>string</code></td>
+            <td>Title of the track.</td>
+          </tr>
+          <tr>
+            <td><code>Path</code></td>
+            <td><code>string</code></td>
+            <td>File path to the track.</td>
+          </tr>
+          <tr>
+            <td><code>Duration</code></td>
+            <td><code>string</code></td>
+            <td>Duration of the track.</td>
+          </tr>
+          <tr>
+            <td><code>nextTrack</code></td>
+            <td><code>string</code></td>
+            <td>ID of the next track, if any.</td>
+          </tr>
+          <tr>
+            <td><code>PlayCounts</code></td>
+            <td>
+              <code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code>
+            </td>
+            <td>Play count statistics.</td>
+          </tr>
+          <tr>
+            <td><code>SkipCounts</code></td>
+            <td>
+              <code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code>
+            </td>
+            <td>Skip count statistics.</td>
+          </tr>
+          <tr>
+            <td><code>Ratings</code></td>
+            <td>
+              <code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code>
+            </td>
+            <td>User ratings for the track.</td>
+          </tr>
+          <tr>
+            <td><code>TrackArtCount</code></td>
+            <td><code>int</code></td>
+            <td>Number of artwork images for the track.</td>
+          </tr>
+          <tr>
+            <td><code>TrackArtDefault</code></td>
+            <td><code>int</code></td>
+            <td>Default artwork index for the track.</td>
+          </tr>
+          <tr>
+            <td><code>LyricsPath</code></td>
+            <td><code>string</code></td>
+            <td>File path to the track&#39;s lyrics.</td>
+          </tr>
+          <tr>
+            <td><code>ServerURL</code></td>
+            <td><code>string</code></td>
+            <td>Server URL hosting the track&#39;s resources.</td>
+          </tr>
+          <tr>
+            <td><code>LastModified</code></td>
+            <td><code>DateTime</code></td>
+            <td>Last modified timestamp of the track file.</td>
+          </tr>
+          <tr>
+            <td><code>DateAdded</code></td>
+            <td><code>DateTime</code></td>
+            <td>Date when the track was added.</td>
+          </tr>
+          <tr>
+            <td><code>ReleaseDate</code></td>
+            <td><code>DateTime</code></td>
+            <td>Release date of the track.</td>
+          </tr>
+          <tr>
+            <td><code>Chapters</code></td>
+            <td>
+              <code>List&lt;<a href="/models/Chapter.html">Chapter</a>&gt;</code>
+            </td>
+            <td>Chapters within the track.</td>
+          </tr>
+          <tr>
+            <td><code>TrackGenres</code></td>
+            <td><code>List&lt;string&gt;</code></td>
+            <td>Genres associated with the track.</td>
+          </tr>
+          <tr>
+            <td><code>TrackArtists</code></td>
+            <td><code>List&lt;<a href="/models/Artist.html">Artist</a>&gt;</code></td>
+            <td>Artists associated with the track.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Melon Scanner Architecture Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <!-- Include Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+  <script>
+    // Initialize Mermaid
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark', // Use 'dark' theme to match your documentation
+    });
+</script>
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h2 id="melon-scanner">Melon Scanner</h2>
+      <p>The Melon Scanner is designed to:</p>
+      <ul>
+        <li>
+          <strong>Scan</strong> specified library paths recursively to discover
+          media files.
+        </li>
+        <li>
+          <strong>Extract metadata</strong> from media files using the
+          <a
+            href="https://github.com/Zeugma440/atldotnet"
+            >ATL</a> library.
+        </li>
+        <li>
+          <strong>Update</strong> the MongoDB database with new or modified
+          tracks, albums, and artists.
+        </li>
+        <li>
+          <strong>Delete</strong> entries from the database that no longer exist
+          in the file system.
+        </li>
+        <li>
+          <strong>Update dynamic collections</strong> based on the latest track
+          information.
+        </li>
+        <li>
+          <strong>Provide real-time feedback</strong> on the scanning progress
+          through the user interface.
+        </li>
+      </ul>
+      <hr />
+      <h2 id="class-structure">Class Structure</h2>
+      <p>
+        The <code>MelonScanner</code> class is implemented as a
+        <code>static</code> class within the
+        <code>Melon.LocalClasses</code> namespace. It encapsulates all
+        functionalities related to scanning and updating the MongoDb database.
+      </p>
+      <h3 id="properties">Properties</h3>
+      <p>
+        The class maintains several static properties to keep track of the
+        scanning process and store temporary data.
+      </p>
+      <ul>
+        <li>
+          <strong>CurrentFolder</strong> (<code>string</code>): The path of the
+          folder currently being scanned.
+        </li>
+        <li>
+          <strong>CurrentFile</strong> (<code>string</code>): The path of the
+          file currently being processed.
+        </li>
+        <li>
+          <strong>CurrentStatus</strong> (<code>string</code>): A status message
+          indicating the current operation.
+        </li>
+        <li>
+          <strong>ScannedFiles</strong> (<code>double</code>): The number of
+          files that have been scanned.
+        </li>
+        <li>
+          <strong>FoundFiles</strong> (<code>double</code>): The total number of
+          files found to be scanned.
+        </li>
+        <li>
+          <strong>averageMilliseconds</strong> (<code>long</code>): The average
+          time taken to process files.
+        </li>
+        <li>
+          <strong>fileTimes</strong> (<code>List&lt;long&gt;</code>): A list of
+          times taken to process individual files.
+        </li>
+        <li>
+          <strong>Indexed</strong> (<code>bool</code>): Indicates whether the
+          database collections have been indexed.
+        </li>
+        <li>
+          <strong>endDisplay</strong> (<code>bool</code>): Controls the
+          termination of the progress display in the UI.
+        </li>
+        <li>
+          <strong>Scanning</strong> (<code>bool</code>): Indicates whether a
+          scanning operation is currently in progress.
+        </li>
+        <li>
+          <strong>LyricFiles</strong> (<code>List&lt;string&gt;</code>): A list
+          of paths to lyric files found during scanning.
+        </li>
+        <li>
+          <strong>newMelonDB</strong> (<code>IMongoDatabase</code>): A reference
+          to the MongoDB database.
+        </li>
+        <li>
+          <strong>artistsCollection</strong>
+          (<code>IMongoCollection&lt;Artist&gt;</code>): The collection of
+          artist documents.
+        </li>
+        <li>
+          <strong>albumsCollection</strong>
+          (<code>IMongoCollection&lt;Album&gt;</code>): The collection of album
+          documents.
+        </li>
+        <li>
+          <strong>tracksCollection</strong>
+          (<code>IMongoCollection&lt;Track&gt;</code>): The collection of track
+          documents.
+        </li>
+        <li>
+          <strong>tracks</strong> (<code
+            >ConcurrentDictionary&lt;string, ProtoTrack&gt;</code
+          >): A thread-safe dictionary of tracks, keyed by file path.
+        </li>
+        <li>
+          <strong>albums</strong> (<code
+            >ConcurrentDictionary&lt;string, Album&gt;</code
+          >): A thread-safe dictionary of albums, keyed by album name and
+          artists.
+        </li>
+        <li>
+          <strong>artists</strong> (<code
+            >ConcurrentDictionary&lt;string, Artist&gt;</code
+          >): A thread-safe dictionary of artists, keyed by artist name.
+        </li>
+        <li>
+          <strong>threads</strong> (<code
+            >ConcurrentDictionary&lt;string, string&gt;</code
+          >): A thread-safe dictionary to track active scanning threads.
+        </li>
+      </ul>
+      <h3 id="methods">Methods</h3>
+      <p>
+        The <code>MelonScanner</code> class provides several methods to perform
+        scanning and database operations:
+      </p>
+      <ul>
+        <li>
+          <code>IndexCollections()</code>: Enables Indexes for database
+          collections for efficient querying.
+        </li>
+        <li>
+          <code>ResetDb()</code>: Resets the database by clearing collections
+          and deleting associated files.
+        </li>
+        <li>
+          <code>StartScan(object skipBool)</code>: Initiates the scanning
+          process.
+        </li>
+        <li>
+          <code>**</code>ScanFolderCounter(string path)`: Recursively counts the
+          total number of files to scan.
+        </li>
+        <li>
+          <code>ScanFolder(string path, bool skip)</code>: Recursively scans
+          folders and processes files.
+        </li>
+        <li>
+          <code>**</code>ScanInTrack(string file)`: Processes individual media
+          files and extracts metadata.
+        </li>
+        <li>
+          <code>FillOutDB()</code>: Constructs and updates database documents
+          based on scanned data.
+        </li>
+        <li>
+          <code
+            >Upload(List&lt;Track&gt; DbTracks, List&lt;Album&gt; DbAlbums,
+            List&lt;Artist&gt; DbArtists)</code
+          >: Performs bulk writes to the database.
+        </li>
+        <li>
+          <code>DeletePass()</code>: Deletes database entries for files that no
+          longer exist.
+        </li>
+        <li>
+          <code>UpdateCollections()</code>: Updates dynamic collections based on
+          the latest tracks.
+        </li>
+        <li>
+          <code>IsAudioFile(string path)</code>: Determines if a file is an
+          audio file.
+        </li>
+        <li>
+          <code>SplitArtists(string artistsStr)</code>: Splits artist strings
+          into individual names.
+        </li>
+        <li>
+          <code>SplitGenres(string genresStr)</code>: Splits genre strings into
+          individual genres.
+        </li>
+        <li>
+          <code>ResetDBUI()</code>: Provides a user interface for resetting the
+          database.
+        </li>
+        <li>
+          <code>MemoryScan()</code>: Initiates a full library scan with UI
+          prompts.
+        </li>
+        <li>
+          <code>MemoryScanShort()</code>: Initiates a short scan (skips existing
+          files) with UI prompts.
+        </li>
+        <li>
+          `ScanProgressView()**: Displays the scanning progress in the user
+          interface.
+        </li>
+      </ul>
+      <hr />
+      <h2 id="scanning-process">Scanning Process</h2>
+      <h3 id="initialization">Initialization</h3>
+      <ol>
+        <li>
+          <p>
+            <strong>Check Scanning Status</strong>: The scanner first checks if
+            a scanning operation is already in progress by inspecting the
+            <code>Scanning</code> flag. If scanning is active, it returns
+            immediately to prevent concurrent scans.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Set Up Database Connections</strong>: Establishes
+            connections to the MongoDB database and retrieves the collections
+            for artists, albums, and tracks.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Load Existing Data</strong>: Loads existing tracks, albums,
+            and artists from the database into in-memory dictionaries
+            (<code>tracks</code>, <code>albums</code>, <code>artists</code>) for
+            quick access and comparison.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Initialize Variables</strong>: Resets counters and status
+            messages. Sets up the <code>LyricFiles</code> list and other
+            temporary data structures.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Check Library Paths</strong>: Validates that library paths
+            are specified in the settings. If none are found, it displays an
+            error message and aborts the scanning process.
+          </p>
+        </li>
+      </ol>
+      <h3 id="folder-scanning">Folder Scanning</h3>
+      <ol>
+        <li>
+          <p>
+            <strong>Counting Files</strong>: The
+            <code>ScanFolderCounter</code> method recursively traverses all
+            library paths to count the total number of files that will be
+            processed. This is essential for displaying accurate progress
+            information.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Scanning Files</strong>: The <code>ScanFolder</code> method
+            recursively scans each folder in the library paths. For each file
+            found:
+          </p>
+          <ul>
+            <li>
+              <strong>Thread Management</strong>: Ensures that no more than 25
+              scanning threads are active simultaneously to prevent resource
+              exhaustion.
+            </li>
+            <li>
+              <strong>File Processing</strong>: For each file, a new thread is
+              spawned to process the file using the
+              <code>ScanInTrack</code> method.
+            </li>
+          </ul>
+        </li>
+      </ol>
+      <h3 id="file-processing">File Processing</h3>
+      <ol>
+        <li>
+          <p>
+            <strong>Filter Non-Audio Files</strong>: The
+            <code>ScanInTrack</code> method first checks if the file is an audio
+            file using the <code>IsAudioFile</code> method. If not, it skips
+            processing.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Process Lyric Files</strong>: If the file is a lyric file
+            (e.g., ends with <code>.lrc</code>), it adds the path to the
+            <code>LyricFiles</code> list and skips further processing.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Extract Metadata</strong>: Uses the <code>ATL</code> library
+            to extract metadata from the audio file, including:
+          </p>
+          <ul>
+            <li>Title</li>
+            <li>Artists</li>
+            <li>Album</li>
+            <li>Track number</li>
+            <li>Disc number</li>
+            <li>Genres</li>
+            <li>Release date</li>
+            <li>Additional fields (e.g., MusicBrainz ID, ISRC)</li>
+          </ul>
+        </li>
+        <li>
+          <p>
+            <strong>Create ProtoTrack Object</strong>: Constructs a
+            <code>ProtoTrack</code> object to temporarily hold the track&#39;s
+            metadata.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Handle Artists and Genres</strong>: Splits artist and genre
+            strings into lists using the <code>SplitArtists</code> and
+            <code>SplitGenres</code> methods.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Update Existing Tracks</strong>: Checks if the track already
+            exists in the <code>tracks</code> dictionary. If it does, updates
+            the existing entry; otherwise, adds a new one.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Error Handling</strong>: If an exception occurs during
+            processing, logs the error to the
+            <code>FailedFiles</code> collection in the database.
+          </p>
+        </li>
+      </ol>
+      <h3 id="database-update">Database Update</h3>
+      <p>After all files have been processed:</p>
+      <ol>
+        <li>
+          <p>
+            <strong>Construct Albums and Artists</strong>: Uses the collected
+            track data to construct albums and artists, ensuring that
+            relationships between tracks, albums, and artists are accurately
+            represented.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Deduplicate Entries</strong>: Removes duplicate albums and
+            artists by using distinct keys based on names and associated
+            artists.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Update Track References</strong>: Updates tracks to
+            reference the correct album and artist IDs.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Process Lyric Files</strong>: Associates lyric files with
+            their corresponding tracks by matching file paths.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Bulk Upload</strong>: Uses the <code>Upload</code> method to
+            perform bulk write operations to the database for tracks, albums,
+            and artists.
+          </p>
+        </li>
+      </ol>
+      <h3 id="cleanup-operations">Cleanup Operations</h3>
+      <ol>
+        <li>
+          <p>
+            <strong>Delete Missing Files</strong>: The
+            <code>DeletePass</code> method removes database entries for files
+            that no longer exist in the file system.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Update Collections</strong>: The
+            <code>UpdateCollections</code> method updates dynamic collections
+            based on the latest track information.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Index Database Collections</strong>: Calls
+            <code>IndexCollections</code> to ensure that database collections
+            are properly indexed for efficient querying.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Finalize Scanning</strong>: Resets scanning flags, updates
+            status messages, and cleans up temporary data structures.
+          </p>
+        </li>
+      </ol>
+      <hr />
+      <h2 id="database-interactions">Database Interactions</h2>
+      <h3 id="indexing-collections">Indexing Collections</h3>
+      <p>
+        The <code>IndexCollections</code> method creates indexes on the
+        <code>Artists</code>, <code>Albums</code>, and
+        <code>Tracks</code> collections to optimize query performance. It sets
+        up indexes on the <code>Name</code> field with collation settings to
+        ensure case-insensitive and culture-aware comparisons.
+      </p>
+      <h3 id="resetting-the-database">Resetting the Database</h3>
+      <p>
+        The <code>ResetDb</code> method performs a complete reset of the
+        database by:
+      </p>
+      <ul>
+        <li>
+          Deleting all documents from the collections: <code>Tracks</code>,
+          <code>Artists</code>, <code>Albums</code>, <code>Playlists</code>,
+          <code>Collections</code>, <code>FailedFiles</code>,
+          <code>Metadata</code>, <code>Stats</code>, and <code>Queues</code>.
+        </li>
+        <li>
+          Dropping indexes from the collections to remove any existing indexing
+          configurations.
+        </li>
+        <li>
+          Deleting associated files from directories like
+          <code>AlbumArts</code>, <code>ArtistBanners</code>,
+          <code>ArtistPfps</code>, <code>Assets</code>,
+          <code>CollectionArts</code>, and <code>PlaylistArts</code>.
+        </li>
+        <li>
+          Users Collection is <strong>NOT</strong> Reset, so any users including
+          your own will remain intact with their username, password, and profile
+          settings. Any stats like play/skip logs and ratings will be lost.
+        </li>
+      </ul>
+      <p>
+        <strong>Warning</strong>: Resetting the database is a destructive
+        operation that cannot be undone. All media metadata and user stats will
+        be lost.
+      </p>
+      <hr />
+      <h2 id="user-interface-integration">User Interface Integration</h2>
+      <p>
+        The Melon Scanner provides user interface methods to interact with users
+        and display scanning progress:
+      </p>
+      <ul>
+        <li>
+          <p>
+            <strong>ResetDBUI()</strong>: Displays a warning message and prompts
+            the user for confirmation before resetting the database.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>MemoryScan()</strong>: Initiates a full library scan with
+            user prompts and progress indicators.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>MemoryScanShort()</strong>: Initiates a short scan that
+            skips existing files, useful for quick updates.
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>ScanProgressView()</strong>: Displays real-time scanning
+            progress, including:
+          </p>
+          <ul>
+            <li>Number of files scanned vs. total files found.</li>
+            <li>
+              Current status message (e.g., &quot;Scanning&quot;, &quot;Updating
+              Tracks&quot;).
+            </li>
+            <li>Control instructions (e.g., &quot;Press Esc to exit&quot;).</li>
+          </ul>
+        </li>
+      </ul>
+      <p><strong>Progress Display Diagram</strong>:</p>
+      <pre><code>
+        +--------------------------------------------------------+
+        | Melon &gt; Scanner Progress                               |
+        +--------------------------------------------------------+
+        | Scan Status: <span class="hljs-number">1500</span> / <span class="hljs-number">3000</span> Found                         |
+        | [####################################--------] <span class="hljs-number">70</span>%     |
+        | System Status: Scanning files                          |
+        |                                                        |
+        |                                                        |
+        |                                                        |
+        +--------------------------------------------------------+
+        </code></pre>
+      <hr />
+      <h2 id="diagrams">Diagrams</h2>
+      <h3 id="overall-scanning-workflow">Overall Scanning Workflow</h3>
+      <div class="mermaid">
+        graph TD;
+            A[Start Scan] --> B[Check Scanning Status]
+            B --> |Not Scanning| C[Initialize Variables]
+            C --> D[Load Existing Data from DB]
+            D --> E[Validate Library Paths]
+            E --> |Paths Exist| F[ScanFolderCounter]
+            F --> G[ScanFolder]
+            G --> H[ScanInTrack]
+            H --> I[Process File Metadata]
+            I --> J[Update tracks, albums, artists]
+            J --> K[All Files Processed?]
+            K --> |No| G
+            K --> |Yes| L[FillOutDB]
+            L --> M[Upload to DB]
+            M --> N[DeletePass]
+            N --> O[UpdateCollections]
+            O --> P[IndexCollections]
+            P --> Q[End Scan]
+        
+            B --> |Already Scanning| R[Return]
+            E --> |No Paths| S[Display Error & Abort]
+      </div>
+      <h3 id="file-processing-workflow">File Processing Workflow</h3>
+      <div class="mermaid">
+        graph TD;
+        A[ScanInTrack] --> B[IsAudioFile?]
+        B --> |No| C[Is Lyric File?]
+        B --> |Yes| D[Extract Metadata]
+        C --> |Yes| E[Add to LyricFiles]
+        C --> |No| F[Skip File]
+        D --> G[Create ProtoTrack]
+        G --> H[Update Existing Track?]
+        H --> |Yes| I[Update Track in Dictionary]
+        H --> |No| J[Add Track to Dictionary]
+        I --> K[End Thread]
+        J --> K
+      </div>
+    </div>
+  </body>
+</html>

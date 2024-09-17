@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>DbMetadata Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="dbmetadata">DbMetadata</h1>
+        <p>The <code>DbMetadata</code> class contains metadata about the database itself. This is used to mark the version of the DB when updating / load from a backup so the database can attempt to merge models to the version required by the currently running version of Melon. This data is stored as objects in MongoDb in the Metadata collection.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>_id</code></td>
+        <td><code>string</code></td>
+        <td>The unique identifier for the metadata entry.</td>
+        </tr>
+        <tr>
+        <td><code>Name</code></td>
+        <td><code>string</code></td>
+        <td>The name of the database.</td>
+        </tr>
+        <tr>
+        <td><code>Version</code></td>
+        <td><code>string</code></td>
+        <td>The version of the database schema or app.</td>
+        </tr>
+        <tr>
+        <td><code>Info</code></td>
+        <td><code>string</code></td>
+        <td>Additional information or notes.</td>
+        </tr>
+        </tbody>
+        </table>
+        
+    </div>  
+</body>

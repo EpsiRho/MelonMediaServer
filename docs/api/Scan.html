@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Scan API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="scan-controller-documentation">Scan Controller Documentation</h1>
+      <p>
+        The <code>ScanController</code> handles media library scanning
+        operations, including starting a new scan and checking the progress of
+        an ongoing scan.
+      </p>
+      <h2 id="controller-route-api-scan-">
+        Controller Route: <code>/api/scan</code>
+      </h2>
+      <p>
+        All routes within the <code>ScanController</code> are prefixed by
+        <code>/api/scan</code>.
+      </p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/scan/start</code></td>
+            <td>POST</td>
+            <td>Initiates a media library scan.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/scan/progress</code></td>
+            <td>GET</td>
+            <td>Retrieves the current scan progress.</td>
+            <td>Admin</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h3 id="start-a-media-library-scan">Start a Media Library Scan</h3>
+      <p>Initiates a new scan of the media library.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/scan/start</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>skip</strong> (boolean, optional): If set to
+          <code>true</code>, skips files that haven&#39;t been modified since
+          last scan. (default: <code>false</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>202 Accepted</strong>: The scanner has started successfully.
+        </li>
+        <li><strong>425 Too Early</strong>: The scanner is already running.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/scan/<span class="hljs-keyword">start</span>?<span class="hljs-keyword">skip</span>=<span class="hljs-literal">false</span><span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-scan-progress">Get Scan Progress</h3>
+      <p>
+        Fetches the current progress of an ongoing scan, including the number of
+        scanned and found files. If you want Realtime progress updates, use the
+        client <a href="/Architecture/WebSockets.html">WebSocket</a> SEND PROGRESS
+        command.
+      </p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/scan/progress</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns the current scan progress.</li>
+        <li><strong>204 No Content</strong>: No scan is currently running.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/scan/progress"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+    </div>
+  </body>
+</html>

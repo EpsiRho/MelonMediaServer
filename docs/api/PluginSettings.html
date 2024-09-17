@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Plugin Settings API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="plugins-api-documentation">Plugins API Documentation</h1>
+      <p>
+        The <code>PluginsController</code> handles actions related to managing
+        plugins in the system. This includes viewing the list of plugins,
+        enabling/disabling them, and rescanning/reloading the plugins directory.
+      </p>
+      <h2 id="controller-route-api-settings-plugins-">
+        Controller Route: <code>/api/settings/plugins</code>
+      </h2>
+      <p>
+        All routes within the <code>PluginsController</code> are prefixed by
+        <code>/api/settings/plugins</code>.
+      </p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/settings/plugins/list</code></td>
+            <td>GET</td>
+            <td>View a list of all available plugins.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/settings/plugins/disable</code></td>
+            <td>POST</td>
+            <td>Disable a specific plugin by name and author.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/settings/plugins/enable</code></td>
+            <td>POST</td>
+            <td>Enable a specific plugin by name and author.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/settings/plugins/rescan</code></td>
+            <td>POST</td>
+            <td>Rescan the plugins folder and reload plugins.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/settings/plugins/reload</code></td>
+            <td>POST</td>
+            <td>Reload all loaded plugins.</td>
+            <td>Admin</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h2 id="endpoint-details">Endpoint Details</h2>
+      <h3 id="view-plugins">View Plugins</h3>
+      <p>
+        Fetch a list of all available plugins with their details, including
+        whether they are enabled or disabled.
+      </p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/settings/plugins/list</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>: None</p>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns a list of plugins with their details
+          (name, author, version, description, and enabled/disabled status).
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/settings/plugins/list"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="disable-plugin">Disable Plugin</h3>
+      <p>Disable a specific plugin by its name and author.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/settings/plugins/disable</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>name</strong> (string, required): The name of the plugin.
+        </li>
+        <li>
+          <strong>author</strong> (string, required): The author of the plugin.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: The plugin is successfully disabled.</li>
+        <li><strong>404 Not Found</strong>: The plugin is not found.</li>
+        <li>
+          <strong>400 Bad Request</strong>: If there is an error during the
+          operation.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/settings/plugins/disable?name=ExamplePlugin&amp;author=JohnDoe"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="enable-plugin">Enable Plugin</h3>
+      <p>Enable a specific plugin by its name and author.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/settings/plugins/enable</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>name</strong> (string, required): The name of the plugin.
+        </li>
+        <li>
+          <strong>author</strong> (string, required): The author of the plugin.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: The plugin is successfully enabled.</li>
+        <li><strong>404 Not Found</strong>: The plugin is not found.</li>
+        <li>
+          <strong>400 Bad Request</strong>: If there is an error during the
+          operation.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/settings/plugins/enable?name=ExamplePlugin&amp;author=JohnDoe"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="rescan-plugins-folder">Rescan Plugins Folder</h3>
+      <p>
+        Rescan the plugins folder and reload all plugins from the directory.
+      </p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/settings/plugins/rescan</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>: None</p>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: The plugins folder was successfully
+          rescanned, and all plugins were reloaded.
+        </li>
+        <li>
+          <strong>400 Bad Request</strong>: If there is an error during the
+          operation.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/settings/plugins/rescan"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="reload-plugins">Reload Plugins</h3>
+      <p>Reload all the currently loaded plugins.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/settings/plugins/reload</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>: None</p>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: The plugins were successfully reloaded.
+        </li>
+        <li>
+          <strong>400 Bad Request</strong>: If there is an error during the
+          operation.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/settings/plugins/reload"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+    </div>
+  </body>
+</html>

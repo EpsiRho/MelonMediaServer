@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Album Model Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="album">Album</h1>
+      <p>
+        The <code>Album</code> class represents an album in the Melon library,
+        including metadata, user statistics, artwork, and associations with
+        artists and genres.
+      </p>
+      <h2 id="properties">Properties</h2>
+      <h3 id="identification">Identification</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>_id</code></td>
+            <td><code>string</code></td>
+            <td>The unique identifier for the album in the database.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3 id="basic-information">Basic Information</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Name</code></td>
+            <td><code>string</code></td>
+            <td>The title of the album.</td>
+          </tr>
+          <tr>
+            <td><code>Bio</code></td>
+            <td><code>string</code></td>
+            <td>
+              A detailed description or background information about the album.
+            </td>
+          </tr>
+          <tr>
+            <td><code>Publisher</code></td>
+            <td><code>string</code></td>
+            <td>The publisher or record label that released the album.</td>
+          </tr>
+          <tr>
+            <td><code>ReleaseStatus</code></td>
+            <td><code>string</code></td>
+            <td>
+              The current release status (e.g., &quot;Released&quot;,
+              &quot;Upcoming&quot;).
+            </td>
+          </tr>
+          <tr>
+            <td><code>ReleaseType</code></td>
+            <td><code>string</code></td>
+            <td>
+              The type of release (e.g., &quot;Album&quot;, &quot;Single&quot;,
+              &quot;EP&quot;).
+            </td>
+          </tr>
+          <tr>
+            <td><code>ReleaseDate</code></td>
+            <td><code>DateTime</code></td>
+            <td>The official release date of the album.</td>
+          </tr>
+          <tr>
+            <td><code>DateAdded</code></td>
+            <td><code>DateTime</code></td>
+            <td>The date and time when the album was added to the system.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3 id="content-details">Content Details</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>TotalDiscs</code></td>
+            <td><code>int</code></td>
+            <td>The total number of discs in the album.</td>
+          </tr>
+          <tr>
+            <td><code>TotalTracks</code></td>
+            <td><code>int</code></td>
+            <td>The total number of tracks across all discs in the album.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3 id="artwork">Artwork</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>AlbumArtCount</code></td>
+            <td><code>int</code></td>
+            <td>The number of album artwork images available.</td>
+          </tr>
+          <tr>
+            <td><code>AlbumArtDefault</code></td>
+            <td><code>int</code></td>
+            <td>The index of the default album artwork to display.</td>
+          </tr>
+          <tr>
+            <td><code>AlbumArtPaths</code></td>
+            <td><code>List&lt;string&gt;</code></td>
+            <td>
+              A list of file paths or URLs to the album&#39;s artwork images.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <h3 id="genres-and-artists">Genres and Artists</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>AlbumGenres</code></td>
+            <td><code>List&lt;string&gt;</code></td>
+            <td>A list of genres associated with the album.</td>
+          </tr>
+          <tr>
+            <td><code>AlbumArtists</code></td>
+            <td><code>List&lt;<a href="/models/DbLink.html">DbLink</a>&gt;</code></td>
+            <td>Primary artists who created the album.</td>
+          </tr>
+          <tr>
+            <td><code>ContributingArtists</code></td>
+            <td><code>List&lt;<a href="/models/DbLink.html">DbLink</a>&gt;</code></td>
+            <td>Artists who contributed to the album.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3 id="user-statistics">User Statistics</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>PlayCounts</code></td>
+            <td>
+              <code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code>
+            </td>
+            <td>Play count statistics per user or aggregated.</td>
+          </tr>
+          <tr>
+            <td><code>SkipCounts</code></td>
+            <td>
+              <code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code>
+            </td>
+            <td>
+              Skip count statistics indicating how often tracks are skipped.
+            </td>
+          </tr>
+          <tr>
+            <td><code>Ratings</code></td>
+            <td>
+              <code>List&lt;<a href="/models/UserStat.html">UserStat</a>&gt;</code>
+            </td>
+            <td>User ratings for the album.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3 id="server-information">Server Information</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>ServerURL</code></td>
+            <td><code>string</code></td>
+            <td>
+              The base URL of the server hosting the album&#39;s resources.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        This value is unused. It is planned for use with listening parties in
+        v2.
+      </p>
+      <hr />
+      <h1 id="responsealbum">ResponseAlbum</h1>
+      <p>
+        The <code>ResponseAlbum</code> class is used for HTTP responses,
+        providing a trimmed version of the album data suitable for client
+        consumption.
+      </p>
+      <h2 id="properties">Properties</h2>
+      <p>
+        All properties are the same as in the Album class, except
+        <code>AlbumArtPaths</code> is excluded to reduce payload size and
+        protect internal data.
+      </p>
+    </div>
+  </body>
+</html>

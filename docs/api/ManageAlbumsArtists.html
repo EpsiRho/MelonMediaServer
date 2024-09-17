@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Albums and Artists Management API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="manage-albums-and-artists">Manage Albums and Artists</h1>
+        <p>The <code>CreateDeleteController</code> handles the creation and deletion of albums and artists. These are
+            used primarily for if the scanner produces too many albums or no album due to an issue with track metadata.
+        </p>
+        <h2 id="controller-route-api-">Controller Route: <code>/api/</code></h2>
+        <p>All routes within the <code>CreateDeleteController</code> are prefixed by <code>/api/</code>.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/album/create</code></td>
+                    <td>POST</td>
+                    <td>Creates a new album.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/album/delete</code></td>
+                    <td>POST</td>
+                    <td>Deletes an existing album.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/artist/create</code></td>
+                    <td>POST</td>
+                    <td>Creates a new artist.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/artist/delete</code></td>
+                    <td>POST</td>
+                    <td>Deletes an existing artist.</td>
+                    <td>Admin</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="create-album">Create Album</h3>
+        <p>Creates a new album.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/album/create</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>name</strong> (string, required): The name of the album.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the unique identifier of the newly created album.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/album/<span class="hljs-keyword">create</span><span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;<span class="hljs-keyword">Admin</span>-JWT&gt;<span class="hljs-string">" \
+             -d "</span><span class="hljs-keyword">name</span>=<span class="hljs-keyword">New</span> Album<span class="hljs-string">"</span>
+        </code></pre>
+        <hr>
+        <h3 id="delete-album">Delete Album</h3>
+        <p>Deletes an album by its unique identifier.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/album/delete</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the album to delete.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Album deleted successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Album not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/album/delete" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"id=612a29ff4f1a2d6f1c1b77aa"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="create-artist">Create Artist</h3>
+        <p>Creates a new artist.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/artist/create</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>name</strong> (string, required): The name of the artist.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the unique identifier of the newly created artist.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/artist/<span class="hljs-keyword">create</span><span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;<span class="hljs-keyword">Admin</span>-JWT&gt;<span class="hljs-string">" \
+             -d "</span><span class="hljs-keyword">name</span>=<span class="hljs-keyword">New</span> Artist<span class="hljs-string">"</span>
+        </code></pre>
+        <hr>
+        <h3 id="delete-artist">Delete Artist</h3>
+        <p>Deletes an artist by its unique identifier.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/artist/delete</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the artist to delete.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Artist deleted successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Artist not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/artist/delete" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"id=612a2f394f1a2d6f1c1b77ab"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="notes-">Notes:</h3>
+        <ul>
+            <li>All operations in this controller require Admin-level permissions.</li>
+            <li>When deleting albums or artists, their associated tracks and other relevant data are updated
+                accordingly.</li>
+        </ul>
+
+    </div>
+</body>

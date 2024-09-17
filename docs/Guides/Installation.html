@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Installation Guide</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="installation">Installation</h1>
+      <h3 id="prerequisites">Prerequisites</h3>
+      <p>Installing Melon is super easy, but it requires a few Prerequisite.</p>
+      <ul>
+        <li>
+          You need .NET 8.0, which you can get
+          <a href="https://dotnet.microsoft.com/en-us/download">Here</a>
+        </li>
+        <li>
+          You&#39;ll need a
+          <a href="https://www.mongodb.com/try/download/community">MongoDB</a>
+          instance to connect the server to, so spin one up either through atlas
+          or locally before running the server.
+        </li>
+      </ul>
+      <h3 id="installation">Installation</h3>
+      <ul>
+        <li>
+          Once you have both of these things up and running, navigate to the
+          GitHub Releases page for the
+          <a href="https://github.com/EpsiRho/MelonMediaServer/releases"
+            >MelonMediaServer</a
+          >
+          project.
+        </li>
+        <li>
+          Here, go to the latest release and download the
+          <strong>installer.zip</strong> file.
+        </li>
+        <li>
+          Once it&#39;s downloaded, either run the exe (Windows) or the dll
+          (Linux) and it will ask for the path to the folder you want to install
+          to. Once it&#39;s done it will close.
+        </li>
+        <li>
+          Go to where you install Melon and run the MelonWebApi.(exe/dll)
+          application. This will launch the server and launch the Console UI.
+        </li>
+        <li>
+          Once the console UI is fully loaded it will take you through an Out Of
+          Box setup experience.
+          <ul>
+            <li>
+              Here you&#39;ll set up your Admin account&#39;s Username and
+              Password, link Melon to your MongoDb instance, and link to the
+              folders you store your music files in.
+            </li>
+          </ul>
+        </li>
+        <li>
+          Once you&#39;re out of the setup, you&#39;ll be left at the console
+          menu. You can use your arrow keys + enter to navigate. You&#39;ll want
+          to start a scan as soon as possible, as no songs will be available in
+          your library until a scan has completed.
+          <ul>
+            <li>
+              You have the choice between Full and Short scan, but for a first
+              scan they will both end up being full scans. This is because the
+              short scan skips files that haven&#39;t been modified since last
+              scan.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <p>
+        Installation is complete! But there are a few more things to configure.
+      </p>
+      <h3 id="configuration">Configuration</h3>
+      <ul>
+        <li>
+          You may need to port forward to the PC/Server you&#39;re hosting Melon
+          on. The port Melon uses by default is 14524, but you can change the
+          port by setting the listening URL in the Console Settings UI.
+        </li>
+        <li>
+          HTTPS allows Melon to send traffic securely, and some clients /
+          devices may require it.
+          <ul>
+            <li>
+              To setup HTTPS, follow the setup UI in the console under Network
+              Settings -&gt; Configure HTTPS.
+            </li>
+            <li>
+              You&#39;ll need an SSL cert, which you can get through
+              <a href="https://certbot.eff.org/">CertBot</a>.
+            </li>
+            <li>
+              SSL Certs expire, but Melon will inform you if your cert is
+              expired on startup, or when you visit the HTTPS settings
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Playlist API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="playlists-controller-documentation">Playlists Controller Documentation</h1>
+        <p>The <code>PlaylistsController</code> handles the creation, modification, and retrieval of playlists and their
+            associated tracks, albums, and artists. This controller manages all playlist-related functionality within
+            the API. For more info on playlists see the <a href="/Guides/Playlists.html">Playlist Guide</a>.</p>
+        <h2 id="controller-route-api-playlists-">Controller Route: <code>/api/playlists</code></h2>
+        <p>All routes within the <code>PlaylistsController</code> are prefixed by <code>/api/playlists</code>.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/playlists/create</code></td>
+                    <td>POST</td>
+                    <td>Create a new playlist.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/playlists/add-tracks</code></td>
+                    <td>POST</td>
+                    <td>Add tracks to an existing playlist.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/playlists/remove-tracks</code></td>
+                    <td>POST</td>
+                    <td>Remove tracks from an existing playlist.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/playlists/delete</code></td>
+                    <td>POST</td>
+                    <td>Delete an existing playlist.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/playlists/update</code></td>
+                    <td>POST</td>
+                    <td>Update the details of an existing playlist.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/playlists/move-track</code></td>
+                    <td>POST</td>
+                    <td>Move a track from one position to another within a playlist.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/playlists/get</code></td>
+                    <td>GET</td>
+                    <td>Retrieve the details of a specific playlist by its ID.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/playlists/search</code></td>
+                    <td>GET</td>
+                    <td>Search for playlists by name with pagination support.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/playlists/get-tracks</code></td>
+                    <td>GET</td>
+                    <td>Retrieve a paginated list of tracks from a specific playlist.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/playlists/get-albums</code></td>
+                    <td>GET</td>
+                    <td>Retrieve albums associated with tracks in a playlist.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/playlists/get-artists</code></td>
+                    <td>GET</td>
+                    <td>Retrieve artists associated with tracks in a playlist.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="create-a-playlist">Create a Playlist</h3>
+        <p>Create a new playlist with an optional description and initial list of track IDs.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/create</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>name</strong> (string, required): The name of the playlist.</li>
+            <li><strong>description</strong> (string, optional): A description for the playlist.</li>
+            <li><strong>ids</strong> (<code>List&lt;string&gt;</code>, optional): A list of track IDs to add to the
+                playlist.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the ID of the newly created playlist.</li>
+            <li><strong>404 Not Found</strong>: If any tracks provided in the list of track IDs are not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/playlists/create?name=My%20Playlist&amp;description=This%20is%20a%20test%20playlist&amp;ids=66bc9aafab7ba419497e7bcf&amp;ids=66bc9aafab7ba419497e7fea"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="add-tracks-to-playlist">Add Tracks to Playlist</h3>
+        <p>Add tracks to an existing playlist by providing a list of track IDs.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/add-tracks</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the playlist.</li>
+            <li><strong>trackIds</strong> (<code>List&lt;string&gt;</code>, required): A list of track IDs to add to the
+                playlist.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a success message if tracks were added successfully.</li>
+            <li><strong>404 Not Found</strong>: If the playlist or any tracks in the provided list are not found.</li>
+            <li><strong>401 Unauthorized</strong>: If the user does not have the required permissions to edit the
+                playlist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/playlists/add-tracks?id=66dd3bd79d629bfdda4c50be&amp;trackIds=66bc9aafab7ba419497e7fea"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="remove-tracks-from-playlist">Remove Tracks from Playlist</h3>
+        <p>Remove tracks from a playlist by providing their positions in the playlist.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/remove-track</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the playlist.</li>
+            <li><strong>positions</strong> (<code>List&lt;int&gt;</code>, required): A list of track positions to remove
+                (starting at 0).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a success message if tracks were removed successfully.</li>
+            <li><strong>404 Not Found</strong>: If the playlist or tracks at the specified positions are not found.</li>
+            <li><strong>401 Unauthorized</strong>: If the user does not have the required permissions to edit the
+                playlist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/playlists/remove-tracks?id=66dd3bd79d629bfdda4c50be&amp;positions=5"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="delete-a-playlist">Delete a Playlist</h3>
+        <p>Delete an existing playlist by its ID.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/delete</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the playlist to delete.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a success message if the playlist was deleted successfully.</li>
+            <li><strong>404 Not Found</strong>: If the playlist is not found.</li>
+            <li><strong>401 Unauthorized</strong>: If the user does not have the required permissions to delete the
+                playlist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/playlists/delete?id=66dd3bd79d629bfdda4c50be"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="update-playlist">Update Playlist</h3>
+        <p>Update the details of an existing playlist, such as its name, description, editors, viewers, and public
+            access settings.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/update</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the playlist.</li>
+            <li><strong>description</strong> (string, optional): New description for the playlist.</li>
+            <li><strong>name</strong> (string, optional): New name for the playlist.</li>
+            <li><strong>editors</strong> (<code>List&lt;string&gt;</code>, optional): List of users who can edit the
+                playlist.</li>
+            <li><strong>viewers</strong> (<code>List&lt;string&gt;</code>, optional): List of users who can view the
+                playlist.</li>
+            <li><strong>publicEditing</strong> (string, optional): Public editing flag (true/false).</li>
+            <li><strong>publicViewing</strong> (string, optional): Public viewing flag (true/false).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a success message if the playlist was updated successfully.</li>
+            <li><strong>404 Not Found</strong>: If the playlist is not found.</li>
+            <li><strong>400 Bad Request</strong>: If the parameters are invalid.</li>
+            <li><strong>401 Unauthorized</strong>: If the user does not have the required permissions to edit the
+                playlist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/playlists/<span class="hljs-keyword">update</span>?<span class="hljs-keyword">id</span>=<span class="hljs-number">66</span>dd3bd79d629bfdda4c50be&amp;<span class="hljs-keyword">name</span>=<span class="hljs-keyword">Updated</span>%<span class="hljs-number">20</span>Playlist&amp;description=<span class="hljs-keyword">New</span>%<span class="hljs-number">20</span>description<span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+        <hr>
+        <h3 id="move-track-in-playlist">Move Track in Playlist</h3>
+        <p>Move a track from one position to another within a playlist.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/move-track</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the playlist.</li>
+            <li><strong>fromPos</strong> (int, required): The current position of the track.</li>
+            <li><strong>toPos</strong> (int, required): The new position for the track.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a success message if the track was moved successfully.</li>
+            <li><strong>404 Not Found</strong>: If the playlist or track is not found.</li>
+            <li><strong>401 Unauthorized</strong>: If the user does not have the required permissions to edit the
+                playlist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/playlists/move-track?id=playlistId&amp;fromPos=2&amp;toPos=4"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-playlist-by-id">Get Playlist by ID</h3>
+        <p>Retrieve the details of a specific playlist by its ID.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/get</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the playlist.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the playlist details.</li>
+            <li><strong>404 Not Found</strong>: If the playlist is not found.</li>
+            <li><strong>401 Unauthorized</strong>: If the user does not have access to the playlist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/playlists/get?id=playlistId"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="search-playlists">Search Playlists</h3>
+        <p>Search for playlists by name, supporting pagination. Entering no search name will return all visible
+            playlists.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/search</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>page</strong> (int, required): The page number for pagination.</li>
+            <li><strong>count</strong> (int, required): The number of playlists per page.</li>
+            <li><strong>name</strong> (string, optional): A keyword to search by playlist name.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a paginated list of playlists matching the search criteria.</li>
+            <li><strong>404 Not Found</strong>: If no playlists are found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/playlists/search?page=0&amp;count=10&amp;name=My%20Playlist"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-tracks-from-playlist">Get Tracks from Playlist</h3>
+        <p>Retrieve a paginated list of tracks from a specific playlist.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/get-tracks</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the playlist.</li>
+            <li><strong>page</strong> (int, optional): The page number (default is 0).</li>
+            <li><strong>count</strong> (int, optional): The number of tracks per page (default is 100).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a paginated list of tracks for the specified playlist.</li>
+            <li><strong>404 Not Found</strong>: If the playlist is not found.</li>
+            <li><strong>401 Unauthorized</strong>: If the user does not have access to the playlist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/playlists/get-tracks?id=playlistId&amp;page=0&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-albums-from-playlist">Get Albums from Playlist</h3>
+        <p>Retrieve albums associated with tracks in a playlist.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/get-albums</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the playlist.</li>
+            <li><strong>page</strong> (int, optional): The page number (default is 0).</li>
+            <li><strong>count</strong> (int, optional): The number of albums per page (default is 100).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a paginated list of albums associated with the playlist tracks.</li>
+            <li><strong>404 Not Found</strong>: If the playlist is not found.</li>
+            <li><strong>401 Unauthorized</strong>: If the user does not have access to the playlist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/playlists/get-albums?id=playlistId&amp;page=0&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-artists-from-playlist">Get Artists from Playlist</h3>
+        <p>Retrieve artists associated with tracks in a playlist.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/playlists/get-artists</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The ID of the playlist.</li>
+            <li><strong>page</strong> (int, optional): The page number (default is 0).</li>
+            <li><strong>count</strong> (int, optional): The number of artists per page (default is 100).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a paginated list of artists associated with the playlist tracks.</li>
+            <li><strong>404 Not Found</strong>: If the playlist is not found.</li>
+            <li><strong>401 Unauthorized</strong>: If the user does not have access to the playlist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/playlists/get-artists?id=playlistId&amp;page=0&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+
+    </div>
+</body>

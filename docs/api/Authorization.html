@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Authorization API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="auth-controller-documentation">Auth Controller Documentation</h1>
+        <p>The <code>AuthController</code> handles user authentication and authorization. It provides endpoints for
+            logging in and inviting users.</p>
+        <p>For more information on Users, check the <a href="/Guides/Users.html">Melon User Guide</a>.</p>
+        <h2 id="controller-route-auth-">Controller Route: <code>/auth/</code></h2>
+        <p>All routes within the <code>AuthController</code> are prefixed by <code>/auth/</code>.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/auth/login</code></td>
+                    <td>GET</td>
+                    <td>Login with a username and password to obtain a JWT token.</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td><code>/auth/invite</code></td>
+                    <td>GET</td>
+                    <td>Generate a new invite code for user registration.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/auth/code-authenticate</code></td>
+                    <td>GET</td>
+                    <td>Generate a &quot;Server&quot; role JWT using an invite code.</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td><code>/auth/check</code></td>
+                    <td>GET</td>
+                    <td>Validate a JWT to check if it is still active.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="login">Login</h3>
+        <p>This endpoint handles logging in users with their username and password, returning a JWT token for
+            authenticating future API calls.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/auth/login</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: None (No token required)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>username</strong> (string, required): The username for the account.</li>
+            <li><strong>password</strong> (string, required): The password for the account.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: The username and password match, and a JWT token is returned for use in future
+                requests.</li>
+            <li><strong>401 Unauthorized</strong>: The username or password does not match any account on the system.
+            </li>
+        </ul>
+        <p><strong>Example Request</strong>:</p>
+        <pre><code class="lang-http">GET <span class="hljs-meta-keyword">/auth/</span>login?username=johndoe<span class="hljs-variable">&amp;password</span>=secret
+</code></pre>
+        <hr>
+        <h3 id="create-invite-code">Create Invite Code</h3>
+        <p>Generates a four-character invite code that can be used to create new user accounts. This invite code lasts
+            for 10 minutes, during which it can be used to obtain a JWT for account creation. Once an invite code has
+            been used to generate a JWT token, it becomes invalid.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/auth/invite</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin Role</li>
+        </ul>
+        <p><strong>Notes</strong>:</p>
+        <ul>
+            <li>Only Admins can generate invite codes.</li>
+            <li>The invite code is temporary and will expire after 10 minutes.</li>
+            <li>A JWT with the &quot;Server&quot; role can be created from the invite code for the new user registration
+                process by calling <code>auth/code-authenticate</code></li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Successfully generated an invite code.</li>
+            <li><strong>401 Unauthorized</strong>: The user does not have Admin permissions.</li>
+            <li><strong>408 Request Timeout</strong>: There are too many active invite codes, try again later.</li>
+        </ul>
+        <p><strong>Example Request</strong>:</p>
+        <pre><code class="lang-http">GET <span class="hljs-meta-keyword">/auth/</span>invite 
+<span class="hljs-symbol">Authorization:</span> Bearer <span class="hljs-params">&lt;Admin-JWT&gt;</span>
+</code></pre>
+        <hr>
+        <h3 id="code-authenticate">Code Authenticate</h3>
+        <p>This endpoint generates a &quot;Server&quot; role JWT using an invite code. The invite code is invalidated
+            after being used once to create a token.</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/auth/code-authenticate</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: None (No token required)</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>code</strong> (string, required): The four-character invite code.</li>
+        </ul>
+        <p><strong>Notes</strong>:</p>
+        <ul>
+            <li>The JWT created lasts for 10 minutes and is meant to be used with <code>/api/users/create</code> to
+                register a new user.</li>
+            <li>The invite code is invalidated after one successful JWT creation.</li>
+            <li>Server roles can only be used with <code>api/users/create</code> to create the new user.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: A JWT with the &quot;Server&quot; role is returned.</li>
+            <li><strong>401 Unauthorized</strong>: The invite code is invalid.</li>
+        </ul>
+        <p><strong>Example Request</strong>:</p>
+        <pre><code class="lang-http"><span class="hljs-symbol">GET</span> /auth/<span class="hljs-meta">code</span>-authenticate?<span class="hljs-meta">code</span><span class="hljs-symbol">=ABCD</span>
+</code></pre>
+        <hr>
+        <h3 id="jwt-authentication-test">JWT Authentication Test</h3>
+        <p>This endpoint verifies if the provided JWT token is valid.</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/auth/check</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass roles</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: The JWT is valid.</li>
+            <li><strong>401 Unauthorized</strong>: The JWT is invalid.</li>
+        </ul>
+        <p><strong>Example Request</strong>:</p>
+        <pre><code class="lang-http">GET <span class="hljs-meta-keyword">/auth/</span>check
+<span class="hljs-symbol">Authorization:</span> Bearer <span class="hljs-params">&lt;JWT&gt;</span>
+</code></pre>
+
+    </div>
+</body>

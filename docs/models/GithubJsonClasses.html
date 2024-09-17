@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Github Json Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="githubresponse-class">GithubResponse Class</h1>
+        <p>The <code>GithubResponse</code> class represents the response from GitHub API when querying for release information.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>url</code></td>
+        <td><code>string</code></td>
+        <td>API URL for this release.</td>
+        </tr>
+        <tr>
+        <td><code>assets_url</code></td>
+        <td><code>string</code></td>
+        <td>URL to retrieve assets of the release.</td>
+        </tr>
+        <tr>
+        <td><code>upload_url</code></td>
+        <td><code>string</code></td>
+        <td>URL for uploading assets.</td>
+        </tr>
+        <tr>
+        <td><code>html_url</code></td>
+        <td><code>string</code></td>
+        <td>HTML URL of the release page.</td>
+        </tr>
+        <tr>
+        <td><code>id</code></td>
+        <td><code>int</code></td>
+        <td>Unique identifier of the release.</td>
+        </tr>
+        <tr>
+        <td><code>author</code></td>
+        <td><code>[Author](models/Author)</code></td>
+        <td>Author of the release.</td>
+        </tr>
+        <tr>
+        <td><code>node_id</code></td>
+        <td><code>string</code></td>
+        <td>Node ID of the release.</td>
+        </tr>
+        <tr>
+        <td><code>tag_name</code></td>
+        <td><code>string</code></td>
+        <td>Tag name of the release.</td>
+        </tr>
+        <tr>
+        <td><code>target_commitish</code></td>
+        <td><code>string</code></td>
+        <td>Target branch or commit SHA.</td>
+        </tr>
+        <tr>
+        <td><code>name</code></td>
+        <td><code>string</code></td>
+        <td>Name of the release.</td>
+        </tr>
+        <tr>
+        <td><code>draft</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the release is a draft.</td>
+        </tr>
+        <tr>
+        <td><code>prerelease</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the release is a prerelease.</td>
+        </tr>
+        <tr>
+        <td><code>created_at</code></td>
+        <td><code>DateTime</code></td>
+        <td>Creation timestamp of the release.</td>
+        </tr>
+        <tr>
+        <td><code>published_at</code></td>
+        <td><code>DateTime</code></td>
+        <td>Publication timestamp of the release.</td>
+        </tr>
+        <tr>
+        <td><code>assets</code></td>
+        <td><code>Asset[]</code></td>
+        <td>Assets associated with the release.</td>
+        </tr>
+        <tr>
+        <td><code>tarball_url</code></td>
+        <td><code>string</code></td>
+        <td>URL to download as tarball.</td>
+        </tr>
+        <tr>
+        <td><code>zipball_url</code></td>
+        <td><code>string</code></td>
+        <td>URL to download as zip file.</td>
+        </tr>
+        <tr>
+        <td><code>body</code></td>
+        <td><code>string</code></td>
+        <td>Description or release notes.</td>
+        </tr>
+        </tbody>
+        </table>
+        <hr>
+        <h1 id="author-class">Author Class</h1>
+        <p>The <code>Author</code> class represents the author of a GitHub release.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>login</code></td>
+        <td><code>string</code></td>
+        <td>Username of the author.</td>
+        </tr>
+        <tr>
+        <td><code>id</code></td>
+        <td><code>int</code></td>
+        <td>Unique identifier of the author.</td>
+        </tr>
+        <tr>
+        <td><code>node_id</code></td>
+        <td><code>string</code></td>
+        <td>Node ID of the author.</td>
+        </tr>
+        <tr>
+        <td><code>avatar_url</code></td>
+        <td><code>string</code></td>
+        <td>URL to the author&#39;s avatar image.</td>
+        </tr>
+        <tr>
+        <td><code>gravatar_id</code></td>
+        <td><code>string</code></td>
+        <td>Gravatar ID, if applicable.</td>
+        </tr>
+        <tr>
+        <td><code>url</code></td>
+        <td><code>string</code></td>
+        <td>API URL for the author&#39;s information.</td>
+        </tr>
+        <tr>
+        <td><code>html_url</code></td>
+        <td><code>string</code></td>
+        <td>HTML URL to the author&#39;s profile.</td>
+        </tr>
+        <tr>
+        <td><code>followers_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve followers.</td>
+        </tr>
+        <tr>
+        <td><code>following_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve following users.</td>
+        </tr>
+        <tr>
+        <td><code>gists_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve gists.</td>
+        </tr>
+        <tr>
+        <td><code>starred_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve starred repos.</td>
+        </tr>
+        <tr>
+        <td><code>subscriptions_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve subscriptions.</td>
+        </tr>
+        <tr>
+        <td><code>organizations_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve organizations.</td>
+        </tr>
+        <tr>
+        <td><code>repos_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve repositories.</td>
+        </tr>
+        <tr>
+        <td><code>events_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve events.</td>
+        </tr>
+        <tr>
+        <td><code>received_events_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve received events.</td>
+        </tr>
+        <tr>
+        <td><code>type</code></td>
+        <td><code>string</code></td>
+        <td>Type of the user (e.g., &quot;User&quot;).</td>
+        </tr>
+        <tr>
+        <td><code>site_admin</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the user is a site admin.</td>
+        </tr>
+        </tbody>
+        </table>
+        <hr>
+        <h1 id="asset-class">Asset Class</h1>
+        <p>The <code>Asset</code> class represents an asset associated with a GitHub release.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>url</code></td>
+        <td><code>string</code></td>
+        <td>API URL for the asset.</td>
+        </tr>
+        <tr>
+        <td><code>id</code></td>
+        <td><code>int</code></td>
+        <td>Unique identifier of the asset.</td>
+        </tr>
+        <tr>
+        <td><code>node_id</code></td>
+        <td><code>string</code></td>
+        <td>Node ID of the asset.</td>
+        </tr>
+        <tr>
+        <td><code>name</code></td>
+        <td><code>string</code></td>
+        <td>Name of the asset.</td>
+        </tr>
+        <tr>
+        <td><code>label</code></td>
+        <td><code>object</code></td>
+        <td>Label of the asset, if any.</td>
+        </tr>
+        <tr>
+        <td><code>uploader</code></td>
+        <td><code>[Uploader](models/Uploader)</code></td>
+        <td>Uploader of the asset.</td>
+        </tr>
+        <tr>
+        <td><code>content_type</code></td>
+        <td><code>string</code></td>
+        <td>MIME type of the asset.</td>
+        </tr>
+        <tr>
+        <td><code>state</code></td>
+        <td><code>string</code></td>
+        <td>State of the asset (e.g., &quot;uploaded&quot;).</td>
+        </tr>
+        <tr>
+        <td><code>size</code></td>
+        <td><code>int</code></td>
+        <td>Size of the asset in bytes.</td>
+        </tr>
+        <tr>
+        <td><code>download_count</code></td>
+        <td><code>int</code></td>
+        <td>Number of times the asset has been downloaded.</td>
+        </tr>
+        <tr>
+        <td><code>created_at</code></td>
+        <td><code>DateTime</code></td>
+        <td>Creation timestamp of the asset.</td>
+        </tr>
+        <tr>
+        <td><code>updated_at</code></td>
+        <td><code>DateTime</code></td>
+        <td>Last update timestamp of the asset.</td>
+        </tr>
+        <tr>
+        <td><code>browser_download_url</code></td>
+        <td><code>string</code></td>
+        <td>URL to download the asset via browser.</td>
+        </tr>
+        </tbody>
+        </table>
+        <hr>
+        <h1 id="uploader-class">Uploader Class</h1>
+        <p>The <code>Uploader</code> class represents the user who uploaded an asset on GitHub.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>login</code></td>
+        <td><code>string</code></td>
+        <td>Username of the uploader.</td>
+        </tr>
+        <tr>
+        <td><code>id</code></td>
+        <td><code>int</code></td>
+        <td>Unique identifier of the uploader.</td>
+        </tr>
+        <tr>
+        <td><code>node_id</code></td>
+        <td><code>string</code></td>
+        <td>Node ID of the uploader.</td>
+        </tr>
+        <tr>
+        <td><code>avatar_url</code></td>
+        <td><code>string</code></td>
+        <td>URL to the uploader&#39;s avatar image.</td>
+        </tr>
+        <tr>
+        <td><code>gravatar_id</code></td>
+        <td><code>string</code></td>
+        <td>Gravatar ID, if applicable.</td>
+        </tr>
+        <tr>
+        <td><code>url</code></td>
+        <td><code>string</code></td>
+        <td>API URL for the uploader&#39;s information.</td>
+        </tr>
+        <tr>
+        <td><code>html_url</code></td>
+        <td><code>string</code></td>
+        <td>HTML URL to the uploader&#39;s profile.</td>
+        </tr>
+        <tr>
+        <td><code>followers_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve followers.</td>
+        </tr>
+        <tr>
+        <td><code>following_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve following users.</td>
+        </tr>
+        <tr>
+        <td><code>gists_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve gists.</td>
+        </tr>
+        <tr>
+        <td><code>starred_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve starred repos.</td>
+        </tr>
+        <tr>
+        <td><code>subscriptions_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve subscriptions.</td>
+        </tr>
+        <tr>
+        <td><code>organizations_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve organizations.</td>
+        </tr>
+        <tr>
+        <td><code>repos_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve repositories.</td>
+        </tr>
+        <tr>
+        <td><code>events_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve events.</td>
+        </tr>
+        <tr>
+        <td><code>received_events_url</code></td>
+        <td><code>string</code></td>
+        <td>API URL to retrieve received events.</td>
+        </tr>
+        <tr>
+        <td><code>type</code></td>
+        <td><code>string</code></td>
+        <td>Type of the user (e.g., &quot;User&quot;).</td>
+        </tr>
+        <tr>
+        <td><code>site_admin</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the user is a site admin.</td>
+        </tr>
+        </tbody>
+        </table>
+        
+    </div>  
+</body>

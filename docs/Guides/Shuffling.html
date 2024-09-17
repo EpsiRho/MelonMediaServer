@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Shuffling Guide</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="shuffling">Shuffling</h1>
+        <p>Melon provides a couple options for Shuffling tracks in the API. These options are designed to bring shuffle
+            modes for any situation or personal desires. </p>
+        <h2 id="shuffle-modes">Shuffle Modes</h2>
+        <ul>
+            <li>TrackRandom<ul>
+                    <li>Shuffle tracks randomly, using a randomization algorithm designed to make things feel more
+                        random than actual random.</li>
+                </ul>
+            </li>
+            <li>TrackFullRandom<ul>
+                    <li>Shuffles tracks randomly, without using an algorithm. Full chaos.</li>
+                </ul>
+            </li>
+            <li>TrackFavorites<ul>
+                    <li>Shuffles tracks weighted based on characteristics that will make the top of the queue more
+                        likely to be your favorites. </li>
+                    <li>Uses track plays and rating to determine the weight</li>
+                </ul>
+            </li>
+            <li>TrackDiscovery<ul>
+                    <li>Shuffles tracks weighted based on characteristics that will make the top of the queue more
+                        likely to be songs you rarely hear or haven&#39;t listen to.</li>
+                    <li>Uses track plays to weigh against songs.</li>
+                </ul>
+            </li>
+            <li>Album<ul>
+                    <li>Orders tracks by album, for example a playlist with randomly inserted songs from 5 albums will
+                        order them from album 1-5, playing songs in their album order before moving to the next album.
+                    </li>
+                </ul>
+            </li>
+            <li>AlbumRandom<ul>
+                    <li>Groups track by album, then shuffles the album order around. Plays each album&#39;s songs in
+                        album order.</li>
+                </ul>
+            </li>
+            <li>ArtistRandom<ul>
+                    <li>Groups tracks by artist, then shuffles the artists around and plays them in &quot;artist
+                        order&quot; (by release date)</li>
+                </ul>
+            </li>
+        </ul>
+        <h2 id="track-links">Track Links</h2>
+        <p>You can enable or disable the use of Track Links in shuffling. Track Links are a property on Tracks called
+            <code>NextTrack</code>. This property can hold the id of another track, linking them together. When two
+            tracks that are linked together appear in a queue that&#39;s being shuffled, they are placed at random, but
+            forced to play back to back. This is for those songs that are designed to play back to back, or ones you
+            just can&#39;t listen to without hearing the other. </p>
+        <p>Track Links are set by an Admin account but they affect every user, unless other users disable track links
+            during shuffling.</p>
+
+    </div>
+</body>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MelonInstaller Architecture Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="meloninstaller">MelonInstaller</h1>
+      <p>
+        The MelonInstaller exe/dll is used to Build, Install, and Update Melon.
+      </p>
+      <p>
+        The application has translation support for EN and ES. You can switch
+        lang by using the argument:
+      </p>
+      <pre><code class="lang-bash">&gt; MelonInstller <span class="hljs-comment">--lang ES</span>
+        </code></pre>
+      <h2 id="building">Building</h2>
+      <p>
+        Melon can be built for Release by using the --build command line
+        argument. Example:
+      </p>
+      <pre><code class="lang-bash">&gt; MelonInstaller -<span class="hljs-keyword">build </span>-<span class="hljs-keyword">buildPath </span>&lt;path to MelonWebApi Project root&gt; -outputPath &lt;output path&gt;
+        </code></pre>
+      <p>
+        This will update the Version number, build for Release, then pack it in
+        a zip file. Version numbers are generated to make easy representations
+        of the timeline of versions. They are a Major.Minor.Patch.Revision style
+        version number that are generated as:
+      </p>
+      <ul>
+        <li>
+          Major: Set manually in the code as the latest major release. Right
+          now, this number is 1.
+        </li>
+        <li>
+          Minor: Set manually in the code as the latest minor release, right now
+          that is 0.
+        </li>
+        <li>Build: Represents the days since Jan 1st, 2024.</li>
+        <li>
+          Revision: Represents the minutes since the start of the day this build
+          was generated on.
+        </li>
+      </ul>
+      <p>
+        The built zip will come with an extra number at the end, seconds since
+        last minute, to keep from builds overwriting each other. This number
+        should be removed in releases and is not set in the code, so will not be
+        shown when calling <code>MelonWebApi.exe -v</code>
+      </p>
+      <h2 id="installing">Installing</h2>
+      <p>
+        Melon can be easily installed just by running the MelonInstaller without
+        any arguments. It will ask you where you want to install, then install
+        the latest version from the github release. You can use the argument
+        <code>--installPath &lt;path&gt;</code> to skip this UI and install
+        quickly.
+      </p>
+      <h2 id="updates">Updates</h2>
+      <p>
+        Whenever you call to update Melon it will launch the MelonInstaller and
+        then close itself.
+      </p>
+      <p>
+        Updates are downloaded from the MelonMediaServer GitHub&#39;s releases.
+        It pulls the latest release, and compares the version numbers. If the
+        version number is higher it will download the release zip and extract it
+        to the install folder, overwriting existing files.
+      </p>
+      <p>You can call for an update for yourself by using this command:</p>
+      <pre><code class="lang-bash">&gt; MelonInstaller -<span class="hljs-keyword">update</span> -installPath <span class="hljs-symbol">&lt;installationDir&gt;</span>
+        </code></pre>
+      <p>
+        You can tell it to restart the server after updating by adding the
+        <code>-restart</code> argument:
+      </p>
+      <pre><code class="lang-bash">&gt; MelonInstaller -<span class="hljs-keyword">update</span> -restart -installPath <span class="hljs-symbol">&lt;installationDir&gt;</span>
+        </code></pre>
+    </div>
+  </body>
+</html>

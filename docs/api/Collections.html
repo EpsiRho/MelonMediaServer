@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Collection API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="collections-controller-documentation">Collections Controller Documentation</h1>
+        <p>The <code>CollectionsController</code> provides APIs for managing collections of tracks, including creating,
+            updating, deleting, and retrieving collections. Collections allow users to create auto-generated playlists
+            using filters based on metadata. It also supports setting permissions for who can view and edit a
+            collection. For more info on Collections see the <a href="/Guides/Playlists.html">Playlist Guide</a>.</p>
+        <p>For more details on managing collections, refer to the Melon Collections Guide.</p>
+        <h2 id="controller-route-api-collections-">Controller Route: <code>/api/collections</code></h2>
+        <p>All routes within the <code>CollectionsController</code> are prefixed by <code>/api/collections</code>.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/collections/create</code></td>
+                    <td>POST</td>
+                    <td>Creates a new collection.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/collections/add-filters</code></td>
+                    <td>POST</td>
+                    <td>Adds filters to an existing collection.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/collections/remove-filters</code></td>
+                    <td>POST</td>
+                    <td>Removes filters from an existing collection.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/collections/delete</code></td>
+                    <td>POST</td>
+                    <td>Deletes a collection.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/collections/update</code></td>
+                    <td>POST</td>
+                    <td>Updates collection metadata and permissions.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/collections/get</code></td>
+                    <td>GET</td>
+                    <td>Retrieves metadata about a specific collection.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/collections/search</code></td>
+                    <td>GET</td>
+                    <td>Searches for collections based on filters and pagination.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/collections/get-tracks</code></td>
+                    <td>GET</td>
+                    <td>Retrieves tracks from a specific collection.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/collections/get-albums</code></td>
+                    <td>GET</td>
+                    <td>Retrieves albums from a specific collection.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/collections/get-artists</code></td>
+                    <td>GET</td>
+                    <td>Retrieves artists from a specific collection.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="filters">Filters</h3>
+        <p>Collections take filters, which they use to find the tracks to add. They use the same filters as <a
+                href="/api/Search.html">Search</a> uses to find tracks. Filters look like this:
+            <code>property;comparison;value</code>.</p>
+        <ul>
+            <li>Property is any property from a <a href="/models/Track.html">Track</a> model. For example, <code>Genre</code>,
+                <code>Artist</code>, <code>Ratings</code>, <code>Name</code>. </li>
+            <li>Comparison is the type of comparing you want to match the property to the value. This can be
+                <code>Contains</code>, <code>Eq</code>, <code>NotEq</code>, <code>Lt</code>, or <code>Gt</code>.</li>
+            <li>Value is the value to compare, for example a string or a number.
+                Examples:</li>
+            <li><code>Artist;Eq;Madeon</code></li>
+            <li><code>Ratings;Gt;4</code></li>
+            <li><code>Year;Lt;2010</code> </li>
+        </ul>
+        <hr>
+        <h3 id="create-collection">Create Collection</h3>
+        <p>Creates a new collection based on provided filters.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/collections/create</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>name</strong> (string, required): The name of the collection.</li>
+            <li><strong>description</strong> (string, optional): The description of the collection.</li>
+            <li><strong>andFilters</strong> (<code>List&lt;string&gt;</code>, optional): Filters where each must match
+                for a track to be included.</li>
+            <li><strong>orFilters</strong> (<code>List&lt;string&gt;</code>, optional): Filters where at least one must
+                match for a track to be included.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Collection created successfully, returns the collection&#39;s ID.</li>
+            <li><strong>400 Bad Request</strong>: Invalid parameters or filters.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/collections/create" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-or-User-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"name=My Collection"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"description=My favorite tracks"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"andFilters=Artist:Eq:Madeon"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"orFilters=Genre;Eq;French House"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="add-filters-to-collection">Add Filters to Collection</h3>
+        <p>Adds filters to an existing collection.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/collections/add-filters</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the collection.</li>
+            <li><strong>andFilters</strong> (<code>List&lt;string&gt;</code>, optional): Filters where each must match
+                for a track to be included.</li>
+            <li><strong>orFilters</strong> (<code>List&lt;string&gt;</code>, optional): Filters where at least one must
+                match for a track to be included.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Filters added successfully.</li>
+            <li><strong>400 Bad Request</strong>: Invalid parameters or filters.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Collection not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/collections/add-filters" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-or-User-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"id=66bc9aadab7ba419497e6a97"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"andFilters=Genre;Eq;Pop"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="remove-filters-from-collection">Remove Filters from Collection</h3>
+        <p>Removes filters from an existing collection.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/collections/remove-filters</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the collection.</li>
+            <li><strong>andFilters</strong> (<code>List&lt;string&gt;</code>, optional): Filters to remove from the
+                <code>andFilters</code> list.</li>
+            <li><strong>orFilters</strong> (<code>List&lt;string&gt;</code>, optional): Filters to remove from the
+                <code>orFilters</code> list.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Filters removed successfully.</li>
+            <li><strong>400 Bad Request</strong>: Invalid parameters or filters.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Collection not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/collections/remove-filters" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-or-User-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"id=66bc9aadab7ba419497e6a97"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"andFilters=Artist;Contains;John"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="delete-collection">Delete Collection</h3>
+        <p>Deletes a collection.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/collections/delete</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the collection.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Collection deleted successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Collection not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/collections/<span class="hljs-keyword">delete</span><span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;<span class="hljs-keyword">Admin</span>-<span class="hljs-keyword">or</span>-<span class="hljs-keyword">User</span>-JWT&gt;<span class="hljs-string">" \
+             -d "</span><span class="hljs-keyword">id</span>=<span class="hljs-number">66</span>bc9aadab7ba419497e6a97<span class="hljs-string">"</span>
+        </code></pre>
+        <hr>
+        <h3 id="update-collection-information">Update Collection Information</h3>
+        <p>Updates collection metadata, permissions, and user access settings.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/collections/update</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the collection.</li>
+            <li><strong>name</strong> (string, optional): The updated name of the collection.</li>
+            <li><strong>description</strong> (string, optional): The updated description of the collection.</li>
+            <li><strong>editors</strong> (<code>List&lt;string&gt;</code>, optional): A list of user IDs allowed to edit
+                the collection.</li>
+            <li><strong>viewers</strong> (<code>List&lt;string&gt;</code>, optional): A list of user IDs allowed to view
+                the collection.</li>
+            <li><strong>publicEditing</strong> (string, optional): Indicates if public editing is allowed.</li>
+            <li><strong>publicViewing</strong> (string, optional): Indicates if public viewing is allowed.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Collection updated successfully.</li>
+            <li><strong>400 Bad Request</strong>: Invalid parameters.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Collection not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/collections/<span class="hljs-keyword">update</span><span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;<span class="hljs-keyword">Admin</span>-<span class="hljs-keyword">or</span>-<span class="hljs-keyword">User</span>-JWT&gt;<span class="hljs-string">" \
+             -d "</span><span class="hljs-keyword">id</span>=<span class="hljs-number">66</span>bc9aadab7ba419497e6a97<span class="hljs-string">" \
+             -d "</span><span class="hljs-keyword">name</span>=<span class="hljs-keyword">Updated</span> Collection<span class="hljs-string">" \
+             -d "</span>publicViewing=<span class="hljs-literal">true</span><span class="hljs-string">"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-collection-info">Get Collection Info</h3>
+        <p>Retrieves metadata about a specific collection. Returns a <a href="/models/Collection.html">ResponseCollection</a>.
+        </p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/collections/get</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the collection.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Collection information retrieved successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Collection not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/collections/get?id=collection123"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;Admin-or-User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="search-collections">Search Collections</h3>
+        <p>Searches for collections based on the name (or leave the name empty to list all collections).</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/collections/search</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>page</strong> (int, required): The page of results to retrieve.</li>
+            <li><strong>count</strong> (int, required): The number of results per page.</li>
+            <li><strong>name</strong> (string, optional): The name of the collection to search for.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Collections retrieved successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Collections not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/collections/search?page=0&amp;count=10&amp;name=rock"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;Admin-or-User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-collection-tracks">Get Collection Tracks</h3>
+        <p>Retrieves tracks from a specific collection, by page.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/collections/get-tracks</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the collection.</li>
+            <li><strong>page</strong> (int, optional): The page of results to retrieve (default is 0).</li>
+            <li><strong>count</strong> (int, optional): The number of results per page (default is 100).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Tracks retrieved successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Collection or tracks not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/collections/get-tracks?id=collection123&amp;page=0&amp;count=50"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;Admin-or-User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-collection-albums">Get Collection Albums</h3>
+        <p>Retrieves albums from a specific collection, by page. This returns the a list of albums, but does
+            <em>not</em> return which tracks from each album are there. </p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/collections/get-albums</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the collection.</li>
+            <li><strong>page</strong> (int, optional): The page of results to retrieve (default is 0).</li>
+            <li><strong>count</strong> (int, optional): The number of results per page (default is 100).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Albums retrieved successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Collection or albums not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/collections/get-albums?id=collection123&amp;page=0&amp;count=50"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;Admin-or-User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-collection-artists">Get Collection Artists</h3>
+        <p>Retrieves artists from a specific collection, by page. This returns the a list of artists, but does
+            <em>not</em> return which tracks from each album are there. </p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/collections/get-artists</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the collection.</li>
+            <li><strong>page</strong> (int, optional): The page of results to retrieve (default is 0).</li>
+            <li><strong>count</strong> (int, optional): The number of results per page (default is 100).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Artists retrieved successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Collection or artists not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/collections/get-artists?id=collection123&amp;page=0&amp;count=50"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;Admin-or-User-JWT&gt;"</span>
+        </code></pre>
+
+    </div>
+</body>

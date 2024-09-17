@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Art Deletion API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="art-deletion-controller-documentation">Art Deletion Controller Documentation</h1>
+        <p>The <code>ArtDeleteController</code> handles deleting artwork associated with various entities such as
+            tracks, artists, playlists, collections, and default artwork.</p>
+        <p>For more details on how Melon manages artwork, refer to the <a href="/Architecture/Artwork.html">Artwork
+                Architecture</a>.</p>
+        <h2 id="controller-route-api-art-delete-">Controller Route: <code>/api/art/delete</code></h2>
+        <p>All routes within the <code>ArtDeleteController</code> are prefixed by <code>/api/art/delete</code>.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/art/delete/track-art</code></td>
+                    <td>POST</td>
+                    <td>Deletes the artwork associated with a specific track.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/art/delete/artist-pfp</code></td>
+                    <td>POST</td>
+                    <td>Deletes the profile picture of a specific artist.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/art/delete/artist-banner</code></td>
+                    <td>POST</td>
+                    <td>Deletes the banner artwork of a specific artist.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/art/delete/playlist-art</code></td>
+                    <td>POST</td>
+                    <td>Deletes the artwork associated with a specific playlist.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/art/delete/collection-art</code></td>
+                    <td>POST</td>
+                    <td>Deletes the artwork associated with a specific collection.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/art/delete/default-art</code></td>
+                    <td>POST</td>
+                    <td>Deletes the default custom artwork.</td>
+                    <td>Admin</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="delete-track-artwork">Delete Track Artwork</h3>
+        <p>Deletes the artwork associated with a specific track at a specified position.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/art/delete/track-art</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+            <li><strong>Consumes</strong>: <code>application/x-www-form-urlencoded</code></li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the track.</li>
+            <li><strong>pos</strong> (int, required): The position of the artwork to be deleted (starting at 0).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Artwork deleted successfully.</li>
+            <li><strong>400 Bad Request</strong>: Invalid input parameters (e.g., invalid position).</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Track or track file not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/art/delete/track-art" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"id=track123&amp;pos=1"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="delete-artist-profile-picture">Delete Artist Profile Picture</h3>
+        <p>Deletes the profile picture of a specified artist at a given position.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/art/delete/artist-pfp</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+            <li><strong>Consumes</strong>: <code>application/x-www-form-urlencoded</code></li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the artist.</li>
+            <li><strong>pos</strong> (int, required): The position of the profile picture to be deleted (starting at 0).
+            </li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Profile picture deleted successfully.</li>
+            <li><strong>400 Bad Request</strong>: Invalid input parameters (e.g., invalid position).</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Artist or profile picture not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/art/delete/artist-pfp" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"id=artist456&amp;pos=0"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="delete-artist-banner">Delete Artist Banner</h3>
+        <p>Deletes the banner artwork associated with a specified artist at a given position.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/art/delete/artist-banner</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+            <li><strong>Consumes</strong>: <code>application/x-www-form-urlencoded</code></li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the artist.</li>
+            <li><strong>pos</strong> (int, required): The position of the banner artwork to be deleted (starting at 0).
+            </li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Banner artwork deleted successfully.</li>
+            <li><strong>400 Bad Request</strong>: Invalid input parameters (e.g., invalid position).</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Artist or banner not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/art/delete/artist-banner" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"id=artist456&amp;pos=1"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="delete-playlist-artwork">Delete Playlist Artwork</h3>
+        <p>Deletes the artwork associated with a specified playlist.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/art/delete/playlist-art</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+            <li><strong>Consumes</strong>: <code>application/x-www-form-urlencoded</code></li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the playlist.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Playlist artwork deleted successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Playlist or artwork not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/art/delete/playlist-art" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"id=playlist789"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="delete-collection-artwork">Delete Collection Artwork</h3>
+        <p>Deletes the artwork associated with a specified collection.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/art/delete/collection-art</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+            <li><strong>Consumes</strong>: <code>application/x-www-form-urlencoded</code></li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the collection.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Collection artwork deleted successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Collection or artwork not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/art/delete/collection-art" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"id=collection123"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="delete-default-artwork">Delete Default Artwork</h3>
+        <p>Deletes the custom default artwork used when no specific artwork is set.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/art/delete/default-art</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+            <li><strong>Consumes</strong>: <code>application/x-www-form-urlencoded</code></li>
+        </ul>
+        <p><strong>Parameters</strong>: None</p>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Default artwork deleted successfully.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+            <li><strong>404 Not Found</strong>: Default artwork file not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/art/<span class="hljs-keyword">delete</span>/<span class="hljs-keyword">default</span>-art<span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;<span class="hljs-keyword">Admin</span>-JWT&gt;<span class="hljs-string">"</span>
+        </code></pre>
+
+    </div>
+</body>

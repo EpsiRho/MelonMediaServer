@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Settings Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="settings">Settings</h1>
+        <p>The <code>Settings</code> class contains all configuration settings for Melon. See <a href="/Guides/Configure.html">Configure Melon</a> for more info.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>MongoDbConnectionString</code></td>
+        <td><code>string?</code></td>
+        <td>Connection string for MongoDB.</td>
+        </tr>
+        <tr>
+        <td><code>LibraryPaths</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>Paths to music library directories.</td>
+        </tr>
+        <tr>
+        <td><code>ArtistSplitIndicators</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>Indicators to split multiple artists in metadata.</td>
+        </tr>
+        <tr>
+        <td><code>GenreSplitIndicators</code></td>
+        <td><code>List&lt;string&gt;</code></td>
+        <td>Indicators to split multiple genres in metadata.</td>
+        </tr>
+        <tr>
+        <td><code>ListeningURL</code></td>
+        <td><code>string</code></td>
+        <td>URL where Melon listens for connections.</td>
+        </tr>
+        <tr>
+        <td><code>DefaultLanguage</code></td>
+        <td><code>string</code></td>
+        <td>Default language setting.</td>
+        </tr>
+        <tr>
+        <td><code>JWTExpireInMinutes</code></td>
+        <td><code>int</code></td>
+        <td>Expiration time for JWT tokens in minutes.</td>
+        </tr>
+        <tr>
+        <td><code>Text</code></td>
+        <td><code>Color</code></td>
+        <td>Color setting for text.</td>
+        </tr>
+        <tr>
+        <td><code>ShadedText</code></td>
+        <td><code>Color</code></td>
+        <td>Color setting for shaded text.</td>
+        </tr>
+        <tr>
+        <td><code>BackgroundText</code></td>
+        <td><code>Color</code></td>
+        <td>Color setting for background text.</td>
+        </tr>
+        <tr>
+        <td><code>Highlight</code></td>
+        <td><code>Color</code></td>
+        <td>Color setting for highlights.</td>
+        </tr>
+        <tr>
+        <td><code>Melon</code></td>
+        <td><code>Color</code></td>
+        <td>Color setting for Melon branding.</td>
+        </tr>
+        <tr>
+        <td><code>Error</code></td>
+        <td><code>Color</code></td>
+        <td>Color setting for error messages.</td>
+        </tr>
+        <tr>
+        <td><code>UseMenuColor</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates whether to use menu color settings.</td>
+        </tr>
+        <tr>
+        <td><code>QueueCleanupWaitInHours</code></td>
+        <td><code>double</code></td>
+        <td>Time to wait before cleaning up queues, in hours.</td>
+        </tr>
+        </tbody>
+        </table>
+        <hr>
+        <h1 id="shortsettings">ShortSettings</h1>
+        <p>The <code>ShortSettings</code> class exposes a subset of the currently loaded <code>Settings</code> to plugins. For more info, see <a href="/Plugins/Introduction.html">Plugins</a></p>
+        <h2 id="properties">Properties</h2>
+        <p>Same as the relevant properties in the Settings class.</p>
+        <h2 id="constructors">Constructors</h2>
+        <ul>
+        <li><code>ShortSettings(Settings set)</code>: Initializes a new instance by copying relevant properties from an existing <code>Settings</code> object.</li>
+        </ul>
+        
+    </div>  
+</body>

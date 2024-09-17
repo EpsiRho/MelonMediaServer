@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Database Info API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="database-controller-documentation">Database Controller Documentation</h1>
+        <p>The <code>DatabaseController</code> provides various endpoints for retrieving metadata about the tracks and
+            albums stored in the Melon server&#39;s database. This includes retrieving formats, bitrates, sample rates,
+            and more.</p>
+        <h2 id="controller-route-api-db">Controller Route: <code>/api/db/</code></h2>
+        <p>All routes within the <code>DatabaseController</code> are prefixed by <code>/api/db/</code>.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/db/format</code></td>
+                    <td>GET</td>
+                    <td>Retrieves a list of unique track formats.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/db/bitrate</code></td>
+                    <td>GET</td>
+                    <td>Retrieves a list of unique bitrates.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/db/sample-rate</code></td>
+                    <td>GET</td>
+                    <td>Retrieves a list of unique sample rates.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/db/bits-per-sample</code></td>
+                    <td>GET</td>
+                    <td>Retrieves a list of unique bit depths.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/db/channel</code></td>
+                    <td>GET</td>
+                    <td>Retrieves a list of unique channels.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/db/release-status</code></td>
+                    <td>GET</td>
+                    <td>Retrieves a list of album release statuses.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/db/release-type</code></td>
+                    <td>GET</td>
+                    <td>Retrieves a list of album release types.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/db/publisher</code></td>
+                    <td>GET</td>
+                    <td>Retrieves a list of unique publishers.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+                <tr>
+                    <td><code>/api/db/genres</code></td>
+                    <td>GET</td>
+                    <td>Retrieves a list of unique genres.</td>
+                    <td>Admin, User, Pass</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="get-track-formats">Get Track Formats</h3>
+        <p>Retrieves a list of unique formats from the tracks in the database.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/db/format</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: A list of track formats is returned.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/db/format"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-track-bitrates">Get Track Bitrates</h3>
+        <p>Retrieves a list of unique bitrates from the tracks in the database.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/db/bitrate</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: A list of bitrates is returned.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/db/Bitrates"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-track-sample-rates">Get Track Sample Rates</h3>
+        <p>Retrieves a list of unique sample rates from the tracks in the database.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/db/sample-rate</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: A list of sample rates is returned.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/db/sample-rate`"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-track-bits-per-sample">Get Track Bits Per Sample</h3>
+        <p>Retrieves a list of unique bit depths (bits per sample) from the tracks in the database.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/db/bits-per-sample</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: A list of bit depths is returned.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/db/bits-per-sample"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-track-channels">Get Track Channels</h3>
+        <p>Retrieves a list of unique channel configurations (e.g., mono, stereo) from the tracks in the database.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/db/channel</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: A list of channels is returned.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/db/channel"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-album-release-statuses">Get Album Release Statuses</h3>
+        <p>Retrieves a list of unique album release statuses from the albums in the database (e.g.,
+            &quot;Released&quot;, &quot;Unreleased&quot;).</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/db/release-status</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: A list of release statuses is returned.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X GET "https://your-melon-server.com/api/db/<span class="hljs-keyword">release</span>-<span class="hljs-keyword">status</span><span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;<span class="hljs-keyword">User</span>-JWT&gt;<span class="hljs-string">"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-album-release-types">Get Album Release Types</h3>
+        <p>Retrieves a list of unique album release types from the albums in the database (e.g., &quot;Album&quot;,
+            &quot;Single&quot;).</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/db/release-type</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: A list of release types is returned.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X GET "https://your-melon-server.com/api/db/<span class="hljs-keyword">release</span>-<span class="hljs-keyword">type</span><span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;<span class="hljs-keyword">User</span>-JWT&gt;<span class="hljs-string">"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-album-publishers">Get Album Publishers</h3>
+        <p>Retrieves a list of unique publishers from the albums in the database.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/db/publisher</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: A list of publishers is returned.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/db/publisher"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="get-track-genres">Get Track Genres</h3>
+        <p>Retrieves a list of unique genres from the tracks in the database.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/db/genres</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: A list of genres is returned.</li>
+            <li><strong>401 Unauthorized</strong>: User lacks necessary permissions.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/db/genres"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+
+    </div>
+</body>

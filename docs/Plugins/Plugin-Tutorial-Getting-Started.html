@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Plugin Tutorial: Getting Started</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+  </head>
+
+  <script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1>Plugin Tutorial: Getting Started</h1>
+      <p>
+        In this tutorial, we&#39;ll guide you through the process of setting up
+        your development environment and creating your first Melon plugin. By
+        the end of this tutorial, you&#39;ll have a basic understanding of how
+        the plugin system works and a simple plugin that integrates with Melon.
+      </p>
+      <h2>Prerequisites</h2>
+      <ul>
+        <li>
+          <strong>Development Environment</strong>: Visual Studio 2019 or later
+          (or any C# IDE)
+        </li>
+        <li>
+          <strong>.NET Framework</strong>: Ensure you have .NET Framework 4.7.2
+          or later installed.
+        </li>
+        <li>
+          <strong>MelonLib.dll</strong>: This is the core library that your
+          plugin will reference. Obtain this from the Melon project.
+        </li>
+        <li>
+          <strong>Basic Knowledge of C#</strong>: Familiarity with C#
+          programming, classes, and interfaces.
+        </li>
+      </ul>
+      <h2>Understanding the Plugin System</h2>
+      <h3>How Plugins Work in Melon</h3>
+      <p>
+        Plugins in Melon are C# class libraries (<code>.dll</code> files) that
+        implement the <code>IPlugin</code> interface. When Melon starts, it
+        scans the <code>Plugins</code> directory for any DLLs and loads them.
+        Plugins:
+      </p>
+      <ul>
+        <li>
+          Access Melon&#39;s core functionalities through provided interfaces
+          IHost and IWebApi
+          <ul>
+            <li>
+              These interfaces give access to Melon APIs and Server APIs
+              respectively
+            </li>
+          </ul>
+        </li>
+        <li>
+          UI can be made easily with built in methods for option menus, progress
+          bars, etc.
+        </li>
+        <li>
+          Interact with Melon&#39;s API endpoints, extending or overriding
+          existing endpoints or creating new ones.
+        </li>
+      </ul>
+      <h3>The IPlugin Interface</h3>
+      <p>
+        Every plugin must implement the <code>IPlugin</code> interface, which
+        defines the core methods and properties Melon expects:
+      </p>
+      <ul>
+        <li>
+          <p><strong>Properties</strong>:</p>
+          <ul>
+            <li><code>Name</code>: The name of the plugin.</li>
+            <li><code>Version</code>: Plugin version.</li>
+            <li><code>Authors</code>: Authors of the plugin.</li>
+            <li><code>Description</code>: A brief description.</li>
+            <li>
+              <code>Host</code>: Provides access to Melon&#39;s host services.
+            </li>
+            <li>
+              <code>WebApi</code>: Provides access to Melon&#39;s web API
+              services.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <p><strong>Methods</strong>:</p>
+          <ul>
+            <li>
+              <code>LoadMelonCommands</code>: Initialize plugin with Melon host.
+            </li>
+            <li>
+              <code>LoadMelonServerCommands</code>: Initialize plugin with Melon
+              web API.
+            </li>
+            <li><code>LoadUI</code>: Load UI elements.</li>
+            <li><code>UnloadUI</code>: Unload UI elements.</li>
+            <li>
+              <code>Execute</code>: Start background processes or middleware.
+            </li>
+            <li><code>Destroy</code>: Clean up resources.</li>
+            <li><code>GetHelpOptions</code>: Provide command-line options.</li>
+          </ul>
+        </li>
+      </ul>
+      <h2>Step-by-Step Guide</h2>
+      <h3>1. Set Up Your Development Environment</h3>
+      <h4>a. Create a New Class Library Project</h4>
+      <ol>
+        <li>Open <strong>Visual Studio</strong>.</li>
+        <li>Click on <strong>Create a new project</strong>.</li>
+        <li>
+          Select <strong>Class Library (.NET Framework)</strong>. Ensure
+          it&#39;s targeting .NET Framework 4.7.2 or compatible with Melon&#39;s
+          version.
+        </li>
+        <li>Name your project, e.g., <code>MyFirstMelonPlugin</code>.</li>
+        <li>Choose a location and click <strong>Create</strong>.</li>
+      </ol>
+      <h4>b. Add References to MelonLib</h4>
+      <p>
+        Since MelonLib is not available via NuGet yet, you&#39;ll need to
+        reference it manually.
+      </p>
+      <ol>
+        <li>
+          Right-click on your project in the <strong>Solution Explorer</strong>.
+        </li>
+        <li>
+          Choose <strong>Add</strong> &gt;
+          <strong>Project Reference...</strong>.
+        </li>
+        <li>In the Reference Manager, click on <strong>Browse...</strong>.</li>
+        <li>
+          Navigate to the location of <code>MelonLib.dll</code> (In your Melon
+          install directory) and select it.
+        </li>
+        <li>Click <strong>Add</strong>, then <strong>OK</strong>.</li>
+      </ol>
+      <h4>c. Verify Target Framework</h4>
+      <p>
+        Ensure your plugin targets the same .NET Framework version as Melon,
+        which is currently 8.0.
+      </p>
+      <ol>
+        <li>
+          Right-click on your project and select <strong>Properties</strong>.
+        </li>
+        <li>
+          Under the <strong>Application</strong> tab, check the
+          <strong>Target framework</strong>.
+        </li>
+        <li>If necessary, change it to match Melon&#39;s target framework.</li>
+      </ol>
+      <h3>2. Implement the IPlugin Interface</h3>
+      <p>Create a class that implements <code>IPlugin</code>.</p>
+      <h4>a. Create the Plugin Class</h4>
+      <pre><code class="language-csharp">
+    using Melon.Interface;
+    using Melon.Models;
+    
+    namespace MyFirstMelonPlugin
+    {
+        public class MyPlugin : IPlugin
+        {
+            public string Name =&gt; &quot;My First Plugin&quot;;
+            public string Version =&gt; &quot;1.0.0&quot;;
+            public string Authors =&gt; &quot;Your Name&quot;;
+            public string Description =&gt; &quot;A simple plugin for Melon.&quot;;
+    
+            public IHost Host { get; set; }
+            public IWebApi WebApi { get; set; }
+    
+            public void LoadMelonCommands(IHost host)
+            {
+                Host = host;
+            }
+    
+            public void LoadMelonServerCommands(IWebApi webapi)
+            {
+                WebApi = webapi;
+            }
+    
+            public int LoadUI()
+            {
+                // Add UI elements here (will be covered in later tutorials)
+                return 0;
+            }
+    
+            public int UnloadUI()
+            {
+                // Remove UI elements here
+                return 0;
+            }
+    
+            public int Execute()
+            {
+                // Start background processes or middleware here
+                return 0;
+            }
+    
+            public int Destroy()
+            {
+                // Clean up any resources or stop processes here
+                return 0;
+            }
+    
+            public Dictionary&lt;string, string&gt; GetHelpOptions()
+            {
+                // Provide command-line options if necessary (will be covered in later tutorials)
+                return new Dictionary&lt;string, string&gt;();
+            }
+        }
+    }
+        </code></pre>
+      <h4>b. Understanding the Code</h4>
+      <ul>
+        <li>
+          <strong>Class <code>MyPlugin</code></strong
+          >: Implements <code>IPlugin</code>, making it recognizable by Melon.
+        </li>
+        <li>
+          <strong>Properties</strong>:
+          <ul>
+            <li>Provide basic information about your plugin.</li>
+            <li>
+              Name and Authors combo should be unique from other plugins, Melon
+              may have conflicts if two plugins are loaded with the same Name +
+              Authors.
+            </li>
+            <li>Authors should separate authors in string by comma.</li>
+            <li>Version should be standard <code>major.minor.patch</code>.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Methods</strong>:
+          <ul>
+            <li>
+              <strong>LoadMelonCommands</strong>: Called by Melon to pass the
+              <code>IHost</code> interface.
+            </li>
+            <li>
+              <strong>LoadMelonServerCommands</strong>: Called by Melon to pass
+              the <code>IWebApi</code> interface.
+            </li>
+            <li>
+              <strong>LoadUI</strong>: Use this to add elements to Melon&#39;s
+              UI.
+            </li>
+            <li>
+              <strong>UnloadUI</strong>: Remove any UI elements you&#39;ve
+              added.
+            </li>
+            <li>
+              <strong>Execute</strong>: Start any continuous processes or
+              middleware.
+            </li>
+            <li>
+              <strong>Destroy</strong>: Clean up resources or stop processes.
+            </li>
+            <li>
+              <strong>GetHelpOptions</strong>: Return any command-line options
+              your plugin supports.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h3>3. Build Your Plugin</h3>
+      <ol>
+        <li>
+          <p><strong>Build the Solution</strong>:</p>
+          <ul>
+            <li>
+              Go to <strong>Build</strong> &gt;
+              <strong>Build Solution</strong> or press
+              <strong>Ctrl+Shift+B</strong>.
+            </li>
+            <li>Ensure there are no build errors.</li>
+          </ul>
+        </li>
+        <li>
+          <p><strong>Locate the DLL</strong>:</p>
+          <ul>
+            <li>
+              Navigate to your project&#39;s <code>bin/Debug</code> or
+              <code>bin/Release</code> folder.
+            </li>
+            <li>You should find <code>MyFirstMelonPlugin.dll</code>.</li>
+          </ul>
+        </li>
+      </ol>
+      <h3>4. Install the Plugin</h3>
+      <ul>
+        <li>Copy <code>MyFirstMelonPlugin.dll</code>.</li>
+        <li>Navigate to Melon&#39;s app data directory.</li>
+        <li>Find or create a <code>Plugins</code> folder.</li>
+        <li>Paste your DLL into this folder.</li>
+      </ul>
+      <h3>5. Run Melon and Verify</h3>
+      <ol>
+        <li>
+          <strong>Start Melon</strong>:
+          <ul>
+            <li>Run Melon as you normally would.</li>
+            <li>
+              Melon should automatically load plugins from the
+              <code>Plugins</code> directory.
+            </li>
+            <li>
+              Go to Settings -&gt; Plugins -&gt; View Plugins and see if your
+              plugin shows up.
+            </li>
+          </ul>
+        </li>
+      </ol>
+      <h3>6. Troubleshooting</h3>
+      <ul>
+        <li>
+          <strong>Plugin Not Detected</strong>:
+          <ul>
+            <li>
+              Ensure the DLL is in the correct <code>Plugins</code> folder.
+            </li>
+            <li>
+              Check for any exceptions in Melon&#39;s logs, located in the app
+              data folder root.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <strong>Version Incompatibility</strong>:
+          <ul>
+            <li>
+              Ensure your plugin targets the same .NET Framework as Melon.
+            </li>
+            <li>
+              Ensure <code>MelonLib.dll</code> is compatible with this version
+              of Melon.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <p>
+        <a href="/Plugins/Introduction.html">Back to Introduction</a> &lt;--- ---&gt;
+        <a href="/Plugins/Plugin-Tutorial-First-UI.html">Next Tutorial: First UI</a>
+      </p>
+    </div>
+  </body>
+</html>

@@ -132,8 +132,8 @@ namespace MelonWebApi.Controllers
         }
 
         [Authorize(Roles = "Admin,User")]
-        [HttpPost("remove-tracks")]
-        public ObjectResult RemoveFromPlaylist(string id, [FromQuery] List<int> positions)
+        [HttpPost("remove-track")]
+        public ObjectResult RemoveFromPlaylist(string id, int position)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -141,7 +141,7 @@ namespace MelonWebApi.Controllers
             var args = new WebApiEventArgs("api/playlists/remove-tracks", curId, new Dictionary<string, object>()
                 {
                     { "id", id },
-                    { "positions", positions }
+                    { "position", position }
                 });
 
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
@@ -167,11 +167,8 @@ namespace MelonWebApi.Controllers
                 }
             }
 
-            foreach (var pos in positions)
-            {
-                playlist.Tracks.RemoveAt(pos);
-                playlist.TrackCount--;
-            }
+            playlist.Tracks.RemoveAt(position);
+            playlist.TrackCount--;
             PCollection.ReplaceOne(pFilter, playlist);
 
             args.SendEvent("Tracks removed", 200, Program.mWebApi);

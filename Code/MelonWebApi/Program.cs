@@ -83,7 +83,7 @@ namespace MelonWebApi
                 mWebApi = new MWebApi();
                 StateManager.Init(mWebApi, true, false);
 
-                if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
+                if (OperatingSystem.IsWindows())
                 {
                     try
                     {

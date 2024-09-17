@@ -1,0 +1,239 @@
+/* General Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212; /* Dark mode background */
+    color: #FFFFFF; /* Light text for contrast */
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+.container {
+    display: flex;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #1E1E1E;
+    padding: 20px 40px 20px 20px;
+    position: fixed;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.sidebar::after {
+    content: '';
+    display: block;
+    height: 60px; /* Desired space at the bottom */
+    flex-shrink: 0;
+}
+
+.content {
+    margin-left: 310px;
+    padding: 20px;
+    max-width: 800px;
+}
+
+/* Heading Styles */
+h1, h2, h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+}
+
+h1 {
+    font-size: 2em;
+    border-bottom: 2px solid #333333;
+    padding-bottom: 0.3em;
+}
+
+h2 {
+    font-size: 1.75em;
+    border-bottom: 1px solid #333333;
+    padding-bottom: 0.3em;
+}
+
+h3 {
+    font-size: 1.5em;
+}
+
+/* Paragraph and List Styles */
+p {
+    margin-bottom: 1em;
+}
+
+ul {
+    list-style-type: disc;
+    margin-left: 5px;
+}
+
+li {
+    margin-bottom: 0.5em;
+    margin-left: 3px;
+    line-height: 1.8;
+}
+
+/* Link Styles */
+a {
+    color: rgb(26, 225, 19); /* Melon's link color */
+    text-decoration: none;
+}
+
+a:hover {
+    color: rgb(97, 214, 214); /* Melon's highlight color */
+}
+
+/* Sidebar Styles */
+.sidebar h2 {
+    font-size: 1.25em;
+    color: #FFFFFF;
+    margin-top: 1em;
+    border-bottom: 1px solid #333333;
+    padding-bottom: 0.3em;
+}
+
+/* Details and Summary Styles */
+.sidebar details {
+    margin-bottom: 1em;
+}
+
+.sidebar summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: rgb(26, 225, 19);
+    list-style: none;
+    position: relative;
+    padding-left: 20px; /* Space for the arrow */
+}
+
+.sidebar summary:hover {
+    color: rgb(97, 214, 214);
+}
+
+.sidebar details[open] summary::before {
+    content: '▼';
+    position: absolute;
+    left: 0;
+}
+
+.sidebar summary::before {
+    content: '▶';
+    position: absolute;
+    left: 0;
+}
+
+/* Remove the default arrow from the summary element */
+.sidebar summary::-webkit-details-marker {
+    display: none;
+}
+
+/* TOC Styles */
+#toc ul {
+    list-style-type: none;
+    padding-left: 10px;
+}
+
+#toc li {
+    margin-bottom: 0.5em;
+}
+
+#toc {
+    padding-left: 10px;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5em;
+}
+
+th, td {
+    border: 1px solid #333333;
+    padding: 12px 15px;
+    text-align: left;
+    color: #FFFFFF;
+}
+
+th {
+    background-color: rgba(26, 225, 19, 0.5); /* Melon's link color */
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #1A1A1A;
+}
+
+tr:hover {
+    background-color: rgba(97, 214, 214, 0.2); /* Melon's highlight color */
+}
+
+caption {
+    caption-side: bottom;
+    text-align: center;
+    padding-top: 0.5em;
+    color: #CCCCCC;
+    font-style: italic;
+}
+
+/* Inline Code Styles */
+:not(pre) > code {
+    background-color: #3A3A3A; /* Lighter background for better contrast */
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    font-size: 0.95em;
+    border: 1px solid #555555; /* Added border for definition */
+    color: #FFFFFF; /* Ensure text color is white for readability */
+}
+
+/* Code Block Styles */
+pre {
+    background-color: transparent; /* Lighter background for better contrast */
+    border-radius: 0px;
+    overflow-x: auto;
+    color: inherit; 
+    margin-bottom: 1.5em;
+    border: 0px solid #444444; /* Added border for definition */
+}
+
+pre code {
+    background-color: transparent; /* Ensure background doesn't override */
+    padding: 0.4em 0.6em;
+    margin: 0.2em 0.4em;
+    border-radius: 4px;
+    color: inherit; /* Inherit color from syntax highlighting */
+    padding: 0;
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    border: 1px solid #444444;
+    font-size: 0.95em;
+    color: inherit; 
+    line-height: 1.5;
+}
+
+/* Inline Code Styles */
+.code-inline {
+    background-color: #2D2D2D; /* Match code block background */
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    color: inherit; 
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    border: 1px solid #444444; /* Added border for better visibility */
+}
+
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding-right: 20px;
+    }
+    .content {
+        margin-left: 0;
+    }
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Playlists and Collections Guide</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="playlists">Playlists</h1>
+      <p>
+        Playlists are lists of tracks that users can create and edit. When
+        created they are marked as &quot;owned&quot; by the user that first
+        created it. By default, playlists are not visible to other users other
+        than the original creator, and they are not editable either. This can be
+        changed by adding user ids to viewers and editors, or by making the
+        playlist viewable/editable publicly (by any user).
+      </p>
+      <p>
+        Playlists come with a Name, a Description, and an Artwork that can be
+        set to customize it&#39;s appearance.
+      </p>
+      <p>
+        Playlists can return their contents either by tracks, by the albums
+        contained, or by the artists contained. If returning their contents by
+        album or artist, the tracks are ignored and the full album/artist object
+        is returned, as if all tracks from said album/artist were in the
+        playlist.
+      </p>
+      <p>
+        There is currently no way in the Console menu to create playlists
+        manually, but you can Import/Export them in the Database Settings (see
+        <a href="Guides/Configure">Configure</a>). These import/export as either
+        m3u, pls, or xml.
+      </p>
+      <h2 id="collections">Collections</h2>
+      <p>
+        Collections are like playlists that are automatically managed based on
+        set filters. Everything else about them works exactly them same. A
+        collection&#39;s tracks are updated anytime a new filter is added or
+        anytime the database is scanned. Collections can also be exported in the
+        console, but not imported, since they are designed to be automatically
+        generated.
+      </p>
+      <h3 id="filters">Filters</h3>
+      <p>
+        Collections use filters find tracks to add to themselves. They use the
+        same filters as <a href="api/Search">Search</a> uses to find tracks.
+        Filters look like this: <code>property;comparison;value</code>.
+      </p>
+      <ul>
+        <li>
+          Property is any property from a
+          <a href="models/Track">Track</a> model. For example,
+          <code>Genre</code>, <code>Artist</code>, <code>Ratings</code>,
+          <code>Name</code>.
+        </li>
+        <li>
+          Comparison is the type of comparing you want to match the property to
+          the value. This can be <code>Contains</code>, <code>Eq</code>,
+          <code>NotEq</code>, <code>Lt</code>, or <code>Gt</code>.
+        </li>
+        <li>
+          Value is the value to compare, for example a string or a number.
+          Examples:
+        </li>
+        <li><code>Artist;Eq;Madeon</code></li>
+        <li><code>Ratings;Gt;4</code></li>
+        <li><code>Year;Lt;2010</code></li>
+      </ul>
+    </div>
+  </body>
+</html>

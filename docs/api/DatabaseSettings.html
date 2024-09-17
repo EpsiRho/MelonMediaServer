@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Database Settings API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="database-settings-controller-documentation">Database Settings Controller Documentation</h1>
+        <p>The <code>DatabaseController</code> exposes Melon&#39;s database settings, such as performing backups,
+            restoring from backups, resetting the database, importing/exporting playlists, and configuring queue cleanup
+            frequency. </p>
+        <p>This is apart of the <a href="/api/Settings.html">Settings Endpoints</a>, which are scattered across a couple of
+            controllers that group them by similarity.</p>
+        <h2 id="controller-route-api-settings-db-">Controller Route: <code>/api/settings/db/</code></h2>
+        <p>All routes within the <code>DatabaseController</code> are prefixed by <code>/api/settings/db/</code>.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/settings/db/backup</code></td>
+                    <td>POST</td>
+                    <td>Backup the database.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/settings/db/view-backups</code></td>
+                    <td>GET</td>
+                    <td>View all available database backups.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/settings/db/load-backup</code></td>
+                    <td>POST</td>
+                    <td>Load the database from a specific backup.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/settings/db/reset</code></td>
+                    <td>POST</td>
+                    <td>Reset the entire database.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/settings/db/export-playlist</code></td>
+                    <td>GET</td>
+                    <td>Export a playlist in a specified format.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/settings/db/import-playlist</code></td>
+                    <td>POST</td>
+                    <td>Import a playlist from a file.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/settings/db/queue-cleanup-frequency</code></td>
+                    <td>GET</td>
+                    <td>Get the queue cleanup frequency.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/settings/db/queue-cleanup-frequency</code></td>
+                    <td>POST</td>
+                    <td>Set the queue cleanup frequency.</td>
+                    <td>Admin</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="backup-database">Backup Database</h3>
+        <p>This endpoint performs a full backup of the database, backup is saved to a folder in Melon/Exports/DbBackups
+            as a collection of JSON files representing the Collection from MongoDb.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/settings/db/backup</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Database backup completed successfully.</li>
+            <li><strong>400 Bad Request</strong>: Failed to backup the database.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-melon-server.com/api/settings/db/backup"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="view-backups">View Backups</h3>
+        <p>This endpoint returns a list of available database backups, taken from Melon/Exports/DbBackups.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/settings/db/view-backups</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: List of backup files returned.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/settings/db/view-backups"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="load-database-from-backup">Load Database from Backup</h3>
+        <p>This endpoint loads the database from a specified backup folder.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/settings/db/load-backup</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>backupFileName</strong> (string, required): The name of the backup folder to restore from.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Database successfully loaded from the backup.</li>
+            <li><strong>404 Not Found</strong>: Backup file not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/settings/db/load-backup" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"backupFileName=140924-013709AM"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="reset-database">Reset Database</h3>
+        <p>This endpoint resets the entire database.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/settings/db/reset</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Database reset successfully.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-melon-server.com/api/settings/db/reset"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="export-playlist">Export Playlist</h3>
+        <p>This endpoint exports a playlist in a specified format.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/settings/db/export-playlist</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>format</strong> (string, required): The format for exporting the playlist, supports m3u, pls,
+                and xml.</li>
+            <li><strong>playlistId</strong> (string, required): The ID of the playlist to export.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: The playlist file is returned for download.</li>
+            <li><strong>404 Not Found</strong>: Playlist not found.</li>
+            <li><strong>400 Bad Request</strong>: Failed to export the playlist.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/settings/db/export-playlist?format=json&amp;playlistId=12345"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="import-playlist">Import Playlist</h3>
+        <p>This endpoint imports a playlist from an uploaded file. Supports m3u, pls, and xml</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/settings/db/import-playlist</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>plstFile</strong> (IFormFile, required): The playlist file to be uploaded and imported.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Playlist imported successfully.</li>
+            <li><strong>400 Bad Request</strong>: No file uploaded or file format not supported.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/settings/db/import-playlist" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span> \
+        </span>     -<span class="ruby">F <span class="hljs-string">"plstFile=@path_to_playlist_file"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="get-queue-cleanup-frequency">Get Queue Cleanup Frequency</h3>
+        <p>This endpoint returns the current queue cleanup frequency.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/settings/db/queue-cleanup-frequency</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: The current queue cleanup frequency is returned.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/settings/db/queue-cleanup-frequency"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="set-queue-cleanup-frequency">Set Queue Cleanup Frequency</h3>
+        <p>This endpoint sets a new queue cleanup frequency.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/settings/db/queue-cleanup-frequency</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>frequencyInHours</strong> (double, required): The new frequency in hours for queue cleanup.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Queue cleanup frequency updated successfully.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/settings/db/queue-cleanup-frequency" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;Admin-JWT&gt;"</span> \
+        </span>     -<span class="ruby">d <span class="hljs-string">"frequencyInHours=24"</span></span>
+        </code></pre>
+
+    </div>
+</body>

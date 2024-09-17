@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>FailedFile Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="failedfile">FailedFile</h1>
+        <p>The <code>FailedFile</code> class is used during the scanning process to record files that failed to scan properly.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>_id</code></td>
+        <td><code>string</code></td>
+        <td>Unique identifier for the failed file entry.</td>
+        </tr>
+        <tr>
+        <td><code>Path</code></td>
+        <td><code>string</code></td>
+        <td>File path of the file that failed to scan.</td>
+        </tr>
+        <tr>
+        <td><code>ErrorMessage</code></td>
+        <td><code>string</code></td>
+        <td>Error message generated during the scan.</td>
+        </tr>
+        <tr>
+        <td><code>StackTrace</code></td>
+        <td><code>string</code></td>
+        <td>Stack trace of the exception, if available.</td>
+        </tr>
+        </tbody>
+        </table>
+        
+    </div>  
+</body>

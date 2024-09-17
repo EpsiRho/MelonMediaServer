@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Collection Model Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+  </head>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="collection">Collection</h1>
+      <p>
+        The <code>Collection</code> class represents a collection of tracks,
+        which can be dynamically generated based on filters or manually curated.
+      </p>
+      <h2 id="properties">Properties</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>_id</code></td>
+            <td><code>string</code></td>
+            <td>The unique identifier for the collection.</td>
+          </tr>
+          <tr>
+            <td><code>Name</code></td>
+            <td><code>string</code></td>
+            <td>The name of the collection.</td>
+          </tr>
+          <tr>
+            <td><code>Description</code></td>
+            <td><code>string</code></td>
+            <td>A description of the collection.</td>
+          </tr>
+          <tr>
+            <td><code>TrackCount</code></td>
+            <td><code>long</code></td>
+            <td>The number of tracks in the collection.</td>
+          </tr>
+          <tr>
+            <td><code>Owner</code></td>
+            <td><code>string</code></td>
+            <td>Username of the collection owner.</td>
+          </tr>
+          <tr>
+            <td><code>Editors</code></td>
+            <td><code>List&lt;string&gt;</code></td>
+            <td>Usernames who can edit the collection.</td>
+          </tr>
+          <tr>
+            <td><code>Viewers</code></td>
+            <td><code>List&lt;string&gt;</code></td>
+            <td>Usernames who can view the collection.</td>
+          </tr>
+          <tr>
+            <td><code>PublicViewing</code></td>
+            <td><code>bool</code></td>
+            <td>Indicates if the collection is publicly viewable.</td>
+          </tr>
+          <tr>
+            <td><code>PublicEditing</code></td>
+            <td><code>bool</code></td>
+            <td>Indicates if the collection is publicly editable.</td>
+          </tr>
+          <tr>
+            <td><code>ArtworkPath</code></td>
+            <td><code>string</code></td>
+            <td>File path or URL to the collection&#39;s artwork.</td>
+          </tr>
+          <tr>
+            <td><code>AndFilters</code></td>
+            <td><code>List&lt;string&gt;</code></td>
+            <td>Filters that must all be satisfied to include a track.</td>
+          </tr>
+          <tr>
+            <td><code>OrFilters</code></td>
+            <td><code>List&lt;string&gt;</code></td>
+            <td>Filters where any satisfied will include a track.</td>
+          </tr>
+          <tr>
+            <td><code>Tracks</code></td>
+            <td><code>List&lt;<a href="/models/DbLink.html">DbLink</a>&gt;</code></td>
+            <td>Tracks included in the collection.</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h1 id="responsecollection">ResponseCollection</h1>
+      <p>
+        The <code>ResponseCollection</code> class is used for HTTP responses,
+        providing a trimmed version of the collection data suitable for client
+        consumption.
+      </p>
+      <h2 id="properties">Properties</h2>
+      <p>
+        All properties are the same as in the Collection class, except
+        <code>ArtworkPath</code> and <code>Tracks</code> are excluded.
+      </p>
+    </div>
+  </body>
+</html>

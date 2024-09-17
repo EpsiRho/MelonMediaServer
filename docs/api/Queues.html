@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Queue API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="queues-api-documentation">Queues API Documentation</h1>
+      <p>
+        The <code>QueuesController</code> handles queue-related operations, such
+        as creating, updating, shuffling, and deleting playback queues, as well
+        as managing tracks within queues.
+      </p>
+      <h2 id="controller-route-api-queues">
+        Controller Route: <code>/api/queues</code>
+      </h2>
+      <p>
+        All routes within the <code>QueuesController</code> are prefixed by
+        <code>/api/queues</code>.
+      </p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/queues/create</code></td>
+            <td>POST</td>
+            <td>Create a new queue with a list of track IDs.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/create-from-albums</code></td>
+            <td>POST</td>
+            <td>Create a queue from albums.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/create-from-artists</code></td>
+            <td>POST</td>
+            <td>Create a queue from artists.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/create-from-playlists</code></td>
+            <td>POST</td>
+            <td>Create a queue from playlists.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/create-from-collections</code></td>
+            <td>POST</td>
+            <td>Create a queue from collections.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/get</code></td>
+            <td>GET</td>
+            <td>Get details of a specific queue by ID.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/search</code></td>
+            <td>GET</td>
+            <td>Search for queues by name.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/get-tracks</code></td>
+            <td>GET</td>
+            <td>Get tracks of a specific queue.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/get-track</code></td>
+            <td>GET</td>
+            <td>Get a specific track from a queue by index.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/add-tracks</code></td>
+            <td>POST</td>
+            <td>Add tracks to a specific queue.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/remove-tracks</code></td>
+            <td>POST</td>
+            <td>Remove tracks from a specific queue.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/delete</code></td>
+            <td>POST</td>
+            <td>Delete a specific queue.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/move-track</code></td>
+            <td>POST</td>
+            <td>Move a track within a queue.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/update-position</code></td>
+            <td>POST</td>
+            <td>Update the playback position within a queue.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/update</code></td>
+            <td>POST</td>
+            <td>Update the metadata (name, editors, viewers) of a queue.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/shuffle</code></td>
+            <td>POST</td>
+            <td>Shuffle the tracks within a queue.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/queues/favorite</code></td>
+            <td>POST</td>
+            <td>Mark or unmark a queue as a favorite.</td>
+            <td>Admin, User</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h2 id="endpoint-details">Endpoint Details</h2>
+      <h3 id="create-queue-from-track-ids">Create Queue from Track IDs</h3>
+      <p>
+        Create a new queue with a list of track IDs and optional shuffle
+        settings.
+      </p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/create</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>name</strong> (string, required): The name of the queue.
+        </li>
+        <li>
+          <strong>ids</strong> (<code>List&lt;string&gt;</code>, required): A
+          list of track IDs to add to the queue.
+        </li>
+        <li>
+          <strong>shuffle</strong> (string, optional): Shuffle mode
+          (<code>none</code>, <code>TrackRandom</code>, <code>Album</code>,
+          etc.).
+        </li>
+        <li>
+          <strong>enableTrackLinks</strong> (boolean, optional): Whether to
+          enable track links (default: <code>true</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Queue created successfully with the new ID.
+        </li>
+        <li>
+          <strong>404 Not Found</strong>: No tracks found with the provided IDs.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/queues/create?name=MyQueue&amp;ids=track1&amp;ids=track2"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="create-queue-from-albums">Create Queue from Albums</h3>
+      <p>Create a queue from a list of album IDs.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/queues/create-from-albums</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>name</strong> (string, required): The name of the queue.
+        </li>
+        <li>
+          <strong>ids</strong> (<code>List&lt;string&gt;</code>, required): A
+          list of album IDs.
+        </li>
+        <li>
+          <strong>shuffle</strong> (string, optional): Shuffle mode
+          (<code>none</code>, <code>TrackRandom</code>, etc.).
+        </li>
+        <li>
+          <strong>enableTrackLinks</strong> (boolean, optional): Whether to
+          enable track links (default: <code>true</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Queue created successfully with the new ID.
+        </li>
+        <li><strong>404 Not Found</strong>: One or more albums not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/queues/<span class="hljs-keyword">create</span>-<span class="hljs-keyword">from</span>-albums?<span class="hljs-keyword">name</span>=AlbumQueue&amp;ids=album1&amp;ids=album2<span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+      <hr />
+      <h3 id="create-queue-from-artists">Create Queue from Artists</h3>
+      <p>Create a queue from a list of artist IDs.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>:
+          <code>/api/queues/create-from-artists</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>name</strong> (string, required): The name of the queue.
+        </li>
+        <li>
+          <strong>ids</strong> (<code>List&lt;string&gt;</code>, required): A
+          list of artist IDs.
+        </li>
+        <li>
+          <strong>shuffle</strong> (string, optional): Shuffle mode
+          (<code>none</code>, <code>TrackRandom</code>, etc.).
+        </li>
+        <li>
+          <strong>enableTrackLinks</strong> (boolean, optional): Whether to
+          enable track links (default: <code>true</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Queue created successfully with the new ID.
+        </li>
+        <li><strong>404 Not Found</strong>: One or more artists not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/queues/<span class="hljs-keyword">create</span>-<span class="hljs-keyword">from</span>-artists?<span class="hljs-keyword">name</span>=ArtistQueue&amp;ids=artist1&amp;ids=artist2<span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+      <hr />
+      <h3 id="create-queue-from-playlists">Create Queue from Playlists</h3>
+      <p>Create a queue using a list of playlists.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>:
+          <code>/api/queues/create-from-playlists</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>name</strong> (string, required): The name of the new queue.
+        </li>
+        <li>
+          <strong>ids</strong> (<code>List&lt;string&gt;</code>, required): A
+          list of playlist IDs to include in the queue.
+        </li>
+        <li>
+          <strong>shuffle</strong> (string, optional): Shuffle mode for the
+          queue. Options include <code>none</code>, <code>TrackRandom</code>,
+          <code>Album</code>, <code>ArtistRandom</code>, etc. (default:
+          <code>none</code>).
+        </li>
+        <li>
+          <strong>enableTrackLinks</strong> (boolean, optional): Whether to
+          enable track links within the queue (default: <code>true</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Queue created successfully, returns the ID of
+          the new queue.
+        </li>
+        <li>
+          <strong>404 Not Found</strong>: One or more playlists not found.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/queues/<span class="hljs-keyword">create</span>-<span class="hljs-keyword">from</span>-playlists?<span class="hljs-keyword">name</span>=MyQueue&amp;ids=playlist1&amp;ids=playlist2<span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+      <hr />
+      <h3 id="create-queue-from-collections">Create Queue from Collections</h3>
+      <p>Create a queue using a list of collections.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>:
+          <code>/api/queues/create-from-collections</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>name</strong> (string, required): The name of the new queue.
+        </li>
+        <li>
+          <strong>ids</strong> (<code>List&lt;string&gt;</code>, required): A
+          list of collection IDs to include in the queue.
+        </li>
+        <li>
+          <strong>shuffle</strong> (string, optional): Shuffle mode for the
+          queue. Options include <code>none</code>, <code>TrackRandom</code>,
+          <code>Album</code>, <code>ArtistRandom</code>, etc. (default:
+          <code>none</code>).
+        </li>
+        <li>
+          <strong>enableTrackLinks</strong> (boolean, optional): Whether to
+          enable track links within the queue (default: <code>true</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Queue created successfully, returns the ID of
+          the new queue.
+        </li>
+        <li>
+          <strong>404 Not Found</strong>: One or more collections not found.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/queues/<span class="hljs-keyword">create</span>-<span class="hljs-keyword">from</span>-collections?<span class="hljs-keyword">name</span>=MyQueue&amp;ids=collection1&amp;ids=collection2<span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-queue-by-id">Get Queue by ID</h3>
+      <p>Retrieve the details of a specific queue by its ID.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/get</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the queue.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns the details of the queue.</li>
+        <li><strong>404 Not Found</strong>: If the queue does not exist.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/queues/get?id=queue1"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="add-tracks-to-queue">Add Tracks to Queue</h3>
+      <p>Add tracks to an existing queue.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/add-tracks</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the queue.</li>
+        <li>
+          <strong>trackIds</strong> (<code>List&lt;string&gt;</code>, required):
+          A list of track IDs to add.
+        </li>
+        <li>
+          <strong>position</strong> (string, optional): Position to add tracks
+          (<code>end</code>, <code>front</code>, <code>random</code>,
+          <code>at</code>).
+        </li>
+        <li>
+          <strong>place</strong> (int, optional): Specific index for position
+          <code>at</code>.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Tracks added to the queue.</li>
+        <li><strong>404 Not Found</strong>: Queue not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/queues/add-tracks?id=queue1&amp;trackIds=track1&amp;trackIds=track2"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="search-queues">Search Queues</h3>
+      <p>
+        Search for queues based on a name filter, with pagination and sorting
+        options.
+      </p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/search</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>page</strong> (int, optional): Page number for pagination
+          (default: <code>0</code>).
+        </li>
+        <li>
+          <strong>count</strong> (int, optional): Number of queues to return per
+          page (default: <code>100</code>).
+        </li>
+        <li>
+          <strong>name</strong> (string, optional): Name filter for searching
+          queues (case-insensitive).
+        </li>
+        <li>
+          <strong>sortByLastListen</strong> (boolean, optional): Whether to sort
+          results by the last listen time (default: <code>true</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns a paginated list of queues.</li>
+        <li>
+          <strong>404 Not Found</strong>: No queues found matching the search
+          criteria.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/queues/search?page=0&amp;count=10&amp;name=party"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-tracks-in-queue">Get Tracks in Queue</h3>
+      <p>Retrieve a paginated list of tracks in a specific queue.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/get-tracks</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the queue.</li>
+        <li>
+          <strong>page</strong> (int, optional): Page number for pagination
+          (default: <code>0</code>).
+        </li>
+        <li>
+          <strong>count</strong> (int, optional): Number of tracks to return per
+          page (default: <code>100</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns a paginated list of tracks in the
+          queue.
+        </li>
+        <li><strong>404 Not Found</strong>: Queue not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/queues/get-tracks?id=queue1&amp;page=0&amp;count=50"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-track-by-index">Get Track by Index</h3>
+      <p>Retrieve a specific track from a queue by its index.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/get-track</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the queue.</li>
+        <li>
+          <strong>index</strong> (uint, required): The index of the track within
+          the queue.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns the details of the track at the
+          specified index.
+        </li>
+        <li><strong>404 Not Found</strong>: Queue or track not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/queues/get-track?id=queue1&amp;index=2"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="remove-tracks-from-queue">Remove Tracks from Queue</h3>
+      <p>Remove one or more tracks from a queue based on their positions.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/queues/remove-tracks</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the queue.</li>
+        <li>
+          <strong>positions</strong> (<code>List&lt;int&gt;</code>, required):
+          List of track positions to remove from the queue.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Tracks removed from the queue.</li>
+        <li><strong>404 Not Found</strong>: Queue not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/queues/remove-tracks?id=queue1&amp;positions=1&amp;positions=3"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="delete-queue">Delete Queue</h3>
+      <p>Delete a specific queue.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/delete</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>id</strong> (string, required): The ID of the queue to delete.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Queue deleted successfully.</li>
+        <li><strong>404 Not Found</strong>: Queue not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/queues/delete?id=queue1"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="move-track-within-queue">Move Track within Queue</h3>
+      <p>Move a track within a queue from one position to another.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/move-track</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the queue.</li>
+        <li>
+          <strong>fromPos</strong> (int, required): The current position of the
+          track.
+        </li>
+        <li>
+          <strong>toPos</strong> (int, required): The new position to move the
+          track to.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Track moved successfully.</li>
+        <li><strong>404 Not Found</strong>: Queue not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/queues/move-track?id=queue1&amp;fromPos=2&amp;toPos=5"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="update-queue-position">Update Queue Position</h3>
+      <p>Update the playback position within a queue.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/queues/update-position</code>
+        </li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the queue.</li>
+        <li>
+          <strong>pos</strong> (int, required): The new playback position.
+        </li>
+        <li>
+          <strong>device</strong> (string, optional): Device information to skip
+          updates for specific devices.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Queue playback position updated.</li>
+        <li><strong>404 Not Found</strong>: Queue not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/queues/<span class="hljs-keyword">update</span>-<span class="hljs-keyword">position</span>?<span class="hljs-keyword">id</span>=queue1&amp;pos=<span class="hljs-number">4</span><span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+      <hr />
+      <h3 id="update-queue-metadata">Update Queue Metadata</h3>
+      <p>
+        Update the metadata of a queue, including name, editors, viewers, and
+        public access settings.
+      </p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/update</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the queue.</li>
+        <li>
+          <strong>name</strong> (string, optional): New name for the queue.
+        </li>
+        <li>
+          <strong>editors</strong> (<code>List&lt;string&gt;</code>, optional):
+          List of editor IDs.
+        </li>
+        <li>
+          <strong>viewers</strong> (<code>List&lt;string&gt;</code>, optional):
+          List of viewer IDs.
+        </li>
+        <li>
+          <strong>publicEditing</strong> (string, optional): Whether the queue
+          allows public editing (<code>true</code> or <code>false</code>).
+        </li>
+        <li>
+          <strong>publicViewing</strong> (string, optional): Whether the queue
+          allows public viewing (<code>true</code> or <code>false</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Queue updated successfully.</li>
+        <li><strong>404 Not Found</strong>: Queue not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/queues/<span class="hljs-keyword">update</span>?<span class="hljs-keyword">id</span>=queue1&amp;<span class="hljs-keyword">name</span>=UpdatedQueue<span class="hljs-string">" \
+             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
+        </code></pre>
+      <hr />
+      <h3 id="shuffle-queue">Shuffle Queue</h3>
+      <p>
+        Shuffle the tracks within a queue using various shuffle modes. For more
+        info see the <a href="/Guides/Shuffling.html">Shuffling Guide</a>.
+      </p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/shuffle</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the queue.</li>
+        <li>
+          <strong>shuffle</strong> (string, optional): Shuffle mode
+          (<code>none</code>, <code>TrackRandom</code>, <code>Album</code>,
+          etc.).
+        </li>
+        <li>
+          <strong>enableTrackLinks</strong> (boolean, optional): Whether to
+          enable track links (default: <code>true</code>).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Queue shuffled successfully.</li>
+        <li><strong>404 Not Found</strong>: Queue not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/queues/shuffle?id=queue1&amp;shuffle=TrackRandom"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="toggle-favorite">Toggle Favorite</h3>
+      <p>Mark or unmark a queue as a favorite.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/queues/favorite</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the queue.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Queue favorited or unfavorited.</li>
+        <li><strong>404 Not Found</strong>: Queue not found.</li>
+      </ul>
+      <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+      <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/queues/favorite?id=queue1"</span> <span class="hljs-string">\</span>
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <p>
+        This concludes the detailed documentation for the
+        <code>QueuesController</code>. The API provides robust functionality for
+        managing queues, including operations for creating, shuffling, and
+        modifying queues and their tracks.
+      </p>
+    </div>
+  </body>
+</html>

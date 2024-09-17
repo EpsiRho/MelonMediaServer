@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Download API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="downloadcontroller-documentation">DownloadController Documentation</h1>
+        <p>The <code>DownloadController</code> provides several API endpoints that allow users to download tracks, and
+            track/album/artist/playlist/collection artwork. The controller supports both direct downloads and
+            transcoding to mp3 on the fly. When downloading artwork, if the linked object isn&#39;t found or artwork
+            isn&#39;t found for it, the default artwork is sent. See <a href="/Architecture/Artwork.html">Artwork
+                Architecture</a> for more info.</p>
+        <h2 id="controller-route-api-download-">Controller Route: <code>/api/download</code></h2>
+        <p>All routes within the <code>DownloadController</code> are prefixed by <code>/api/download/</code> and are
+            primarily used for downloading media-related content such as tracks and artwork.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/download/track</code></td>
+                    <td>GET</td>
+                    <td>Download a track file based on its ID.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/download/track-transcode</code></td>
+                    <td>GET</td>
+                    <td>Download a transcoded version of a track.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/download/track-wave</code></td>
+                    <td>GET</td>
+                    <td>Get the waveform of a track in a specified width.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/download/track-art</code></td>
+                    <td>GET</td>
+                    <td>Download the artwork associated with a specific track.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/download/album-art</code></td>
+                    <td>GET</td>
+                    <td>Download the artwork associated with a specific album.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/download/artist-pfp</code></td>
+                    <td>GET</td>
+                    <td>Download the profile picture of an artist.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/download/artist-banner</code></td>
+                    <td>GET</td>
+                    <td>Download the banner artwork of an artist.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/download/playlist-art</code></td>
+                    <td>GET</td>
+                    <td>Download the artwork of a specific playlist.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/download/collection-art</code></td>
+                    <td>GET</td>
+                    <td>Download the artwork associated with a specific collection.</td>
+                    <td>Admin, User</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="download-track">Download Track</h3>
+        <p>This endpoint allows users to download a track based on its ID. Downloading supports range requests for
+            partial content streaming or resuming interrupted downloads.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/download/track</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the track to be downloaded.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the track file.</li>
+            <li><strong>404 Not Found</strong>: Track not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/track?id=66bc9aadab7ba419497e6a97"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <p><strong>Example Request</strong> with range (using <code>curl</code>):</p>
+        <pre><code class="lang-bash">curl -X GET "https://your-melon-server.com/api/download/track?id=66bc9aadab7ba419497e6a97" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span> \
+        </span>     -<span class="ruby">H <span class="hljs-string">"Range: bytes=1000-"</span></span>
+        </code></pre>
+        <hr>
+        <h3 id="download-track-with-transcoding">Download Track with Transcoding</h3>
+        <p>This endpoint allows users to download an mp3 transcoded version of a track in a specific bitrate.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/download/track-transcode</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the track to be transcoded and
+                downloaded.</li>
+            <li><strong>transcodeBitrate</strong> (int, optional): The desired bitrate of the transcoded track (default
+                is 256 kbps).</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the transcoded track.</li>
+            <li><strong>404 Not Found</strong>: Track not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/track-transcode?id=66bc9aadab7ba419497e6a97&amp;transcodeBitrate=320"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="download-track-waveform">Download Track Waveform</h3>
+        <p>This endpoint allows users to generate and download a visual representation of the track&#39;s waveform with
+            a specified width. Waveform is represented as float points of amplitude.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/download/track-wave</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the track.</li>
+            <li><strong>width</strong> (float, required): The width (in pixels) of the waveform to be generated.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a float array representing the track&#39;s waveform data.</li>
+            <li><strong>400 Bad Request</strong>: Width parameter is required.</li>
+            <li><strong>404 Not Found</strong>: Track not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/track-wave?id=66bc9aadab7ba419497e6a97&amp;width=500"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="download-track-artwork">Download Track Artwork</h3>
+        <p>This endpoint allows users to download the artwork embedded within a track.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/download/track-art</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the track.</li>
+            <li><strong>index</strong> (int, optional): The index of the artwork (for tracks with multiple embedded
+                artworks). If not specified, defaults to the track&#39;s default artwork.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the track artwork.</li>
+            <li><strong>404 Not Found</strong>: Track or artwork not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/track-art?id=66bc9aadab7ba419497e6a97"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="download-album-artwork">Download Album Artwork</h3>
+        <p>This endpoint allows users to download the artwork associated with a specific album. See <a
+                href="/Architecture/Artwork.html">Artwork Architecture</a> for more info on how album art is handled.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/download/album-art</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the album.</li>
+            <li><strong>index</strong> (int, optional): The index of the album artwork. If not specified, defaults to
+                the album&#39;s default artwork.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the album artwork.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/album-art?id=album123"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="download-artist-profile-picture">Download Artist Profile Picture</h3>
+        <p>This endpoint allows users to download the profile picture of an artist.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/download/artist-pfp</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the artist.</li>
+            <li><strong>index</strong> (int, optional): The index of the profile picture. If not specified, defaults to
+                the artist&#39;s default profile picture.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the artist&#39;s profile picture.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/artist-pfp?id=artist123"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="download-artist-banner">Download Artist Banner</h3>
+        <p>This endpoint allows users to download the banner artwork of an artist.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/download/artist-banner</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the artist.</li>
+            <li><strong>index</strong> (int, optional): The index of the banner artwork. If not specified, defaults to
+                the artist&#39;s default banner.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the artist&#39;s banner artwork.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/artist-banner?id=artist123"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="download-playlist-artwork">Download Playlist Artwork</h3>
+        <p>This endpoint allows users to download the artwork associated with a specific playlist.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/download/playlist-art</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the playlist.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the playlist artwork.</li>
+            <li><strong>404 Not Found</strong>: Playlist or artwork not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/playlist-art?id=playlist123"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="download-collection-artwork">Download Collection Artwork</h3>
+        <p>This endpoint allows users to download the artwork associated with a specific collection.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/download/collection-art</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The unique identifier of the collection.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the collection artwork.</li>
+            <li><strong>404 Not Found</strong>: Collection or artwork not found.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/collection-art?id=collection123"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+
+    </div>
+</body>

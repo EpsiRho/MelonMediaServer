@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Discovery API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="discovery-endpoints">Discovery Endpoints</h1>
+        <p>The <code>DiscoverController</code> provides endpoints for discovering tracks, albums, and artists based on
+            specified criteria such as genres or connections between artists.</p>
+        <h2 id="controller-route-api-discover-">Controller Route: <code>/api/discover</code></h2>
+        <p>All routes within the <code>DiscoverController</code> are prefixed by <code>/api/discover/</code>.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/discover/tracks</code></td>
+                    <td>GET</td>
+                    <td>Discover tracks based on input ids.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/discover/albums</code></td>
+                    <td>GET</td>
+                    <td>Discover albums based on input ids.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/discover/artists</code></td>
+                    <td>GET</td>
+                    <td>Discover artists based on input ids.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/discover/time</code></td>
+                    <td>GET</td>
+                    <td>Discover time-based tracks within a specified time window.</td>
+                    <td>Admin, User</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="discover-tracks">Discover Tracks</h3>
+        <p>This endpoint allows users to discover tracks based on provided track ids.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/discover/tracks</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>ids</strong> (<code>List&lt;string&gt;</code>, required): A list of track IDs to base the
+                discovery on.</li>
+            <li><strong>orderByFavorites</strong> (bool, optional): If true, weighs tracks shuffle by user
+                favorites(high rating, lots of plays)</li>
+            <li><strong>orderByDiscovery</strong> (bool, optional): If true, weighs track shuffle by tracks with less
+                plays.</li>
+            <li><strong>count</strong> (int, optional): The maximum number of tracks to return (default is 100).</li>
+            <li><strong>enableTrackLinks</strong> (bool, optional): If true, enables <a
+                    href="/Guides/Shuffling.html">TrackLinks</a>.</li>
+            <li><strong>includeArtists</strong> (bool, optional): If true, includes related artist tracks in the
+                results.</li>
+            <li><strong>includeGenres</strong> (bool, optional): If true, includes tracks of the same genres.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a list of discovered <a href="/models/Track.html">Tracks</a>.</li>
+            <li><strong>400 Bad Request</strong>: Invalid parameters or request.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/discover/tracks?ids=track1,track2&amp;orderByFavorites=true&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="discover-albums">Discover Albums</h3>
+        <p>This endpoint allows users to discover albums based on album ids.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/discover/albums</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role
+                <strong>Parameters</strong>:
+            </li>
+            <li><strong>ids</strong> (<code>List&lt;string&gt;</code>, required): A list of album IDs to base the
+                discovery on.</li>
+            <li><strong>shuffle</strong> (bool, optional): If true, shuffles the returned albums.</li>
+            <li><strong>count</strong> (int, optional): The maximum number of albums to return (default is 100).</li>
+            <li><strong>page</strong> (int, optional): The page number of the results (used for pagination).</li>
+            <li><strong>includeArtists</strong> (bool, optional): If true, includes albums by connected artists.</li>
+            <li><strong>includeGenres</strong> (bool, optional): If true, includes albums from the same genres.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a list of discovered <a href="/models/Album.html">Albums</a>.</li>
+            <li><strong>400 Bad Request</strong>: Invalid parameters or request.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/discover/albums?ids=album1,album2&amp;count=5&amp;includeArtists=true"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="discover-artists">Discover Artists</h3>
+        <p>This endpoint allows users to discover artists based on artist ids.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/discover/artists</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>ids</strong> (<code>List&lt;string&gt;</code>, required): A list of artist IDs to base the
+                discovery on.</li>
+            <li><strong>count</strong> (int, optional): The maximum number of artists to return (default is 100).</li>
+            <li><strong>page</strong> (int, optional): The page number of the results (used for pagination).</li>
+            <li><strong>shuffle</strong> (bool, optional): If true, shuffles the returned artists.</li>
+            <li><strong>includeConnections</strong> (bool, optional): If true, includes connected artists.</li>
+            <li><strong>includeGenres</strong> (bool, optional): If true, includes artists from the same genres.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a list of discovered <a href="/models/Artist.html">Artists</a>.</li>
+            <li><strong>400 Bad Request</strong>: Invalid parameters or request.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/discover/artists?ids=artist1,artist2&amp;count=10&amp;includeGenres=true"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+        <hr>
+        <h3 id="discover-time-based-tracks">Discover Time-Based Tracks</h3>
+        <p>This endpoint allows users to discover tracks that are similar to those played around a specified time.</p>
+        <p><strong>Details</strong>:</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/discover/time</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>time</strong> (string, required): The specific time (e.g., &quot;10:22:00AM&quot;) around which
+                tracks will be discovered.</li>
+            <li><strong>span</strong> (int, optional): The time span in minutes (default is 5).</li>
+            <li><strong>count</strong> (int, optional): The maximum number of tracks to return (default is 100).</li>
+            <li><strong>enableTrackLinks</strong> (bool, optional): If true, enables track links.</li>
+            <li><strong>includeArtists</strong> (bool, optional): If true, includes tracks by related artists.</li>
+            <li><strong>includeGenres</strong> (bool, optional): If true, includes tracks of the genres.</li>
+            <li><strong>includeRecent</strong> (bool, optional): If true, includes recently played tracks.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns a list of discovered <a href="/models/Track.hmtl">Tracks</a>.</li>
+            <li><strong>400 Bad Request</strong>: Invalid parameters or request.</li>
+        </ul>
+        <p><strong>Example Request</strong> (using <code>curl</code>):</p>
+        <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/discover/time?time=2023-09-15T12:00:00&amp;span=10&amp;count=10&amp;includeArtists=true"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;User-JWT&gt;"</span>
+        </code></pre>
+
+    </div>
+</body>

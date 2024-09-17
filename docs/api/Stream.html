@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Stream API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="stream-apis-documentation">Stream APIs Documentation</h1>
+      <p>
+        The <code>StreamController</code> manages web socket functionalities,
+        which are used to send realtime updates to clients from the server. This
+        could be queue changes or request for play/pause/skip, primarily when a
+        client wants to control another client, for example adding songs to the
+        current play queue on a TV client from the user&#39;s phone client. For
+        more information about how WebSockets are used, see the
+        <a href="/Architecture/WebSockets.html">WebSocket Architecture</a>.
+      </p>
+      <h2 id="controller-route-api-stream-">
+        Controller Route: <code>/api/stream</code>
+      </h2>
+      <p>
+        All routes within the <code>StreamController</code> are prefixed by
+        <code>/api/stream</code>.
+      </p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/stream/connect</code></td>
+            <td>GET</td>
+            <td>Connects to a WebSocket for streaming.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/stream/get-external</code></td>
+            <td>GET</td>
+            <td>Retrieves available external devices for streaming.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/stream/play-external</code></td>
+            <td>GET</td>
+            <td>Sends a play request to an external device.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/stream/pause-external</code></td>
+            <td>GET</td>
+            <td>Sends a pause request to an external device.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/stream/skip-external</code></td>
+            <td>GET</td>
+            <td>Sends a skip request to an external device.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/stream/rewind-external</code></td>
+            <td>GET</td>
+            <td>Sends a rewind request to an external device.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/stream/volume-external</code></td>
+            <td>GET</td>
+            <td>Adjusts the volume on an external device.</td>
+            <td>Admin, User</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h3 id="connect-to-websocket-stream">Connect to WebSocket Stream</h3>
+      <p>Connects the client to a WebSocket for streaming.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stream/connect</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Successfully connected to the WebSocket.
+        </li>
+        <li>
+          <strong>400 Bad Request</strong>: If the request is not a WebSocket
+          request.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stream/connect"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-external-devices">Get External Devices</h3>
+      <p>
+        Fetches a list of available external devices that the user can stream
+        to.
+      </p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/stream/get-external</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns a list of external devices.</li>
+        <li><strong>404 Not Found</strong>: If no devices are available.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stream/get-external"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="play-on-external-device">Play on External Device</h3>
+      <p>
+        Sends a play request to a specified external device to start playing
+        from a queue.
+      </p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/stream/play-external</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>deviceName</strong> (string, required): The name of the
+          external device.
+        </li>
+        <li>
+          <strong>queueId</strong> (string, required): The ID of the queue to
+          play.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Play request sent successfully.</li>
+        <li><strong>404 Not Found</strong>: If the device is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stream/play-external?deviceName=Speaker&amp;queueId=queue123"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="pause-on-external-device">Pause on External Device</h3>
+      <p>Sends a pause request to a specified external device.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/stream/pause-external</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>deviceName</strong> (string, required): The name of the
+          external device.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Pause request sent successfully.</li>
+        <li><strong>404 Not Found</strong>: If the device is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stream/pause-external?deviceName=Speaker"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="skip-on-external-device">Skip on External Device</h3>
+      <p>Sends a skip request to a specified external device.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/stream/skip-external</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>deviceName</strong> (string, required): The name of the
+          external device.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Skip request sent successfully.</li>
+        <li><strong>404 Not Found</strong>: If the device is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stream/skip-external?deviceName=Speaker"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="rewind-on-external-device">Rewind on External Device</h3>
+      <p>Sends a rewind request to a specified external device.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/stream/rewind-external</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>deviceName</strong> (string, required): The name of the
+          external device.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Rewind request sent successfully.</li>
+        <li><strong>404 Not Found</strong>: If the device is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stream/rewind-external?deviceName=Speaker"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="set-volume-on-external-device">Set Volume on External Device</h3>
+      <p>Sends a volume adjustment request to a specified external device.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/stream/volume-external</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>deviceName</strong> (string, required): The name of the
+          external device.
+        </li>
+        <li>
+          <strong>volume</strong> (int, optional): The volume level to set
+          (default is 50).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Volume adjustment request sent successfully.
+        </li>
+        <li><strong>404 Not Found</strong>: If the device is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stream/volume-external?deviceName=Speaker&amp;volume=75"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+    </div>
+  </body>
+</html>

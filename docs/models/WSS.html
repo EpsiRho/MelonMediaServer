@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>WSS Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="wss">WSS</h1>
+        <p>The <code>WSS</code> class is used internally only. It holds information about a WebSocket Stream, which clients can use for real-time updates.
+        For more info, see <a href="/Architecture/WebSockets.html">WebSockets</a>.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>_id</code></td>
+        <td><code>string</code></td>
+        <td>Unique identifier for the WebSocket session.</td>
+        </tr>
+        <tr>
+        <td><code>Socket</code></td>
+        <td><code>WebSocket</code></td>
+        <td>WebSocket connection object.</td>
+        </tr>
+        <tr>
+        <td><code>CurrentQueue</code></td>
+        <td><code>string</code></td>
+        <td>ID of the current queue being managed.</td>
+        </tr>
+        <tr>
+        <td><code>DeviceName</code></td>
+        <td><code>string</code></td>
+        <td>Name of the device connected via WebSocket.</td>
+        </tr>
+        <tr>
+        <td><code>UserId</code></td>
+        <td><code>string</code></td>
+        <td>ID of the user associated with the session.</td>
+        </tr>
+        <tr>
+        <td><code>IsPublic</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if the WebSocket stream is public.</td>
+        </tr>
+        <tr>
+        <td><code>SendProgress</code></td>
+        <td><code>bool</code></td>
+        <td>Indicates if progress updates should be sent.</td>
+        </tr>
+        <tr>
+        <td><code>LastPing</code></td>
+        <td><code>DateTime</code></td>
+        <td>Timestamp of the last ping from the client.</td>
+        </tr>
+        </tbody>
+        </table>
+        
+    </div>  
+</body>

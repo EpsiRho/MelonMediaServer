@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Users Guide</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="melon-users-guide">Melon Users Guide</h1>
+      <p>
+        Melon has support for as many users as you want to create. This guide
+        will talk about some specifics around users and how to invite new ones.
+      </p>
+      <h2 id="account-types">Account Types</h2>
+      <h4 id="admin-accounts">Admin Accounts</h4>
+      <p>
+        When you first start Melon, you&#39;ll setup an account username and
+        password. This is the first Admin account for the instance. Admin
+        accounts can do whatever they please permission wise, so should be given
+        out to only trusted individuals.
+      </p>
+      <h4 id="user-accounts">User Accounts</h4>
+      <p>
+        User accounts are additional users added to your Melon server. They can
+        listen to tracks, make their own playlists, rate songs, and get their
+        own stats logging. When a user creates a playlist or a collection or a
+        queue, it is considered owned by them, and only visible and editable to
+        them. These objects have properties for allowing other users to
+        view/edit. Additionally, Admins can bypass these restrictions.
+      </p>
+      <h4 id="pass-accounts">Pass Accounts</h4>
+      <p>
+        <strong>Pass accounts are currently mostly unused</strong>. These are
+        accounts that will be allowed certain endpoints used for Listening
+        Parties. For example, sending a link to a friend to generate them a
+        temporary &quot;Pass Account&quot;, that only lets them listen along
+        with the listening party, and then expires with the listening party.
+      </p>
+      <h4 id="server-accounts">Server Accounts</h4>
+      <p>
+        This isn&#39;t technically an account, but it is a user type. This is
+        given to JWT that are granted through
+        <code>auth/code-authenticate</code>. When you invite a user, you
+        generate a code that allows them to call
+        <code>auth/code-authenticate</code> on your server. This generates them
+        a one time use JWT that is a server account. This allows them to call
+        <code>api/users/create</code>, the only api endpoint accessible by
+        server accounts. They create their user, then discard the server account
+        and login to their newly made one.
+      </p>
+      <h2 id="how-to-invite-someone">How to Invite someone</h2>
+      <p>! There are currently no GUI methods for creating new users. !</p>
+      <p>
+        They way this will work is the inviter will generate an invite code,
+        pass it to the new user along with the server url, and then create their
+        user. This can be accomplished now by calling <code>auth/invite</code>,
+        then <code>auth/code-authenticate</code>, and then using the JWT to call
+        <code>api/users/create</code>.
+      </p>
+      <h2 id="user-properties">User properties</h2>
+      <p>
+        Users have a few properties they can set. They can set a Bio and
+        Favorite Track/Album/Artist. You can also choose if your stats are
+        public, aka viewable by other users.
+      </p>
+      <h2 id="user-friends">User Friends</h2>
+      <p>! This feature is not fully implemented !</p>
+      <p>
+        Users can add other users on the server as friends. This will bypass the
+        restrictions for viewing their stats (but not their
+        playlists/collections).
+      </p>
+      <h2 id="username-password-changes">Username / Password changes</h2>
+      <p>
+        <code>api/users</code> exposes endpoints for changing your current
+        Username and Password. If you need to change your Username or Password,
+        you need a valid JWT. These last for an hour, so if you&#39;ve logged in
+        over the past hour your current one will still do. Once you&#39;ve
+        changed your Username or Password, all your JWT tokens will become
+        invalid and you&#39;ll need to login with your new credentials.
+      </p>
+      <p>
+        If you do not know / have access to your password anymore, an Admin
+        account can override the JWT restriction and change your password for
+        you. (Note, in the future I&#39;d like Admins to be able to distribute
+        an Invite Token style code to let users change their password on their
+        own, so the admin doesn&#39;t need to know the password to change it)
+      </p>
+    </div>
+  </body>
+</html>

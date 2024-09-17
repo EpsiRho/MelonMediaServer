@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Search Guide</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="search">Search</h1>
+      <p>
+        Melon handling searching through filters. These filters allow you to
+        search the database by any property of the model object you&#39;re
+        search for. For example, Tracks can be searched by Name, Artist,
+        PlayCounts, Ratings, Format, Year, etc. For API references, see the
+        <a href="/api/Search.html">Search API</a> docs.
+      </p>
+      <h3 id="filters">Filters</h3>
+      <p>Filters look like this: <code>property;comparison;value</code>.</p>
+      <ul>
+        <li>
+          Property is any property from a
+          <a href="/models/Track.html">Track</a> model. For example,
+          <code>Genre</code>, <code>Artist</code>, <code>Ratings</code>,
+          <code>Name</code>.
+        </li>
+        <li>
+          Comparison is the type of comparing you want to match the property to
+          the value. This can be <code>Contains</code>, <code>Eq</code>,
+          <code>NotEq</code>, <code>Lt</code>, or <code>Gt</code>.
+        </li>
+        <li>
+          Value is the value to compare, for example a string or a number.
+          Examples:
+        </li>
+        <li><code>Artist;Eq;Madeon</code></li>
+        <li><code>Ratings;Gt;4</code></li>
+        <li><code>Year;Lt;2010</code></li>
+      </ul>
+      <p>
+        To see all the available properties, look at the
+        <a href="/models/Track.html">Track</a>, <a href="/models/Album.html">Album</a>, and
+        <a href="/models/Artist.html">Artist</a> model documentation.
+      </p>
+      <h3 id="sorting">Sorting</h3>
+      <p>Available sorts are different per object:</p>
+      <ul>
+        <li>
+          Tracks
+          <ul>
+            <li>NameDesc</li>
+            <li>NameAsc</li>
+            <li>DateAddedDesc</li>
+            <li>DateAddedAsc</li>
+            <li>ReleaseDataDesc</li>
+            <li>ReleaseDateAsc</li>
+            <li>PlayCountDesc</li>
+            <li>PlayCountAsc</li>
+            <li>AlbumPositionAsc</li>
+            <li>AlbumPositionDesc</li>
+          </ul>
+        </li>
+        <li>
+          Albums
+          <ul>
+            <li>NameDesc</li>
+            <li>NameAsc</li>
+            <li>DateAddedDesc</li>
+            <li>DateAddedAsc</li>
+            <li>ReleaseDataDesc</li>
+            <li>ReleaseDateAsc</li>
+            <li>PlayCountDesc</li>
+            <li>PlayCountAsc</li>
+          </ul>
+        </li>
+        <li>
+          Artist
+          <ul>
+            <li>NameDesc</li>
+            <li>NameAsc</li>
+            <li>DateAddedDesc</li>
+            <li>DateAddedAsc</li>
+            <li>PlayCountDesc</li>
+            <li>PlayCountAsc</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

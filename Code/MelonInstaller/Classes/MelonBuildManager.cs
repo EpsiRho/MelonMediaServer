@@ -23,7 +23,7 @@ namespace MelonInstaller.Classes
             // Get Build Path
             if (!Program.LaunchArgs.ContainsKey("buildPath"))
             {
-                Console.WriteLine($"[!] {StringsManager.GetString("BuildStart")}");
+                Console.WriteLine($"[!] {StringsManager.GetString("PathMissing")}");
                 return;
             }
             buildPath = Program.LaunchArgs["buildPath"];

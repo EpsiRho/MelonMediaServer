@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Album Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1>IWebApi Interface Documentation</h1>
+        <p>The <code>IWebApi</code> interface allows plugins to interact with Melon&#39;s web API, enabling them to add middleware, handle API events, and extend functionality.</p>
+        <h2>Interface Definition</h2>
+        <pre><code class="language-C#">
+    public interface IWebApi
+    {
+        bool UsePluginMiddleware(KeyValuePair&lt;string, Func&lt;WebApiEventArgs, byte[]&gt;&gt; middleware);
+        bool RemovePluginMiddleware(string name);
+        Dictionary&lt;string, Func&lt;WebApiEventArgs, byte[]&gt;&gt; GetPluginMiddlewares();
+    
+        // Events for various API endpoints
+        // ArtDeleteController
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtDeleteTrack;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtDeleteAlbum;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtDeleteArtistPfP;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtDeleteArtistBanner;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtDeletePlaylist;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtDeleteCollection;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtDeleteDefault;
+        
+        // ArtUploadController
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtUploadTrack;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtUploadAlbum;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtUploadArtistPfP;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtUploadArtistBanner;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtUploadPlaylist;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtUploadCollection;
+        public event EventHandler&lt;WebApiEventArgs&gt; ArtUploadDefault;
+        
+        // AuthController
+        public event EventHandler&lt;WebApiEventArgs&gt; AuthLogin;
+        public event EventHandler&lt;WebApiEventArgs&gt; AuthInvite;
+        public event EventHandler&lt;WebApiEventArgs&gt; AuthCodeAuthenticate;
+        
+        // CollectionsController
+        public event EventHandler&lt;WebApiEventArgs&gt; CollectionsCreate;
+        public event EventHandler&lt;WebApiEventArgs&gt; CollectionsAddFilters;
+        public event EventHandler&lt;WebApiEventArgs&gt; CollectionsRemoveFilters;
+        public event EventHandler&lt;WebApiEventArgs&gt; CollectionsDelete;
+        public event EventHandler&lt;WebApiEventArgs&gt; CollectionsUpdate;
+        public event EventHandler&lt;WebApiEventArgs&gt; CollectionsGet;
+        public event EventHandler&lt;WebApiEventArgs&gt; CollectionsSearch;
+        public event EventHandler&lt;WebApiEventArgs&gt; CollectionsGetTracks;
+        
+        // CreateDeleteController
+        public event EventHandler&lt;WebApiEventArgs&gt; CreateAlbum;
+        public event EventHandler&lt;WebApiEventArgs&gt; DeleteAlbum;
+        public event EventHandler&lt;WebApiEventArgs&gt; CreateArtist;
+        public event EventHandler&lt;WebApiEventArgs&gt; DeleteArtist;
+        
+        // DatabaseController
+        public event EventHandler&lt;WebApiEventArgs&gt; DbFormat;
+        public event EventHandler&lt;WebApiEventArgs&gt; DbBitrate;
+        public event EventHandler&lt;WebApiEventArgs&gt; DbSampleRate;
+        public event EventHandler&lt;WebApiEventArgs&gt; DbBitsPerSample;
+        public event EventHandler&lt;WebApiEventArgs&gt; DbChannel;
+        public event EventHandler&lt;WebApiEventArgs&gt; DbReleaseStatus;
+        public event EventHandler&lt;WebApiEventArgs&gt; DbReleaseType;
+        public event EventHandler&lt;WebApiEventArgs&gt; DbPublisher;
+        public event EventHandler&lt;WebApiEventArgs&gt; DbGenres;
+        
+        // DiscoverController
+        public event EventHandler&lt;WebApiEventArgs&gt; DiscoverTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; DiscoverAlbums;
+        public event EventHandler&lt;WebApiEventArgs&gt; DiscoverArtists;
+        public event EventHandler&lt;WebApiEventArgs&gt; DiscoverTimeBasedTracks;
+        
+        // DownloadController
+        public event EventHandler&lt;WebApiEventArgs&gt; DownloadTrack;
+        public event EventHandler&lt;WebApiEventArgs&gt; DownloadTrackTranscode;
+        public event EventHandler&lt;WebApiEventArgs&gt; DownloadTrackWave;
+        public event EventHandler&lt;WebApiEventArgs&gt; DownloadTrackArt;
+        public event EventHandler&lt;WebApiEventArgs&gt; DownloadAlbumArt;
+        public event EventHandler&lt;WebApiEventArgs&gt; DownloadArtistPfp;
+        public event EventHandler&lt;WebApiEventArgs&gt; DownloadArtistBanner;
+        public event EventHandler&lt;WebApiEventArgs&gt; DownloadPlaylistArt;
+        public event EventHandler&lt;WebApiEventArgs&gt; DownloadCollectionArt;
+        
+        // GeneralController
+        public event EventHandler&lt;WebApiEventArgs&gt; GetTrack;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetAlbum;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetAlbums;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetAlbumTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetArtist;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetArtists;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetArtistTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetArtistReleases;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetArtistSeenOn;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetArtistConnections;
+        public event EventHandler&lt;WebApiEventArgs&gt; GetLyrics;
+        
+        // PlaylistsController
+        public event EventHandler&lt;WebApiEventArgs&gt; PlaylistsCreate;
+        public event EventHandler&lt;WebApiEventArgs&gt; PlaylistsAddTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; PlaylistsRemoveTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; PlaylistsDelete;
+        public event EventHandler&lt;WebApiEventArgs&gt; PlaylistsUpdate;
+        public event EventHandler&lt;WebApiEventArgs&gt; PlaylistsMoveTrack;
+        public event EventHandler&lt;WebApiEventArgs&gt; PlaylistsGet;
+        public event EventHandler&lt;WebApiEventArgs&gt; PlaylistsSearch;
+        public event EventHandler&lt;WebApiEventArgs&gt; PlaylistsGetTracks;
+        
+        // QueuesController
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesCreateFromTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesCreateFromAlbums;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesCreateFromArtists;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesCreateFromPlaylists;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesCreateFromCollections;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesAddTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesRemoveTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesDelete;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesUpdatePosition;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesUpdate;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesMoveTrack;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesGet;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesSearch;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesGetTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; QueuesShuffle;
+        
+        // ScanController
+        public event EventHandler&lt;WebApiEventArgs&gt; ScanStart;
+        public event EventHandler&lt;WebApiEventArgs&gt; ScanProgress;
+        
+        // SearchController
+        public event EventHandler&lt;WebApiEventArgs&gt; SearchTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; SearchAlbums;
+        public event EventHandler&lt;WebApiEventArgs&gt; SearchArtists;
+        
+        // StatsController
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsLogPlay;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsLogSkip;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsListeningTime;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsTopTracks;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsTopAlbums;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsTopArtists;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsTopGenres;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsRecentTrack;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsRecentAlbums;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsRecentArtists;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsRateTrack;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsRateAlbum;
+        public event EventHandler&lt;WebApiEventArgs&gt; StatsRateArtist;
+        
+        // StreamController
+        public event EventHandler&lt;WebApiEventArgs&gt; StreamConnect;
+        public event EventHandler&lt;WebApiEventArgs&gt; StreamGetExternal;
+        public event EventHandler&lt;WebApiEventArgs&gt; StreamPlayExternal;
+        public event EventHandler&lt;WebApiEventArgs&gt; StreamPauseExternal;
+        public event EventHandler&lt;WebApiEventArgs&gt; StreamSkipExternal;
+        public event EventHandler&lt;WebApiEventArgs&gt; StreamRewindExternal;
+        public event EventHandler&lt;WebApiEventArgs&gt; StreamVolumeExternal;
+        
+        // UpdateController
+        public event EventHandler&lt;WebApiEventArgs&gt; UpdateTrack;
+        public event EventHandler&lt;WebApiEventArgs&gt; UpdateAlbum;
+        public event EventHandler&lt;WebApiEventArgs&gt; UpdateArtist;
+        
+        // UserController
+        public event EventHandler&lt;WebApiEventArgs&gt; UsersGet;
+        public event EventHandler&lt;WebApiEventArgs&gt; UsersSearch;
+        public event EventHandler&lt;WebApiEventArgs&gt; UsersAddFriend;
+        public event EventHandler&lt;WebApiEventArgs&gt; UsersRemoveFriend;
+        public event EventHandler&lt;WebApiEventArgs&gt; UsersCurrent;
+        public event EventHandler&lt;WebApiEventArgs&gt; UsersCreate;
+        public event EventHandler&lt;WebApiEventArgs&gt; UsersDelete;
+        public event EventHandler&lt;WebApiEventArgs&gt; UsersUpdate;
+        public event EventHandler&lt;WebApiEventArgs&gt; UsersChangeUsername;
+        public event EventHandler&lt;WebApiEventArgs&gt; UsersChangePassword;
+    }
+        </code></pre>
+        <p>NOTE: Some Endpoints are missing API Events. This will be fixed in the future.</p>
+        <h3>Methods</h3>
+        <ul>
+        <li><strong>UsePluginMiddleware</strong>:<ul>
+        <li><strong>Parameters</strong>:<ul>
+        <li><code>middleware</code>: A key-value pair where the key is the middleware name, and the value is the function handling the middleware.</li>
+        </ul>
+        </li>
+        <li><strong>Returns</strong>: <code>true</code> if added successfully, <code>false</code> otherwise.</li>
+        </ul>
+        </li>
+        <li><strong>RemovePluginMiddleware</strong>:<ul>
+        <li><strong>Parameters</strong>:<ul>
+        <li><code>name</code>: Name of the middleware to remove.</li>
+        </ul>
+        </li>
+        <li><strong>Returns</strong>: <code>true</code> if removed successfully, <code>false</code> otherwise.</li>
+        </ul>
+        </li>
+        <li><strong>GetPluginMiddlewares</strong>:<ul>
+        <li><strong>Returns</strong>: A dictionary of all registered plugin middlewares.</li>
+        </ul>
+        </li>
+        </ul>
+        <h3>Events</h3>
+        <p>Events get triggered whenever the server is about to send a response to the client. This differs from Middleware in that it comes after the request, while middleware will come before. Events come with args that include information about the response and the request. </p>
+        
+    </div>  
+</body>

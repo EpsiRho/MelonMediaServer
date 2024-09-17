@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>ScanProgress Model Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sidebar.js"></script>
+</head>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="scanprogress">ScanProgress</h1>
+        <p>The <code>ScanProgress</code> class is used to send scanner progress over the API endpoint <code>api/scan/progress</code>.</p>
+        <h2 id="properties">Properties</h2>
+        <table>
+        <thead>
+        <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>ScannedFiles</code></td>
+        <td><code>double</code></td>
+        <td>Number of files that have been scanned.</td>
+        </tr>
+        <tr>
+        <td><code>FoundFiles</code></td>
+        <td><code>double</code></td>
+        <td>Total number of files found to be scanned.</td>
+        </tr>
+        <tr>
+        <td><code>Status</code></td>
+        <td><code>string</code></td>
+        <td>Current status message of the scanner.</td>
+        </tr>
+        </tbody>
+        </table>
+        
+    </div>  
+</body>

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Stats API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="stats-apis-documentation">Stats APIs Documentation</h1>
+      <p>
+        The <code>StatsController</code> handles logging and retrieving play
+        statistics, including track plays, skips, ratings, listening times, and
+        more.
+      </p>
+      <h2 id="controller-route-api-stats-">
+        Controller Route: <code>/api/stats</code>
+      </h2>
+      <p>
+        All routes within the <code>StatsController</code> are prefixed by
+        <code>/api/stats</code>.
+      </p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/stats/log-play</code></td>
+            <td>POST</td>
+            <td>Logs a track play for the current user.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/log-skip</code></td>
+            <td>POST</td>
+            <td>Logs a track skip for the current user.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/listening-time</code></td>
+            <td>GET</td>
+            <td>Retrieves total listening time for a user.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/top-tracks</code></td>
+            <td>GET</td>
+            <td>Retrieves the top tracks for a user.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/top-albums</code></td>
+            <td>GET</td>
+            <td>Retrieves the top albums for a user.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/top-artists</code></td>
+            <td>GET</td>
+            <td>Retrieves the top artists for a user.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/top-genres</code></td>
+            <td>GET</td>
+            <td>Retrieves the top genres for a user.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/recent-tracks</code></td>
+            <td>GET</td>
+            <td>Retrieves recent tracks played by the user.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/recent-albums</code></td>
+            <td>GET</td>
+            <td>Retrieves recent albums played by the user.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/recent-artists</code></td>
+            <td>GET</td>
+            <td>Retrieves recent artists played by the user.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/rate-track</code></td>
+            <td>POST</td>
+            <td>Allows users to rate a track.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/rate-album</code></td>
+            <td>POST</td>
+            <td>Allows users to rate an album.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/rate-artist</code></td>
+            <td>POST</td>
+            <td>Allows users to rate an artist.</td>
+            <td>Admin, User</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h3 id="log-play">Log Play</h3>
+      <p>
+        Logs a track play event and updates the play statistics for the track,
+        album, and associated artists.
+      </p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stats/log-play</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>id</strong> (string, required): The ID of the track being
+          played.
+        </li>
+        <li>
+          <strong>device</strong> (string, optional): The device used to play
+          the track.
+        </li>
+        <li>
+          <strong>dateTime</strong> (string, optional): The date and time the
+          track was played (ISO format).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the play event is logged.
+        </li>
+        <li><strong>404 Not Found</strong>: If the track is not found.</li>
+        <li>
+          <strong>400 Bad Request</strong>: If the date format is invalid.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/stats/log-play?id=66bc99b8ab7ba419497e21af&amp;device=mobile" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span> \
+        </span>     -<span class="ruby">H <span class="hljs-string">"Content-Type: application/json"</span></span>
+        </code></pre>
+      <hr />
+      <h3 id="log-skip">Log Skip</h3>
+      <p>Logs a track skip event for a user.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stats/log-skip</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>id</strong> (string, required): The ID of the track being
+          skipped.
+        </li>
+        <li>
+          <strong>device</strong> (string, optional): The device used to skip
+          the track.
+        </li>
+        <li>
+          <strong>dateTime</strong> (string, optional): The date and time of the
+          skip (ISO format).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the skip event is logged.
+        </li>
+        <li><strong>404 Not Found</strong>: If the track is not found.</li>
+        <li>
+          <strong>400 Bad Request</strong>: If the date format is invalid.
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/stats/log-skip?id=66bc99b8ab7ba419497e21af&amp;device=mobile" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span> \
+        </span>     -<span class="ruby">H <span class="hljs-string">"Content-Type: application/json"</span></span>
+        </code></pre>
+      <hr />
+      <h3 id="get-listening-time">Get Listening Time</h3>
+      <p>Retrieves the total listening time for a user.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/stats/listening-time</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>userId</strong> (string, optional): The ID of the user
+          (defaults to the current user).
+        </li>
+        <li>
+          <strong>ltDateTime</strong> (string, optional): Filters logs before
+          this date.
+        </li>
+        <li>
+          <strong>gtDateTime</strong> (string, optional): Filters logs after
+          this date.
+        </li>
+        <li>
+          <strong>page</strong> (int, optional): The page of results (default is
+          0).
+        </li>
+        <li>
+          <strong>count</strong> (int, optional): The number of results per page
+          (default is 100).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns the total listening time for the
+          user.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET "https://your-api-url.com/api/stats/listening-time?userId=66bc99b8ab7ba419497e21af&amp;ltDateTime=2023<span class="hljs-string">-01</span><span class="hljs-string">-01</span>&amp;gtDateTime=2022<span class="hljs-string">-01</span><span class="hljs-string">-01</span>" \
+             -H "Authorization: Bearer &lt;JWT-token&gt;"
+        </code></pre>
+      <hr />
+      <h3 id="get-top-tracks">Get Top Tracks</h3>
+      <p>
+        Retrieves the top played tracks for a user within a given timeframe.
+      </p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stats/top-tracks</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>userId</strong> (string, optional): The ID of the user
+          (defaults to the current user).
+        </li>
+        <li>
+          <strong>ltDateTime</strong> (string, optional): Filters logs before
+          this date.
+        </li>
+        <li>
+          <strong>gtDateTime</strong> (string, optional): Filters logs after
+          this date.
+        </li>
+        <li>
+          <strong>device</strong> (string, optional): Filters logs by device.
+        </li>
+        <li>
+          <strong>page</strong> (int, optional): The page of results (default is
+          0).
+        </li>
+        <li>
+          <strong>count</strong> (int, optional): The number of results per page
+          (default is 100).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns the list of top tracks.</li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stats/top-tracks?userId=66bc99b8ab7ba419497e21af&amp;page=0&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-top-albums">Get Top Albums</h3>
+      <p>
+        Retrieves the top played albums for a user within a given timeframe.
+      </p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stats/top-albums</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>userId</strong> (string, optional): The ID of the user
+          (defaults to the current user).
+        </li>
+        <li>
+          <strong>ltDateTime</strong> (string, optional): Filters logs before
+          this date.
+        </li>
+        <li>
+          <strong>gtDateTime</strong> (string, optional): Filters logs after
+          this date.
+        </li>
+        <li>
+          <strong>device</strong> (string, optional): Filters logs by device.
+        </li>
+        <li>
+          <strong>page</strong> (int, optional): The page of results (default is
+          0).
+        </li>
+        <li>
+          <strong>count</strong> (int, optional): The number of results per page
+          (default is 100).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns the list of top albums.</li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stats/top-albums?userId=66bc99b8ab7ba419497e21af&amp;page=0&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-top-artists">Get Top Artists</h3>
+      <p>
+        Retrieves the top played artists for a user within a given timeframe.
+      </p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stats/top-artists</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>userId</strong> (string, optional): The ID of the user
+          (defaults to the current user).
+        </li>
+        <li>
+          <strong>ltDateTime</strong> (string, optional): Filters logs before
+          this date.
+        </li>
+        <li>
+          <strong>gtDateTime</strong> (string, optional): Filters logs after
+          this date.
+        </li>
+        <li>
+          <strong>device</strong> (string, optional): Filters logs by device.
+        </li>
+        <li>
+          <strong>page</strong> (int, optional): The page of results (default is
+          0).
+        </li>
+        <li>
+          <strong>count</strong> (int, optional): The number of results per page
+          (default is 100).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns the list of top artists.</li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stats/top-artists?userId=66bc99b8ab7ba419497e21af&amp;page=0&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-top-genres">Get Top Genres</h3>
+      <p>
+        Retrieves the top played genres for a user within a given timeframe.
+      </p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stats/top-genres</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <p><strong>userId</strong> (string, optional): The ID of the</p>
+          <p>user (defaults to the current user).</p>
+        </li>
+        <li>
+          <strong>ltDateTime</strong> (string, optional): Filters logs before
+          this date.
+        </li>
+        <li>
+          <strong>gtDateTime</strong> (string, optional): Filters logs after
+          this date.
+        </li>
+        <li>
+          <strong>device</strong> (string, optional): Filters logs by device.
+        </li>
+        <li>
+          <strong>page</strong> (int, optional): The page of results (default is
+          0).
+        </li>
+        <li>
+          <strong>count</strong> (int, optional): The number of results per page
+          (default is 100).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: Returns the list of top genres.</li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stats/top-genres?userId=66bc99b8ab7ba419497e21af&amp;page=0&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-recent-tracks">Get Recent Tracks</h3>
+      <p>Retrieves a list of recently played tracks for a user.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/stats/recent-tracks</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>userId</strong> (string, optional): The ID of the user
+          (defaults to the current user).
+        </li>
+        <li>
+          <strong>device</strong> (string, optional): Filters logs by device.
+        </li>
+        <li>
+          <strong>page</strong> (int, optional): The page of results (default is
+          0).
+        </li>
+        <li>
+          <strong>count</strong> (int, optional): The number of results per page
+          (default is 100).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns a list of recent tracks played by the
+          user.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stats/recent-tracks?userId=66bc99b8ab7ba419497e21af&amp;device=mobile&amp;page=0&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-recent-albums">Get Recent Albums</h3>
+      <p>Retrieves a list of recently played albums for a user.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/stats/recent-albums</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>userId</strong> (string, optional): The ID of the user
+          (defaults to the current user).
+        </li>
+        <li>
+          <strong>device</strong> (string, optional): Filters logs by device.
+        </li>
+        <li>
+          <strong>page</strong> (int, optional): The page of results (default is
+          0).
+        </li>
+        <li>
+          <strong>count</strong> (int, optional): The number of results per page
+          (default is 100).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns a list of recent albums played by the
+          user.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stats/recent-albums?userId=66bc99b8ab7ba419497e21af&amp;device=mobile&amp;page=0&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="get-recent-artists">Get Recent Artists</h3>
+      <p>Retrieves a list of recently played artists for a user.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li>
+          <strong>Endpoint</strong>: <code>/api/stats/recent-artists</code>
+        </li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li>
+          <strong>userId</strong> (string, optional): The ID of the user
+          (defaults to the current user).
+        </li>
+        <li>
+          <strong>device</strong> (string, optional): Filters logs by device.
+        </li>
+        <li>
+          <strong>page</strong> (int, optional): The page of results (default is
+          0).
+        </li>
+        <li>
+          <strong>count</strong> (int, optional): The number of results per page
+          (default is 100).
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns a list of recent artists played by
+          the user.
+        </li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/stats/recent-artists?userId=66bc99b8ab7ba419497e21af&amp;device=mobile&amp;page=0&amp;count=10"</span> \
+             -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
+        </code></pre>
+      <hr />
+      <h3 id="rate-track">Rate Track</h3>
+      <p>Allows a user to rate a track.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stats/rate-track</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the track.</li>
+        <li>
+          <strong>rating</strong> (long, required): The rating value for the
+          track.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the rating is saved.
+        </li>
+        <li><strong>404 Not Found</strong>: If the track is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/stats/rate-track?id=66bc99b8ab7ba419497e21af&amp;rating=5" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span> \
+        </span>     -<span class="ruby">H <span class="hljs-string">"Content-Type: application/json"</span></span>
+        </code></pre>
+      <hr />
+      <h3 id="rate-album">Rate Album</h3>
+      <p>Allows a user to rate an album.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stats/rate-album</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the album.</li>
+        <li>
+          <strong>rating</strong> (long, required): The rating value for the
+          album.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the rating is saved.
+        </li>
+        <li><strong>404 Not Found</strong>: If the album is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/stats/rate-album?id=66bc99b8ab7ba419497e21af&amp;rating=5" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span> \
+        </span>     -<span class="ruby">H <span class="hljs-string">"Content-Type: application/json"</span></span>
+        </code></pre>
+      <hr />
+      <h3 id="rate-artist">Rate Artist</h3>
+      <p>Allows a user to rate an artist.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stats/rate-artist</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the artist.</li>
+        <li>
+          <strong>rating</strong> (long, required): The rating value for the
+          artist.
+        </li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li>
+          <strong>200 OK</strong>: Returns success if the rating is saved.
+        </li>
+        <li><strong>404 Not Found</strong>: If the artist is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/stats/rate-artist?id=66bc99b8ab7ba419497e21af&amp;rating=5" \
+             -<span class="ruby">H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span> \
+        </span>     -<span class="ruby">H <span class="hljs-string">"Content-Type: application/json"</span></span>
+        </code></pre>
+    </div>
+  </body>
+</html>
