@@ -62,7 +62,7 @@ namespace Melon.DisplayClasses
         }
         public static void AddIcon()
         {
-            using var iconStream = GetStream("cda.ico");
+            using var iconStream = GetStream("MelonLogo.ico");
             icon = new Icon(iconStream);
             trayIcon = new TrayIconWithContextMenu
             {
