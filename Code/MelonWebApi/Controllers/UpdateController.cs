@@ -1,646 +1,414 @@
 ﻿using Melon.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using SharpCompress.Common;
-using static System.Net.Mime.MediaTypeNames;
-using System.Drawing;
-using Melon.LocalClasses;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
-using System.Web.Http.Filters;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
 using System.Security.Claims;
-using System.Security.Policy;
-using NuGet.Packaging.Signing;
-using Amazon.Util.Internal;
-using Melon.Classes;
-using Melon.DisplayClasses;
+using System.Threading.Tasks;
+using Melon.LocalClasses;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace MelonWebApi.Controllers
 {
     [ApiController]
-    [Route("api/")]
+    [Route("api/update")]
     public class UpdateController : ControllerBase
     {
-        private readonly ILogger<GeneralController> _logger;
+        private readonly ILogger<UpdateController> _logger;
+        private readonly IMongoDatabase _database;
+        private readonly IMongoCollection<Track> _tracksCollection;
+        private readonly IMongoCollection<Album> _albumsCollection;
+        private readonly IMongoCollection<Artist> _artistsCollection;
 
-        public UpdateController(ILogger<GeneralController> logger)
+        public UpdateController(ILogger<UpdateController> logger)
         {
             _logger = logger;
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            _database = mongoClient.GetDatabase("Melon");
+            _tracksCollection = _database.GetCollection<Track>("Tracks");
+            _albumsCollection = _database.GetCollection<Album>("Albums");
+            _artistsCollection = _database.GetCollection<Artist>("Artists");
         }
 
+        /// <summary>
+        /// Updates a track's metadata.
+        /// </summary>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <param name="id">Track ID</param>
+        /// <param name="updatedTrack">Updated track data</param>
+        /// <returns>Result of the update operation</returns>
+        /// <response code="200">If the update was successful</response>
+        /// <response code="400">If the input is invalid</response>
+        /// <response code="401">If the user is unauthorized</response>
+        /// <response code="404">If the track is not found</response>
         [Authorize(Roles = "Admin")]
-        [HttpPatch("track/update")]
-        public ObjectResult UpdateTrack(string trackId, string disc = "", string isrc = "", string releaseDate = "", string position = "",
-                                        [FromQuery] string[] trackGenres = null, string trackName = "", string year = "", string nextTrack = "",
-                                        string albumId = "", int defaultTrackArt = -1, [FromQuery] string[] artistIds = null)
+        [HttpPut("track")]
+        public async Task<IActionResult> UpdateTrack(string id, [FromBody] ResponseTrack updatedTrack)
         {
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                        .Where(c => c.Type == ClaimTypes.UserData)
-                        .Select(c => c.Value).FirstOrDefault();
-            var args = new WebApiEventArgs("api/track/update", curId, new Dictionary<string, object>()
+            if (updatedTrack == null || string.IsNullOrEmpty(id))
             {
-                { "trackId", trackId },
-                { "disc", disc },
-                { "isrc", isrc },
-                { "releaseDate", releaseDate },
-                { "position", position },
-                { "trackGenres", trackGenres },
-                { "trackName", trackName },
-                { "year", year },
-                { "nextTrack", nextTrack },
-                { "albumId", albumId },
-                { "defaultTrackArt", defaultTrackArt },
-                { "artistIds", artistIds },
-            });
-
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
-            var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
-            var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
-            
-            var trackFilter = Builders<Track>.Filter.Eq(x=>x._id, trackId);
-            var foundTrack = TracksCollection.Find(trackFilter).FirstOrDefault();
-            if(foundTrack == null)
-            {
-                args.SendEvent("Track Not Found", 404, Program.mWebApi);
-                return new ObjectResult("Track Not Found") { StatusCode = 404 };
+                return BadRequest("Invalid track data.");
             }
 
-            disc = disc == "" ? foundTrack.Disc.ToString() : disc;
-            isrc = isrc == "" ? foundTrack.ISRC : isrc;
-            releaseDate = releaseDate == "" ? foundTrack.ReleaseDate.ToString() : releaseDate;
-            position = position == "" ? foundTrack.Position.ToString() : position;
-            trackName = trackName == "" ? foundTrack.Name.ToString() : trackName;
-            year = year == "" ? foundTrack.Year : year;
-            nextTrack = nextTrack == "" ? foundTrack.nextTrack : nextTrack;
-            defaultTrackArt = defaultTrackArt == -1 ? foundTrack.TrackArtDefault : defaultTrackArt;
+            var userId = User.FindFirstValue(ClaimTypes.UserData);
+            var args = new WebApiEventArgs($"api/update/track/{id}", userId, new Dictionary<string, object>());
 
-            if (trackGenres == null)
+            var filter = Builders<Track>.Filter.Eq(t => t._id, id);
+            var existingTrack = await _tracksCollection.Find(filter).FirstOrDefaultAsync();
+
+            if (existingTrack == null)
             {
-                trackGenres = foundTrack.TrackGenres.ToArray();
+                args.SendEvent("Track not found", 404, Program.mWebApi);
+                return NotFound("Track not found.");
             }
 
-            Album newAlbum = null;
-            DbLink newShortAlbum = null;
-            List<Artist> newArtists = new List<Artist>();
-            List<DbLink> newShortArtists = new List<DbLink>();
-            if(albumId != "")
-            {
-                var aFilter = Builders<Album>.Filter.Eq(x=>x._id, albumId);
-                newAlbum = AlbumsCollection.Find(aFilter).FirstOrDefault();
+            // Preserve UserStats and ensure only the current user's stats can be modified
+            updatedTrack.Ratings = UpdateUserStats(existingTrack.Ratings, updatedTrack.Ratings, userId);
+            updatedTrack.PlayCounts = UpdateUserStats(existingTrack.PlayCounts, updatedTrack.PlayCounts, userId);
+            updatedTrack.SkipCounts = UpdateUserStats(existingTrack.SkipCounts, updatedTrack.SkipCounts, userId);
 
-                if (newAlbum == null)
+            // Fetch full Album and Artist documents
+            var album = await _albumsCollection.Find(a => a._id == updatedTrack.Album._id).FirstOrDefaultAsync();
+            if (album == null)
+            {
+                return BadRequest("Invalid album reference.");
+            }
+            updatedTrack.Album = new DbLink(album);
+
+            var artistIds = updatedTrack.TrackArtists.Select(a => a._id).ToList();
+            var artists = await _artistsCollection.Find(a => artistIds.Contains(a._id)).ToListAsync();
+            if (artists.Count != artistIds.Count)
+            {
+                return BadRequest("One or more track artists not found.");
+            }
+            updatedTrack.TrackArtists = artists.Select(a => new DbLink(a)).ToList();
+
+            // Update the database record
+            updatedTrack._id = existingTrack._id; // Ensure the ID remains the same
+            var updatedTrackFull = new Track(updatedTrack);
+            updatedTrackFull.Path = existingTrack.Path; // Preserve the file path
+            updatedTrackFull.LyricsPath = existingTrack.LyricsPath; // Preserve the file path
+            await _tracksCollection.ReplaceOneAsync(filter, updatedTrackFull);
+
+            // Update the audio file's metadata
+            try
+            {
+                var atlTrack = new ATL.Track(existingTrack.Path);
+
+                // Update basic tags
+                atlTrack.Title = updatedTrack.Name;
+                atlTrack.Album = album.Name;
+                atlTrack.Artist = string.Join("; ", updatedTrack.TrackArtists.Select(a => a.Name));
+                atlTrack.TrackNumber = updatedTrack.Position;
+                atlTrack.DiscNumber = updatedTrack.Disc;
+                atlTrack.Year = int.TryParse(updatedTrack.Year, out int year) ? year : 0;
+                atlTrack.AlbumArtist = string.Join("; ", album.AlbumArtists.Select(a => a.Name));
+                atlTrack.Genre = string.Join("; ", updatedTrack.TrackGenres);
+                atlTrack.Date = updatedTrack.ReleaseDate;
+
+                // Update additional tags
+                atlTrack.AdditionalFields["ISRC"] = updatedTrack.ISRC ?? "";
+                atlTrack.AdditionalFields["MUSICBRAINZ_TRACKID"] = updatedTrack.MusicBrainzID ?? "";
+                atlTrack.Publisher = album.Publisher ?? "";
+
+                // Update chapters if supported by the format
+                if (atlTrack.Chapters != null && updatedTrack.Chapters != null)
                 {
-                    args.SendEvent("Album Not Found", 404, Program.mWebApi);
-                    return new ObjectResult("Album Not Found") { StatusCode = 404 };
-                }
-
-                newShortAlbum = new DbLink(newAlbum);
-            }
-            else
-            {
-                newShortAlbum = foundTrack.Album;
-            }
-
-            if(artistIds != null)
-            {
-                foreach (var id in artistIds)
-                {
-                    var aFilter = Builders<Artist>.Filter.Eq(x => x._id, id);
-                    var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
-                    if (newArtist == null)
+                    atlTrack.Chapters.Clear();
+                    foreach (var chapter in updatedTrack.Chapters)
                     {
-                        args.SendEvent("Artist Not Found", 404, Program.mWebApi);
-                        return new ObjectResult("Artist Not Found") { StatusCode = 404 };
+                        var atlChapter = new ATL.ChapterInfo
+                        {
+                            Title = chapter.Title,
+                            StartTime = (uint)chapter.Timestamp.TotalMilliseconds,
+                            Subtitle = chapter.Description
+                        };
+                        atlTrack.Chapters.Add(atlChapter);
                     }
-                    newShortArtists.Add(new DbLink(newArtist));
-
-                    newArtists.Add(newArtist);
-                    newShortArtists.Add(new DbLink(newArtist));
                 }
+
+                atlTrack.Save();
             }
-            else
+            catch (Exception ex)
             {
-                newShortArtists.AddRange(foundTrack.TrackArtists);
-            }
-
-            // Create new objects
-            var newTrack = new Track()
-            {
-                _id = foundTrack._id,
-                Album = newShortAlbum,
-                Bitrate = foundTrack.Bitrate,
-                BitsPerSample = foundTrack.BitsPerSample,
-                Channels = foundTrack.Channels,
-                Disc = Convert.ToInt32(disc),
-                Format = foundTrack.Format,
-                ISRC = foundTrack.ISRC,
-                MusicBrainzID = foundTrack.MusicBrainzID,
-                Ratings = foundTrack.Ratings,
-                ReleaseDate = DateTime.Parse(releaseDate).ToUniversalTime(),
-                SampleRate = foundTrack.SampleRate,
-                LyricsPath = foundTrack.LyricsPath,
-                ServerURL = foundTrack.ServerURL,
-                Position = Convert.ToInt32(position),
-                TrackArtists = newShortArtists,
-                TrackGenres = trackGenres.ToList(),
-                Name = trackName,
-                Year = year,
-                Duration = foundTrack.Duration,
-                DateAdded = foundTrack.DateAdded,
-                LastModified = foundTrack.LastModified,
-                Path = foundTrack.Path,
-                PlayCounts = foundTrack.PlayCounts,
-                SkipCounts = foundTrack.SkipCounts,
-                TrackArtCount = foundTrack.TrackArtCount,
-                nextTrack = nextTrack,
-                TrackArtDefault = defaultTrackArt
-            };
-
-            var newShortTrack = new DbLink()
-            {
-                _id = foundTrack._id,
-                Name = trackName
-            };
-
-            // Replace objects
-            TracksCollection.ReplaceOne(trackFilter, newTrack);
-
-            // Update File
-            var fileMetadata = new ATL.Track(foundTrack.Path);
-
-            fileMetadata.DiscNumber = disc == "" ? fileMetadata.DiscNumber : Convert.ToInt32(disc);
-            if (!fileMetadata.AdditionalFields.ContainsKey("ISRC"))
-            {
-                fileMetadata.AdditionalFields.Add("ISRC", isrc);
-            }
-            fileMetadata.AdditionalFields["ISRC"] = isrc == "" ? fileMetadata.AdditionalFields["ISRC"] : isrc;
-            fileMetadata.Date = releaseDate == "" ? fileMetadata.Date : DateTime.Parse(releaseDate).ToUniversalTime();
-            fileMetadata.TrackNumber = position == "" ? fileMetadata.TrackNumber : Convert.ToInt32(position);
-            fileMetadata.Title = trackName == "" ? fileMetadata.Title : trackName;
-            fileMetadata.Year = year == "" ? fileMetadata.Year : Convert.ToInt32(year);
-
-            if (trackGenres != null)
-            {
-                string genreStr = "";
-                foreach (var genre in trackGenres)
-                {
-                    genreStr += $"{genre};";
-                }
-                genreStr = genreStr.Substring(0, genreStr.Length - 1);
-                fileMetadata.Genre = genreStr;
+                _logger.LogError(ex, "Error updating file metadata for track ID: {TrackId}", id);
+                args.SendEvent("Error updating file metadata", 500, Program.mWebApi);
+                return StatusCode(500, "Error updating file metadata.");
             }
 
-            if(newAlbum != null)
-            {
-                fileMetadata.Album = newAlbum.Name;
-                fileMetadata.DiscTotal = newAlbum.TotalDiscs;
-                fileMetadata.TrackTotal = newAlbum.TotalDiscs;
-                fileMetadata.Publisher = newAlbum.Publisher;
-                if (!fileMetadata.AdditionalFields.ContainsKey("RELEASESTATUS"))
-                {
-                    fileMetadata.AdditionalFields.Add("RELEASESTATUS", newAlbum.ReleaseStatus);
-                }
-                fileMetadata.AdditionalFields["RELEASESTATUS"] = newAlbum.ReleaseStatus;
-                if (!fileMetadata.AdditionalFields.ContainsKey("RELEASETYPE"))
-                {
-                    fileMetadata.AdditionalFields.Add("RELEASETYPE", newAlbum.ReleaseType);
-                }
-                fileMetadata.AdditionalFields["RELEASETYPE"] = newAlbum.ReleaseType;
-                string artistStr = "";
-                foreach (var artist in newAlbum.AlbumArtists)
-                {
-                    artistStr = $"{artist};";
-                }
-                artistStr = artistStr.Substring(0, artistStr.Length - 1);
-                fileMetadata.AlbumArtist = artistStr;
-            }
-
-            if(newArtists.Count() != 0)
-            {
-                string artistStr = "";
-                foreach (var artist in newArtists)
-                {
-                    artistStr += $"{artist.Name};";
-                }
-                artistStr = artistStr.Substring(0, artistStr.Length - 1);
-                fileMetadata.Artist = artistStr;
-            }
-
-            fileMetadata.Save();
-
-            Thread t = new Thread(MelonScanner.UpdateCollections);
-            t.Start();
-
-            args.SendEvent("Track updated", 200, Program.mWebApi);
-            return new ObjectResult("Track updated") { StatusCode = 200 };
-        }
-        [Authorize(Roles = "Admin")]
-        [HttpPatch("track/update/add-chapter")]
-        public ObjectResult AddTrackChapter(string id, string title, long timestampMs, string description = "",
-                                            [FromQuery] List<string> trackIds = null, [FromQuery] List<string> albumIds = null, [FromQuery] List<string> artistIds = null)
-        {
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
-            var args = new WebApiEventArgs("api/track/update/add-chapter", curId, new Dictionary<string, object>()
-            {
-                { "id", id },
-                { "title", title },
-                { "timestampMs", timestampMs },
-                { "description", description },
-                { "trackIds", trackIds },
-                { "albumIds", albumIds },
-                { "artistIds", artistIds }
-            });
-
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
-            var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
-            var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
-
-            var trackFilter = Builders<Track>.Filter.Eq(x => x._id, id);
-            var foundTrack = TracksCollection.Find(trackFilter).FirstOrDefault();
-            if (foundTrack == null)
-            {
-                args.SendEvent("Track Not Found", 404, Program.mWebApi);
-                return new ObjectResult("Track Not Found") { StatusCode = 404 };
-            }
-
-            Chapter ch = new Chapter();
-            ch._id = ObjectId.GenerateNewId().ToString();
-            ch.Title = title;
-            ch.Description = description;
-            ch.Timestamp = TimeSpan.FromMilliseconds(timestampMs);
-            ch.Tracks = trackIds != null ? TracksCollection.AsQueryable().Where(x=>trackIds.Contains(x._id)).ToList().Select(x=>new DbLink(x)).ToList() : new List<DbLink>();
-            ch.Albums = albumIds != null ? AlbumsCollection.AsQueryable().Where(x => albumIds.Contains(x._id)).ToList().Select(x => new DbLink(x)).ToList() : new List<DbLink>();
-            ch.Artists = artistIds != null ? ArtistsCollection.AsQueryable().Where(x => artistIds.Contains(x._id)).ToList().Select(x => new DbLink(x)).ToList() : new List<DbLink>();
-
-            foundTrack.Chapters.Add(ch);
-            TracksCollection.ReplaceOne(trackFilter, foundTrack);
-
-            args.SendEvent("Track Chapter Added", 200, Program.mWebApi);
-            return new ObjectResult("Track Chapter Added") { StatusCode = 200 };
-        }
-        [Authorize(Roles = "Admin")]
-        [HttpPatch("track/update/remove-chapter")]
-        public ObjectResult RemoveTrackChapter(string id, string chapterId)
-        {
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
-            var args = new WebApiEventArgs("api/track/update/remove-chapter", curId, new Dictionary<string, object>()
-            {
-                { "id", id },
-                { "chapterId", chapterId }
-            });
-
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
-
-            var trackFilter = Builders<Track>.Filter.Eq(x => x._id, id);
-            var foundTrack = TracksCollection.Find(trackFilter).FirstOrDefault();
-            if (foundTrack == null)
-            {
-                args.SendEvent("Track Not Found", 404, Program.mWebApi);
-                return new ObjectResult("Track Not Found") { StatusCode = 404 };
-            }
-
-            foundTrack.Chapters.Remove(foundTrack.Chapters.FirstOrDefault(x=>x._id == chapterId));
-            TracksCollection.ReplaceOne(trackFilter, foundTrack);
-
-            args.SendEvent("Track Chapter Removed", 200, Program.mWebApi);
-            return new ObjectResult("Track Chapter Removed") { StatusCode = 200 };
+            args.SendEvent("Track updated successfully", 200, Program.mWebApi);
+            return Ok("Track updated successfully.");
         }
 
+        /// <summary>
+        /// Updates an album's metadata.
+        /// </summary>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <param name="id">Album ID</param>
+        /// <param name="updatedAlbum">Updated album data</param>
+        /// <returns>Result of the update operation</returns>
+        /// <response code="200">If the update was successful</response>
+        /// <response code="400">If the input is invalid</response>
+        /// <response code="401">If the user is unauthorized</response>
+        /// <response code="404">If the album is not found</response>
         [Authorize(Roles = "Admin")]
-        [HttpPatch("album/update")]
-        public ObjectResult UpdateAlbum(string albumId, string totalDiscs = "", string totalTracks = "", string releaseDate = "", string albumName = "",
-                                        [FromQuery] string[] albumGenres = null, string bio = "", string publisher = "", string releaseStatus = "", string releaseType = "", int defaultAlbumArt = -1,
-                                        [FromQuery] string[] contributingAristsIds = null, [FromQuery] string[] albumArtistIds = null)
+        [HttpPut("album")]
+        public async Task<IActionResult> UpdateAlbum(string id, [FromBody] ResponseAlbum updatedAlbum)
         {
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                        .Where(c => c.Type == ClaimTypes.UserData)
-                        .Select(c => c.Value).FirstOrDefault();
-            var args = new WebApiEventArgs("api/album/update", curId, new Dictionary<string, object>()
+            if (updatedAlbum == null || string.IsNullOrEmpty(id))
             {
-                { "albumId", albumId },
-                { "totalDiscs", totalDiscs },
-                { "totalTracks", totalTracks },
-                { "releaseDate", releaseDate },
-                { "albumName", albumName },
-                { "albumGenres", albumGenres },
-                { "bio", bio },
-                { "publisher", publisher },
-                { "releaseStatus", releaseStatus },
-                { "releaseType", releaseType },
-                { "defaultAlbumArt", defaultAlbumArt },
-                { "contributingAristsIds", contributingAristsIds },
-                { "albumArtistIds", albumArtistIds },
-            });
-
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
-            var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
-            var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
-
-            var albumFilter = Builders<Album>.Filter.Eq(x => x._id, albumId);
-            var foundAlbum = AlbumsCollection.Find(albumFilter).FirstOrDefault();
-            if (foundAlbum == null)
-            {
-                args.SendEvent("Album Not Found", 404, Program.mWebApi);
-                return new ObjectResult("Album Not Found") { StatusCode = 404 };
+                return BadRequest("Invalid album data.");
             }
 
-            List<Artist> newAlbumArtists = new List<Artist>();
-            List<DbLink> newAlbumShortArtists = new List<DbLink>();
-            List<Artist> newConArtists = new List<Artist>();
-            List<DbLink> newConShortArtists = new List<DbLink>();
+            var userId = User.FindFirstValue(ClaimTypes.UserData);
+            var args = new WebApiEventArgs($"api/update/album/{id}", userId, new Dictionary<string, object>());
 
-            List<Track> newTracks = new List<Track>();
-            List<DbLink> newShortTracks = new List<DbLink>();
+            var filter = Builders<Album>.Filter.Eq(a => a._id, id);
+            var existingAlbum = await _albumsCollection.Find(filter).FirstOrDefaultAsync();
 
-            if (albumArtistIds != null)
+            if (existingAlbum == null)
             {
-                foreach (var id in albumArtistIds)
-                {
-                    var aFilter = Builders<Artist>.Filter.Eq(x => x._id, id);
-                    var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
-                    if (newArtist == null)
-                    {
-                        args.SendEvent("Artist Not Found", 404, Program.mWebApi);
-                        return new ObjectResult("Artist Not Found") { StatusCode = 404 };
-                    }
-
-                    newAlbumArtists.Add(newArtist);
-                    newAlbumShortArtists.Add(new DbLink(newArtist));
-                }
-            }
-            else
-            {
-                newAlbumShortArtists.AddRange(foundAlbum.AlbumArtists);
+                args.SendEvent("Album not found", 404, Program.mWebApi);
+                return NotFound("Album not found.");
             }
 
-            if (contributingAristsIds != null)
-            {
-                foreach (var id in contributingAristsIds)
-                {
-                    var aFilter = Builders<Artist>.Filter.Eq(x => x._id, id);
-                    var newArtist = ArtistsCollection.Find(aFilter).FirstOrDefault();
-                    if (newArtist == null)
-                    {
-                        args.SendEvent("Artist Not Found", 404, Program.mWebApi);
-                        return new ObjectResult("Artist Not Found") { StatusCode = 404 };
-                    }
+            // Preserve UserStats and ensure only the current user's stats can be modified
+            updatedAlbum.Ratings = UpdateUserStats(existingAlbum.Ratings, updatedAlbum.Ratings, userId);
+            updatedAlbum.PlayCounts = UpdateUserStats(existingAlbum.PlayCounts, updatedAlbum.PlayCounts, userId);
+            updatedAlbum.SkipCounts = UpdateUserStats(existingAlbum.SkipCounts, updatedAlbum.SkipCounts, userId);
 
-                    newConArtists.Add(newArtist);
-                    newConShortArtists.Add(new DbLink(newArtist));
-                }
+            // Fetch full Artist documents for AlbumArtists and ContributingArtists
+            var albumArtistIds = updatedAlbum.AlbumArtists.Select(a => a._id).ToList();
+            var albumArtists = await _artistsCollection.Find(a => albumArtistIds.Contains(a._id)).ToListAsync();
+            if (albumArtists.Count != albumArtistIds.Count)
+            {
+                return BadRequest("One or more album artists not found.");
             }
-            else
+            updatedAlbum.AlbumArtists = albumArtists.Select(a => new DbLink(a)).ToList();
+
+            var contribArtistIds = updatedAlbum.ContributingArtists.Select(a => a._id).ToList();
+            var contribArtists = await _artistsCollection.Find(a => contribArtistIds.Contains(a._id)).ToListAsync();
+            updatedAlbum.ContributingArtists = contribArtists.Select(a => new DbLink(a)).ToList();
+
+            // Update the database record
+            updatedAlbum._id = existingAlbum._id; // Ensure the ID remains the same
+            var updatedAlbumFull = new Album(updatedAlbum);
+            updatedAlbumFull.AlbumArtPaths = existingAlbum.AlbumArtPaths; // Preserve the file path
+            await _albumsCollection.ReplaceOneAsync(filter, updatedAlbumFull);
+
+            // Find all tracks in this album
+            var trackFilter = Builders<Track>.Filter.Eq(t => t.Album._id, id);
+            var albumTracks = await _tracksCollection.Find(trackFilter).ToListAsync();
+
+            // Update the album information in each track and the corresponding file metadata
+            foreach (var track in albumTracks)
             {
-                newConShortArtists.AddRange(foundAlbum.ContributingArtists);
-            }
+                track.Album = new DbLink(updatedAlbumFull);
+                await _tracksCollection.ReplaceOneAsync(Builders<Track>.Filter.Eq(t => t._id, track._id), track);
 
-            totalDiscs = totalDiscs == "" ? foundAlbum.TotalDiscs.ToString() : totalDiscs;
-            totalTracks = totalTracks == "" ? foundAlbum.TotalTracks.ToString() : totalTracks;
-            albumName = albumName == "" ? foundAlbum.Name : albumName;
-            bio = bio == "" ? foundAlbum.Bio : bio;
-            publisher = publisher == "" ? foundAlbum.Publisher : publisher;
-            releaseStatus = releaseStatus == "" ? foundAlbum.ReleaseStatus : releaseStatus;
-            releaseType = releaseType == "" ? foundAlbum.ReleaseType : releaseType;
-            releaseDate = releaseDate == "" ? foundAlbum.ReleaseDate.ToString() : releaseDate;
-            defaultAlbumArt = defaultAlbumArt == -1 ? foundAlbum.AlbumArtDefault : defaultAlbumArt;
-
-            var newShortAlbum = new DbLink()
-            {
-                _id = foundAlbum._id,
-                Name = albumName
-            };
-
-            if (albumGenres == null)
-            {
-                albumGenres = foundAlbum.AlbumGenres.ToArray();
-            }
-
-            // Create new objects
-            var newAlbum = new Album()
-            {
-                _id = foundAlbum._id,
-                AlbumGenres = albumGenres.ToList(),
-                AlbumArtists = newAlbumShortArtists,
-                AlbumArtPaths = foundAlbum.AlbumArtPaths,
-                Name = albumName,
-                ContributingArtists = newConShortArtists,
-                PlayCounts = foundAlbum.PlayCounts,
-                DateAdded = foundAlbum.DateAdded,
-                SkipCounts = foundAlbum.SkipCounts,
-                ReleaseDate = DateTime.Parse(releaseDate).ToUniversalTime(),
-                ReleaseStatus = releaseStatus,
-                ReleaseType = releaseType,
-                Ratings = foundAlbum.Ratings,
-                Bio = bio,
-                Publisher = publisher,
-                ServerURL = foundAlbum.ServerURL,
-                TotalDiscs = Convert.ToInt32(totalDiscs),
-                TotalTracks = Convert.ToInt32(totalTracks),
-                AlbumArtDefault = defaultAlbumArt,
-                AlbumArtCount = foundAlbum.AlbumArtCount
-            };
-
-            // Replace objects
-            AlbumsCollection.ReplaceOne(albumFilter, newAlbum);
-
-            var trackFilter = Builders<Track>.Filter.Eq(x => x.Album._id, foundAlbum._id);
-            var trackUpdate = Builders<Track>.Update.Set(x=>x.Album, newShortAlbum);
-            var artistUpdate = Builders<Artist>.Update.Set("Releases.$", newShortAlbum);
-            var conArtistUpdate = Builders<Artist>.Update.Set("SeenOn.$", newShortAlbum);
-
-            TracksCollection.UpdateMany(trackFilter, trackUpdate);
-
-            // TODO: Update File
-
-            Thread t = new Thread(MelonScanner.UpdateCollections);
-            t.Start();
-
-            args.SendEvent("Album updated", 200, Program.mWebApi);
-            return new ObjectResult("Album updated") { StatusCode = 200 };
-        }
-        
-        [Authorize(Roles = "Admin")]
-        [HttpPatch("artist/update")]
-        public ObjectResult UpdateArtist(string artistId, string artistName = "", string bio = "", [FromQuery] string[] artistGenres = null, int defaultArtistPfp = -1, int defaultArtistBanner = -1)
-        {
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                        .Where(c => c.Type == ClaimTypes.UserData)
-                        .Select(c => c.Value).FirstOrDefault();
-            var args = new WebApiEventArgs("api/artist/update", curId, new Dictionary<string, object>()
-            {
-                { "artistId", artistId },
-                { "artistName", artistName },
-                { "bio", bio },
-                { "artistGenres", artistGenres },
-                { "defaultArtistPfp", defaultArtistPfp },
-                { "defaultArtistBanner", defaultArtistBanner }
-            });
-
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
-            var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
-            var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
-
-            var artistFilter = Builders<Artist>.Filter.Eq(x => x._id, artistId);
-            var foundArtist = ArtistsCollection.Find(artistFilter).FirstOrDefault();
-            if (foundArtist == null)
-            {
-                args.SendEvent("Artist Not Found", 404, Program.mWebApi);
-                return new ObjectResult("Artist Not Found") { StatusCode = 404 };
-            }
-
-            if(foundArtist.ConnectedArtists == null)
-            {
-                foundArtist.ConnectedArtists = new List<DbLink>();
-            }
-
-            List<DbLink> newTracks = new List<DbLink>();
-            List<Track> missingTracks = new List<Track>();
-            List<DbLink> newReleases = new List<DbLink>();
-            List<Album> newFullReleases = new List<Album>();
-            List<Album> missingReleases = new List<Album>();
-            List<DbLink> newSeenOns = new List<DbLink>();
-            List<DbLink> ConnectedArtists = new List<DbLink>();
-
-            artistName = artistName == "" ? foundArtist.Name : artistName;
-            bio = bio == "" ? foundArtist.Bio : bio;
-            defaultArtistPfp = defaultArtistPfp == -1 ? foundArtist.ArtistPfpDefault : defaultArtistPfp;
-            defaultArtistBanner = defaultArtistBanner == -1 ? foundArtist.ArtistBannerArtDefault : defaultArtistBanner;
-
-            if (artistGenres == null)
-            {
-                artistGenres = foundArtist.Genres.ToArray();
-            }
-
-
-            // Create new objects
-            var newArtist = new Artist()
-            {
-                _id = foundArtist._id,
-                Name = artistName,
-                Bio = bio,
-                PlayCounts = foundArtist.PlayCounts,
-                Ratings = foundArtist.Ratings,
-                SkipCounts = new List<UserStat>(),
-                ServerURL = foundArtist.ServerURL,
-                ArtistPfpPaths = foundArtist.ArtistPfpPaths,
-                ArtistBannerPaths = foundArtist.ArtistBannerPaths,
-                Genres = artistGenres.ToList(),
-                DateAdded = foundArtist.DateAdded,
-                ConnectedArtists = ConnectedArtists.ToList(),
-                ArtistBannerArtCount = foundArtist.ArtistBannerArtCount,
-                ArtistPfpArtCount = foundArtist.ArtistPfpArtCount,
-                ArtistBannerArtDefault = defaultArtistBanner,
-                ArtistPfpDefault = defaultArtistPfp
-            };
-
-            var newShortArtist = new DbLink()
-            {
-                _id = foundArtist._id,
-                Name = artistName
-            };
-
-            // Replace objects
-            ArtistsCollection.ReplaceOne(artistFilter, newArtist);
-
-            var trackFilter = Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, Builders<DbLink>.Filter.Eq(x => x._id, foundArtist._id));
-            var albumArtistFilter = Builders<Album>.Filter.ElemMatch(x => x.AlbumArtists, Builders<DbLink>.Filter.Eq(x => x._id, foundArtist._id));
-            var conArtistFilter = Builders<Album>.Filter.ElemMatch(x => x.ContributingArtists, Builders<DbLink>.Filter.Eq(x => x._id, foundArtist._id));
-            var trackUpdate = Builders<Track>.Update.Set("TrackArtists.$", newShortArtist);
-            var artistUpdate = Builders<Album>.Update.Set("AlbumArtists.$", newShortArtist);
-            var conArtistUpdate = Builders<Album>.Update.Set("ContributingArtists.$", newShortArtist);
-
-            TracksCollection.UpdateMany(trackFilter, trackUpdate);
-            AlbumsCollection.UpdateMany(albumArtistFilter, artistUpdate);
-            AlbumsCollection.UpdateMany(conArtistFilter, conArtistUpdate);
-
-            // TODO: Update File
-            //Task.Run(() =>
-            //{
-            //    
-            //});
-
-            Thread t = new Thread(MelonScanner.UpdateCollections);
-            t.Start();
-
-            args.SendEvent("Artist updated", 200, Program.mWebApi);
-            return new ObjectResult("Artist updated") { StatusCode = 200 };
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpPatch("update/check")]
-        public ObjectResult CheckForUpdate()
-        {
-            var release = SettingsUI.GetGithubRelease("latest").Result;
-            if (release != null)
-            {
-                var curVersion = System.Version.Parse(StateManager.Version);
-                var latestVersion = System.Version.Parse(release.tag_name.Replace("v", ""));
-                if (curVersion >= latestVersion)
-                {
-                    return new ObjectResult("No update found") { StatusCode = 204 };
-                }
-
-                UpdateResponse response = new UpdateResponse()
-                {
-                    CurrentVersion = curVersion.ToString(),
-                    LatestVersion = latestVersion.ToString(),
-                    ReleaseNotes = release.body
-                };
-                return new ObjectResult(response) { StatusCode = 200 };
-            }
-            return new ObjectResult("No update found") { StatusCode = 204 };
-        }
-        [Authorize(Roles = "Admin")]
-        [HttpPatch("update/server")]
-        public ObjectResult UpdateServer()
-        {
-            var release = SettingsUI.GetGithubRelease("latest").Result;
-            if (release != null)
-            {
-                var curVersion = System.Version.Parse(StateManager.Version);
-                var latestVersion = System.Version.Parse(release.tag_name.Replace("v", ""));
-                if (curVersion >= latestVersion)
-                {
-                    return new ObjectResult("No update found") { StatusCode = 204 };
-                }
-
+                // Update the audio file's metadata
                 try
                 {
-                    var updaterPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MelonInstaller.exe");
-                    var processInfo = new ProcessStartInfo
-                    {
-                        FileName = updaterPath,
-                        Arguments = $"-update -restart -installPath {AppDomain.CurrentDomain.BaseDirectory} -lang {StateManager.Language}",
-                        UseShellExecute = false
-                    };
-                    Process.Start(processInfo);
-
-                    Environment.Exit(0);
+                    var atlTrack = new ATL.Track(track.Path);
+                    atlTrack.Album = updatedAlbum.Name;
+                    atlTrack.AlbumArtist = string.Join("; ", updatedAlbum.AlbumArtists.Select(a => a.Name));
+                    atlTrack.Publisher = updatedAlbum.Publisher ?? "";
+                    atlTrack.Year = updatedAlbum.ReleaseDate.Year;
+                    atlTrack.AdditionalFields["RELEASESTATUS"] = updatedAlbum.ReleaseStatus ?? "";
+                    atlTrack.AdditionalFields["RELEASETYPE"] = updatedAlbum.ReleaseType ?? "";
+                    atlTrack.Save();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    return new ObjectResult("Updater failed to launch, is the updater missing?") { StatusCode = 500 };
+                    _logger.LogError(ex, "Error updating file metadata for track ID: {TrackId}", track._id);
+                    // Continue to next track without failing the entire operation
                 }
             }
-            return new ObjectResult("No update found") { StatusCode = 204 };
+
+            args.SendEvent("Album updated successfully", 200, Program.mWebApi);
+            return Ok("Album updated successfully.");
         }
 
+        /// <summary>
+        /// Updates an artist's metadata.
+        /// </summary>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin
+        /// </remarks>
+        /// <param name="id">Artist ID</param>
+        /// <param name="updatedArtist">Updated artist data</param>
+        /// <returns>Result of the update operation</returns>
+        /// <response code="200">If the update was successful</response>
+        /// <response code="400">If the input is invalid</response>
+        /// <response code="401">If the user is unauthorized</response>
+        /// <response code="404">If the artist is not found</response>
+        [Authorize(Roles = "Admin")]
+        [HttpPut("artist")]
+        public async Task<IActionResult> UpdateArtist(string id, [FromBody] Artist updatedArtist)
+        {
+            if (updatedArtist == null || string.IsNullOrEmpty(id))
+            {
+                return BadRequest("Invalid artist data.");
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.UserData);
+            var args = new WebApiEventArgs($"api/update/artist/{id}", userId, new Dictionary<string, object>());
+
+            var filter = Builders<Artist>.Filter.Eq(a => a._id, id);
+            var existingArtist = await _artistsCollection.Find(filter).FirstOrDefaultAsync();
+
+            if (existingArtist == null)
+            {
+                args.SendEvent("Artist not found", 404, Program.mWebApi);
+                return NotFound("Artist not found.");
+            }
+
+            // Preserve UserStats and ensure only the current user's stats can be modified
+            updatedArtist.Ratings = UpdateUserStats(existingArtist.Ratings, updatedArtist.Ratings, userId);
+            updatedArtist.PlayCounts = UpdateUserStats(existingArtist.PlayCounts, updatedArtist.PlayCounts, userId);
+            updatedArtist.SkipCounts = UpdateUserStats(existingArtist.SkipCounts, updatedArtist.SkipCounts, userId);
+
+            // Update the database record
+            updatedArtist._id = existingArtist._id; // Ensure the ID remains the same
+            await _artistsCollection.ReplaceOneAsync(filter, updatedArtist);
+
+            // Find all tracks where the artist is credited
+            var trackFilter = Builders<Track>.Filter.ElemMatch(t => t.TrackArtists, a => a._id == id);
+            var artistTracks = await _tracksCollection.Find(trackFilter).ToListAsync();
+
+            // Update the artist information in each track and the corresponding file metadata
+            foreach (var track in artistTracks)
+            {
+                // Update artist info in track
+                foreach (var artist in track.TrackArtists)
+                {
+                    if (artist._id == id)
+                    {
+                        artist.Name = updatedArtist.Name;
+                    }
+                }
+
+                await _tracksCollection.ReplaceOneAsync(Builders<Track>.Filter.Eq(t => t._id, track._id), track);
+
+                // Update the audio file's metadata
+                try
+                {
+                    var atlTrack = new ATL.Track(track.Path);
+                    atlTrack.Artist = string.Join("; ", track.TrackArtists.Select(a => a.Name));
+                    atlTrack.Save();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error updating file metadata for track ID: {TrackId}", track._id);
+                    // Continue to next track without failing the entire operation
+                }
+            }
+
+            // Update the artist's id in albums where they are credited as album artist
+            var albumFilter = Builders<Album>.Filter.ElemMatch(a => a.AlbumArtists, ar => ar._id == id);
+            var artistAlbums = await _albumsCollection.Find(albumFilter).ToListAsync();
+
+            foreach (var album in artistAlbums)
+            {
+                foreach (var artist in album.AlbumArtists)
+                {
+                    if (artist._id == id)
+                    {
+                        artist.Name = updatedArtist.Name;
+                    }
+                }
+
+                await _albumsCollection.ReplaceOneAsync(Builders<Album>.Filter.Eq(a => a._id, album._id), album);
+
+                // Update the album info in tracks
+                var albumTracksFilter = Builders<Track>.Filter.Eq(t => t.Album._id, album._id);
+                var albumTracks = await _tracksCollection.Find(albumTracksFilter).ToListAsync();
+
+                foreach (var track in albumTracks)
+                {
+                    track.Album = new DbLink(album);
+                    await _tracksCollection.ReplaceOneAsync(Builders<Track>.Filter.Eq(t => t._id, track._id), track);
+
+                    // Update the audio file's metadata
+                    try
+                    {
+                        var atlTrack = new ATL.Track(track.Path);
+                        atlTrack.AlbumArtist = string.Join("; ", album.AlbumArtists.Select(a => a.Name));
+                        atlTrack.Save();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error updating file metadata for track ID: {TrackId}", track._id);
+                        // Continue to next track
+                    }
+                }
+            }
+
+            // Update the artist's id in albums where they are credited as album artist
+            var albumContributingFilter = Builders<Album>.Filter.ElemMatch(a => a.ContributingArtists, ar => ar._id == id);
+            var artistContributingAlbums = await _albumsCollection.Find(albumFilter).ToListAsync();
+
+            foreach (var album in artistContributingAlbums)
+            {
+                foreach (var artist in album.ContributingArtists)
+                {
+                    if (artist._id == id)
+                    {
+                        artist.Name = updatedArtist.Name;
+                    }
+                }
+
+                await _albumsCollection.ReplaceOneAsync(Builders<Album>.Filter.Eq(a => a._id, album._id), album);
+
+            }
+
+            args.SendEvent("Artist updated successfully", 200, Program.mWebApi);
+            return Ok("Artist updated successfully.");
+        }
+
+        /// <summary>
+        /// Updates the UserStats for the current user.
+        /// </summary>
+        /// <param name="existingStats">Existing stats from the database</param>
+        /// <param name="updatedStats">Stats provided in the update request</param>
+        /// <param name="userId">Current user's ID</param>
+        /// <returns>Updated list of UserStats</returns>
+        private List<UserStat> UpdateUserStats(List<UserStat> existingStats, List<UserStat> updatedStats, string userId)
+        {
+            if (existingStats == null) existingStats = new List<UserStat>();
+            if (updatedStats == null) updatedStats = new List<UserStat>();
+
+            // Get the current user's stats
+            var userStat = existingStats.FirstOrDefault(s => s.UserId == userId);
+
+            var updatedUserStat = updatedStats.FirstOrDefault(s => s.UserId == userId);
+
+            if (updatedUserStat != null)
+            {
+                if (userStat != null)
+                {
+                    // Update existing stat
+                    userStat.Value = updatedUserStat.Value;
+                }
+                else
+                {
+                    // Add new stat
+                    existingStats.Add(new UserStat
+                    {
+                        UserId = userId,
+                        Value = updatedUserStat.Value
+                    });
+                }
+            }
+
+            return existingStats;
+        }
     }
 }

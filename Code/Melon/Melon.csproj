@@ -9,9 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\3dmelon.ico" />
     <None Remove="Assets\cda.ico" />
     <None Remove="Assets\defaultArtwork.png" />
     <None Remove="Assets\Melon.png" />
+    <None Remove="Assets\MelonLogo.ico" />
     <None Remove="Strings\UIStringsEN.resources" />
     <None Remove="Strings\UIStringsES.resources" />
     <None Remove="UIStrings.en.txt" />
@@ -19,12 +21,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Assets\cda.ico" />
+    <EmbeddedResource Include="Assets\3dmelon.ico" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\defaultArtwork.png" />
     <EmbeddedResource Include="Assets\Melon.png" />
+    <EmbeddedResource Include="Assets\MelonLogo.ico" />
     <EmbeddedResource Include="Strings\UIStringsEN.resources" />
     <EmbeddedResource Include="Strings\UIStringsES.resources" />
   </ItemGroup>

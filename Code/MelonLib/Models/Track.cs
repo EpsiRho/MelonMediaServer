@@ -176,6 +176,35 @@ namespace Melon.Models
             Chapters = t.Chapters;
             TrackArtists = t.TrackArtists.Select(x=> new DbLink() { _id = x._id, Name = x.Name }).ToList();
         }
+        public Track(ResponseTrack t)
+        {
+            _id = t._id;
+            Album = t.Album;
+            Position = t.Position;
+            Disc = t.Disc;
+            Format = t.Format;
+            Bitrate = t.Bitrate;
+            SampleRate = t.SampleRate;
+            Channels = t.Channels;
+            BitsPerSample = t.BitsPerSample;
+            MusicBrainzID = t.MusicBrainzID;
+            ISRC = t.ISRC;
+            Year = t.Year;
+            Name = t.Name;
+            Duration = t.Duration;
+            nextTrack = t.nextTrack;
+            PlayCounts = t.PlayCounts;
+            SkipCounts = t.SkipCounts;
+            Ratings = t.Ratings;
+            TrackArtCount = t.TrackArtCount;
+            ServerURL = t.ServerURL;
+            LastModified = t.LastModified;
+            DateAdded = t.DateAdded;
+            ReleaseDate = t.ReleaseDate;
+            TrackGenres = t.TrackGenres;
+            TrackArtists = t.TrackArtists;
+            Chapters = t.Chapters;
+        }
     }
     public class ResponseTrack
     {
