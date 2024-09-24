@@ -385,6 +385,8 @@ namespace MelonWebApi
 
                 app.MapControllers();
 
+                app.UseStaticFiles();
+
                 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
                 
                 lifetime.ApplicationStopping.Register(() =>

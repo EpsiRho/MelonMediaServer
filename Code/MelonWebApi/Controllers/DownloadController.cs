@@ -240,7 +240,6 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult(waveform) { StatusCode = 200 };
             }
         }
-        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("track-art")]
         public async Task<IActionResult> DownloadTrackArt(string id, int index = -1)
         {
@@ -279,7 +278,6 @@ namespace MelonWebApi.Controllers
             }
             
         }
-        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("album-art")]
         public async Task<IActionResult> DownloadAlbumArt(string id, int index = -1)
         {
@@ -360,7 +358,6 @@ namespace MelonWebApi.Controllers
             args.SendEvent("Default artwork sent", 200, Program.mWebApi);
             return File(StateManager.GetDefaultImage(), "image/jpeg");
         }
-        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist-pfp")]
         public async Task<IActionResult> DownloadArtistPfp(string id, int index = -1)
         {
@@ -397,7 +394,6 @@ namespace MelonWebApi.Controllers
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
         }
-        [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("artist-banner")]
         public async Task<IActionResult> DownloadArtistBanner(string id, int index = -1)
         {
