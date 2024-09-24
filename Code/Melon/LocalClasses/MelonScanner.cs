@@ -211,19 +211,24 @@ namespace Melon.LocalClasses
                 ScanFolderCounter(path);
             }
 
-            // Start recursive scan to open threads and load in file metadata 
-            CurrentStatus = StateManager.StringsManager.GetString("ScannerScanning");
-            threads = new ConcurrentDictionary<string, string>();
+            // Collect files to process
+            CurrentStatus = StateManager.StringsManager.GetString("ScannerFinding");
+            List<string> filesToProcess = new List<string>();
             foreach (var path in StateManager.MelonSettings.LibraryPaths)
             {
-                ScanFolder(path, skip);
+                filesToProcess = ScanFolder(path, skip);
             }
+            FoundFiles = filesToProcess.Count;
 
-            // After recursive function, wait until all opened threads have finished
-            while (threads.Count != 0)
+            // Process files with limited concurrency
+            CurrentStatus = StateManager.StringsManager.GetString("ScannerScanning");
+            int maxDegreeOfParallelism = 15;
+            var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = maxDegreeOfParallelism };
+
+            Parallel.ForEach(filesToProcess, parallelOptions, file =>
             {
-
-            }
+                ScanInTrack(file);
+            });
 
             // Fill out the database with the new tracks, creating artists and albums
             CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
@@ -276,45 +281,39 @@ namespace Melon.LocalClasses
             }
             FoundFiles = FoundFiles + Directory.GetFiles(path).Count();
         }
-        private static void ScanFolder(string path, bool skip)
+        private static List<string> ScanFolder(string path, bool skip)
         {
             CurrentFolder = path;
-
-            // Recursively scan folders
+            List<string> filesToProcess = new List<string>();
             var folders = Directory.GetDirectories(path);
             foreach (var folder in folders)
             {
-                ScanFolder(folder, skip);
+                filesToProcess.AddRange(ScanFolder(folder, skip));
             }
 
-            // Get Files, for each file start a new thread to scan the file metadata into memory
             var files = Directory.GetFiles(path);
             foreach (var file in files)
             {
-                // If the file path is already in the DB and scanner is running in fast mode, skip the file
-                if (skip && tracks.ContainsKey(file.Replace("\\", "/")))
+                string normalizedPath = file.Replace("\\", "/");
+
+                if (IsAudioFile(file) || file.EndsWith(".lrc"))
                 {
-                    ScannedFiles++;
-                    continue;
+                    if (skip && tracks.ContainsKey(normalizedPath))
+                    {
+                        var fileLastWriteTime = File.GetLastWriteTimeUtc(file);
+                        var trackLastModified = tracks[normalizedPath].LastModified;
+                        if (fileLastWriteTime == trackLastModified)
+                        {
+                            //ScannedFiles++;
+                            continue;
+                        }
+                    }
+                    filesToProcess.Add(file);
                 }
+                FoundFiles++;
+            }
 
-                // If there are 25 threads, don't add more threads till previous ones finish
-                int workers = 0;
-                int asyncIOThread = 0;
-                ThreadPool.GetAvailableThreads(out workers, out asyncIOThread);
-                while (threads.Count() >= 25)
-                {
-                    Thread.Sleep(100);
-                }
-
-                // Add thread to the thread tracker and start it
-                Task.Factory.StartNew(() =>
-                {
-                    threads.TryAdd(file, "");
-                    ScanInTrack(file);
-                });
-            };
-
+            return filesToProcess;
         }
         private static void ScanInTrack(string file)
         {
@@ -330,7 +329,6 @@ namespace Melon.LocalClasses
                 {
                     LyricFiles.Add(file);
                     ScannedFiles++;
-                    threads.TryRemove(file, out _);
                     return;
                 }
 
@@ -338,7 +336,6 @@ namespace Melon.LocalClasses
                 if (!IsAudioFile(file))
                 {
                     ScannedFiles++;
-                    threads.TryRemove(file, out _);
                     return;
                 }
 
@@ -480,6 +477,7 @@ namespace Melon.LocalClasses
                     trackDoc.SkipCounts = tracks[trackDoc.Path].SkipCounts;
                     trackDoc.TrackArtDefault = tracks[trackDoc.Path].TrackArtDefault;
                     trackDoc.nextTrack = tracks[trackDoc.Path].nextTrack;
+                    trackDoc.Chapters = tracks[trackDoc.Path].Chapters;
                     tracks[trackDoc.Path] = trackDoc;
                 }
                 else
@@ -505,7 +503,7 @@ namespace Melon.LocalClasses
 
             // Track added successfully, so update metrics and remove the thread from the tracker
             ScannedFiles++;
-            threads.TryRemove(file, out _);
+            //threads.TryRemove(file, out _);
             return;
         }
         private static void FillOutDB()
@@ -847,28 +845,34 @@ namespace Melon.LocalClasses
             var AlbumCollection = NewMelonDB.GetCollection<Album>("Albums");
             var TracksCollection = NewMelonDB.GetCollection<Track>("Tracks");
 
-            int page = 0;
-            int count = 100;
+            var tracksToDelete = tracks.Values.Where(t => !File.Exists(t.Path)).ToList();
 
             ScannedFiles = 0;
             FoundFiles = tracks.Count();
-            foreach (var track in tracks.Values)
+            foreach (var track in tracksToDelete)
             {
-                CurrentFile = track.Path;
-                // Track is deleted, remove.
-                if (!File.Exists(track.Path))
+                // Remove track from database
+                var tFilter = Builders<Track>.Filter.Eq(x => x._id, track._id);
+                tracksCollection.DeleteOne(tFilter);
+
+                // Check if album has no more tracks
+                var albumFilter = Builders<Track>.Filter.Eq(x => x.Album._id, track.Album._id);
+                if (!tracksCollection.Find(albumFilter).Any())
                 {
-                    // remove from albums
-                    var filter = Builders<Album>.Filter.Eq(x => x._id, track.Album._id);
-                    var albums = AlbumCollection.Find(filter).ToList();
+                    // Remove album
+                    var aFilter = Builders<Album>.Filter.Eq(x => x._id, track.Album._id);
+                    albumsCollection.DeleteOne(aFilter);
+                }
 
-                    // TODO, remove album if no tracks are left
-
-                    // TODO, remove artists if no tracks are left
-
-                    // Remove Track
-                    var tFilter = Builders<Track>.Filter.Eq(x => x._id, track._id);
-                    TracksCollection.DeleteOne(tFilter);
+                // Check if artist has no more tracks
+                foreach (var artist in track.TrackArtists)
+                {
+                    var artistFilter = Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, a => a._id == artist._id);
+                    if (!tracksCollection.Find(artistFilter).Any())
+                    {
+                        var arFilter = Builders<Artist>.Filter.Eq(x => x._id, artist._id);
+                        artistsCollection.DeleteOne(arFilter);
+                    }
                 }
                 Task u = new Task(() =>
                 {
@@ -876,6 +880,8 @@ namespace Melon.LocalClasses
                 });
                 u.Start();
             }
+
+           
         }
         public static void UpdateCollections()
         {
