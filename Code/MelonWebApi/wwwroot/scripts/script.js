@@ -1,25 +1,3 @@
-// User Info Variables
-var userInfo = {
-    username: 'johndoe',
-    bio: 'Music lover and audiophile.',
-    profilePicture: 'pfp.png',
-    favoriteTrack: {
-        name: 'Bohemian Rhapsody',
-        artist: 'Queen',
-        album: 'A Night at the Opera',
-        artwork: 'defaultArtwork.png'
-    },
-    favoriteAlbum: {
-        name: 'Abbey Road',
-        artist: 'The Beatles',
-        artwork: 'defaultArtwork.png'
-    },
-    favoriteArtist: {
-        name: 'The Beatles',
-        artwork: 'defaultArtwork.png'
-    }
-};
-
 // Stats Configuration (Enable or Disable Stats)
 var statsConfig = {
     listeningTimesEnabled: true,
@@ -32,611 +10,267 @@ var statsConfig = {
     recentArtistsEnabled: true
 };
 
-// Listening Times Data (Minutes listened per hour over the past month)
-var listeningTimesData = [30, 20, 15, 10, 5, 2, 5, 10, 20, 50, 60, 80, 100, 120, 110, 90, 80, 70, 60, 50, 40, 35, 30, 25];
+// Data variables (initialized as empty arrays)
+var topTracks = [];
+var topAlbums = [];
+var topArtists = [];
+var topGenres = [];
+var recentTracks = [];
+var recentAlbums = [];
+var recentArtists = [];
+var listeningTimeStats = [];
 
-// Top Tracks (Add more items for demonstration)
-var topTracks = [
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-
-    {
-        name: 'Track A',
-        artist: 'Artist A',
-        album: 'Album A',
-        artwork: 'defaultArtwork.png'
-    },
-    // ... Add more tracks
-];
-
-// Top Albums (Add more items for demonstration)
-var topAlbums = [
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album A',
-        artist: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    // ... Add more albums
-];
-
-// Top Artists (Add more items for demonstration)
-var topArtists = [
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist A',
-        artwork: 'defaultArtwork.png'
-    },
-    // ... Add more artists
-];
-
-// Top Genres (Add more items for demonstration)
-var topGenres = ['Rock', 'Pop', 'Jazz', 'Classical', 'Hip-Hop', 'Electronic', 'Country'];
-
-// Recent Tracks (Add more items for demonstration)
-var recentTracks = [
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Track X',
-        artist: 'Artist X',
-        album: 'Album X',
-        artwork: 'defaultArtwork.png'
-    },
-    // ... Add more tracks
-];
-
-// Recent Albums (Add more items for demonstration)
-var recentAlbums = [
-    {
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Album X',
-        artist: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    // ... Add more albums
-];
-
-// Recent Artists (Add more items for demonstration)
-var recentArtists = [
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },{
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    {
-        name: 'Artist X',
-        artwork: 'defaultArtwork.png'
-    },
-    // ... Add more artists
-];
 // Function to update user info
 function updateUserInfo() {
     document.getElementById('username').textContent = userInfo.username;
     document.getElementById('bio').textContent = userInfo.bio;
     document.getElementById('profile-pic').src = userInfo.profilePicture;
+    document.getElementById('tab-title').title = `${userInfo.username}'s Listening Stats`;
 
     // Favorite Track
-    document.getElementById('favorite-track-art').src = userInfo.favoriteTrack.artwork;
-    document.getElementById('favorite-track').textContent = userInfo.favoriteTrack.name;
-    document.getElementById('favorite-track-artist').textContent = userInfo.favoriteTrack.artist;
+    document.getElementById('favorite-track-art').src = userInfo.favoriteTrack.artwork || 'defaultArtwork.png';
+    document.getElementById('favorite-track').textContent = userInfo.favoriteTrack.name || 'Track Name';
+    document.getElementById('favorite-track-artist').textContent = userInfo.favoriteTrack.artist || 'Artist Name';
 
     // Favorite Album
-    document.getElementById('favorite-album-art').src = userInfo.favoriteAlbum.artwork;
-    document.getElementById('favorite-album').textContent = userInfo.favoriteAlbum.name;
-    document.getElementById('favorite-album-artist').textContent = userInfo.favoriteAlbum.artist;
+    document.getElementById('favorite-album-art').src = userInfo.favoriteAlbum.artwork || 'defaultArtwork.png';
+    document.getElementById('favorite-album').textContent = userInfo.favoriteAlbum.name || 'Album Name';
+    document.getElementById('favorite-album-artist').textContent = userInfo.favoriteAlbum.artist || 'Artist Name';
 
     // Favorite Artist
-    document.getElementById('favorite-artist-art').src = userInfo.favoriteArtist.artwork;
-    document.getElementById('favorite-artist').textContent = userInfo.favoriteArtist.name;
+    document.getElementById('favorite-artist-art').src = userInfo.favoriteArtist.artwork || 'defaultArtwork.png';
+    document.getElementById('favorite-artist').textContent = userInfo.favoriteArtist.name || 'Artist Name';
 }
 
+// Debounce function to limit function calls
+function debounce(func, wait) {
+    let timeout;
+    return function () {
+        clearTimeout(timeout);
+        timeout = setTimeout(func, wait);
+    };
+}
+
+// Variables for caching
+var previousMaxItemsToShow = {};
+var itemElementsCache = {};
+
 // Function to render stats
-function renderStats() {
+async function renderStats(useNew) {
     // Listening Times
     if (statsConfig.listeningTimesEnabled) {
-        renderListeningChart();
-        window.addEventListener('resize', renderListeningChart);
+        if (useNew) {
+            var ltTimeRangeSelector = document.getElementById('listening-times-selector');
+            var ltTimeRange = ltTimeRangeSelector ? ltTimeRangeSelector.value : 'month';
+
+            var apiUrl = `user-page/listening-time?userId=${userId}&timeRange=${ltTimeRange}`;
+
+            listeningTimeStats = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    return [];
+                });
+        renderListeningChart(listeningTimeStats);
+        }
     } else {
         document.getElementById('listening-times').style.display = 'none';
     }
 
     // Render item lists with limited items
-    //renderItemList('top-tracks', topTracks, statsConfig.topTracksEnabled, 'track');
-    //renderItemList('top-albums', topAlbums, statsConfig.topAlbumsEnabled, 'album');
-    //renderItemList('top-artists', topArtists, statsConfig.topArtistsEnabled, 'artist');
-    //renderItemList('top-genres', topGenres, statsConfig.topGenresEnabled, 'genre');
-    //renderItemList('recent-tracks', recentTracks, statsConfig.recentTracksEnabled, 'track');
-    //renderItemList('recent-albums', recentAlbums, statsConfig.recentAlbumsEnabled, 'album');
-    //renderItemList('recent-artists', recentArtists, statsConfig.recentArtistsEnabled, 'artist');
     const sections = ['top-tracks', 'top-albums', 'top-artists', 'top-genres', 'recent-tracks', 'recent-albums', 'recent-artists'];
     sections.forEach(sectionId => {
         const isEnabled = statsConfig[sectionId.replace('-', '') + 'Enabled'];
-        const timeRange = document.getElementById(sectionId + '-selector').value;
-        updateWidgetData(sectionId, timeRange);
+        const timeRangeSelector = document.getElementById(sectionId + '-selector');
+        const timeRange = timeRangeSelector ? timeRangeSelector.value : 'month'; // Default to 'month' if no selector
+        updateWidgetData(sectionId, timeRange, useNew);
     });
+
 }
 
 // Function to render the listening chart
-function renderListeningChart() {
-    var chartContainer = document.getElementById('listening-chart');
-    chartContainer.innerHTML = '';
-    var chartWidth = chartContainer.clientWidth;
-    var barWidth = chartWidth / listeningTimesData.length;
-    var maxTime = Math.max(...listeningTimesData);
-    for (var i = 0; i < listeningTimesData.length; i++) {
-        var bar = document.createElement('div');
-        var barHeight = (listeningTimesData[i] / maxTime) * 100;
-        bar.className = 'bar';
-        bar.style.left = (i * barWidth) + 'px';
-        bar.style.width = (barWidth - 2) + 'px'; // Subtract 2 for spacing
-        bar.style.height = barHeight + '%';
-        bar.title = i + ':00 - ' + listeningTimesData[i] + ' minutes';
-        bar.innerHTML = '<span>' + listeningTimesData[i] + '</span>';
-        chartContainer.appendChild(bar);
+var myChart = null;
+function renderListeningChart(minutesListened) {
+    const ctx = document.getElementById('myChart')?.getContext('2d');
+    if (!ctx) return; // Exit if the chart element doesn't exist
+
+    // Hour labels for the x-axis
+    const labels = [
+        '1am', '2am', '3am', '4am', '5am', '6am',
+        '7am', '8am', '9am', '10am', '11am', '12pm',
+        '1pm', '2pm', '3pm', '4pm', '5pm', '6pm',
+        '7pm', '8pm', '9pm', '10pm', '11pm', '12am'
+    ];
+
+    // Configuration for the Chart.js line chart
+    const data = {
+        labels: labels,
+        datasets: [{
+            label: 'Minutes Listened',
+            data: minutesListened,
+            fill: true,
+            backgroundColor: 'rgba(75,192,192,0.2)',
+            borderColor: '#4bc0c0',
+            pointBackgroundColor: '#4bc0c0',
+            tension: 0.4
+        }]
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    autoSkip: false,
+                    maxRotation: 45,
+                    minRotation: 45
+                }
+            },
+            y: {
+                beginAtZero: true,
+                max: Math.max(...minutesListened) + 10 || 100,
+                ticks: {
+                    stepSize: 10
+                }
+            }
+        }
+    };
+
+    // Create or update the Chart.js line chart
+    if (myChart) {
+        myChart.options = options;
+        myChart.data = data;
+        myChart.update();
+    } else {
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: options
+        });
     }
 }
 
 // Function to render item lists with show more functionality using modal
 function renderItemList(sectionId, items, isEnabled, itemType) {
-    if (isEnabled) {
-        console.log(items);
-        var listContainer = document.getElementById(sectionId + '-list');
-        listContainer.innerHTML = '';
-        var maxItemsToShow = listContainer.getBoundingClientRect().width / 49;
-        const entries = Object.entries(items);
+    if (!isEnabled) {
+        document.getElementById(sectionId).style.display = 'none';
+        return;
+    }
 
-        var slicedEntries = entries.slice(0, maxItemsToShow);
-        var itemsToShow = Object.fromEntries(slicedEntries);
+    var listContainer = document.getElementById(sectionId + '-list');
 
-        console.log(itemsToShow.length);
-        const itemsArray = Object.values(itemsToShow);
-        for (let i = 0; i < itemsArray.length; i++) {
-            var item = itemsArray[i];
-            console.log(item);
-            var itemElement = createItemElement(item, itemType);
-            listContainer.appendChild(itemElement);
+    // Calculate maxItemsToShow based on container width and item width
+    var listContainer = document.getElementById(sectionId + '-list');
+    var itemContainer = listContainer.getElementsByClassName('item');
+    var maxItemsToShow = 0;
+
+    if (itemContainer.length > 0) {
+        maxItemsToShow = listContainer.getBoundingClientRect().width / (itemContainer[0].clientWidth / 2);
+    } else {
+        maxItemsToShow = listContainer.getBoundingClientRect().width / 67;
+    }
+
+    maxItemsToShow = Math.floor(maxItemsToShow);
+
+
+
+    // Check if maxItemsToShow has changed
+    if (previousMaxItemsToShow[sectionId] === maxItemsToShow && !itemElementsCache[sectionId] === null) {
+        // No change, do nothing
+        return;
+    }
+    previousMaxItemsToShow[sectionId] = maxItemsToShow;
+
+    if (!itemElementsCache[sectionId] || itemElementsCache[sectionId] === null) {
+        itemElementsCache[sectionId] = { elements: [], needsUpdate: false };
+        // Create all item elements and cache them
+        var itemsArray = itemType !== 'genre' ? items : items; // For genres, items is already an array
+
+        if (itemType !== 'genre') {
+            itemsArray = Object.values(items);
+        }
+        else {
+            itemsArray = Object.keys(items);
         }
 
-        var showMoreButton = document.querySelector('button[data-target="' + sectionId + '-list"]');
-        showMoreButton.style.display = items.length > maxItemsToShow ? 'block' : 'none';
-        setupShowMoreModal(sectionId, items, itemType);
-    } else {
-        document.getElementById(sectionId).style.display = 'none';
+        // Clear the container and append all items once
+        listContainer.innerHTML = '';
+        for (let i = 0; i < itemsArray.length; i++) {
+            var item = itemsArray[i];
+            var itemElement = createItemElement(item, itemType);
+            itemElementsCache[sectionId].elements.push(itemElement);
+            listContainer.appendChild(itemElement);
+        }
     }
+
+    // Now, show or hide items based on maxItemsToShow
+    for (let i = 0; i < itemElementsCache[sectionId].elements.length; i++) {
+        var itemElement = itemElementsCache[sectionId].elements[i];
+        if (i < maxItemsToShow) {
+            itemElement.style.display = ''; // show
+        } else {
+            itemElement.style.display = 'none'; // hide
+        }
+    }
+
+    var showMoreButton = document.querySelector('button[data-target="' + sectionId + '-list"]');
+    showMoreButton.style.display = itemElementsCache[sectionId].elements.length > maxItemsToShow ? 'block' : 'none';
+
+    setupShowMoreModal(sectionId, items, itemType);
+
+    debounce(FixBg, 200);
 }
+
 
 // Function to create item elements
 function createItemElement(item, itemType) {
     var itemDiv = document.createElement('div');
     itemDiv.className = 'item';
+    var infoDiv = document.createElement('div');
+    infoDiv.className = 'item-info';
+
     if (itemType === 'genre') {
         itemDiv.classList.add('genre');
-        var infoDiv = document.createElement('div');
-        infoDiv.className = 'item-info';
         var nameP = document.createElement('p');
         nameP.textContent = item;
         infoDiv.appendChild(nameP);
-    }
-    if (itemType !== 'genre') {
-        console.log(item);
+    } else {
         var img = document.createElement('img');
         img.src = item.artwork || 'defaultArtwork.png';
         img.alt = item.name;
+        img.addEventListener('click', debounce(function () {
+            console.log('Changing bg');
+            targetPalette = getColors(img, 2);
+            startPaletteTransition();
+        }));
+        img.classList.add('item-image')
         itemDiv.appendChild(img);
-        var infoDiv = document.createElement('div');
-        infoDiv.className = 'item-info';
+
         var nameP = document.createElement('p');
+        nameP.className = "item-info-name";
         nameP.textContent = item.name;
         infoDiv.appendChild(nameP);
 
@@ -651,40 +285,69 @@ function createItemElement(item, itemType) {
     return itemDiv;
 }
 
-// Function to setup Show More modal
-function setupShowMoreModal(sectionId, items, itemType) {
-    var showMoreButton = document.querySelector('button[data-target="' + sectionId + '-list"]');
+// Initialize modal event listeners once
+var modalInitialized = false;
+
+function initializeModal() {
+    if (modalInitialized) return;
+    modalInitialized = true;
+
     var modal = document.getElementById('modal');
-    var modalTitle = document.getElementById('modal-title');
-    var modalBody = document.getElementById('modal-body');
     var modalClose = document.getElementById('modal-close');
 
-    showMoreButton.addEventListener('click', function() {
+    modalClose.addEventListener('click', function () {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    });
+
+    // Close modal when clicking outside of modal content
+    window.addEventListener('click', function (event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+    });
+}
+
+var showMoreButtonsInitialized = {};
+
+function setupShowMoreModal(sectionId, items, itemType) {
+    initializeModal(); // Ensure modal event listeners are set
+
+    var showMoreButton = document.querySelector('button[data-target="' + sectionId + '-list"]');
+
+    // Check if the listener has already been added
+    if (showMoreButtonsInitialized[sectionId]) return;
+    showMoreButtonsInitialized[sectionId] = true;
+
+    showMoreButton.addEventListener('click', function () {
+        var modal = document.getElementById('modal');
+        var modalTitle = document.getElementById('modal-title');
+        var modalBody = document.getElementById('modal-body');
+
         modal.style.display = 'block';
+        document.body.classList.add('modal-open');
         modalTitle.textContent = document.querySelector('#' + sectionId + ' h2').textContent;
         modalBody.innerHTML = '';
         modalBody.scrollTop = 0;
 
-        items.forEach(function(item) {
-            var itemElement = createItemElement(item, itemType);
-            modalBody.appendChild(itemElement);
-        });
-    });
-
-    modalClose.addEventListener('click', function() {
-        modal.style.display = 'none';
-    });
-
-    // Close modal when clicking outside of modal content
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
+        if (itemType !== 'genre') {
+            items.forEach(async function (item) {
+                var itemElement = createItemElement(item, itemType);
+                modalBody.appendChild(itemElement);
+            });
         }
-    };
+        else {
+            const entries = Object.keys(items);
+            entries.forEach(async function (item) {
+                var itemElement = createItemElement(item, itemType);
+                modalBody.appendChild(itemElement);
+            });
+        }
+    });
 }
 
-// Check system preference and apply dark mode if preferred
-// Function to apply the correct theme on page load
+// Apply the correct theme on page load
 function applyTheme(theme) {
     if (theme === 'dark') {
         document.body.classList.add('dark-mode');
@@ -693,12 +356,10 @@ function applyTheme(theme) {
     }
 }
 
-// Check system preference and apply the theme if no user preference exists
 function applyPreferredColorScheme() {
     const userPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme');
 
-    // Apply the saved theme if it exists, otherwise use system preference
     if (savedTheme) {
         applyTheme(savedTheme);
     } else {
@@ -706,100 +367,131 @@ function applyPreferredColorScheme() {
     }
 }
 
-function setupDataSelectors() {
+async function setupDataSelectors() {
     const selectors = document.querySelectorAll('.data-selector');
     selectors.forEach(selector => {
-        selector.addEventListener('change', function () {
+        selector.addEventListener('change', async function () {
+            var ltTimeRangeSelector = document.getElementById('listening-times-selector');
+            var ltTimeRange = ltTimeRangeSelector ? ltTimeRangeSelector.value : 'month';
+
+            var apiUrl = `user-page/listening-time?userId=${userId}&timeRange=${ltTimeRange}`;
+
+            listeningTimeStats = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    return [];
+                });
+            renderListeningChart(listeningTimeStats);
+
             const sectionId = this.id.replace('-selector', '');
-            console.log('beep');
-            updateWidgetData(sectionId, this.value);
+            updateWidgetData(sectionId, this.value, true);
         });
     });
 }
 
-async function updateWidgetData(sectionId, timeRange) {
-    // Fetch or filter data based on timeRange
-    // For demonstration, we'll use dummy data
-    const dummyData = await getNewData(sectionId, timeRange);
-    if (sectionId === 'listening-times') {
-        // Update Listening Times Chart
-        updateListeningChart(dummyData);
+async function updateWidgetData(sectionId, timeRange, getNew) {
+    var data = [];
+    if (getNew) {
+        console.log("Get Data");
+        data = await getNewData(sectionId, timeRange);
     } else {
-        // Update Item Lists
+        data = getCachedData(sectionId);
+    }
+
+    if (sectionId === 'listening-times') {
+        
+    } else {
         const itemType = sectionId.includes('tracks') ? 'track' :
-                         sectionId.includes('albums') ? 'album' :
+            sectionId.includes('albums') ? 'album' :
                 sectionId.includes('artists') ? 'artist' : 'genre';
-        console.log(itemType);
-        renderItemList(sectionId, dummyData, true, itemType);
+        renderItemList(sectionId, data, true, itemType);
     }
 }
 
-async function getNewData(sectionId, timeRange) {
-    console.log(timeRange);
-    console.log(sectionId);
-
-    if (sectionId === 'top-tracks')
-    {
-        var tracks = await MelonCall(0, 100, 'user-page/top-tracks');
-        console.log('freedom');
-        return tracks;W
-    }
-    else if (sectionId === 'top-albums')
-    {
-        var albums = await MelonCall(0, 100, 'user-page/top-albums');
-        return albums;
-    }
-    else if (sectionId === 'top-artists') {
-        var artists = await MelonCall(0, 100, 'user-page/top-artists');
-        return artists;
-    }
-
-    // Return different data based on sectionId and timeRange
-    // This should be replaced with actual data fetching logic
-    //renderItemList('top-tracks', topTracks, statsConfig.topTracksEnabled, 'track');
-    //renderItemList('top-albums', topAlbums, statsConfig.topAlbumsEnabled, 'album');
-    //renderItemList('top-artists', topArtists, statsConfig.topArtistsEnabled, 'artist');
-    //renderItemList('top-genres', topGenres, statsConfig.topGenresEnabled, 'genre');
-    //renderItemList('recent-tracks', recentTracks, statsConfig.recentTracksEnabled, 'track');
-    //renderItemList('recent-albums', recentAlbums, statsConfig.recentAlbumsEnabled, 'album');
-    //renderItemList('recent-artists', recentArtists, statsConfig.recentArtistsEnabled, 'artist');
+function getCachedData(sectionId) {
+    if (sectionId === 'top-tracks') return topTracks;
+    if (sectionId === 'top-albums') return topAlbums;
+    if (sectionId === 'top-artists') return topArtists;
+    if (sectionId === 'top-genres') return topGenres;
+    if (sectionId === 'recent-tracks') return recentTracks;
+    // Similarly for recent-albums and recent-artists
     return [];
 }
 
-function MelonCall(page, count, api){
-    const userId = '66469992586a37512366abc6';
-    const jwtToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkVwc2kiLCJyb2xlIjoiQWRtaW4iLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3VzZXJkYXRhIjoiNjY0Njk5OTI1ODZhMzc1MTIzNjZhYmM2IiwibmJmIjoxNzI3MTYzMjEzLCJleHAiOjE3MjcxNjY4MTMsImlhdCI6MTcyNzE2MzIxM30.pK1BlAlMF18RSm92bj2qphK2XhRRYN_KLOzE2ijfpZg';  // Replace this with your actual JWT token
+async function getNewData(sectionId, timeRange) {
+    // Use MelonCall function to fetch data
+    let data = [];
+    try {
+        if (sectionId === 'top-tracks') {
+            data = await MelonCall(0, 100, 'user-page/top-tracks', timeRange);
+            topTracks = data;
+        } else if (sectionId === 'top-albums') {
+            data = await MelonCall(0, 100, 'user-page/top-albums', timeRange);
+            topAlbums = data;
+        } else if (sectionId === 'top-artists') {
+            data = await MelonCall(0, 100, 'user-page/top-artists', timeRange);
+            topArtists = data;
+        } else if (sectionId === 'top-genres') {
+            data = await MelonCall(0, 100, 'user-page/top-genres', timeRange);
+            topGenres = data;
+        } else if (sectionId === 'recent-tracks') {
+            data = await MelonCall(0, 100, 'user-page/recent-tracks', timeRange);
+            recentTracks = data;
+        } else if (sectionId === 'recent-albums') {
+            data = await MelonCall(0, 100, 'user-page/recent-albums', timeRange);
+            recentAlbums = data;
+        } else if (sectionId === 'recent-artists') {
+            data = await MelonCall(0, 100, 'user-page/recent-artists', timeRange);
+            recentArtists = data;
+        }
 
-    const apiUrl = `${api}?userId=${userId}&page=${page}&count=${count}`;
+        // Invalidate cache
+        itemElementsCache[sectionId] = null;
+    } catch (error) {
+        console.error('Error fetching data for ' + sectionId + ':', error);
+    }
+    return data;
+}
+
+// MelonCall function
+function MelonCall(page, count, api, timeRange) {
+    console.log(timeRange);
+    const apiUrl = `${api}?userId=${userId}&page=${page}&count=${count}&timeRange=${timeRange}`;
 
     return fetch(apiUrl, {
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${jwtToken}`,
             'Content-Type': 'application/json',
         },
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
-        }
-        return response.json();
-    })
-    .catch(error => {
-        console.error('There was a problem with the fetch operation:', error);
-    });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+            return [];
+        });
 }
-
 
 // Toggle dark mode manually
 document.getElementById('dark-mode-toggle').addEventListener('click', function () {
     const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    console.log(newTheme);
-    // Apply the new theme
     applyTheme(newTheme);
-
-    // Save user preference in localStorage
     localStorage.setItem('theme', newTheme);
 });
 
@@ -808,20 +500,82 @@ window.addEventListener('DOMContentLoaded', function () {
     applyPreferredColorScheme();
 });
 
-
 // Initialize the page
 updateUserInfo();
-renderStats();
+renderStats(true);
 setupDataSelectors();
 
-
+// Debounced resize event handler
 function resizeCanvas() {
-    renderStats();
+    console.log('resize.');
+    renderStats(false);
+    console.log('resize complete.');
 }
 
-// Event listener for window resize
-window.addEventListener('resize', resizeCanvas);
+async function FixBg() {
+    console.log('Bf fix start.');
+    adjustCanvasHeight();
 
-// Call resizeCanvas on page load to ensure the canvas is the correct size
-resizeCanvas();
+    drawPerlinNoise();
+
+    applyColorOverlay(1);
+    console.log('Bg fix end.');
+}
+
+async function WhatTheFuck () {
+    var current = document.body.clientHeight;
+    while (true) {
+        console.log(`curent height: ${current}`)
+        FixBg();
+        console.log(`new height: ${current}`)
+
+        if (current !== document.body.clientHeight)
+        {
+            return;
+        }
+
+        await new Promise(r => setTimeout(r, 100));
+    }
+}
+
+// Event listeners and initial setup
+window.addEventListener('load', async function () {
+    console.log('loaded');
+    renderStats(true);
+
+
+    var img = document.getElementById('profile-pic');
+
+    async function initializeCanvas() {
+        drawPerlinNoise();
+
+        extractColors(img, 2);
+
+        // Now that palettes are initialized, resize the canvas and draw
+        resizeBackgroundCanvas();
+
+        // Set up event listeners after initialization
+        setupImageEventListeners();
+
+        // Apply initial color overlay
+        applyColorOverlay(1);
+
+        resizeBackgroundCanvas();
+
+        WhatTheFuck();
+
+    }
+
+    // Check if image is already loaded
+    if (img.complete) {
+        initializeCanvas();
+    } else {
+        img.addEventListener('load', initializeCanvas);
+    }
+
+    console.log(document.body.clientHeight);
+
+});
+
+window.addEventListener('resize', debounce(resizeCanvas, 50));
 

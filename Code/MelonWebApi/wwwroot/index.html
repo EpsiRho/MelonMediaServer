@@ -2,20 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>User Music Statistics</title>
+    <title id="tab-title">User Music Statistics</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Include CSS file -->
     <link rel="stylesheet" href="style.css">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/melon-apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/melon-favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/melon-favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/melon-safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
 </head>
+
+<script>
+    InputVarsHere
+</script>
 <body>
     <canvas id="bgcnvs"></canvas>
 
     <!-- User Profile Section -->
     <header id="user-profile">
-        <button id="dark-mode-toggle">Toggle Dark Mode</button>
+        <button id="dark-mode-toggle">🔆</button>
         <div class="header-content">
             <div class="profile-picture">
-                <img src="profile.jpg" alt="Profile Picture" id="profile-pic">
+                <img src="defaultArtwork.png" alt="Profile Picture" id="profile-pic" class="item-image">
             </div>
             <div class="user-info">
                 <h1 id="username">Username</h1>
@@ -30,25 +41,25 @@
         <div class="favorites-container">
             <div class="favorite-item">
                 <h3>Favorite Track</h3>
-                <img src="favorite-track.jpg" alt="Favorite Track" id="favorite-track-art">
+                <img src="defaultArtwork.png" alt="Favorite Track" id="favorite-track-art" class="item-image">
                 <div>
-                    <p id="favorite-track">Track Name</p>
+                    <p id="favorite-track" class="item-info-name">Track Name</p>
                     <p><span id="favorite-track-artist">Artist Name</span></p>
                 </div>
             </div>
             <div class="favorite-item">
                 <h3>Favorite Album</h3>
-                <img src="favorite-album.jpg" alt="Favorite Album" id="favorite-album-art">
+                <img src="defaultArtwork.png" alt="Favorite Album" id="favorite-album-art" class="item-image">
                 <div>
-                    <p id="favorite-album">Album Name</p>
+                    <p id="favorite-album" class="item-info-name">Album Name</p>
                     <p><span id="favorite-album-artist">Artist Name</span></p>
                 </div>
             </div>
             <div class="favorite-item">
                 <h3>Favorite Artist</h3>
-                <img src="favorite-artist.jpg" alt="Favorite Artist" id="favorite-artist-art">
+                <img src="defaultArtwork.png" alt="Favorite Artist" id="favorite-artist-art" class="item-image">
                 <div>
-                    <p id="favorite-artist">Artist Name</p>
+                    <p id="favorite-artist" class="item-info-name">Artist Name</p>
                 </div>
             </div>
         </div>
@@ -57,11 +68,11 @@
     <!-- Statistics Section -->
     <main id="statistics">
         <!-- Stats Widgets Container -->
-        <div class="widgets-container">
+        <div class="widgets-container" id="graph-widgets">
             <!-- Listening Times -->
             <section id="listening-times" class="stat-widget">
                 <div class="command-bar">
-                    <h2>Listening Times</h2>
+                    <h2>Daily Listening Habbits</h2>
                     <select class="data-selector" id="listening-times-selector">
                         <option value="day">Today</option>
                         <option value="week" selected>This Week</option>
@@ -69,14 +80,20 @@
                         <option value="year">This Year</option>
                     </select>
                 </div>
-                <div id="listening-chart"></div>
+                <div id="chartContainer">
+                    <canvas id="myChart"></canvas>
+                </div>
             </section>
-    
+        </div>
+
+        <div class="widgets-container">
+
             <!-- Top Tracks -->
             <section id="top-tracks" class="stat-widget">
                 <div class="command-bar">
                     <h2>Top Tracks</h2>
                     <select class="data-selector" id="top-tracks-selector">
+                        <option value="day" selected>Today</option>
                         <option value="week">Last Week</option>
                         <option value="month" selected>Last Month</option>
                         <option value="year">Last Year</option>
@@ -86,12 +103,13 @@
                 </div>
                 <div class="item-list" id="top-tracks-list"></div>
             </section>
-    
+
             <!-- Top Albums -->
             <section id="top-albums" class="stat-widget">
                 <div class="command-bar">
                     <h2>Top Albums</h2>
                     <select class="data-selector" id="top-albums-selector">
+                        <option value="day" selected>Today</option>
                         <option value="week">Last Week</option>
                         <option value="month" selected>Last Month</option>
                         <option value="year">Last Year</option>
@@ -101,12 +119,13 @@
                 </div>
                 <div class="item-list" id="top-albums-list"></div>
             </section>
-    
+
             <!-- Top Artists -->
             <section id="top-artists" class="stat-widget">
                 <div class="command-bar">
                     <h2>Top Artists</h2>
                     <select class="data-selector" id="top-artists-selector">
+                        <option value="day" selected>Today</option>
                         <option value="week">Last Week</option>
                         <option value="month" selected>Last Month</option>
                         <option value="year">Last Year</option>
@@ -116,12 +135,13 @@
                 </div>
                 <div class="item-list" id="top-artists-list"></div>
             </section>
-    
+
             <!-- Top Genres -->
             <section id="top-genres" class="stat-widget">
                 <div class="command-bar">
                     <h2>Top Genres</h2>
                     <select class="data-selector" id="top-genres-selector">
+                        <option value="day" selected>Today</option>
                         <option value="week">Last Week</option>
                         <option value="month" selected>Last Month</option>
                         <option value="year">Last Year</option>
@@ -131,45 +151,44 @@
                 </div>
                 <div class="item-list" id="top-genres-list"></div>
             </section>
-    
+
             <!-- Recent Tracks -->
             <section id="recent-tracks" class="stat-widget">
                 <div class="command-bar">
                     <h2>Recent Tracks</h2>
                     <select class="data-selector" id="recent-tracks-selector">
-                        <option value="today">Today</option>
                         <option value="week" selected>This Week</option>
                     </select>
                     <button class="show-more" data-target="recent-tracks-list">Show More</button>
                 </div>
                 <div class="item-list" id="recent-tracks-list"></div>
             </section>
-    
+
             <!-- Recent Albums -->
             <section id="recent-albums" class="stat-widget">
                 <div class="command-bar">
                     <h2>Recent Albums</h2>
                     <select class="data-selector" id="recent-albums-selector">
-                        <option value="today">Today</option>
                         <option value="week" selected>This Week</option>
                     </select>
                     <button class="show-more" data-target="recent-albums-list">Show More</button>
                 </div>
                 <div class="item-list" id="recent-albums-list"></div>
             </section>
-    
+
             <!-- Recent Artists -->
             <section id="recent-artists" class="stat-widget">
                 <div class="command-bar">
                     <h2>Recent Artists</h2>
                     <select class="data-selector" id="recent-artists-selector">
-                        <option value="today">Today</option>
                         <option value="week" selected>This Week</option>
                     </select>
                     <button class="show-more" data-target="recent-artists-list">Show More</button>
                 </div>
                 <div class="item-list" id="recent-artists-list"></div>
             </section>
+
+
         </div>
     </main>
 
@@ -183,9 +202,11 @@
     </div>
 
     <!-- Include JavaScript file -->
-    <script src="scripts/script.js"></script>
     <script src="scripts/color-theif.js"></script>
     <script src="scripts/perlin.js"></script>
+    <script src="scripts/Chart.js"></script>
+    <script src="scripts/ColorPalette.js"></script>
     <script src="scripts/background.js"></script>
+    <script src="scripts/script.js"></script>
 </body>
 </html>

@@ -97,6 +97,39 @@ namespace Melon.DisplayClasses
                     },
                     new PopupMenuItem(StateManager.StringsManager.GetString("ShowConsoleOption"), (_, _) => Task.Run(ShowConsole)),
                     new PopupMenuItem(StateManager.StringsManager.GetString("CheckForUpdates"), (_, _) => Task.Run(UpdateMelon)),
+                    new PopupMenuItem(StateManager.StringsManager.GetString("OpenMelonFolderOption"), (_, _) => Task.Run(() =>
+                    {
+                        var path = $"{StateManager.melonPath}";
+                        try
+                        {
+                            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                            {
+                                // For Windows, use explorer.exe
+                                ProcessStartInfo startInfo = new ProcessStartInfo
+                                {
+                                    FileName = "explorer.exe",
+                                    Arguments = $"\"{path.Replace("/", "\\")}\"",
+                                    UseShellExecute = true
+                                };
+
+                                Process.Start(startInfo);
+                            }
+                            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                            {
+                                // For Linux, use xdg-open
+                                Process.Start("xdg-open", path);
+                            }
+                            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                            {
+                                // For macOS, use open
+                                Process.Start("open", path);
+                            }
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+                    })),
                     new PopupMenuItem(StateManager.StringsManager.GetString("ExitMelonOption"), (_, _) =>
                     {
                         trayIcon.Dispose();

@@ -69,6 +69,9 @@ namespace YourNamespace.Controllers
         [HttpGet("export-playlist")]
         public IActionResult ExportPlaylist(string format, string playlistId)
         {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
             var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
             var PlaylistsCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
             var CollectionsCollection = NewMelonDB.GetCollection<Collection>("Collections");
@@ -86,6 +89,11 @@ namespace YourNamespace.Controllers
             }
 
             if(plst == null)
+            {
+                return NotFound("Playlist not found.");
+            }
+
+            if (plst.Owner != curId)
             {
                 return NotFound("Playlist not found.");
             }
