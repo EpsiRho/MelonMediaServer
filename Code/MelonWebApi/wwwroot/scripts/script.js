@@ -22,6 +22,31 @@ var listeningTimeStats = [];
 
 // Function to update user info
 function updateUserInfo() {
+    async function initializeCanvas() {
+        //console.log('setting canvas');
+        //extractColors(img, 2);
+
+        //console.log(currentPalette);
+
+        //drawPerlinNoise();
+
+        // Set up event listeners after initialization
+        //setupImageEventListeners();
+
+        // Apply initial color overlay
+        //applyColorOverlay(1);
+
+        //resizeBackgroundCanvas();
+
+        //WhatTheFuck();
+
+    }
+
+    var img = document.getElementById('profile-pic');
+
+    // Check if image is already loaded
+    img.addEventListener('load', initializeCanvas);
+
     document.getElementById('username').textContent = userInfo.username;
     document.getElementById('bio').textContent = userInfo.bio;
     document.getElementById('profile-pic').src = userInfo.profilePicture;
@@ -42,14 +67,7 @@ function updateUserInfo() {
     document.getElementById('favorite-artist').textContent = userInfo.favoriteArtist.name || 'Artist Name';
 }
 
-// Debounce function to limit function calls
-function debounce(func, wait) {
-    let timeout;
-    return function () {
-        clearTimeout(timeout);
-        timeout = setTimeout(func, wait);
-    };
-}
+
 
 // Variables for caching
 var previousMaxItemsToShow = {};
@@ -261,11 +279,11 @@ function createItemElement(item, itemType) {
         var img = document.createElement('img');
         img.src = item.artwork || 'defaultArtwork.png';
         img.alt = item.name;
-        img.addEventListener('click', debounce(function () {
+        img.addEventListener('click', function () {
             console.log('Changing bg');
             targetPalette = getColors(img, 2);
             startPaletteTransition();
-        }));
+        });
         img.classList.add('item-image')
         itemDiv.appendChild(img);
 
@@ -403,7 +421,7 @@ async function setupDataSelectors() {
 async function updateWidgetData(sectionId, timeRange, getNew) {
     var data = [];
     if (getNew) {
-        console.log("Get Data");
+        //console.log("Get Data");
         data = await getNewData(sectionId, timeRange);
     } else {
         data = getCachedData(sectionId);
@@ -425,7 +443,9 @@ function getCachedData(sectionId) {
     if (sectionId === 'top-artists') return topArtists;
     if (sectionId === 'top-genres') return topGenres;
     if (sectionId === 'recent-tracks') return recentTracks;
-    // Similarly for recent-albums and recent-artists
+    if (sectionId === 'recent-albums') return recentAlbums;
+    if (sectionId === 'recent-artists') return recentArtists;
+
     return [];
 }
 
@@ -466,7 +486,7 @@ async function getNewData(sectionId, timeRange) {
 
 // MelonCall function
 function MelonCall(page, count, api, timeRange) {
-    console.log(timeRange);
+    //console.log(timeRange);
     const apiUrl = `${api}?userId=${userId}&page=${page}&count=${count}&timeRange=${timeRange}`;
 
     return fetch(apiUrl, {
@@ -501,81 +521,43 @@ window.addEventListener('DOMContentLoaded', function () {
 });
 
 // Initialize the page
-updateUserInfo();
-renderStats(true);
-setupDataSelectors();
+//updateUserInfo();
+//renderStats(true);
+//setupDataSelectors();
 
 // Debounced resize event handler
-function resizeCanvas() {
-    console.log('resize.');
-    renderStats(false);
-    console.log('resize complete.');
-}
 
-async function FixBg() {
-    console.log('Bf fix start.');
-    adjustCanvasHeight();
-
-    drawPerlinNoise();
-
-    applyColorOverlay(1);
-    console.log('Bg fix end.');
-}
-
-async function WhatTheFuck () {
-    var current = document.body.clientHeight;
-    while (true) {
-        console.log(`curent height: ${current}`)
-        FixBg();
-        console.log(`new height: ${current}`)
-
-        if (current !== document.body.clientHeight)
-        {
-            return;
-        }
-
-        await new Promise(r => setTimeout(r, 100));
-    }
-}
 
 // Event listeners and initial setup
 window.addEventListener('load', async function () {
     console.log('loaded');
+    updateUserInfo();
     renderStats(true);
+    setupDataSelectors();
+    setupImageEventListeners();
+    const resizeObserver = new ResizeObserver(debounce(function () {
 
+        console.group();
+       // console.log(`body size changed: ${entries[0].target.clientHeight}, ${entries[0].target.clientWidth}`);
+        console.log(`re-rendering stat widgets`);
+        renderStats(false);
 
-    var img = document.getElementById('profile-pic');
+        console.groupEnd();
 
-    async function initializeCanvas() {
-        drawPerlinNoise();
+        FixBg();
+        cnvs.style.display = `block`;
 
-        extractColors(img, 2);
+        console.groupEnd();
+    }), 15);
 
-        // Now that palettes are initialized, resize the canvas and draw
-        resizeBackgroundCanvas();
+    // start observing a DOM node
+    resizeObserver.observe(document.body)
+    FixBg();
 
-        // Set up event listeners after initialization
-        setupImageEventListeners();
-
-        // Apply initial color overlay
-        applyColorOverlay(1);
-
-        resizeBackgroundCanvas();
-
-        WhatTheFuck();
-
-    }
-
-    // Check if image is already loaded
-    if (img.complete) {
-        initializeCanvas();
-    } else {
-        img.addEventListener('load', initializeCanvas);
-    }
 
     console.log(document.body.clientHeight);
 
 });
 
-window.addEventListener('resize', debounce(resizeCanvas, 50));
+//window.addEventListener('resize', debounce(resizeCanvas, 50));
 

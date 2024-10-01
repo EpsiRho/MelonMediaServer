@@ -17,6 +17,7 @@ body {
     height: auto;
     z-index: -1;
     transition: background-color 2s ease-in-out;
+    display: none;
 }
 
 /* Header User Profile */
