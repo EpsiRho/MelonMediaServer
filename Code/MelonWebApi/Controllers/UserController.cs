@@ -277,10 +277,10 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var UserCollection = mongoDatabase.GetCollection<User>("Users");
 
-            if (password == "")
+            if (username == "" || password == "")
             {
                 args.SendEvent("User Not Found", 400, Program.mWebApi);
-                return new ObjectResult("Password cannot be empty") { StatusCode = 400 };
+                return new ObjectResult("Username/Password cannot be empty") { StatusCode = 400 };
             }
 
             byte[] tempSalt;

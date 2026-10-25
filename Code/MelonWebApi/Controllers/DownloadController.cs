@@ -139,7 +139,8 @@ namespace MelonWebApi.Controllers
                 WaveFormat targetFormat = new Mp3WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.Channels, 0, transcodeBitrate);
                 LameConfig config = new LameConfig()
                 {
-                    BitRate = transcodeBitrate
+                    BitRate = transcodeBitrate,
+                    OutputSampleRate = reader.WaveFormat.SampleRate
                 };
 
 

@@ -129,6 +129,34 @@ main#statistics {
     min-height: 400px;
 }
 
+.graph-widget {
+    flex: 1 1;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    position: relative;
+    display: flex;
+    flex-direction: column; 
+}
+
+.graph-widget .command-bar {
+    flex: 0 0 auto;
+    margin-bottom: 10px; 
+}
+
+.graph-widget .chartContainer {
+    flex: 1 1 auto; 
+    display: flex;
+}
+
+.graph-widget .chartContainer canvas {
+    flex: 1 1 auto; /* Make canvas fill the chartContainer */
+    width: 100% !important; /* Ensure canvas takes full width */
+    height: 100% !important; /* Ensure canvas takes full height */
+}
+
+
 .stat-widget h2 {
     margin-bottom: 10px;
 }
@@ -145,20 +173,13 @@ main#statistics {
     cursor: pointer;
 }
 
-#listening-times {
-    max-height: 300px;
-}
 
 #graph-widgets {
     margin: 10px auto;
 }
 
 /* Style for the chart container */
-#listening-times #chartContainer {
-    position: relative;
-    margin: auto;
-    height: 80vh;
-    width: 80vw;
+.chartContainer {
 }
 
 #size-checker {
@@ -330,6 +351,9 @@ body.dark-mode header#user-profile {
 
 /* Statistics Widgets */
 body.dark-mode .stat-widget {
+    background-color: #1e1e1e;
+}
+body.dark-mode .graph-widget {
     background-color: #1e1e1e;
 }
 

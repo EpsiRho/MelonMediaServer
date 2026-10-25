@@ -9,6 +9,7 @@ using MelonLib.API;
 using NAudio.CoreAudioApi;
 using System;
 using MongoDB.Bson.Serialization;
+using System.Globalization;
 
 
 namespace MelonWebApi.Controllers
@@ -82,7 +83,7 @@ namespace MelonWebApi.Controllers
             var FavAlbum = AlbumsCollection.Find(Builders<Album>.Filter.Eq(x => x._id, user.FavAlbum)).FirstOrDefault();
             var FavArtist = ArtistsCollection.Find(Builders<Artist>.Filter.Eq(x => x._id, user.FavArtist)).FirstOrDefault();
 
-            string favs = ""; 
+            string favs = "";
             if (FavTrack != null)
             {
                 favs = $"\"favoriteTrack\": {{ \n";
@@ -124,8 +125,8 @@ namespace MelonWebApi.Controllers
 
             vars = vars.Replace("[FavoriteTracksHere]", favs);
 
-            
-            
+
+
 
             vars += $"const userId = '{id}';";
 
@@ -216,7 +217,7 @@ namespace MelonWebApi.Controllers
 
 
             string obj = "[";
-            foreach(var track in tracks)
+            foreach (var track in tracks)
             {
                 var fullTrack = tracksFull.FirstOrDefault(x => x._id == track.Key);
                 string artists = "";
@@ -566,7 +567,7 @@ namespace MelonWebApi.Controllers
                                              .Limit(count)
                                              .ToList();
 
-            var tracks = recentStats.Select(stat => KeyValuePair.Create( stat.TrackId, stat.LogDate )).ToList();
+            var tracks = recentStats.Select(stat => KeyValuePair.Create(stat.TrackId, stat.LogDate)).ToList();
 
             List<string> trackIds = (from kvp in tracks select kvp.Key).Distinct().ToList();
             var tracksFull = TracksCollection.Find(x => trackIds.Contains(x._id)).ToList();
@@ -778,9 +779,9 @@ namespace MelonWebApi.Controllers
             args.SendEvent("Top genres sent", 200, Program.mWebApi);
             return new ObjectResult(obj) { StatusCode = 200 };
         }
-        
+
         [HttpGet("user-page/listening-time")]
-        public IActionResult GetListeningTime(string userId = "",string timeRange = "")
+        public IActionResult GetListeningTime(string userId = "", string timeRange = "")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -823,7 +824,6 @@ namespace MelonWebApi.Controllers
             args.SendEvent("Listening time sent", 200, Program.mWebApi);
             return new ObjectResult(vars) { StatusCode = 200 };
         }
-
 
         public List<double> GetListeningTimeByHour(TimeSpan timePeriod)
         {
@@ -886,6 +886,141 @@ namespace MelonWebApi.Controllers
             }
 
             return formattedListeningTimeByHour;
+        }
+
+        public class PeriodGenreData
+        {
+            public string Time { get; set; }
+            public Dictionary<string, int> Genres { get; set; }
+        }
+
+        [HttpGet("user-page/genre-graph")]
+        public IActionResult genreGraph(string userId, string timeRange, int numberOfPeriods = 5)
+        {
+            var curId = ((ClaimsIdentity)User.Identity).Claims
+                      .Where(c => c.Type == ClaimTypes.UserData)
+                      .Select(c => c.Value).FirstOrDefault();
+            var args = new WebApiEventArgs("user-page/listening-time", "Stats", new Dictionary<string, object>()
+            {
+                { "userId", userId },
+                { "timeRange", timeRange }
+            });
+
+            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase("Melon");
+            var collection = mongoDatabase.GetCollection<PlayStat>("Stats");
+
+            // Step 1: Calculate the start date (10 weeks ago)
+            DateTime startDate;
+
+            switch (timeRange.ToLower())
+            {
+                case "week":
+                    startDate = DateTime.UtcNow.Date.AddDays(-7 * numberOfPeriods);
+                    break;
+                case "month":
+                    startDate = DateTime.UtcNow.Date.AddMonths(-numberOfPeriods);
+                    break;
+                case "year":
+                    startDate = DateTime.UtcNow.Date.AddYears(-numberOfPeriods);
+                    break;
+                default:
+                    throw new ArgumentException("Invalid period type. Choose 'week', 'month', or 'year'.");
+            }
+
+
+            var filter = Builders<PlayStat>.Filter.And(
+                Builders<PlayStat>.Filter.Eq(s => s.UserId, userId),
+                Builders<PlayStat>.Filter.Gte(s => s.LogDate, startDate)
+            );
+
+            var playStats = collection.Find(x=> x.UserId == userId && x.LogDate > startDate).ToList();
+
+            // Step 2: Bin each PlayStat into an individual period
+            var periodGenreCounts = new Dictionary<string, Dictionary<string, int>>();
+
+            foreach (var playStat in playStats)
+            {
+                string periodKey;
+
+                switch (timeRange.ToLower())
+                {
+                    case "week":
+                        {
+                            DayOfWeek firstDayOfWeek = CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
+                            DateTime weekStartDate = playStat.LogDate.Date;
+
+                            while (weekStartDate.DayOfWeek != firstDayOfWeek)
+                            {
+                                weekStartDate = weekStartDate.AddDays(-1);
+                            }
+
+                            periodKey = weekStartDate.ToString("MM-dd-yyyy");
+                            break;
+                        }
+                    case "month":
+                        periodKey = playStat.LogDate.ToString("yyyy-MM");
+                        break;
+                    case "year":
+                        periodKey = playStat.LogDate.ToString("yyyy");
+                        break;
+                    default:
+                        throw new ArgumentException("Invalid period type. Choose 'week', 'month', or 'year'.");
+                }
+
+                if (!periodGenreCounts.ContainsKey(periodKey))
+                {
+                    periodGenreCounts[periodKey] = new Dictionary<string, int>();
+                }
+
+                var genreCounts = periodGenreCounts[periodKey];
+
+                // Step 3: Count up how many of every genre is found in each period's set of PlayStats
+                if (playStat.Genres != null)
+                {
+                    foreach (var genre in playStat.Genres)
+                    {
+                        if (genreCounts.ContainsKey(genre))
+                        {
+                            genreCounts[genre]++;
+                        }
+                        else
+                        {
+                            genreCounts[genre] = 1;
+                        }
+                    }
+                }
+            }
+
+            // Step 4: Return the top 10 genres of the last N periods of data
+            // Sort periods in descending order (most recent first)
+            var sortedPeriods = periodGenreCounts.Keys
+                .OrderBy(k => k)
+                .Take(numberOfPeriods);
+
+            var result = new List<PeriodGenreData>();
+
+            int count = 1;
+            foreach (var periodKey in sortedPeriods)
+            {
+                var genreCounts = periodGenreCounts[periodKey];
+
+                // Sort the genres by count descending
+                var topGenres = genreCounts
+                    .OrderByDescending(kvp => kvp.Value)
+                    .Take(numberOfPeriods)
+                    .ToDictionary(kvp => kvp.Key, kvp => count++);
+                //count++;
+
+                result.Add(new PeriodGenreData
+                {
+                    Time = periodKey,
+                    Genres = topGenres
+                });
+            }
+
+            args.SendEvent("Genre Graph Data Sent", 200, Program.mWebApi);
+            return new ObjectResult(result) { StatusCode = 200 };
         }
     }
 }

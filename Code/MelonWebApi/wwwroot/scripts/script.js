@@ -1,6 +1,7 @@
 // Stats Configuration (Enable or Disable Stats)
 var statsConfig = {
     listeningTimesEnabled: true,
+    genreGraphEnabled: true,
     topTracksEnabled: true,
     topAlbumsEnabled: true,
     topArtistsEnabled: true,
@@ -19,6 +20,7 @@ var recentTracks = [];
 var recentAlbums = [];
 var recentArtists = [];
 var listeningTimeStats = [];
+var genreGraphStats = [];
 
 // Function to update user info
 function updateUserInfo() {
@@ -79,7 +81,7 @@ async function renderStats(useNew) {
     if (statsConfig.listeningTimesEnabled) {
         if (useNew) {
             var ltTimeRangeSelector = document.getElementById('listening-times-selector');
-            var ltTimeRange = ltTimeRangeSelector ? ltTimeRangeSelector.value : 'month';
+            var ltTimeRange = ltTimeRangeSelector ? ltTimeRangeSelector.value : 'week';
 
             var apiUrl = `user-page/listening-time?userId=${userId}&timeRange=${ltTimeRange}`;
 
@@ -105,6 +107,35 @@ async function renderStats(useNew) {
         document.getElementById('listening-times').style.display = 'none';
     }
 
+    if (statsConfig.genreGraphEnabled) {
+        if (useNew) {
+            var ggTimeRangeSelector = document.getElementById('genre-graph-selector');
+            var ggTimeRange = ggTimeRangeSelector ? ggTimeRangeSelector.value : 'week';
+
+            var apiUrl = `user-page/genre-graph?userId=${userId}&timeRange=${ggTimeRange}`;
+
+            genreGraphStats = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    return [];
+                });
+            renderGenreGraph(genreGraphStats);
+        }
+    } else {
+        document.getElementById('genre-graph').style.display = 'none';
+    }
+
     // Render item lists with limited items
     const sections = ['top-tracks', 'top-albums', 'top-artists', 'top-genres', 'recent-tracks', 'recent-albums', 'recent-artists'];
     sections.forEach(sectionId => {
@@ -116,10 +147,155 @@ async function renderStats(useNew) {
 
 }
 
+
+
+
 // Function to render the listening chart
-var myChart = null;
+var genreGraph = null;
+function renderGenreGraph(ggdata) {
+    const ctx = document.getElementById('ggChart')?.getContext('2d');
+    if (!ctx) return; 
+
+    const timeLabels = ggdata.map(d => d.time);
+
+    // Collect all genres and calculate their total counts
+    const genreTotals = {};
+    ggdata.forEach(d => {
+        for (const genre in d.genres) {
+            if (genreTotals[genre]) {
+                genreTotals[genre] += d.genres[genre];
+            } else {
+                genreTotals[genre] = d.genres[genre];
+            }
+        }
+    });
+
+
+    const topGenres = Object.keys(genreTotals)
+        .sort((a, b) => genreTotals[b] - genreTotals[a]);
+
+
+    const datasets = topGenres.map((genre, index) => {
+        const genreData = ggdata.map(d => d.genres[genre] || null);
+        //const genreData = ggdata.map(d => {
+        //    reutd.genres[genre];
+        //
+        //    // If the rank is 0, set it to null to not show it
+        //    if (adjustedRank === 0) {
+        //        adjustedRank = null;
+        //    }
+        //
+        //    return adjustedRank;
+        //});
+
+
+        var img = document.getElementById('profile-pic');
+        var palettes = getColors(img, topGenres.length);
+        const color = `rgb(${palettes[index][0]}, ${palettes[index][1]}, ${palettes[index][2]})`;
+
+        return {
+            label: genre,
+            data: genreData,
+            borderColor: color,
+            backgroundColor: color,
+            fill: false,
+            tension: 0.2,
+            pointRadius: 3, 
+            pointHoverRadius: 6, 
+            hoverBorderWidth: 3, 
+        };
+    });
+
+    const legendPlugin = {
+        id: 'legendPlugin',
+        afterDraw(chart) {
+            const { ctx, chartArea: { top, bottom, left, right, width, height } } = chart;
+            ctx.save();
+            // Adjust these values to position the legend inside the chart area
+            const legendX = right - 75; // position from the right
+            const legendY = top + 10;    // position from the top
+            const lineHeight = 15;
+            chart.data.datasets.forEach((dataset, index) => {
+                ctx.fillStyle = dataset.backgroundColor;
+                ctx.fillRect(legendX, legendY + index * lineHeight, 10, 10);
+
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(dataset.label, legendX + 15, legendY + index * lineHeight + 5);
+            });
+            ctx.restore();
+        }
+    };
+
+    if (genreGraph) {
+        genreGraph.data.labels = timeLabels;
+        genreGraph.data.datasets = datasets;
+        genreGraph.update();
+    } else {
+        genreGraph = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: datasets,
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Top Genres Over Time',
+                    },
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        enabled: true,
+                        mode: 'nearest',
+                        intersect: false,
+                        callbacks: {
+                            title: function (tooltipItems) {
+                                // Show time label as title
+                                return tooltipItems[0].label;
+                            },
+                            label: function (context) {
+                                // Show genre and value
+                                const genre = context.dataset.label;
+                                const value = context.formattedValue;
+                                return `${genre}: ${value}`;
+                            }
+                        }
+                    },
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time',
+                        },
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Rank',
+                        },
+                        reverse: true, // Invert the Y-axis
+                        min: 0,
+                        max: 10,
+                        ticks: {
+                            stepSize: 1,
+                        },
+                    },
+                },
+            },
+        });
+    }
+}
+
+
+var ltChart = null;
 function renderListeningChart(minutesListened) {
-    const ctx = document.getElementById('myChart')?.getContext('2d');
+    const ctx = document.getElementById('ltChart')?.getContext('2d');
     if (!ctx) return; // Exit if the chart element doesn't exist
 
     // Hour labels for the x-axis
@@ -130,16 +306,18 @@ function renderListeningChart(minutesListened) {
         '7pm', '8pm', '9pm', '10pm', '11pm', '12am'
     ];
 
-    // Configuration for the Chart.js line chart
+
+    var img = document.getElementById('profile-pic');
+    var palettes = getColors(img, 3);
     const data = {
         labels: labels,
         datasets: [{
             label: 'Minutes Listened',
             data: minutesListened,
             fill: true,
-            backgroundColor: 'rgba(75,192,192,0.2)',
-            borderColor: '#4bc0c0',
-            pointBackgroundColor: '#4bc0c0',
+            backgroundColor: `rgba(${palettes[1][0]},${palettes[1][1]},${palettes[1][2]},0.2)`,
+            borderColor: `rgb(${palettes[0][0]},${palettes[0][1]},${palettes[0][2]})`,
+            pointBackgroundColor: `rgb(${palettes[2][0]},${palettes[2][1]},${palettes[2][2]})`,
             tension: 0.4
         }]
     };
@@ -177,13 +355,13 @@ function renderListeningChart(minutesListened) {
         }
     };
 
-    // Create or update the Chart.js line chart
-    if (myChart) {
-        myChart.options = options;
-        myChart.data = data;
-        myChart.update();
+
+    if (ltChart) {
+        ltChart.options = options;
+        ltChart.data = data;
+        ltChart.update();
     } else {
-        myChart = new Chart(ctx, {
+        ltChart = new Chart(ctx, {
             type: 'line',
             data: data,
             options: options
@@ -192,7 +370,7 @@ function renderListeningChart(minutesListened) {
 }
 
 // Function to render item lists with show more functionality using modal
-function renderItemList(sectionId, items, isEnabled, itemType) {
+async function renderItemList(sectionId, items, isEnabled, itemType) {
     if (!isEnabled) {
         document.getElementById(sectionId).style.display = 'none';
         return;
@@ -329,8 +507,9 @@ function initializeModal() {
 
 var showMoreButtonsInitialized = {};
 
-function setupShowMoreModal(sectionId, items, itemType) {
+async function setupShowMoreModal(sectionId, items, itemType) {
     initializeModal(); // Ensure modal event listeners are set
+    console.log('modal init');
 
     var showMoreButton = document.querySelector('button[data-target="' + sectionId + '-list"]');
 
@@ -339,6 +518,16 @@ function setupShowMoreModal(sectionId, items, itemType) {
     showMoreButtonsInitialized[sectionId] = true;
 
     showMoreButton.addEventListener('click', function () {
+        console.log(`modal show ${sectionId}`);
+        console.log(items);
+        console.log(`modal show ${itemType}`);
+
+        if (items.length === 0) {
+            const selector = document.getElementById(`${sectionId}-selector`);
+            items = getCachedData(sectionId);
+            console.log(`modal get new data ${sectionId}`);
+        }
+
         var modal = document.getElementById('modal');
         var modalTitle = document.getElementById('modal-title');
         var modalBody = document.getElementById('modal-body');
@@ -411,6 +600,29 @@ async function setupDataSelectors() {
                     return [];
                 });
             renderListeningChart(listeningTimeStats);
+
+            var ggTimeRangeSelector = document.getElementById('genre-graph-selector');
+            var ggTimeRange = ggTimeRangeSelector ? ggTimeRangeSelector.value : 'month';
+
+            var apiUrl = `user-page/genre-graph?userId=${userId}&timeRange=${ggTimeRange}`;
+
+            genreGraphStats = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    return [];
+                });
+            renderGenreGraph(genreGraphStats);
 
             const sectionId = this.id.replace('-selector', '');
             updateWidgetData(sectionId, this.value, true);
@@ -559,5 +771,9 @@ window.addEventListener('load', async function () {
 
 });
 
-//window.addEventListener('resize', debounce(resizeCanvas, 50));
+window.addEventListener('resize', debounce(function () {
+    renderListeningChart(listeningTimeStats);
+    renderGenreGraph(genreGraphStats);
+    console.log("reszie graphs");
+}, 50));
 

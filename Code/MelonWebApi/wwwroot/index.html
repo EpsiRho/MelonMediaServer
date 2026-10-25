@@ -69,7 +69,7 @@
         <!-- Stats Widgets Container -->
         <div class="widgets-container" id="graph-widgets">
             <!-- Listening Times -->
-            <section id="listening-times" class="stat-widget">
+            <section id="listening-times" class="graph-widget">
                 <div class="command-bar">
                     <h2>Daily Listening Habbits</h2>
                     <select class="data-selector" id="listening-times-selector">
@@ -79,8 +79,34 @@
                         <option value="year">This Year</option>
                     </select>
                 </div>
-                <div id="chartContainer">
-                    <canvas id="myChart"></canvas>
+                <div class="chartContainer">
+                    <canvas id="ltChart"></canvas>
+                </div>
+            </section>
+            <section id="genre-graph" class="graph-widget">
+                <div class="command-bar">
+                    <h2>Top Genres History</h2>
+                    <select class="data-selector" id="genre-graph-selector">
+                        <option value="week" selected>By Week</option>
+                        <option value="month">By Month</option>
+                        <option value="year">By Year</option>
+                    </select>
+                </div>
+                <div class="chartContainer">
+                    <canvas id="ggChart"></canvas>
+                </div>
+            </section>
+            <section id="total-times" class="graph-widget">
+                <div class="command-bar">
+                    <h2>Total Minutes Listened</h2>
+                    <select class="data-selector" id="genre-graph-selector">
+                        <option value="week" selected>By Week</option>
+                        <option value="month">By Month</option>
+                        <option value="year">By Year</option>
+                    </select>
+                </div>
+                <div class="chartContainer">
+                    <canvas id="ttChart"></canvas>
                 </div>
             </section>
         </div>
