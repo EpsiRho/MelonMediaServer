@@ -8,9 +8,7 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
-using NuGet.Packaging.Signing;
 using MongoDB.Bson.Serialization;
-using NuGet.Packaging;
 using System.Collections.Generic;
 using System.Security.Claims;
 
@@ -320,7 +318,10 @@ namespace MelonWebApi.Controllers
             Dictionary<DbLink, double> finalArtists = new Dictionary<DbLink, double>();
             if (includeConnections)
             {
-                finalArtists.AddRange(Artists.Select(x => KeyValuePair.Create(x, 0.2)));
+                foreach (var artist in Artists)
+                {
+                    finalArtists.TryAdd(artist, 0.2);
+                }
             }
 
             if (includeGenres)
@@ -329,7 +330,10 @@ namespace MelonWebApi.Controllers
                 var genreBasedArtists = ArtistsCollection.Find(genrefilter).ToList();
 
                 genreBasedArtists = genreBasedArtists.Where(x => ids.Contains(x._id) == false).ToList();
-                finalArtists.AddRange(genreBasedArtists.Select(x => KeyValuePair.Create(new DbLink(x), 0.0)));
+                foreach (var artist in genreBasedArtists)
+                {
+                    finalArtists.TryAdd(new DbLink(artist), 0.0);
+                }
             }
 
             string username = User.Identity.Name;
@@ -453,7 +457,10 @@ namespace MelonWebApi.Controllers
             Dictionary<Track, double> tracks = finalTracks.Select(x => KeyValuePair.Create(x, 0.2)).ToDictionary();
             if (includeRecent)
             {
-                tracks.AddRange(firstTracks.Select(x => KeyValuePair.Create(x, 0.0)).ToDictionary());
+                foreach (var track in firstTracks)
+                {
+                    tracks.TryAdd(track, 0.0);
+                }
             }
 
             Random rng = new Random();

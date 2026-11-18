@@ -825,6 +825,7 @@ namespace MelonWebApi.Controllers
             return new ObjectResult(vars) { StatusCode = 200 };
         }
 
+        [NonAction]
         public List<double> GetListeningTimeByHour(TimeSpan timePeriod)
         {
             var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);

@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.Data;
 using RestSharp;
-using Azure.Core;
 using RestSharp.Authenticators;
 using System.Text;
 using System.Linq;

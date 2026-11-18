@@ -32,7 +32,6 @@ namespace MelonInstaller
         }
         public static async Task<int> Main(string[] args)
         {
-            ClearConsole();
             ParseArgs(args);
 
             if (LaunchArgs.ContainsKey("v") || LaunchArgs.ContainsKey("version"))
@@ -40,6 +39,8 @@ namespace MelonInstaller
                 Console.WriteLine($"Melon Installer {Version}");
                 return 0;
             }
+
+            ClearConsole();
 
             var resources = typeof(Program).Assembly.GetManifestResourceNames();
             if (LaunchArgs.ContainsKey("lang") && resources.Contains($"MelonInstaller.Strings.UIStrings{LaunchArgs["lang"].ToUpper()}.resources"))

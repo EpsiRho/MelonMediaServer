@@ -1,6 +1,4 @@
-﻿using Amazon.Runtime.Internal.Util;
-using Amazon.Util.Internal;
-using H.NotifyIcon.Core;
+﻿using H.NotifyIcon.Core;
 using Melon.Classes;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Mvc;

@@ -1,5 +1,4 @@
-﻿using Amazon.Util.Internal;
-using Melon.DisplayClasses;
+﻿using Melon.DisplayClasses;
 using Melon.LocalClasses;
 using Pastel;
 using System;
@@ -73,7 +72,8 @@ namespace Melon.Classes
                 string command = option.Key;
                 command += new string(' ', max - command.Length);
 
-                int descMax = Console.WindowWidth - 7 - command.Length;
+                int width = Console.IsOutputRedirected ? 120 : Console.WindowWidth;
+                int descMax = Math.Max(40, width - 7 - command.Length);
                 string desc = option.Value;
 
                 if(desc.Length > descMax)

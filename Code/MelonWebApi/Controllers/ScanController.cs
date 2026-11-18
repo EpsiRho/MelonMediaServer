@@ -8,7 +8,6 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
-using NuGet.Packaging.Signing;
 using System.Security.Claims;
 using Melon.Classes;
 using Pastel;

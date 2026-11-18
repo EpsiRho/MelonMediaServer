@@ -8,12 +8,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Collections.Specialized;
@@ -22,15 +21,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.RateLimiting;
 using Melon.Models;
-using NuGet.Protocol.Plugins;
 using MelonWebApi.Middleware;
 using Microsoft.Extensions.Hosting.WindowsServices;
-using Microsoft.Identity.Client;
 using System.Runtime.Versioning;
 using Melon.PluginModels;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.Options;
-using Amazon.Util.Internal;
 using Pastel;
 using Melon.Interface;
 namespace MelonWebApi
@@ -83,7 +79,7 @@ namespace MelonWebApi
                 mWebApi = new MWebApi();
                 StateManager.Init(mWebApi, true, false);
 
-                if (OperatingSystem.IsWindows())
+                if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
                 {
                     try
                     {
@@ -332,21 +328,10 @@ namespace MelonWebApi
                         Scheme = "Bearer"
                     });
 
-                    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement()
                     {
                     {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            },
-                            Scheme = "oauth2",
-                            Name = "Bearer",
-                            In = ParameterLocation.Header,
-
-                        },
+                        new OpenApiSecuritySchemeReference("Bearer", document),
                         new List<string>()
                     }
                     });
@@ -374,7 +359,7 @@ namespace MelonWebApi
 
                 app.UseSwagger(options =>
                 {
-                    options.SerializeAsV2 = true;
+                    options.OpenApiVersion = OpenApiSpecVersion.OpenApi2_0;
                 });
 
                 app.UseSwaggerUI(options =>

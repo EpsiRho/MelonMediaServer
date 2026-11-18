@@ -13,21 +13,15 @@ using Pastel;
 using System.Drawing;
 using Newtonsoft.Json;
 using System.Diagnostics;
-using Amazon.Util;
 using Microsoft.Extensions.DependencyInjection;
 using System.Resources;
-using Amazon.Util.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Melon.Models;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Reflection;
 using System.Windows.Input;
 using Melon.Interface;
 using Melon.PluginModels;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using Amazon.Runtime.Internal.Transform;
 using Serilog;
-using Microsoft.Owin.Hosting;
 using MongoDB.Bson;
 using Microsoft.Extensions.FileSystemGlobbing;
 
@@ -325,7 +319,6 @@ namespace Melon.LocalClasses
                 else
                 {
                     PluginsManager.ExecutePlugins();
-                    LaunchArgs.TryAdd("headless", "svr");
                 }
             }
 
@@ -396,12 +389,12 @@ namespace Melon.LocalClasses
                     MelonSettings.QueueCleanupWaitInHours = 48;
                 }
 
-                if (MelonSettings.DefaultLanguage.IsNullOrEmpty())
+                if (string.IsNullOrEmpty(MelonSettings.DefaultLanguage))
                 {
                     MelonSettings.DefaultLanguage = "EN";
                 }
 
-                if (MelonSettings.ListeningURL.IsNullOrEmpty())
+                if (string.IsNullOrEmpty(MelonSettings.ListeningURL))
                 {
                     MelonSettings.ListeningURL = "https://*:14524";
                 }

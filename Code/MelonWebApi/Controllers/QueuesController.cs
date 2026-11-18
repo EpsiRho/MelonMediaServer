@@ -8,10 +8,7 @@ using Melon.LocalClasses;
 using System.Diagnostics;
 using Melon.Models;
 using System.Security.Cryptography;
-using System.Web.Http.Filters;
 using System.Security.Claims;
-using NuGet.Packaging.Signing;
-using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 namespace MelonWebApi.Controllers
 {

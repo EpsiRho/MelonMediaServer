@@ -1,5 +1,4 @@
-﻿using Amazon.Util.Internal;
-using Melon.Classes;
+﻿using Melon.Classes;
 using Melon.DisplayClasses;
 using Melon.Models;
 using Microsoft.Extensions.Logging;

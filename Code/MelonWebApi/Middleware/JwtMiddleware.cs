@@ -1,5 +1,4 @@
-﻿using Azure;
-using Melon.LocalClasses;
+﻿using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Logging;
@@ -9,7 +8,6 @@ using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web.Http;
 
 namespace MelonWebApi.Middleware
 {

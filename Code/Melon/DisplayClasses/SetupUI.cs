@@ -1,5 +1,4 @@
-﻿using Amazon.Util.Internal;
-using Melon.Classes;
+﻿using Melon.Classes;
 using Melon.LocalClasses;
 using Melon.Models;
 using Microsoft.Extensions.Hosting;
@@ -108,7 +107,7 @@ namespace Melon.DisplayClasses
                 MelonUI.ClearConsole(0, 1, Console.WindowWidth, 4);
                 Console.WriteLine(StringsManager.GetString("PasswordSetupPrompt").Replace("{}", tempUsername.Pastel(MelonColor.Highlight)).Pastel(MelonColor.Text));
                 Console.WriteLine(StringsManager.GetString("AppLoginInstruction").Pastel(MelonColor.Text));
-                if (!passInput[0].IsNullOrEmpty())
+                if (!string.IsNullOrEmpty(passInput[0]))
                 {
                     Console.SetCursorPosition(0, 3);
                     Console.WriteLine(StringsManager.GetString("PasswordMismatchError").Pastel(MelonColor.Error));

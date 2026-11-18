@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33627.172
@@ -10,6 +10,14 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MelonLib", "MelonLib\MelonLib.csproj", "{35DED3BA-1966-4CED-B255-C6F88E1390A7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MelonInstaller", "MelonInstaller\MelonInstaller.csproj", "{45DE1579-A0F1-40BB-A15D-53C5661E84B3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demos", "Demos", "{FA8A28C8-4B59-8028-2ACF-626D05B08DB7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MelonTestPlugin", "Demos\Demo Plugin\MelonTestPlugin\MelonTestPlugin.csproj", "{95C954C2-8074-479B-8C4D-4010B2ED91E5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildSmoke", "Tests\BuildSmoke\BuildSmoke.csproj", "{C9DD8B80-2B93-4C08-B86E-E909A486DEC9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,9 +41,21 @@ Global
 		{45DE1579-A0F1-40BB-A15D-53C5661E84B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45DE1579-A0F1-40BB-A15D-53C5661E84B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45DE1579-A0F1-40BB-A15D-53C5661E84B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95C954C2-8074-479B-8C4D-4010B2ED91E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95C954C2-8074-479B-8C4D-4010B2ED91E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95C954C2-8074-479B-8C4D-4010B2ED91E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95C954C2-8074-479B-8C4D-4010B2ED91E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9DD8B80-2B93-4C08-B86E-E909A486DEC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9DD8B80-2B93-4C08-B86E-E909A486DEC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9DD8B80-2B93-4C08-B86E-E909A486DEC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9DD8B80-2B93-4C08-B86E-E909A486DEC9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{95C954C2-8074-479B-8C4D-4010B2ED91E5} = {FA8A28C8-4B59-8028-2ACF-626D05B08DB7}
+		{C9DD8B80-2B93-4C08-B86E-E909A486DEC9} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {571BEE4C-8BBC-45D6-94A1-1F989E3F6368}

@@ -9,7 +9,6 @@ using System.Diagnostics;
 using Melon.Models;
 using System.Security.Claims;
 using ATL.Playlist;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace MelonWebApi.Controllers
 {

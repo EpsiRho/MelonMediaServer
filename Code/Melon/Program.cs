@@ -25,7 +25,7 @@ namespace Melon
             {
                 StateManager.Version = "1.0.0.0";
             }
-            StateManager.Init(null, false, true);
+            StateManager.Init(null, StateManager.LaunchArgs.ContainsKey("headless"), true);
 
             // Launch DisplayHome
             DisplayManager.DisplayHome();

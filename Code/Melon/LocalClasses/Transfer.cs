@@ -15,7 +15,6 @@ using Pastel;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using System.Threading;
-using Amazon.Util.Internal;
 using static Melon.LocalClasses.StateManager;
 using MongoDB.Bson.Serialization;
 namespace Melon.LocalClasses

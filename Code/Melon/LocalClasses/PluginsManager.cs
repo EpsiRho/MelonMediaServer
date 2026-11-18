@@ -1,5 +1,4 @@
-﻿using Amazon.Runtime.Internal.Transform;
-using Melon.Classes;
+﻿using Melon.Classes;
 using Melon.Interface;
 using System;
 using System.Collections.Generic;
@@ -46,7 +45,7 @@ namespace Melon.LocalClasses
                 var options = plugin.GetHelpOptions();
                 foreach(var option in options)
                 {
-                    DisplayManager.HelpOptions.Add(option.Key, option.Value);
+                    DisplayManager.HelpOptions.TryAdd(option.Key, option.Value);
                 }
             }
         }

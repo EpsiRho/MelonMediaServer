@@ -119,7 +119,7 @@ namespace YourNamespace.Controllers
         // Import Playlist
         [Authorize(Roles = "Admin, User")]
         [HttpPost("import-playlist")]
-        public IActionResult ImportPlaylist([FromForm] IFormFile plstFile)
+        public IActionResult ImportPlaylist(IFormFile plstFile)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
