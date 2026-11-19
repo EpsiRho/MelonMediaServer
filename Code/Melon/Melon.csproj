@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyVersion>1.0.67.428</AssemblyVersion>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,13 +33,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.NotifyIcon" Version="2.4.1" />
     <PackageReference Include="MongoDB.Bson" Version="3.13.0" />
     <PackageReference Include="MongoDB.Driver" Version="3.13.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="Net.Codecrete.QrCodeGenerator" Version="3.2.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.3" />
-    <PackageReference Include="Pastel" Version="8.0.0" />
     <PackageReference Include="RestSharp" Version="114.1.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="SharpCompress" Version="0.50.7" />

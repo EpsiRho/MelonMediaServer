@@ -1,4 +1,4 @@
-﻿using Melon.Models;
+using Melon.Models;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using Melon.LocalClasses;
@@ -130,7 +130,9 @@ namespace MelonWebApi.Controllers
 
             vars += $"const userId = '{id}';";
 
-            var htmlContent = System.IO.File.ReadAllText($"{_environment.WebRootPath}/index.html");
+            using var template = _environment.WebRootFileProvider.GetFileInfo("index.html").CreateReadStream();
+            using var reader = new StreamReader(template);
+            var htmlContent = reader.ReadToEnd();
 
 
 

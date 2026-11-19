@@ -1,4 +1,4 @@
-﻿using MelonInstaller.Models;
+using MelonInstaller.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,7 +18,19 @@ namespace MelonInstaller.Classes
         private static string repository = "EpsiRho/MelonMediaServer";
         public static async Task Install(bool update)
         {
-            string installTempDir = $"{installPath}/temp";
+            if (update && OperatingSystem.IsWindows() && File.Exists(Path.Combine(installPath, "Server", "MelonWebApi.exe")))
+            {
+                string? archive = LaunchArgs.GetValueOrDefault("localPath");
+                var asset = archive == null ? (await GetGithubRelease(versionToFind))?.assets.FirstOrDefault(a => a.name == WindowsBundleUpdate.AssetName) : null;
+                var exe = Path.GetFullPath(Path.Combine(installPath, "Server", "MelonWebApi.exe"));
+                using var server = Process.GetProcessesByName("MelonWebApi").FirstOrDefault(p =>
+                    string.Equals(p.MainModule?.FileName, exe, StringComparison.OrdinalIgnoreCase));
+                var data = LaunchArgs.GetValueOrDefault("dataPath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Melon"));
+                await WindowsBundleUpdate.Prepare(httpClient, installPath, asset?.browser_download_url, asset?.digest, data,
+                    server?.Id ?? 0, LaunchArgs.ContainsKey("service"), LaunchArgs.ContainsKey("restart"), archive);
+                return;
+            }
+            string installTempDir = Path.Combine(Path.GetTempPath(), "MelonInstall-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(installTempDir);
             var installTemp = $"{installTempDir}/release.zip";
 
@@ -34,7 +46,10 @@ namespace MelonInstaller.Classes
                     return;
                 }
 
-                var asset = release.assets.FirstOrDefault();
+                var asset = OperatingSystem.IsWindows()
+                    ? release.assets.FirstOrDefault(a => a.name == WindowsBundleUpdate.AssetName)
+                    : null;
+                asset ??= release.assets.FirstOrDefault(a => a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) && a.name != WindowsBundleUpdate.AssetName);
                 if (asset == null)
                 {
                     Console.WriteLine($"[!] {StringsManager.GetString("InstallFailed")}");
@@ -52,6 +67,7 @@ namespace MelonInstaller.Classes
                 {
                     Console.WriteLine($"[!] {StringsManager.GetString("InstallFailed")}");
                     Console.WriteLine($"[!] {e.Message}");
+                    return;
                 }
             }
             else

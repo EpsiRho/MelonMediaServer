@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="3.13.0" />
-    <PackageReference Include="Pastel" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

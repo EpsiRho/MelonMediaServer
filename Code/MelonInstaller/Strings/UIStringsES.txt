@@ -23,3 +23,5 @@ ReleaseInformationError=¡No se pudo obtener la información de lanzamiento!
 HttpError=Ocurrió un error:
 MelonExtracting=Extrayendo Melon
 DownloadFromGithub=Descargando {} de GitHub
+InvalidVersion=Versión inválida
+MissingVersion=Versión faltante

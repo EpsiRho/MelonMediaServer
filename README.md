@@ -21,6 +21,12 @@ See the [Melon Docs](https://melon.docs.epsirho.com) for more info.
 	- Melon has in-depth plugin interfaces for easy access to making powerful plugins.
 
 ## Get Started Using Melon
+In the Windows x64 release, open `Controller\MelonGUI.exe`. It starts Melon, walks through setup, and manages the local library, database, networking, plugins, and updates. The GUI follows the server language and saves its theme locally.
+
+For the terminal controller, open `CLI\MelonCLI.exe` in the Windows bundle or run `dotnet run --project Code/MelonCLI` from a checkout with a built MelonWebApi. Use Tab to switch between sections and actions, the arrow keys to move, Enter to select, and Esc to go back. The CLI supports first-time setup, recovery, and the same seven sections as the GUI. Use `--status` to print JSON for a running server or `--dataPath DIRECTORY` to select another Melon profile. Managed MongoDB installation and bundled updates are available on Windows.
+
+Run `MelonWebApi` to host the backend and WebUI. Local controllers and server plugins can manage the running server through the [administration interface](docs/Architecture/LocalControllers.md).
+
 See the [Installation Guide](https://melon.docs.epsirho.com/Guides/Installation.html)!
 
 ### Clients
@@ -71,14 +77,10 @@ There are a couple docs about how melon handles certain things behind the scenes
 ### Extra Credits
 - [ATL](https://github.com/Zeugma440/atldotnet)
 	- Used for reading track metadata
-- [H.NotifyIcon](https://github.com/HavenDV/H.NotifyIcon)
-	- Windows Tray Icon Support
 - [MongoDb](https://www.mongodb.com/)
 	- Used as Melon's database.
 - [NAudio](https://github.com/naudio/NAudio) and [NAudio.Lame](https://github.com/Corey-M/NAudio.Lame)
 	- Used for transcoding
-- [Pastel](https://github.com/silkfire/Pastel)
-	- Used to color the console UI
 - CaydoFox - 3D Melon Icon
 - Hypervis0r - Help with authentication
 - KindaConfusion - Testing, Bug fixes, Various Code Contributions

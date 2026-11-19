@@ -1,4 +1,4 @@
-﻿using Melon.Interface;
+using Melon.Interface;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -27,7 +27,7 @@ namespace Melon.Models
         public Color Melon { get; set; }
         public Color Error { get; set; }
         public bool UseMenuColor { get; set; }
-        public double QueueCleanupWaitInHours { get; set; }
+        public double QueueCleanupWaitInHours { get; set; } = 48;
     }
     public class ShortSettings
     {
@@ -47,7 +47,9 @@ namespace Melon.Models
         public ShortSettings(Settings set)
         {
             MongoDbConnectionString = set.MongoDbConnectionString;
-            LibraryPaths = set.LibraryPaths;
+            LibraryPaths = [.. set.LibraryPaths];
+            ArtistSplitIndicators = [.. set.ArtistSplitIndicators];
+            GenreSplitIndicators = [.. set.GenreSplitIndicators];
             ListeningURL = set.ListeningURL;
             DefaultLanguage = set.DefaultLanguage;
             Text = set.Text;

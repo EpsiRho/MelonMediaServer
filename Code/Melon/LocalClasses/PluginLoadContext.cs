@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -19,6 +19,7 @@ namespace Melon.LocalClasses
 
         protected override Assembly Load(AssemblyName assemblyName)
         {
+            if (assemblyName.Name == typeof(Melon.Interface.IPlugin).Assembly.GetName().Name) return typeof(Melon.Interface.IPlugin).Assembly;
             string assemblyPath = _resolver.ResolveAssemblyToPath(assemblyName);
             if (assemblyPath != null)
             {

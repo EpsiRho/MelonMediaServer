@@ -1,4 +1,3 @@
-﻿using Melon.Classes;
 using Melon.Interface;
 using System;
 using System.Collections.Generic;
@@ -19,116 +18,24 @@ namespace Melon.LocalClasses
                 Directory.CreateDirectory($"{melonPath}/Plugins");
             }
 
-            var files = Directory.GetFiles($"{melonPath}/Plugins");
             Plugins = new List<IPlugin>();
-            foreach (var file in files)
+            foreach (var path in Directory.EnumerateFiles(Path.Combine(melonPath, "Plugins"), "*.dll"))
             {
+                var context = new PluginLoadContext(path);
                 try
                 {
-                    PluginLoadContext context;
-                    Assembly pluginAssembly = LoadPlugin(file, out context);
-                    Plugins.AddRange(CreatePlugins(pluginAssembly));
+                    var assembly = context.LoadFromAssemblyPath(Path.GetFullPath(path));
+                    var types = assembly.GetTypes().Where(type => !type.IsAbstract && typeof(IPlugin).IsAssignableFrom(type));
+                    var discovered = types.Select(type => (IPlugin)Activator.CreateInstance(type)!).ToList();
+                    if (discovered.Count == 0) { context.Unload(); continue; }
+                    Plugins.AddRange(discovered);
                     PluginsContexts.Add(context);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-
+                    context.Unload();
+                    Serilog.Log.Warning(ex, "Unable to load plugin {Path}", path);
                 }
-            }
-            DisplayManager.HelpOptions.Clear();
-            foreach (var plugin in Plugins)
-            {
-                if (DisabledPlugins.Contains($"{plugin.Name}:{plugin.Authors}"))
-                {
-                    continue;
-                }
-                var options = plugin.GetHelpOptions();
-                foreach(var option in options)
-                {
-                    DisplayManager.HelpOptions.TryAdd(option.Key, option.Value);
-                }
-            }
-        }
-        public static void LoadPluginUIs()
-        {
-            foreach (var plugin in Plugins)
-            {
-                if (DisabledPlugins.Contains($"{plugin.Name}:{plugin.Authors}"))
-                {
-                    continue;
-                }
-                plugin.LoadMelonCommands(Host);
-                try
-                {
-                    var check = plugin.LoadUI();
-                    if (check != 0)
-                    {
-                        Serilog.Log.Error($"Plugin UI load failed: {plugin.Name}");
-                    }
-                }
-                catch (Exception)
-                {
-                    Serilog.Log.Error($"Plugin UI load failed: {plugin.Name}");
-                }
-            }
-        }
-        public static void ExecutePlugins()
-        {
-            foreach (var plugin in Plugins)
-            {
-                if (DisabledPlugins.Contains($"{plugin.Name}:{plugin.Authors}"))
-                {
-                    continue;
-                }
-                plugin.LoadMelonCommands(Host);
-                plugin.LoadMelonServerCommands(WebApi);
-                try
-                {
-                    var check = plugin.Execute();
-                    if (check != 0)
-                    {
-                        Serilog.Log.Error($"Plugin Execute failed: {plugin.Name}");
-                    }
-                }
-                catch (Exception)
-                {
-                    Serilog.Log.Error($"Plugin Execute failed: {plugin.Name}");
-                }
-            }
-        }
-        private static Assembly LoadPlugin(string path, out PluginLoadContext context)
-        {
-            PluginLoadContext loadContext = new PluginLoadContext(path);
-            var result = loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(path)));
-            context = loadContext;
-            return result;
-        }
-        private static List<IPlugin> CreatePlugins(Assembly assembly)
-        {
-            List<IPlugin> plugins = new List<IPlugin>();
-            try
-            {
-                foreach (Type type in assembly.GetTypes())
-                {
-                    if (type.Name.Contains("IPlugin"))
-                    {
-                        bool check = true;
-                    }
-                    if (typeof(IPlugin).IsAssignableFrom(type))
-                    {
-                        IPlugin result = Activator.CreateInstance(type) as IPlugin;
-                        if (result != null)
-                        {
-                            plugins.Add(result);
-                        }
-                    }
-                }
-                return plugins;
-            }
-            catch (Exception)
-            {
-                Serilog.Log.Error($"Plugin Load failed: {assembly.FullName}");
-                return plugins;
             }
         }
     }

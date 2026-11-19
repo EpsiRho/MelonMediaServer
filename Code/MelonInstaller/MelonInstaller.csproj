@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="UpdateWindows.ps1" LogicalName="MelonInstaller.UpdateWindows.ps1" />
     <EmbeddedResource Include="Strings\UIStringsEN.resources" />
     <EmbeddedResource Include="Strings\UIStringsES.resources" />
   </ItemGroup>

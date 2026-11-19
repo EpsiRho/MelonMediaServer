@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -55,13 +55,13 @@ namespace Melon.Interface
         /// Called on startup, this should be where your plugin adds any ui it needs.
         /// </summary>
         /// <returns>int indicating success or failure result</returns>
-        public int LoadUI();
+        public int LoadUI() => 0;
 
         /// <summary>
         /// Called when reloading or disabling a plugin, this should remove any ui.
         /// </summary>
         /// <returns>int indicating success or failure result</returns>
-        public int UnloadUI();
+        public int UnloadUI() => 0;
 
         /// <summary>
         /// Called on startup, this should include any processes or middleware you want to add that should be running until melon closes or your plugin is disabled.

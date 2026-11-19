@@ -1,4 +1,4 @@
-﻿using Melon.LocalClasses;
+using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
@@ -14,15 +14,7 @@ namespace YourNamespace.Controllers
         [HttpGet("list")]
         public IActionResult GetPlugins()
         {
-            var pluginsInfo = StateManager.Plugins.Select(p => new
-            {
-                p.Name,
-                p.Authors,
-                p.Version,
-                p.Description,
-                IsEnabled = !StateManager.DisabledPlugins.Contains($"{p.Name}:{p.Authors}")
-            });
-            return Ok(pluginsInfo);
+            return Ok(ServerAdministration.Instance.GetPlugins());
         }
 
         // Disable Plugin
@@ -30,16 +22,8 @@ namespace YourNamespace.Controllers
         [HttpPost("disable")]
         public IActionResult DisablePlugin(string name, string author)
         {
-            var plugin = StateManager.Plugins.FirstOrDefault(p => p.Name == name && p.Authors == author);
-            if (plugin == null)
-            {
-                return NotFound("Plugin not found.");
-            }
-            //plugin.UnloadUI();
-            plugin.Destroy();
-            StateManager.DisabledPlugins.Add($"{plugin.Name}:{plugin.Authors}");
-            Storage.SaveConfigFile("DisabledPlugins", StateManager.DisabledPlugins, null);
-            return Ok("Plugin disabled successfully.");
+            return ServerAdministration.Instance.SetPluginEnabled(name, author, false)
+                ? Ok("Plugin disabled successfully.") : NotFound("Plugin not found.");
         }
 
         // Enable Plugin
@@ -47,24 +31,8 @@ namespace YourNamespace.Controllers
         [HttpPost("enable")]
         public IActionResult EnablePlugin(string name, string author)
         {
-            var plugin = StateManager.Plugins.FirstOrDefault(p => p.Name == name && p.Authors == author);
-            if (plugin == null)
-            {
-                return NotFound("Plugin not found.");
-            }
-            try
-            {
-                plugin.LoadMelonCommands(StateManager.Host);
-                plugin.LoadMelonServerCommands(StateManager.WebApi);
-                plugin.Execute();
-                StateManager.DisabledPlugins.Remove($"{plugin.Name}:{plugin.Authors}");
-                Storage.SaveConfigFile("DisabledPlugins", StateManager.DisabledPlugins, null);
-                return Ok("Plugin enabled successfully.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Error enabling plugin: {ex.Message}");
-            }
+            return ServerAdministration.Instance.SetPluginEnabled(name, author, true)
+                ? Ok("Plugin enabled successfully.") : NotFound("Plugin not found.");
         }
 
         // Rescan Plugins Folder
@@ -74,14 +42,7 @@ namespace YourNamespace.Controllers
         {
             try
             {
-                //Storage.SaveConfigFile("DisabledPlugins", StateManager.DisabledPlugins, null);
-                //System.IO.File.WriteAllText($"{StateManager.melonPath}/Configs/restartServer.json", "1");
-                foreach (var plugin in StateManager.Plugins)
-                {
-                    plugin.Destroy();
-                }
-                PluginsManager.LoadPlugins();
-                PluginsManager.ExecutePlugins();
+                ServerAdministration.Instance.ReloadPlugins(true);
                 return Ok("Plugins folder rescanned successfully.");
             }
             catch (Exception ex)
@@ -97,18 +58,7 @@ namespace YourNamespace.Controllers
         {
             try
             {
-                //Storage.SaveConfigFile("DisabledPlugins", StateManager.DisabledPlugins, null);
-                //System.IO.File.WriteAllText($"{StateManager.melonPath}/Configs/restartServer.json", "1");
-                foreach (var plugin in StateManager.Plugins)
-                {
-                    plugin.Destroy();
-                }
-                foreach (var plugin in StateManager.Plugins)
-                {
-                    plugin.LoadMelonCommands(StateManager.Host);
-                    plugin.LoadMelonServerCommands(StateManager.WebApi);
-                    plugin.Execute();
-                }
+                ServerAdministration.Instance.ReloadPlugins(false);
                 return Ok("Plugins reloaded successfully.");
             }
             catch (Exception ex)

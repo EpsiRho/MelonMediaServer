@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RestoreAdditionalProjectSources>$(RestoreAdditionalProjectSources);$(MSBuildThisFileDirectory)vendor</RestoreAdditionalProjectSources>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MelonLib\MelonLib.csproj" />
+    <PackageReference Include="MelonUI" Version="1.0.0" GeneratePathProperty="true" />
+    <PackageReference Include="Net.Codecrete.QrCodeGenerator" Version="3.2.1" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.13" />
+    <None Include="$(PkgMelonUI)/LICENSE" Link="licenses/MelonUI-LICENSE" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(PkgMelonUI)/THIRD-PARTY-NOTICES.md" Link="licenses/MelonUI-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="..\ControllerShared\*.cs" />
+    <EmbeddedResource Include="..\ControllerShared\InstallMongo.ps1" LogicalName="Melon.Controllers.InstallMongo.ps1" />
+  </ItemGroup>
+
+</Project>

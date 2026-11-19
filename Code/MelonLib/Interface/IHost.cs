@@ -1,4 +1,4 @@
-﻿using Melon.Models;
+using Melon.Models;
 using Melon.Types;
 using System;
 using System.Collections;
@@ -21,9 +21,7 @@ namespace Melon.Interface
         IStorageAPI Storage { get; }
         IMelonScanner MelonScanner { get; }
         IStateManager StateManager { get; }
-        IDisplayManager DisplayManager { get; }
-        IMelonUI MelonUI { get; }
-        ISettingsUI SettingsUI { get; }
+        IMelonAdministration Administration { get; }
     }
     public interface IMelonAPI
     {
@@ -36,15 +34,14 @@ namespace Melon.Interface
     }
     public interface IMelonScanner
     {
-        public string CurrentFolder { get; set; }
-        public string CurrentFile { get; set; }
-        public string CurrentStatus { get; set; }
-        public double ScannedFiles { get; set; }
-        public double FoundFiles { get; set; }
-        public long averageMilliseconds { get; set; }
-        public bool Indexed { get; set; }
-        public bool endDisplay { get; set; }
-        public bool Scanning { get; set; }
+        public string CurrentFolder { get; }
+        public string CurrentFile { get; }
+        public string CurrentStatus { get; }
+        public double ScannedFiles { get; }
+        public double FoundFiles { get; }
+        public long averageMilliseconds { get; }
+        public bool Indexed { get; }
+        public bool Scanning { get; }
         public void StartScan(bool skip);
         public void UpdateCollections();
         public void ResetDB();
@@ -58,33 +55,6 @@ namespace Melon.Interface
         public List<IPlugin> Plugins { get; }
         public Dictionary<string, string> LaunchArgs { get; }
         public byte[] GetDefaultImage();
-    }
-    public interface IDisplayManager
-    {
-        public OrderedDictionary MenuOptions { get; set; }
-        public OrderedDictionary UIExtensions { get; set; }
-    }
-    public interface IMelonUI
-    {
-        public void BreadCrumbBar(List<string> list);
-        public void ClearConsole();
-        public void ClearConsole(int left, int top, int width, int height);
-        public Color ColorPicker(Color CurColor);
-        public string HiddenInput();
-        public void DisplayProgressBar(double count, double max, char foreground, char background);
-        public void ShowIndeterminateProgress();
-        public void HideIndeterminateProgress();
-        public static bool endOptionsDisplay { get; set; }
-        public string OptionPicker(List<string> Choices);
-        public string StringInput(bool UsePred, bool AutoCorrect, bool FreeInput, bool ShowChoices, List<string> Choices = null);
-        public void ChecklistDisplayToggle();
-        public void SetChecklistItems(string[] list);
-        public void InsertInChecklist(string item, int place, bool check);
-        public void UpdateChecklist(int place, bool check);
-    }
-    public interface ISettingsUI
-    {
-        public OrderedDictionary MenuOptions { get; set; }
     }
     public interface IWebApi
     {

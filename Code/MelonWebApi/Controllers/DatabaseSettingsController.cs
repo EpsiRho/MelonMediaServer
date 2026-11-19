@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +19,7 @@ namespace YourNamespace.Controllers
         [HttpPost("backup")]
         public IActionResult BackupDatabase()
         {
-            var success = Transfer.ExportDb();
+            var success = ServerAdministration.Instance.BackupDatabase();
             if (success)
             {
                 return Ok("Database backup completed successfully.");
@@ -35,9 +35,7 @@ namespace YourNamespace.Controllers
         [HttpGet("view-backups")]
         public IActionResult ViewBackups()
         {
-            var backupFiles = Directory.GetDirectories($"{StateManager.melonPath}/Exports/DbBackups")
-                .Select(x=>x.Split(new string[] {"/", "\\"}, StringSplitOptions.None).Last())
-                .ToList();
+            var backupFiles = ServerAdministration.Instance.ListBackups();
             return Ok(backupFiles);
         }
 
@@ -46,12 +44,8 @@ namespace YourNamespace.Controllers
         [HttpPost("load-backup")]
         public IActionResult LoadFromBackup(string backupFileName)
         {
-            var backupFilePath = Path.Combine($"{StateManager.melonPath}/Exports/DbBackups", backupFileName);
-            if (!System.IO.Directory.Exists(backupFilePath))
-            {
-                return NotFound("Backup file not found.");
-            }
-            Transfer.ImportDb(backupFileName);
+            try { ServerAdministration.Instance.RestoreBackup(backupFileName); }
+            catch (FileNotFoundException) { return NotFound("Backup file not found."); }
             return Ok("Database loaded from backup successfully.");
         }
 
@@ -60,7 +54,7 @@ namespace YourNamespace.Controllers
         [HttpPost("reset")]
         public IActionResult ResetDatabase()
         {
-            MelonScanner.ResetDb();
+            ServerAdministration.Instance.ResetDatabase();
             return Ok("Database reset successfully.");
         }
 
@@ -72,48 +66,14 @@ namespace YourNamespace.Controllers
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
-            var NewMelonDB = StateManager.DbClient.GetDatabase("Melon");
-            var PlaylistsCollection = NewMelonDB.GetCollection<Playlist>("Playlists");
-            var CollectionsCollection = NewMelonDB.GetCollection<Collection>("Collections");
-
-            var plst = PlaylistsCollection.AsQueryable().Where(x => x._id == playlistId).FirstOrDefault();
-            if (plst == null)
-            {
-                var col = CollectionsCollection.AsQueryable().Where(x => x._id == playlistId).FirstOrDefault();
-                if (col != null)
-                {
-                    plst = new Playlist();
-                    plst.Name = col.Name;
-                    plst.Tracks = col.Tracks;
-                }
-            }
-
-            if(plst == null)
-            {
-                return NotFound("Playlist not found.");
-            }
-
-            if (plst.Owner != curId)
-            {
-                return NotFound("Playlist not found.");
-            }
-
-            string filePath = "";
-            var check = Transfer.ExportPlaylist(format, plst, out filePath);
-            if (!check)
-            {
-                return BadRequest("Failed to export playlist.");
-            }
-
             try
             {
-                var fileStream = new FileStream(filePath, FileMode.Open);
-                return File(fileStream, "application/octet-stream", $"{Path.GetFileName(filePath)}");
+                if (string.IsNullOrEmpty(curId)) return Forbid();
+                var export = Transfer.GetPlaylistExport(playlistId, format, curId);
+                return File(System.Text.Encoding.UTF8.GetBytes(export.Contents), "application/octet-stream", export.Name);
             }
-            catch(Exception)
-            {
-                return BadRequest("Failed to export playlist.");
-            }
+            catch (FileNotFoundException) { return NotFound("Playlist not found."); }
+            catch (ArgumentException ex) { return BadRequest(ex.Message); }
         }
 
         // Import Playlist
@@ -129,20 +89,16 @@ namespace YourNamespace.Controllers
                 return BadRequest("No file uploaded.");
             }
 
-            var tempFilePath = $"{Path.GetTempPath()}/{plstFile.FileName.Split(new string[] {"/", "\\"}, StringSplitOptions.None).Last()}";
-
-            using (var stream = new FileStream(tempFilePath, FileMode.Create))
+            if (string.IsNullOrEmpty(curId)) return Forbid();
+            var extension = Path.GetExtension(Path.GetFileName(plstFile.FileName));
+            var tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + extension);
+            try
             {
-                plstFile.CopyTo(stream);
+                using (var stream = new FileStream(tempFilePath, FileMode.CreateNew)) plstFile.CopyTo(stream);
+                return ServerAdministration.Instance.ImportPlaylists(tempFilePath, curId) == 1
+                    ? Ok("Playlist imported successfully.") : BadRequest("File Not Supported.");
             }
-
-            var check = Transfer.ImportPlaylist(tempFilePath, curId);
-            if (!check)
-            {
-                return BadRequest("File Not Supported.");
-            }
-            System.IO.File.Delete(tempFilePath);
-            return Ok("Playlist imported successfully.");
+            finally { System.IO.File.Delete(tempFilePath); }
         }
 
         // Get Queue Cleanup Frequency
@@ -150,7 +106,7 @@ namespace YourNamespace.Controllers
         [HttpGet("queue-cleanup-frequency")]
         public IActionResult GetQueueCleanupFrequency()
         {
-            return Ok(StateManager.MelonSettings.QueueCleanupWaitInHours);
+            return Ok(ServerAdministration.Instance.GetSettings().QueueCleanupHours);
         }
 
         // Set Queue Cleanup Frequency
@@ -158,13 +114,8 @@ namespace YourNamespace.Controllers
         [HttpPost("queue-cleanup-frequency")]
         public IActionResult SetQueueCleanupFrequency(double frequencyInHours)
         {
-            double cur = StateManager.MelonSettings.QueueCleanupWaitInHours;
-            StateManager.MelonSettings.QueueCleanupWaitInHours = frequencyInHours;
-            if (cur == -1)
-            {
-                QueuesCleaner.StartCleaner();
-            }
-            Storage.SaveConfigFile<Settings>("MelonSettings", StateManager.MelonSettings, null);
+            try { ServerAdministration.Instance.SetQueueCleanupHours(frequencyInHours); }
+            catch (ArgumentException ex) { return BadRequest(ex.Message); }
             return Ok("Queue cleanup frequency updated successfully.");
         }
     }

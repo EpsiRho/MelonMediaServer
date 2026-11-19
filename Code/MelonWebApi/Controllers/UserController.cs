@@ -1,4 +1,4 @@
-﻿using Melon.Models;
+using Melon.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
@@ -167,7 +167,7 @@ namespace MelonWebApi.Controllers
 
             user.Friends.Add(id);
 
-            UserCollection.ReplaceOne(userFilter, user);
+            UserCollection.UpdateOne(userFilter, Builders<User>.Update.Set(u => u.Friends, user.Friends));
 
             args.SendEvent("Friend Added", 404, Program.mWebApi);
             return new ObjectResult("Friend Added") { StatusCode = 200 };
@@ -216,7 +216,7 @@ namespace MelonWebApi.Controllers
 
             user.Friends.Remove(id);
 
-            UserCollection.ReplaceOne(userFilter, user);
+            UserCollection.UpdateOne(userFilter, Builders<User>.Update.Set(u => u.Friends, user.Friends));
 
             args.SendEvent("Friend Removed", 200, Program.mWebApi);
             return new ObjectResult("Friend Removed") { StatusCode = 200 };
@@ -297,7 +297,13 @@ namespace MelonWebApi.Controllers
             user.FavArtist = "";
             user.LastLogin = DateTime.MinValue;
 
-            UserCollection.InsertOne(user);
+            if (roles.Contains("Server"))
+            {
+                if (!Security.RegisterInvitedUser(User.FindFirstValue("melon_signup"), () => UserCollection.InsertOne(user)))
+                    return new UnauthorizedObjectResult("Invalid or expired signup.");
+            }
+            else UserCollection.InsertOne(user);
+            ServerAdministration.Instance.PublishMessage("users", "Account created.");
 
             args.SendEvent("User created", 200, Program.mWebApi);
             return new ObjectResult(user._id) { StatusCode = 200 };
@@ -317,30 +323,11 @@ namespace MelonWebApi.Controllers
                 { "id", id }
             });
 
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var UserCollection = mongoDatabase.GetCollection<User>("Users");
-
-            var userFilter = Builders<User>.Filter.Eq(x => x._id, id);
-            var user = UserCollection.Find(userFilter).FirstOrDefault();
-
-            if (user == null)
+            try
             {
-                args.SendEvent("User Not Found", 404, Program.mWebApi);
-                return new ObjectResult("User Not Found") { StatusCode = 404 };
+                if (!ServerAdministration.Instance.DeleteUser(id)) return new NotFoundObjectResult("User not found.");
             }
-
-            if (user._id != curId)
-            {
-                if (!roles.Contains("Admin"))
-                {
-                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
-                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
-                }
-            }
-
-            UserCollection.DeleteOne(userFilter);
-
+            catch (InvalidOperationException ex) { return new ConflictObjectResult(ex.Message); }
             args.SendEvent("User deleted", 200, Program.mWebApi);
             return new ObjectResult("User Deleted") { StatusCode = 200 };
         }
@@ -390,38 +377,19 @@ namespace MelonWebApi.Controllers
             }
 
 
-            if (bio != null)
+            var changes = new List<UpdateDefinition<User>>();
+            var update = Builders<User>.Update;
+            if (bio != null) changes.Add(update.Set(u => u.Bio, bio));
+            if (role != null)
             {
-                user.Bio = bio;
+                if (!roles.Contains("Admin")) return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                changes.Add(update.Set(u => u.Type, role));
             }
-            if (role != null && roles.Contains("Admin"))
-            {
-                user.Type = role;
-            }
-            else if (role != null && !roles.Contains("Admin"))
-            {
-                args.SendEvent("Invalid Auth", 401, Program.mWebApi);
-                return new ObjectResult("Invalid Auth") { StatusCode = 401 };
-            }
-
-            if (publicStats != null)
-            {
-                user.PublicStats = Convert.ToBoolean(publicStats);
-            }
-            if (favTrackId != null)
-            {
-                user.FavTrack = favTrackId;
-            }
-            if (favAlbumId != null)
-            {
-                user.FavAlbum = favAlbumId;
-            }
-            if (favArtistId != null)
-            {
-                user.FavArtist = favArtistId;
-            }
-
-            UserCollection.ReplaceOne(userFilter, user);
+            if (publicStats != null) changes.Add(update.Set(u => u.PublicStats, Convert.ToBoolean(publicStats)));
+            if (favTrackId != null) changes.Add(update.Set(u => u.FavTrack, favTrackId));
+            if (favAlbumId != null) changes.Add(update.Set(u => u.FavAlbum, favAlbumId));
+            if (favArtistId != null) changes.Add(update.Set(u => u.FavArtist, favArtistId));
+            if (changes.Count > 0) UserCollection.UpdateOne(userFilter, update.Combine(changes));
 
             args.SendEvent("User updated", 200, Program.mWebApi);
             return new ObjectResult("User Updated") { StatusCode = 200 };
@@ -469,7 +437,7 @@ namespace MelonWebApi.Controllers
 
             user.Username = username;
 
-            UserCollection.ReplaceOne(userFilter, user);
+            UserCollection.UpdateOne(userFilter, Builders<User>.Update.Set(u => u.Username, username));
 
             args.SendEvent("Username Changed", 200, Program.mWebApi);
             return new ObjectResult("Username Changed") { StatusCode = 200 };
@@ -499,26 +467,14 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("User Not Found") { StatusCode = 404 };
             }
             var user = users[0];
-            var roles = ((ClaimsIdentity)User.Identity).Claims
-                        .Where(c => c.Type == ClaimTypes.Role)
-                        .Select(c => c.Value);
-
-            if (user._id != curId)
-            {
-                if (!roles.Contains("Admin"))
-                {
-                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
-                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
-                }
-            }
-
+            if (user._id != curId) return new ObjectResult("Use a reset code for another account.") { StatusCode = 403 };
             byte[] tempSalt;
             var protectedPassword = Security.HashPassword(password, out tempSalt);
 
             user.Password = protectedPassword;
             user.Salt = tempSalt;
 
-            UserCollection.ReplaceOne(userFilter, user);
+            UserCollection.UpdateOne(userFilter, Builders<User>.Update.Set(u => u.Password, protectedPassword).Set(u => u.Salt, tempSalt));
 
             args.SendEvent("Password Changed", 200, Program.mWebApi);
             return new ObjectResult("Password Changed") { StatusCode = 200 };

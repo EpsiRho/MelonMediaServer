@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -71,6 +71,7 @@ namespace Melon.Models
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
         public string browser_download_url { get; set; }
+        public string? digest { get; set; }
     }
 
     public class Uploader

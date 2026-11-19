@@ -1,4 +1,4 @@
-﻿using Melon.Models;
+using Melon.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
@@ -9,9 +9,6 @@ using System.Drawing;
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using Melon.Classes;
-using Pastel;
-using Melon.DisplayClasses;
 
 namespace MelonWebApi.Controllers
 {
@@ -19,13 +16,6 @@ namespace MelonWebApi.Controllers
     [Route("api/scan")]
     public class ScanController : ControllerBase
     {
-        private readonly ILogger<ScanController> _logger;
-
-        public ScanController(ILogger<ScanController> logger)
-        {
-            _logger = logger;
-        }
-
         [Authorize(Roles = "Admin")]
         [HttpPost("start")]
         public ObjectResult StartScan(bool skip = false)
@@ -38,19 +28,18 @@ namespace MelonWebApi.Controllers
                     { "skip", skip }
                 });
 
-            if (MelonScanner.Scanning) 
+            bool started;
+            try { started = ServerAdministration.Instance.StartScan(skip); }
+            catch (InvalidOperationException error)
+            {
+                args.SendEvent(error.Message, 409, Program.mWebApi);
+                return new ObjectResult(error.Message) { StatusCode = 409 };
+            }
+            if (!started)
             {
                 args.SendEvent("Scanner is already running", 425, Program.mWebApi);
                 return new ObjectResult("Scanner is already running") { StatusCode = 425 };
             }
-
-            DisplayManager.UIExtensions.Add("LibraryScanIndicator", () =>
-            {
-                Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight));
-            });
-            MelonUI.endOptionsDisplay = true;
-            Thread scanThread = new Thread(MelonScanner.StartScan);
-            scanThread.Start(skip);
 
             args.SendEvent("Scanner Started", 202, Program.mWebApi);
             return new ObjectResult("Scanner Started") { StatusCode = 202 };
@@ -65,19 +54,13 @@ namespace MelonWebApi.Controllers
                       .Select(c => c.Value).FirstOrDefault();
             var args = new WebApiEventArgs("api/scan/progress-old", curId, new Dictionary<string, object>());
 
-            if (!MelonScanner.Scanning)
+            var status = ServerAdministration.Instance.GetStatus();
+            if (!status.Scanning)
             {
                 args.SendEvent("Scanner is not running", 204, Program.mWebApi);
                 return new ObjectResult("Scanner is not running") { StatusCode = 204 };
             }
-
-            var progress = new ScanProgress()
-            {
-                ScannedFiles = MelonScanner.ScannedFiles,
-                FoundFiles = MelonScanner.FoundFiles,
-                Status = MelonScanner.CurrentStatus
-            };
-
+            var progress = status.Scan;
             args.SendEvent("Scanner progress sent", 200, Program.mWebApi);
             return new ObjectResult(progress) { StatusCode = 200 };
         }

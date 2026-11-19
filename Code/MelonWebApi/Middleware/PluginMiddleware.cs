@@ -41,9 +41,9 @@ namespace MelonWebApi.Middleware
                         context.Response.Body.Write(res);
                         return;
                     }
+                    // Proceed to the next middleware if not handling
                 }
 
-                // Proceed to the next middleware if not handling
             }
             await _next(context);
         }

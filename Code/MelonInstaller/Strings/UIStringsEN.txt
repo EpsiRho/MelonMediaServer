@@ -23,3 +23,5 @@ ReleaseInformationError=Could not get release information!
 HttpError=An error occurred:
 MelonExtracting=Extracting Melon
 DownloadFromGithub=Downloading {} from GitHub
+InvalidVersion=Invalid version
+MissingVersion=Missing version

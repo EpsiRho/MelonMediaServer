@@ -1,4 +1,4 @@
-﻿using Melon.Models;
+using Melon.Models;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -50,7 +50,7 @@ namespace Melon.LocalClasses
 
             var serviceCollection = new ServiceCollection();
             serviceCollection.AddDataProtection();
-            var services = serviceCollection.BuildServiceProvider();
+            using var services = serviceCollection.BuildServiceProvider();
 
             var instance = ActivatorUtilities.CreateInstance<Security>(services);
 
@@ -101,7 +101,7 @@ namespace Melon.LocalClasses
 
             var serviceCollection = new ServiceCollection();
             serviceCollection.AddDataProtection();
-            var services = serviceCollection.BuildServiceProvider();
+            using var services = serviceCollection.BuildServiceProvider();
             var instance = ActivatorUtilities.CreateInstance<Security>(services);
 
             if (protectedProperties != null)
@@ -141,7 +141,14 @@ namespace Melon.LocalClasses
             }
 
             string settingstxt = JsonConvert.SerializeObject(config, Formatting.Indented);
-            File.WriteAllText($"{StateManager.melonPath}/Configs/{filename}.json", settingstxt);
+            var path = Path.Combine(StateManager.melonPath, "Configs", filename + ".json");
+            var temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                File.WriteAllText(temp, settingstxt);
+                File.Move(temp, path, overwrite: true);
+            }
+            finally { File.Delete(temp); }
 
         }
         private static T TryConvertConfigType<T>(string json)

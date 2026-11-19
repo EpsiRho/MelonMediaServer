@@ -43,6 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="wwwroot\reset-password.html" CopyToOutputDirectory="PreserveNewest" />
     <Folder Include="Services\" />
   </ItemGroup>
 

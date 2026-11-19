@@ -1,7 +1,8 @@
-﻿namespace Melon.Models
+namespace Melon.Models
 {
     public class Collection
     {
+        public bool StaticMembership { get; set; }
         public string _id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }

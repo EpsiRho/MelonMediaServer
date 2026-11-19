@@ -1,11 +1,8 @@
-﻿using Melon.Classes;
-using Melon.DisplayClasses;
 using Melon.Models;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
-using Pastel;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,8 +25,8 @@ namespace Melon.LocalClasses
         public static long averageMilliseconds { get; set; }
         public static List<long> fileTimes { get; set; }
         public static bool Indexed { get; set; }
-        public static bool endDisplay { get; set; }
-        public static bool Scanning { get; set; }
+        private static int running;
+        public static bool Scanning => Volatile.Read(ref running) != 0;
         private static List<string> LyricFiles { get; set; }
         private static IMongoDatabase newMelonDB { get; set; }
         private static IMongoCollection<Artist> artistsCollection { get; set; }
@@ -66,7 +63,6 @@ namespace Melon.LocalClasses
         }
         public static void ResetDb()
         {
-            //MelonUI.ShowIndeterminateProgress();
             newMelonDB = StateManager.DbClient.GetDatabase("Melon");
 
             var TracksCollection = newMelonDB.GetCollection<Track>("Tracks");
@@ -142,19 +138,39 @@ namespace Melon.LocalClasses
                 }
             }
 
-            //MelonUI.HideIndeterminateProgress();
         }
 
         // Main Scanning Functions
-        public static void StartScan(object skipBool)
+        public static bool TryStartScan(bool skip)
         {
-            // If currently scanning, don't start another scan.
-            if (Scanning)
+            if (Interlocked.CompareExchange(ref running, 1, 0) != 0)
+                return false;
+            ServerAdministration.Instance.Messages.Publish("scan", "Library scan started.");
+            _ = Task.Run(() =>
             {
+                try { Scan(skip); }
+                catch (Exception error)
+                {
+                    CurrentStatus = "Scan failed";
+                    Serilog.Log.Error(error, "Library scan failed");
+                }
+                finally
+                {
+                    Volatile.Write(ref running, 0);
+                    ServerAdministration.Instance.Messages.Publish("scan", CurrentStatus ?? "Scan finished.");
+                }
+            });
+            return true;
+        }
+
+        private static void Scan(bool skip)
+        {
+            var roots = StateManager.MelonSettings.LibraryPaths.ToArray();
+            if (roots.Length == 0 || roots.Any(path => !Directory.Exists(path)))
+            {
+                CurrentStatus = "Library folder unavailable";
                 return;
             }
-            Scanning = true;
-
             CurrentStatus = StateManager.StringsManager.GetString("LoadDbStatus");
 
             // Get MongoDB collections into memory
@@ -174,38 +190,20 @@ namespace Melon.LocalClasses
             }
 
             // Setup vars
-            bool skip = (bool)skipBool;
             LyricFiles = new List<string>();
             ScannedFiles = 1; // Set to 1 to avoid divide by 0 errors
             FoundFiles = 1; // Set to 1 to avoid divide by 0 errors
             averageMilliseconds = 0;
             Indexed = false;
-            endDisplay = false;
             fileTimes = new List<long>();
 
             CurrentFolder = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentStatus = StateManager.StringsManager.GetString("CheckDbVersioningStatus");
 
-            // If Library Paths are empty, display a warning and return
-            if (StateManager.MelonSettings.LibraryPaths.Count() == 0)
-            {
-                MelonUI.ClearConsole();
-                DisplayManager.UIExtensions.Remove("LibraryScanIndicator");
-                DisplayManager.UIExtensions.Add("LibraryScanError", () => 
-                { 
-                    Console.WriteLine(StateManager.StringsManager.GetString("NoPathWarning").Pastel(MelonColor.Error));
-                    DisplayManager.UIExtensions.Remove("LibraryScanError");
-                    MelonUI.endOptionsDisplay = true;
-                });
-                Scanning = false;
-                endDisplay = true;
-                return;
-            }
-
             // Run through and get a count of how many files need scanning to display the proper number on the progressbar
             CurrentStatus = StateManager.StringsManager.GetString("ScannerFinding");
-            foreach (var path in StateManager.MelonSettings.LibraryPaths)
+            foreach (var path in roots)
             {
                 ScanFolderCounter(path);
             }
@@ -213,9 +211,9 @@ namespace Melon.LocalClasses
             // Collect files to process
             CurrentStatus = StateManager.StringsManager.GetString("ScannerFinding");
             List<string> filesToProcess = new List<string>();
-            foreach (var path in StateManager.MelonSettings.LibraryPaths)
+            foreach (var path in roots)
             {
-                filesToProcess = ScanFolder(path, skip);
+                filesToProcess.AddRange(ScanFolder(path, skip));
             }
             FoundFiles = filesToProcess.Count;
 
@@ -247,30 +245,19 @@ namespace Melon.LocalClasses
             UpdateCollections();
 
             // Set Indexes for mongodb
-            endDisplay = true;
             FoundFiles = 100;
             ScannedFiles = 99;
             CurrentFile = StateManager.StringsManager.GetString("NotApplicableStatus");
             CurrentStatus = StateManager.StringsManager.GetString("CompletionStatus");
             IndexCollections();
 
-            // Cleanup
-            DisplayManager.UIExtensions.Remove("LibraryScanIndicator");
-            MelonUI.endOptionsDisplay = true;
-
             tracks = null;
             albums = null;
             artists = null;
             LyricFiles = null;
-            Scanning = false;
-            Thread.Sleep(500);
-
-            if (OperatingSystem.IsWindows())
-            {
-                NotificationManager.ShowToast("Scanner", "Scanning is complete!");
-            }
         }
-        private static async void ScanFolderCounter(string path)
+
+        private static void ScanFolderCounter(string path)
         {
             CurrentFolder = path;
             var folders = Directory.GetDirectories(path);
@@ -896,6 +883,7 @@ namespace Melon.LocalClasses
                 // Sort the album's and artist's tracks and releases
                 foreach (var collection in collections)
                 {
+                    if (collection.StaticMembership) continue;
                     var tracks = MelonAPI.FindTracks(collection.AndFilters, collection.OrFilters, collection.Owner, -1, -1);
                     if (tracks == null)
                     {
@@ -963,188 +951,5 @@ namespace Melon.LocalClasses
 
 
         // UI
-        public static void ResetDBUI()
-        {
-            // Title
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("SettingsOption"), StateManager.StringsManager.GetString("DatabaseMenu"), StateManager.StringsManager.GetString("DatabaseResetOption") });
-
-            // Description
-            Console.WriteLine(StateManager.StringsManager.GetString("DatabaseRemovalWarning").Pastel(MelonColor.Text));
-            Console.WriteLine(StateManager.StringsManager.GetString("RescanRequirement").Pastel(MelonColor.Text));
-            Console.WriteLine(StateManager.StringsManager.GetString("ResetConfirmation").Pastel(MelonColor.Text));
-            string PositiveConfirmation = StateManager.StringsManager.GetString("PositiveConfirmation");
-            string NegativeConfirmation = StateManager.StringsManager.GetString("NegativeConfirmation");
-            var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
-            if (input == PositiveConfirmation)
-            {
-                ResetDb();
-            }
-            else
-            {
-                return;
-            }
-        }
-        public static void MemoryScan()
-        {
-            string PositiveConfirmation = StateManager.StringsManager.GetString("PositiveConfirmation");
-            string NegativeConfirmation = StateManager.StringsManager.GetString("NegativeConfirmation");
-            if (Scanning)
-            {
-                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), $"{StateManager.StringsManager.GetString("FullScanOption")} V2.0.0" });
-
-                Console.WriteLine(StateManager.StringsManager.GetString("ScannerRunningCheck").Pastel(MelonColor.Text));
-                var opt = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
-                if (opt == PositiveConfirmation)
-                {
-                    ScanProgressView();
-                }
-                else
-                {
-                    return;
-                }
-            }
-            // Title
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), $"{StateManager.StringsManager.GetString("FullScanOption")} V2.0.0" });
-
-            // Description
-            Console.WriteLine(StateManager.StringsManager.GetString("FullLibraryScanInitiation").Pastel(MelonColor.Text));
-            Console.WriteLine($"{StateManager.StringsManager.GetString("ScanDurationNote")} {StateManager.StringsManager.GetString("TimeConsumptionNote").Pastel(MelonColor.Highlight)} {StateManager.StringsManager.GetString("FileCountNote")}".Pastel(MelonColor.Text));
-            Console.WriteLine(StateManager.StringsManager.GetString("StartConfirmation").Pastel(MelonColor.Text));
-            var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
-            if (input == PositiveConfirmation)
-            {
-                if (!Scanning)
-                {
-                    Thread scanThread = new Thread(StartScan);
-                    scanThread.Start(false);
-                    DisplayManager.UIExtensions.Add("LibraryScanIndicator", () => { Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight)); });
-                    MelonUI.endOptionsDisplay = true;
-                }
-                ScanProgressView();
-            }
-            else
-            {
-                return;
-            }
-        }
-        public static void MemoryScanShort()
-        {
-            string PositiveConfirmation = StateManager.StringsManager.GetString("PositiveConfirmation");
-            string NegativeConfirmation = StateManager.StringsManager.GetString("NegativeConfirmation");
-            if (Scanning)
-            {
-                MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), $"{StateManager.StringsManager.GetString("ShortScanOption")} V2.0.0" });
-
-                Console.WriteLine(StateManager.StringsManager.GetString("ScannerRunningCheck").Pastel(MelonColor.Text));
-                var opt = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
-                if (opt == PositiveConfirmation)
-                {
-                    ScanProgressView();
-                }
-                else
-                {
-                    return;
-                }
-            }
-            // Title
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), $"{StateManager.StringsManager.GetString("ShortScanOption")} V2.0.0" });
-
-            // Description
-            Console.WriteLine(StateManager.StringsManager.GetString("ShortScanExplanation").Pastel(MelonColor.Text));
-            Console.WriteLine($"{StateManager.StringsManager.GetString("ScanDurationNote")} {StateManager.StringsManager.GetString("TimeConsumptionNote").Pastel(MelonColor.Highlight)} {StateManager.StringsManager.GetString("FileCountNote")}".Pastel(MelonColor.Text));
-            Console.WriteLine(StateManager.StringsManager.GetString("StartConfirmation").Pastel(MelonColor.Text));
-            var input = MelonUI.OptionPicker(new List<string>() { PositiveConfirmation, NegativeConfirmation });
-            if (input == PositiveConfirmation)
-            {
-                if (!Scanning)
-                {
-                    Thread scanThread = new Thread(StartScan);
-                    scanThread.Start(true);
-                    DisplayManager.UIExtensions.Add("LibraryScanIndicator", () => 
-                    { 
-                        Console.WriteLine(StateManager.StringsManager.GetString("LibraryScanInitiation").Pastel(MelonColor.Highlight));
-                    });
-                    MelonUI.endOptionsDisplay = true;
-                }
-                ScanProgressView();
-            }
-            else
-            {
-                return;
-            }
-        }
-        public static void ScanProgressView()
-        {
-            // Title
-            Console.CursorVisible = false;
-            MelonUI.ClearConsole();
-            MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("ScannerProgressDisplay") });
-
-            endDisplay = false;
-            int sLeft = Console.CursorLeft;
-            int sTop = Console.CursorTop;
-            Thread DisplayThread = new Thread(() =>
-            {
-                int x = Console.WindowWidth;
-                while (!endDisplay)
-                {
-                    double scanned = ScannedFiles;
-                    double found = FoundFiles;
-                    if (endDisplay)
-                    {
-                        return;
-                    }
-                    if (x != Console.WindowWidth)
-                    {
-                        x = Console.WindowWidth;
-                        MelonUI.ClearConsole();
-                        MelonUI.BreadCrumbBar(new List<string>() { StateManager.StringsManager.GetString("MelonTitle"), StateManager.StringsManager.GetString("ScannerProgressDisplay") });
-                    }
-                    try
-                    {
-                        string controls = StateManager.StringsManager.GetString("BackEscapeControl");
-                        int conX = Console.WindowWidth - controls.Length - 2;
-                        Console.CursorLeft = conX;
-                        Console.CursorTop = sTop;
-                        Console.Write(controls.Pastel(MelonColor.BackgroundText));
-                        Console.CursorTop = sTop;
-                        Console.CursorLeft = sLeft;
-                        var msg = $"{StateManager.StringsManager.GetString("ScanStatus")} {scanned.ToString().Pastel(MelonColor.Melon)} // {found.ToString().Pastel(MelonColor.Melon)} {StateManager.StringsManager.GetString("FoundStatus")}";
-                        Console.Write(msg);
-                        Console.WriteLine(new string(' ', Console.WindowWidth - msg.Length - 1));
-                        MelonUI.DisplayProgressBar(scanned, found, '#', '-');
-                        //Console.Write(new string(' ', Console.WindowWidth));
-                        Console.CursorLeft = 0;
-                        msg = $"{StateManager.StringsManager.GetString("SystemStatusDisplay")}: {CurrentStatus}  ";
-                        var max = msg.Length >= Console.WindowWidth ? Console.WindowWidth - 4 : msg.Length;
-                        Console.Write(msg.Substring(0, max).Pastel(MelonColor.BackgroundText));
-                        Console.WriteLine(new string(' ', Console.WindowWidth - msg.Length - 1));
-                        Console.WriteLine(new string(' ', Console.WindowWidth));
-                        Console.WriteLine(new string(' ', Console.WindowWidth));
-                    }
-                    catch (Exception)
-                    {
-
-                    }
-                }
-            });
-            DisplayThread.Priority = ThreadPriority.Highest;
-            DisplayThread.Start();
-
-
-            while (!endDisplay)
-            {
-                if (Console.KeyAvailable)
-                {
-                    var k = Console.ReadKey();
-                    if (k.Key == ConsoleKey.Escape)
-                    {
-                        endDisplay = true;
-                        return;
-                    }
-                }
-            }
-
-        }
     }
 }

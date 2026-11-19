@@ -1,7 +1,8 @@
 {
   "profiles": {
     "MelonUpdater": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "-build -buildPath C:\\Users\\jhset\\Documents\\GitHub\\MelonMediaServer\\Code\\MelonWebApi -outputPath \"C:\\Users\\jhset\\Desktop\\Melon Workspace\\Melon\\Releases\" -buildVersion 1.0.0/Beta"
     }
   }
 }

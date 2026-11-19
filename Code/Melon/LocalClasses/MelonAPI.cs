@@ -1,4 +1,4 @@
-﻿using Melon.Types;
+using Melon.Types;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
@@ -11,7 +11,6 @@ using System.Text;
 using Melon.Models;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Melon.Classes;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections;
 

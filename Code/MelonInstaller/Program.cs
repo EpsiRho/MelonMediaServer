@@ -1,4 +1,4 @@
-﻿using MelonInstaller.Classes;
+using MelonInstaller.Classes;
 using Microsoft.Build.Locator;
 using System.Diagnostics;
 using System.Resources;
@@ -40,7 +40,7 @@ namespace MelonInstaller
                 return 0;
             }
 
-            ClearConsole();
+            if (!Console.IsOutputRedirected && !LaunchArgs.ContainsKey("update")) ClearConsole();
 
             var resources = typeof(Program).Assembly.GetManifestResourceNames();
             if (LaunchArgs.ContainsKey("lang") && resources.Contains($"MelonInstaller.Strings.UIStrings{LaunchArgs["lang"].ToUpper()}.resources"))
@@ -55,30 +55,20 @@ namespace MelonInstaller
             Console.ForegroundColor = ConsoleColor.White;
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            Process[] processes = Process.GetProcessesByName("MelonWebApi.exe");
-            bool isRunning = processes.Length > 0;
-
-            string msg = StringsManager.GetString("WaitForClose");
-            while (isRunning)
-            {
-                if (msg != "")
-                {
-                    Console.WriteLine($"[-] {msg}");
-                    msg = "";
-                }
-            }
-
-
             if(LaunchArgs.ContainsKey("update"))
             {
                 Thread.Sleep(1000);
                 await MelonInstallManager.Install(true);
-                return 1;
+                return 0;
             }
             else if (LaunchArgs.ContainsKey("build"))
             {
                 SetupMSBuild();
-                MelonBuildManager.PrepareBuild();
+                var check = MelonBuildManager.PrepareBuild();
+                if(!check)
+                {
+                    return -1;
+                }
                 MelonBuildManager.Build();
                 return 2;
             }

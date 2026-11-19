@@ -1,149 +1,98 @@
-﻿using Melon.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
 using System.Text;
-using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
+using Melon.Models;
 
-namespace MelonLib.Parsers
+namespace MelonLib.Parsers;
+
+public static class PlaylistFormatConverter
 {
-    public static class PlaylistFormatConverter
+    public static KeyValuePair<string, List<string>> FromM3U(string path)
     {
-        public static KeyValuePair<string, List<string>> FromM3U(string path)
+        var name = Path.GetFileNameWithoutExtension(path);
+        var tracks = new List<string>();
+        foreach (var line in File.ReadLines(path).Select(line => line.Trim()))
         {
-            string text = File.ReadAllText(path);
-            string name = "";
-            List<string> paths = new List<string>();
-
-            if (!text.StartsWith("#EXTM3U"))
-            {
-                return KeyValuePair.Create(name, paths);
-            }
-
-            if (text.Contains("#PLAYLIST"))
-            {
-                name = path.Replace("\\", "/").Split("/").Last().Split(".")[0];
-            }
-
-            foreach(var line in text.Replace("\r","").Split("\n"))
-            {
-                if (!line.StartsWith("#") && line != "")
-                {
-                    paths.Add(line);
-                }
-            }
-
-            return KeyValuePair.Create(name, paths);
+            if (line.StartsWith("#PLAYLIST:", StringComparison.OrdinalIgnoreCase) && line.Length > 10)
+                name = line[10..];
+            else if (line.Length > 0 && !line.StartsWith('#'))
+                tracks.Add(LocalPath(line));
         }
-        public static KeyValuePair<string, List<string>> FromPLS(string path)
+        return new(name, tracks);
+    }
+
+    public static KeyValuePair<string, List<string>> FromPLS(string path)
+    {
+        var files = new SortedDictionary<int, string>();
+        foreach (var line in File.ReadLines(path))
         {
-            string text = File.ReadAllText(path);
-            string name = path.Replace("\\", "/").Split("/").Last().Split(".")[0];
-            List<string> paths = new List<string>();
-
-            if (!text.StartsWith("[playlist]"))
-            {
-                return KeyValuePair.Create(name, paths);
-            }
-
-            foreach (var line in text.Replace("\r", "").Split("\n"))
-            {
-                if (line.StartsWith("File"))
-                {
-                    paths.Add(line.Split("=")[1]);
-                }
-            }
-
-            return KeyValuePair.Create(name, paths);
+            int equals = line.IndexOf('=');
+            if (equals > 4 && line.StartsWith("File", StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(line.AsSpan(4, equals - 4), out int index) && equals + 1 < line.Length)
+                files[index] = LocalPath(line[(equals + 1)..]);
         }
-        public static KeyValuePair<string, List<string>> FromXML(string path)
+        return new(Path.GetFileNameWithoutExtension(path), [.. files.Values]);
+    }
+
+    public static KeyValuePair<string, List<string>> FromXML(string path)
+    {
+        var xml = File.ReadAllText(path);
+        // Older Melon exports used a lowercase closing tag and unescaped text.
+        if (xml.Contains("<trackList>") && xml.Contains("</tracklist>"))
         {
-            string text = File.ReadAllText(path);
-            string name = path.Replace("\\", "/").Split("/").Last().Split(".")[0];
-            List<string> paths = new List<string>();
-
-            if (!text.StartsWith("<?xml"))
-            {
-                return KeyValuePair.Create(name, paths);
-            }
-
-            text = text.Replace("\t", "");
-
-            foreach (var line in text.Replace("\r", "").Split("\n"))
-            {
-                var l = line.Trim();
-                if (l.StartsWith("<location>"))
-                {
-                    var loc = l.Split(">")[1].Split("</")[0];
-                    loc = loc.Replace("file://", "");
-                    paths.Add(loc);
-                }
-            }
-
-            return KeyValuePair.Create(name, paths);
+            var paths = xml.Split('\n').Select(line => line.Trim())
+                .Where(line => line.StartsWith("<location>") && line.EndsWith("</location>"))
+                .Select(line => LocalPath(line[10..^11])).ToList();
+            return new(Path.GetFileNameWithoutExtension(path), paths);
         }
+        using var reader = XmlReader.Create(new StringReader(xml), new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit });
+        var root = XElement.Load(reader);
+        return new(Path.GetFileNameWithoutExtension(path), root.Descendants().Where(e => e.Name.LocalName == "location")
+            .Select(e => LocalPath(e.Value)).ToList());
+    }
 
-        public static string ToM3U(string name, List<Track> tracks)
+    private static string LocalPath(string value)
+    {
+        // Original Windows exports used file://C:/... instead of file:///C:/...
+        if (value.StartsWith("file://", StringComparison.OrdinalIgnoreCase) && value.Length > 9 && value[8] == ':')
+            return value[7..];
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.IsFile ? uri.LocalPath : value;
+    }
+
+    private static string Seconds(Track track) =>
+        double.TryParse(track.Duration, NumberStyles.Float, CultureInfo.InvariantCulture, out var milliseconds)
+            ? (milliseconds / 1000).ToString(CultureInfo.InvariantCulture) : "-1";
+
+    public static string ToM3U(string name, List<Track> tracks)
+    {
+        var result = new StringBuilder().AppendLine("#EXTM3U").AppendLine("#PLAYLIST:" + name);
+        foreach (var track in tracks)
         {
-            string txt = $"#EXTM3U\n\n#PLAYLIST:{name}\n\n";
-            foreach(var track in tracks)
-            {
-                double dur = 0;
-                try
-                {
-                    dur = Convert.ToDouble((track.Duration)) / 1000;
-                }
-                catch (Exception)
-                {
-
-                }
-
-                string artistNames = String.Join(";", track.TrackArtists.Select(x=>x.Name));
-
-                txt += $"#EXTINF:{dur},{artistNames} - {track.Name}\n";
-                txt += $"{track.Path}\n\n";
-            }
-
-            return txt;
+            var artists = string.Join(";", track.TrackArtists.Select(artist => artist.Name));
+            result.AppendLine($"#EXTINF:{Seconds(track)},{artists} - {track.Name}").AppendLine(track.Path);
         }
-        public static string ToPLS(List<Track> tracks)
+        return result.ToString();
+    }
+
+    public static string ToPLS(List<Track> tracks)
+    {
+        var result = new StringBuilder().AppendLine("[playlist]");
+        int i = 0;
+        foreach (var track in tracks)
         {
-            string txt = "[playlist]\n\n";
-            int count = 1;
-            foreach(var track in tracks)
-            {
-                double dur = 0;
-                try
-                {
-                    dur = Convert.ToDouble((track.Duration)) / 1000;
-                }
-                catch (Exception)
-                {
-
-                }
-
-                string artistNames = String.Join(";", track.TrackArtists.Select(x=>x.Name));
-
-                txt += $"File{count}={track.Path}\n";
-                txt += $"Title{count}={track.Name}\n";
-                txt += $"Length{count}={dur}\n\n";
-                count++;
-            }
-
-            txt += $"NumberOfEntries={count}";
-            return txt;
+            i++;
+            result.AppendLine($"File{i}={track.Path}").AppendLine($"Title{i}={track.Name}").AppendLine($"Length{i}={Seconds(track)}");
         }
-        public static string ToXML(List<Track> tracks)
-        {
-            string txt = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<playlist version=\"1\" xmlns=\"http://xspf.org/ns/0/\">\n\t<trackList>\n";
-            foreach(var track in tracks)
-            {
-                txt += $"\t\t<track>\n\t\t\t<title>{track.Name}</title>\n\t\t\t<location>file://{track.Path}</location>\n\t\t</track>\n";
-            }
+        return result.AppendLine($"NumberOfEntries={i}").AppendLine("Version=2").ToString();
+    }
 
-            txt += $"\t</tracklist>\n</playlist>";
-
-            return txt;
-        }
+    public static string ToXML(List<Track> tracks)
+    {
+        XNamespace ns = "http://xspf.org/ns/0/";
+        return new XElement(ns + "playlist", new XAttribute("version", 1),
+            new XElement(ns + "trackList", tracks.Select(track => new XElement(ns + "track",
+                new XElement(ns + "title", track.Name),
+                new XElement(ns + "location", new Uri(Path.GetFullPath(track.Path)).AbsoluteUri))))).ToString();
     }
 }

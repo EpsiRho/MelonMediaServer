@@ -1,4 +1,4 @@
-﻿using Melon.LocalClasses;
+using Melon.LocalClasses;
 using Melon.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +17,7 @@ namespace YourNamespace.Controllers
         [HttpGet("library-paths")]
         public IActionResult GetLibraryPaths()
         {
-            var libraryPaths = StateManager.MelonSettings.LibraryPaths;
+            var libraryPaths = ServerAdministration.Instance.GetSettings().LibraryPaths;
             return Ok(libraryPaths);
         }
 
@@ -26,15 +26,8 @@ namespace YourNamespace.Controllers
         [HttpPost("library-paths")]
         public IActionResult SetLibraryPaths([FromBody] List<string> newLibraryPaths)
         {
-            foreach (var path in newLibraryPaths)
-            {
-                if (!Directory.Exists(path))
-                {
-                    return BadRequest($"Path does not exist: {path}");
-                }
-            }
-            StateManager.MelonSettings.LibraryPaths = newLibraryPaths;
-            Storage.SaveConfigFile<Settings>("MelonSettings", StateManager.MelonSettings, null);
+            try { ServerAdministration.Instance.SetLibraryPaths(newLibraryPaths.ToArray()); }
+            catch (ArgumentException ex) { return BadRequest(ex.Message); }
             return Ok("Library paths updated successfully.");
         }
 
@@ -43,7 +36,7 @@ namespace YourNamespace.Controllers
         [HttpGet("artist-split-indicators")]
         public IActionResult GetArtistSplitIndicators()
         {
-            return Ok(StateManager.MelonSettings.ArtistSplitIndicators);
+            return Ok(ServerAdministration.Instance.GetSettings().ArtistSplitIndicators);
         }
 
         // Set Artist Split Indicators
@@ -51,8 +44,8 @@ namespace YourNamespace.Controllers
         [HttpPost("artist-split-indicators")]
         public IActionResult SetArtistSplitIndicators([FromBody] List<string> indicators)
         {
-            StateManager.MelonSettings.ArtistSplitIndicators = indicators;
-            Storage.SaveConfigFile<Settings>("MelonSettings", StateManager.MelonSettings, null);
+            try { ServerAdministration.Instance.SetArtistSplitIndicators(indicators.ToArray()); }
+            catch (ArgumentException ex) { return BadRequest(ex.Message); }
             return Ok("Artist split indicators updated successfully.");
         }
 
@@ -61,7 +54,7 @@ namespace YourNamespace.Controllers
         [HttpGet("genre-split-indicators")]
         public IActionResult GetGenreSplitIndicators()
         {
-            return Ok(StateManager.MelonSettings.GenreSplitIndicators);
+            return Ok(ServerAdministration.Instance.GetSettings().GenreSplitIndicators);
         }
 
         // Set Genre Split Indicators
@@ -69,8 +62,8 @@ namespace YourNamespace.Controllers
         [HttpPost("genre-split-indicators")]
         public IActionResult SetGenreSplitIndicators([FromBody] List<string> indicators)
         {
-            StateManager.MelonSettings.GenreSplitIndicators = indicators;
-            Storage.SaveConfigFile<Settings>("MelonSettings", StateManager.MelonSettings, null);
+            try { ServerAdministration.Instance.SetGenreSplitIndicators(indicators.ToArray()); }
+            catch (ArgumentException ex) { return BadRequest(ex.Message); }
             return Ok("Genre split indicators updated successfully.");
         }
     }

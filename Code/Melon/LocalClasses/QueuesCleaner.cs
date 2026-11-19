@@ -1,4 +1,4 @@
-﻿using Melon.Models;
+using Melon.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
@@ -13,40 +13,28 @@ namespace Melon.LocalClasses
 {
     public static class QueuesCleaner
     {
-        public static bool CleanerActive { get; set; }
-        public static void StartCleaner()
+        public static async Task RunAsync(CancellationToken stopping)
         {
-            if(CleanerActive)
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+            try
             {
-                return;
-            }
-            CleanerActive = true;
-
-            Task.Run(CleanerThread);
-        }
-        private static void CleanerThread()
-        {
-            var mongoDb = StateManager.DbClient.GetDatabase("Melon");
-            var collection = mongoDb.GetCollection<PlayQueue>("Queues");
-            while (CleanerActive && StateManager.MelonSettings.QueueCleanupWaitInHours != -1)
-            {
-                var queues = collection.AsQueryable();
-                foreach(var queue in queues)
+                while (await timer.WaitForNextTickAsync(stopping))
                 {
-                    if (queue.Favorite)
+                    var hours = StateManager.MelonSettings.QueueCleanupWaitInHours;
+                    if (hours == -1 || !ServerAdministration.Instance.GetStatus().DatabaseConnected) continue;
+                    try
                     {
-                        continue;
+                        var queues = StateManager.DbClient.GetDatabase("Melon").GetCollection<PlayQueue>("Queues");
+                        var threshold = DateTime.UtcNow - TimeSpan.FromHours(hours);
+                        await queues.DeleteManyAsync(q => !q.Favorite && q.LastListen < threshold, stopping);
                     }
-
-                    var time = DateTime.Now.ToUniversalTime() - queue.LastListen;
-                    if(time > TimeSpan.FromHours(StateManager.MelonSettings.QueueCleanupWaitInHours))
+                    catch (Exception ex) when (!stopping.IsCancellationRequested)
                     {
-                        collection.DeleteOne(x => x._id == queue._id);
+                        Serilog.Log.Warning(ex, "Queue cleanup failed");
                     }
                 }
-                Thread.Sleep(TimeSpan.FromSeconds(30));
             }
-            CleanerActive = false;
+            catch (OperationCanceledException) when (stopping.IsCancellationRequested) { }
         }
     }
 }

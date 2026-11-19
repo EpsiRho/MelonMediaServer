@@ -16,48 +16,55 @@ namespace MelonInstaller.Classes
     public static class MelonBuildManager
     {
         public static string version = "";
+        public static string branch = "";
         public static string buildPath = "";
         public static string outputPath = "";
-        public static void PrepareBuild()
+        public static bool PrepareBuild()
         {
             // Get Build Path
             if (!Program.LaunchArgs.ContainsKey("buildPath"))
             {
                 Console.WriteLine($"[!] {StringsManager.GetString("PathMissing")}");
-                return;
+                return false;
             }
             buildPath = Program.LaunchArgs["buildPath"];
 
             if (!Directory.Exists(buildPath))
             {
                 Console.WriteLine($"[!] \"{buildPath}\" {StringsManager.GetString("PathMissing")}");
-                return;
+                return false;
             }
 
             // Generate Version Number
-            version = CreateVersionNumber();
+            (version, branch) = CreateVersionNumber();
+            if(string.IsNullOrEmpty(version))
+            {
+                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
+                return false;
+            }
             try
             {
-                SetVersionNumber(buildPath, version);
+                SetVersionNumber(buildPath, version, branch);
             }
             catch (Exception e)
             {
                 Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
                 Console.WriteLine($"[!] {e.Message}");
-                return;
+                return false;
             }
 
             // Get Output Path
-            outputPath = $"Build/{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
+            outputPath = $"Build/{branch}-{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
             if (Program.LaunchArgs.ContainsKey("outputPath"))
             {
-                outputPath = $"{Program.LaunchArgs["outputPath"]}/{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
+                outputPath = $"{Program.LaunchArgs["outputPath"]}/{branch}-{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
             }
             else
             {
                 Directory.CreateDirectory("Build");
             }
 
+            return true;
         }
         public static void Build()
         {
@@ -98,9 +105,10 @@ namespace MelonInstaller.Classes
                 return;
             }
         }
-        private static void SetVersionNumber(string projectFolderPath, string version)
+        private static void SetVersionNumber(string projectFolderPath, string version, string branch)
         {
             string vString = $"        public const string Version = \"{version}\";";
+            string bString = $"        public const string Branch = \"{branch}\";";
 
             string[] files = System.IO.Directory.GetFiles(projectFolderPath, "*.cs", System.IO.SearchOption.AllDirectories);
 
@@ -113,8 +121,10 @@ namespace MelonInstaller.Classes
             var txt = File.ReadAllText(prog);
             var split = txt.Contains("\r\n") ? txt.Split("\r\n") : txt.Split("\n");
             string repl = split.FirstOrDefault(x => x.Contains("public const string Version = "));
+            string repl2 = split.FirstOrDefault(x => x.Contains("public const string Branch = "));
 
             txt = txt.Replace(repl, vString);
+            txt = txt.Replace(repl2, bString);
             using (var fileStream = new FileStream(prog, FileMode.Create, FileAccess.Write, FileShare.None))
             {
                 using (var writer = new StreamWriter(fileStream))
@@ -171,30 +181,39 @@ namespace MelonInstaller.Classes
             }
             else
             {
-                throw new InvalidOperationException(StringsManager.GetString("BuildFailed"));
+                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
+                Console.WriteLine($"[!] {buildResult.Exception}");
+                return "";
             }
         }
-        public static string CreateVersionNumber()
+        public static (string, string) CreateVersionNumber()
         {
-            int major = 1;
-            int minor = 0;
-            int build = 0;
-            int revision = 0;
+            if (!Program.LaunchArgs.ContainsKey("buildVersion"))
+            {
+                Console.WriteLine($"[!] {StringsManager.GetString("MissingVersion")}");
+                return ("", "");
+            }
 
-            // Get Build Number
-            DateTime Time = DateTime.Now;
-            DateTime Start = new DateTime(2024, 1, 1); // Initial version release
-            var inbetween = Time - Start;
-            build = inbetween.Days;
+            string ver = Program.LaunchArgs["buildVersion"];
+            string[] num = ver.Split(".");
+            string[] branch = ver.Split("/");
+            if(num.Length != 3)
+            {
+                Console.WriteLine($"[!] {StringsManager.GetString("InvalidVersion")}");
+                return ("", "");
+            }
+            if (branch.Length != 2)
+            {
+                Console.WriteLine($"[!] {StringsManager.GetString("InvalidVersion")}");
+                return ("", "") ;
+            }
 
-            // Get Revision Number
-            DateTime startOfDay = Time.Date;
-            TimeSpan durationSinceStartOfDay = Time - startOfDay;
-            revision = (int)durationSinceStartOfDay.TotalMinutes;
+            var now = DateTime.UtcNow;
 
-            string version = $"{major}.{minor}.{build}.{revision}";
+            string version = $"{num[0]}.{num[1]}.{num[2].Split("/")[0]}.{now.Hour}{now.Minute}{now.Second}";
+            string branchName = $"{branch[1]}";
 
-            return version;
+            return (version, branchName);
         }
     }
 }

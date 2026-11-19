@@ -1,4 +1,4 @@
-﻿using Melon.Models;
+using Melon.Models;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
@@ -233,61 +233,12 @@ namespace Melon.LocalClasses
 
             return String.Join(",", incompatibleCollections);
         }
-        public static void ConvertCollectionsUI(string[] collections)
-        {
-            Console.WriteLine($"[-] {StringsManager.GetString("BackingUpDatabase")}");
-            var backup = Transfer.ExportDb();
-            if (!backup)
-            {
-                Console.WriteLine($"[#] {StringsManager.GetString("DatabaseBackupFailed")}");
-                Environment.Exit(2);
-            }
-            Console.WriteLine($"[+] {StringsManager.GetString("BackupCreated")}");
-
-            foreach (var col in collections)
-            {
-                Console.WriteLine($"[-] {StringsManager.GetString("Converting")} {col}");
-
-                switch (col)
-                {
-                    case "Artists":
-                        ConvertDocuments<Artist>(col, ArtistsVersion);
-                        break;
-                    case "Albums":
-                        ConvertDocuments<Album>(col, AlbumsVersion);
-                        break;
-                    case "Tracks":
-                        ConvertDocuments<Track>(col, TracksVersion);
-                        break;
-                    case "FailedFiles":
-                        ConvertDocuments<FailedFile>(col, FailedFilesVersion);
-                        break;
-                    case "Playlists":
-                        ConvertDocuments<Playlist>(col, PlaylistsVersion);
-                        break;
-                    case "Collections":
-                        ConvertDocuments<Collection>(col, CollectionsVersion);
-                        break;
-                    case "Queues":
-                        ConvertDocuments<PlayQueue>(col, QueuesVersion);
-                        break;
-                    case "Users":
-                        ConvertDocuments<User>(col, UsersVersion);
-                        break;
-                    case "Stats":
-                        ConvertDocuments<PlayStat>(col, StatsVersion);
-                        break;
-                }
-
-                Console.WriteLine($"[+] {StringsManager.GetString("ConversionCompleted")}");
-            }
-        }
         public static void ConvertCollections(string[] collections)
         {
             var backup = Transfer.ExportDb();
             if (!backup)
             {
-                Environment.Exit(2);
+                throw new InvalidOperationException("Database conversion requires a successful backup.");
             }
 
             foreach (var col in collections)

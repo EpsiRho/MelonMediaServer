@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -11,43 +11,13 @@ namespace MelonInstaller.Classes
 {
     public static class ZipManager
     {
-        public static async Task ExtractZip(string zipPath, string extractPath, IProgress<double> progress)
+        public static Task ExtractZip(string zipPath, string extractPath, IProgress<double> progress)
         {
-            // Ensure the target directory exists
-            Directory.CreateDirectory(extractPath);
-
-            double finished = 0;
-
-            double total = 0;
-
-            // Open the zip file for reading
-            using (ZipArchive archive = ZipFile.OpenRead(zipPath))
+            return Task.Run(() =>
             {
-                total = archive.Entries.Count;
-                foreach (ZipArchiveEntry entry in archive.Entries)
-                {
-                    string destinationPath = Path.GetFullPath(Path.Combine(extractPath, entry.FullName));
-
-                    try
-                    {
-                        if (entry.FullName.EndsWith("/"))
-                        {
-                            Directory.CreateDirectory(destinationPath);
-                        }
-                        else
-                        {
-                            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
-                            entry.ExtractToFile(destinationPath, overwrite: true);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-
-                    }
-                    finished++;
-                    progress.Report(finished / total);
-                }
-            }
+                ZipFile.ExtractToDirectory(zipPath, extractPath, overwriteFiles: true);
+                progress.Report(1);
+            });
         }
         public static async Task CreateZip(string zipPath, string buildFolderPath, IProgress<double> progress)
         {

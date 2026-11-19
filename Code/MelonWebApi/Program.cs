@@ -1,214 +1,121 @@
-using Melon.Classes;
-using Melon.DisplayClasses;
+using System.Reflection;
+using System.Security.Claims;
+using MongoDB.Driver;
+using System.Security.Cryptography.X509Certificates;
 using Melon.LocalClasses;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Melon.Models;
+using MelonLib.API;
+using MelonWebApi.Middleware;
+using MelonWebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Collections.Specialized;
-using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.RateLimiting;
-using Melon.Models;
-using MelonWebApi.Middleware;
-using Microsoft.Extensions.Hosting.WindowsServices;
-using System.Runtime.Versioning;
-using Melon.PluginModels;
-using Microsoft.Extensions.FileSystemGlobbing;
-using Microsoft.Extensions.Options;
-using Pastel;
-using Melon.Interface;
+
 namespace MelonWebApi
 {
     public static class Program
     {
-        //public static bool started = false;
-        public static WebApplication app;
+        private static readonly HttpClient UpdateDownloads = new();
         public static MWebApi mWebApi;
-        public static FileSystemWatcher watcher;
-        public static FileSystemWatcher shutdownWatcher;
-        public const string Version = "1.0.257.182";
+        public const string Version = "1.0.0.1756";
+        public const string Branch = "Beta";
 
         public static async Task<int> Main(string[] args)
         {
             StateManager.Version = Version;
+            StateManager.Branch = Branch;
             StateManager.ParseArgs(args);
-            StateManager.ServerIsAlive = true;
-            MelonColor.SetDefaults();
-            //StateManager.ConsoleIsAlive = true;
-
-            if (StateManager.LaunchArgs.ContainsKey("openFolder"))
+            if (StateManager.LaunchArgs.ContainsKey("version"))
             {
-                SettingsUI.OpenMelonFolder();
-                Environment.Exit(0);
-            }
-
-            if (StateManager.LaunchArgs.ContainsKey("help") || StateManager.LaunchArgs.ContainsKey("version"))
-            {
-                StateManager.Init(null, true, false);
+                Console.WriteLine(Version);
                 return 0;
             }
-
-            if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
+            var admin = ServerAdministration.Instance;
+            admin.PrepareWindowsUpdate = release =>
             {
-                StateManager.ConsoleIsAlive = false;
-
-                TrayIconManager.HideConsole();
-                TrayIconManager.ShowConsole();
+                var asset = release.assets.FirstOrDefault(a => a.name == MelonInstaller.Classes.WindowsBundleUpdate.AssetName);
+                return MelonInstaller.Classes.WindowsBundleUpdate.Prepare(UpdateDownloads, new DirectoryInfo(AppContext.BaseDirectory).Parent!.FullName,
+                    asset?.browser_download_url, asset?.digest, StateManager.melonPath, Environment.ProcessId,
+                    Microsoft.Extensions.Hosting.WindowsServices.WindowsServiceHelpers.IsWindowsService());
+            };
+            if (StateManager.LaunchArgs.ContainsKey("help"))
+            {
+                foreach (var option in admin.GetHelp()) Console.WriteLine($"{option.Key}  {option.Value}");
+                return 0;
             }
-            else if (!StateManager.LaunchArgs.ContainsKey("headless"))
+            if (StateManager.LaunchArgs.ContainsKey("openFolder"))
             {
-                TrayIconManager.ShowConsole();
+                Console.WriteLine(StateManager.melonPath);
+                return 0;
             }
-
-            StateManager.RestartServer = true;
-            while (StateManager.RestartServer)
+            if (StateManager.LaunchArgs.TryGetValue("dataPath", out var path))
+                StateManager.melonPath = Path.GetFullPath(path);
+            Directory.CreateDirectory(StateManager.melonPath);
+            using var ownership = new FileStream(Path.Combine(StateManager.melonPath, "server.lock"), FileMode.OpenOrCreate,
+                FileAccess.ReadWrite, FileShare.None);
+            if (StateManager.LaunchArgs.ContainsKey("setup"))
+                Console.WriteLine("Open a local controller to configure MongoDB and create the first administrator.");
+            bool restart;
+            do
             {
-                StateManager.RestartServer = false;
+                restart = false;
+                using var stopping = new CancellationTokenSource();
+                void Shutdown(bool again) { restart = again; stopping.Cancel(); }
+                void Interrupt(object? sender, ConsoleCancelEventArgs e) { e.Cancel = true; Shutdown(false); }
                 mWebApi = new MWebApi();
-                StateManager.Init(mWebApi, true, false);
-
-                if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
+                StateManager.Initialize(mWebApi);
+                admin.BeginRun();
+                Log.Logger = new LoggerConfiguration().WriteTo.File(Path.Combine(StateManager.melonPath, "MelonWebLogs.txt"))
+                    .WriteTo.Console().CreateLogger();
+                admin.ShutdownRequested += Shutdown;
+                Console.CancelKeyPress += Interrupt;
+                var control = new LocalControllerServer(admin, LocalControllerClient.GetPipeName(StateManager.melonPath)).RunAsync(stopping.Token);
+                var cleaner = Task.CompletedTask;
+                try
                 {
-                    try
+                    if (control.IsFaulted) await control;
+                    try { admin.ConnectDatabase(); }
+                    catch (Exception ex) { Log.Warning("Database unavailable ({ErrorType}). Local management is available.", ex.GetType().Name); }
+                    admin.ReloadPlugins(true);
+                    cleaner = QueuesCleaner.RunAsync(stopping.Token);
+                    var web = RunWebAsync(stopping.Token);
+                    if (await Task.WhenAny(web, control) == control)
                     {
-                        TrayIconManager.AddIcon();
+                        stopping.Cancel();
+                        await control;
                     }
-                    catch (Exception)
-                    {
-
-                    }
+                    await web;
                 }
-
-                _ = Task.Run(() =>
+                finally
                 {
-                    // Watch for settings changes
-                    watcher = new FileSystemWatcher();
-                    watcher.Path = $"{StateManager.melonPath}/Configs/";
+                    stopping.Cancel();
+                    await control;
+                    await cleaner;
+                    while (MelonScanner.Scanning) await Task.Delay(100);
+                    admin.UnloadPlugins();
+                    StateManager.DbClient?.Dispose();
+                    Log.CloseAndFlush();
+                    admin.ShutdownRequested -= Shutdown;
+                    Console.CancelKeyPress -= Interrupt;
+                }
+            } while (restart);
+            return 0;
+        }
 
-                    watcher.NotifyFilter = NotifyFilters.LastWrite
-                                         | NotifyFilters.FileName
-                                         | NotifyFilters.DirectoryName;
-
-                    watcher.Filter = "*.json";
-
-                    FileSystemEventHandler func = (sender, args) =>
-                    {
-                        if(args.Name == "MelonSettings.json")
-                        {
-                            // Check if settings have actually changed
-                            var temp = Storage.LoadConfigFile<Settings>("MelonSettings", null, out _);
-                            if (StateManager.MelonSettings == null || temp == null || 
-                                Storage.PropertiesEqual(StateManager.MelonSettings, temp))
-                            {
-                                return;
-                            }
-                            StateManager.MelonSettings = temp;
-                        }
-                        else if (args.Name == "SSLConfig.json")
-                        {
-                            try
-                            {
-                                StateManager.RestartServer = true;
-                                app.StopAsync();
-                            }
-                            catch (Exception)
-                            {
-
-                            }
-                        }
-                        else if (args.Name == "DisabledPlugins.json")
-                        {
-                            try
-                            {
-                                foreach (var plugin in StateManager.Plugins)
-                                {
-                                    plugin.Destroy();
-                                }
-                                PluginsManager.LoadPlugins();
-                                PluginsManager.ExecutePlugins();
-                            }
-                            catch (Exception)
-                            {
-
-                            }
-                        }
-                        else if (args.Name == "restartServer.json")
-                        {
-                            try
-                            {
-                                System.IO.File.Delete(args.FullPath);
-                                StateManager.RestartServer = true;
-                                app.StopAsync();
-                            }
-                            catch (Exception)
-                            {
-                            }
-                        }
-                        else if (args.Name == "GoAway.json")
-                        {
-                            try
-                            {
-                                StateManager.RestartServer = false;
-                                app.StopAsync();
-                                File.Delete($"{AppDomain.CurrentDomain.BaseDirectory}/GoAway.sdrq");
-                                Environment.Exit(0);
-                            }
-                            catch (Exception)
-                            {
-                            }
-                        }
-                    };
-
-                    // Add event handlers.
-                    watcher.Changed += func;
-                    watcher.Created += func;
-
-                    watcher.EnableRaisingEvents = true;
-
-                    // And again for so I can detect a shutdown rq
-                    shutdownWatcher = new FileSystemWatcher();
-                    shutdownWatcher.Path = $"{AppDomain.CurrentDomain.BaseDirectory}";
-
-                    shutdownWatcher.NotifyFilter = NotifyFilters.LastWrite
-                                         | NotifyFilters.FileName
-                                         | NotifyFilters.DirectoryName;
-
-                    shutdownWatcher.Filter = "*.sdrq";
-
-                    FileSystemEventHandler updateFunc = (sender, args) =>
-                    {
-                        if (args.Name == "GoAway.sdrq")
-                        {
-                            StateManager.RestartServer = false;
-                            app.StopAsync();
-                            File.Delete($"{AppDomain.CurrentDomain.BaseDirectory}/GoAway.sdrq");
-                            Environment.Exit(0);
-                        }
-                    };
-
-                    shutdownWatcher.Changed += updateFunc;
-                    shutdownWatcher.Created += updateFunc;
-
-                    shutdownWatcher.EnableRaisingEvents = true;
+        private static async Task RunWebAsync(CancellationToken stopping)
+        {
+            try
+            {
+                var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+                {
+                    ApplicationName = typeof(Program).Assembly.GetName().Name,
+                    ContentRootPath = AppContext.BaseDirectory
                 });
-
-                var builder = WebApplication.CreateBuilder();
+                builder.WebHost.UseStaticWebAssets();
 
                 builder.Services.AddControllers().AddNewtonsoftJson();
-
-
 
                 builder.Logging.ClearProviders();
 
@@ -217,58 +124,12 @@ namespace MelonWebApi
                 // Load SSL Certificate
                 var sslConfig = Security.GetSSLConfig();
 
-                // Verify SSL Cert
-                if(!String.IsNullOrEmpty(sslConfig.PathToCert) && !String.IsNullOrEmpty(sslConfig.Password)) // No Cert set, skip and used http
+                if (!string.IsNullOrEmpty(sslConfig.PathToCert))
                 {
-                    var res = Security.VerifySSLConfig(sslConfig);
-
-                    if (res == "Expired") // Expired, notify
-                    {
-                        if (OperatingSystem.IsWindows())
-                        {
-                            TrayIconManager.ShowMessageBox("The SSL Certificate is expired, please generate a new SSL Certificate.");
-                        }
-                        Console.WriteLine("The SSL Certificate is expired, please generate a new SSL Certificate.");
-                    }
-                    else if (res == "Invalid") // Path or Password is wrong, notify
-                    {
-                        if (OperatingSystem.IsWindows())
-                        {
-                            TrayIconManager.ShowMessageBox("The SSL Certificate is invalid, please link a new SSL Certificate.");
-                        }
-                        Console.WriteLine("The SSL Certificate is invalid, please generate a new SSL Certificate.");
-                    }
-
-                    if (res != "Invalid")
-                    {
-                        var certificate = new X509Certificate2(sslConfig.PathToCert, sslConfig.Password);
-
-                        // Configure Kestrel to use SSL
-                        builder.WebHost.ConfigureKestrel(serverOptions =>
-                        {
-                            serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(10);
-                            serverOptions.ConfigureHttpsDefaults(httpsOptions =>
-                            {
-                                httpsOptions.ServerCertificate = certificate;
-                            });
-                        });
-                    }
+                    if (Security.VerifySSLConfig(sslConfig) != "Valid") throw new InvalidOperationException("Invalid HTTPS certificate.");
+                    var certificate = X509CertificateLoader.LoadPkcs12FromFile(sslConfig.PathToCert, sslConfig.Password);
+                    builder.WebHost.ConfigureKestrel(options => options.ConfigureHttpsDefaults(https => https.ServerCertificate = certificate));
                 }
-
-                if (OperatingSystem.IsWindows() && !StateManager.LaunchArgs.ContainsKey("headless"))
-                {
-                    Log.Logger = new LoggerConfiguration()
-                            .WriteTo.File($"{StateManager.melonPath}/MelonWebLogs.txt")
-                            .CreateLogger();
-                }
-                else
-                {
-                    Log.Logger = new LoggerConfiguration()
-                            .WriteTo.File($"{StateManager.melonPath}/MelonWebLogs.txt")
-                            .WriteTo.Console()
-                            .CreateLogger();
-                }
-
                 builder.Host.UseSerilog();
                 builder.Host.UseWindowsService();
 
@@ -287,6 +148,17 @@ namespace MelonWebApi
                             };
                             x.Events = new JwtBearerEvents
                             {
+                                OnTokenValidated = async context =>
+                                {
+                                    var principal = context.Principal!;
+                                    var id = principal.FindFirstValue(ClaimTypes.UserData);
+                                    if (id == "NA" && principal.IsInRole("Server")) return;
+                                    var account = await StateManager.DbClient.GetDatabase("Melon").GetCollection<User>("Users")
+                                        .Find(u => u._id == id).Project(u => new { u.Password, u.Type, u.Username }).FirstOrDefaultAsync(context.HttpContext.RequestAborted);
+                                    if (account == null || account.Username != principal.Identity?.Name || !principal.IsInRole(account.Type) ||
+                                        principal.FindFirstValue("melon_session") != Security.SessionStamp(account.Password))
+                                        context.Fail("Account credentials have changed.");
+                                },
                                 OnMessageReceived = context =>
                                 {
                                     // First, check if the token is present in the Authorization header
@@ -342,9 +214,8 @@ namespace MelonWebApi
                     options.AllowSynchronousIO = true;
                 });
 
-                app = builder.Build();
+                await using var app = builder.Build();
 
-                //app.UseMiddleware<JwtMiddleware>();
                 app.UseAuthentication();
                 app.UseAuthorization();
                 app.UseHttpsRedirection();
@@ -372,22 +243,15 @@ namespace MelonWebApi
 
                 app.UseStaticFiles();
 
-                var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
-                
-                lifetime.ApplicationStopping.Register(() =>
-                {
-                    QueuesCleaner.CleanerActive = false;
-                    watcher.Dispose();
-                    TrayIconManager.RemoveIcon();
-                });
-
-                app.Run();
-
-                await app.StopAsync();
-                watcher.Dispose();
+                await app.RunAsync(stopping);
             }
-            TrayIconManager.RemoveIcon();
-            return 0;
+            catch (OperationCanceledException) when (stopping.IsCancellationRequested) { }
+            catch (Exception ex) when (!stopping.IsCancellationRequested)
+            {
+                Log.Error(ex, "Web listener unavailable. Correct settings through local management and restart.");
+                try { await Task.Delay(Timeout.Infinite, stopping); }
+                catch (OperationCanceledException) when (stopping.IsCancellationRequested) { }
+            }
         }
     }
 }

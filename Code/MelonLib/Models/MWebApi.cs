@@ -1,24 +1,22 @@
-﻿using Melon.Interface;
+using Melon.Interface;
 
 namespace Melon.Models
 {
     public class MWebApi : IWebApi
     {
-        private Dictionary<string, Func<WebApiEventArgs, byte[]>> _middlewares = new Dictionary<string, Func<WebApiEventArgs, byte[]>>();
+        private readonly Dictionary<string, Func<WebApiEventArgs, byte[]>> _middlewares = new Dictionary<string, Func<WebApiEventArgs, byte[]>>();
 
         public bool UsePluginMiddleware(KeyValuePair<string, Func<WebApiEventArgs, byte[]>> middleware)
         {
-            var check = _middlewares.TryAdd(middleware.Key, middleware.Value);
-            return check;
+            lock (_middlewares) return _middlewares.TryAdd(middleware.Key, middleware.Value);
         }
         public bool RemovePluginMiddleware(string name)
         {
-            var check = _middlewares.Remove(name);
-            return check;
+            lock (_middlewares) return _middlewares.Remove(name);
         }
         public Dictionary<string, Func<WebApiEventArgs, byte[]>> GetPluginMiddlewares()
         {
-            return _middlewares;
+            lock (_middlewares) return new(_middlewares);
         }
 
         // ArtDeleteController
