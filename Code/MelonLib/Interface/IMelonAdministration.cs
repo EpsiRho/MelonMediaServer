@@ -27,6 +27,11 @@ public record ReleaseInfo(bool UpdateAvailable, string CurrentVersion, string La
 public record PluginField(string Key, string Label, string Type, object Value);
 public record PluginAction(string Key, string Label);
 public record PluginPage(PluginField[] Fields, PluginAction[] Actions);
+/// <param name="Installed">False when settings are saved for a plugin provider that is not currently loaded.</param>
+public record ArtworkProviderInfo(string Id, string Name, string Description, string[] Kinds, bool Enabled, int Priority,
+    bool RequiresApiKey, bool HasApiKey, string? ApiKeyUrl, bool BuiltIn, bool Installed);
+public record ArtworkStatus(bool FetchAfterScan, bool Running, int Processed, int Total, int Updated, string? LastResult,
+    ArtworkProviderInfo[] Providers);
 
 /// <summary>Optional controller-neutral settings and actions, executed in the server process.</summary>
 public interface IControllerPlugin
@@ -67,6 +72,7 @@ public interface IMelonAdministration
     int ImportPlaylists(string path, string userId);
     string ExportPlaylist(string id, string format);
     ManagedUser[] GetUsers();
+    void SetUserType(string userId, string type);
     bool DeleteUser(string userId);
     AccessCode CreatePasswordReset(string userId);
     AccessCode CreateInvite(int minutes = 10);
@@ -80,6 +86,18 @@ public interface IMelonAdministration
     Dictionary<string, string> GetHelp();
     PluginPage GetPluginPage(string name, string author);
     object? InvokePlugin(string name, string author, string action, JsonElement values);
+    ArtworkStatus GetArtwork();
+    void SetArtworkProviderEnabled(string id, bool enabled);
+    /// <summary>Sets provider priority, highest first. Providers left out keep their order after the listed ones.</summary>
+    void SetArtworkProviderOrder(string[] ids);
+    /// <summary>Saves an API key for a provider. An empty key removes it and disables a provider that needs one.</summary>
+    void SetArtworkProviderKey(string id, string apiKey);
+    void SetArtworkFetchAfterScan(bool enabled);
+    /// <summary>Starts filling in missing artist artwork in the background. Returns false when a fetch or scan is running.</summary>
+    /// <param name="force">Also retry artists checked recently that had no match.</param>
+    bool FetchArtistArtwork(bool force = false);
+    /// <summary>Looks up one artist with one provider without saving anything, to check its setup.</summary>
+    Task<string> TestArtworkProvider(string id, string artistName);
     Task<ReleaseInfo> CheckForUpdates();
     Task<bool> ApplyUpdate();
     void PublishMessage(string topic, string message);

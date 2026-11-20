@@ -30,6 +30,7 @@ public sealed partial class MainWindow
             foreach (var user in users)
             {
                 var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                actions.Children.Add(IconAction("\uE70F", T("Edit user type") + " · " + user.Username, () => EditUserType(user)));
                 actions.Children.Add(ButtonFor("Reset code", async () =>
                     await ShowCode(await Read<AccessCode>(nameof(IMelonAdministration.CreatePasswordReset), new { userId = user.Id }), user.Username)));
                 actions.Children.Add(IconAction("\uE74D", T("Delete user") + " " + user.Username, async () =>
@@ -56,6 +57,19 @@ public sealed partial class MainWindow
         activeInvites = invites;
         DrawInvites();
         page.Children.Add(rows);
+    }
+
+    private async Task EditUserType(ManagedUser user)
+    {
+        var type = Choices("Account type", "User", "Admin");
+        type.SelectedItem = type.Items.Cast<ComboBoxItem>().FirstOrDefault(item => (string)item.Tag == user.Role);
+        type.PlaceholderText = T("Choose User or Admin.");
+        if (!await Dialog("Edit user type", Stack(Text(user.Username, "BodyStrongTextBlockStyle"), type), "Save")) return;
+        if (type.SelectedItem == null) throw new ArgumentException("Choose User or Admin.");
+
+        var selectedType = Choice(type);
+        if (selectedType != user.Role)
+            await Command(nameof(IMelonAdministration.SetUserType), new { userId = user.Id, type = selectedType });
     }
 
     private void DrawInvites()

@@ -48,6 +48,12 @@ internal sealed partial class Controller
         page.Items.Add(Entry.Header(T("Metadata")));
         page.Items.Add(Setting("Artist split indicators", Summary(settings.ArtistSplitIndicators), () => Indicators(true)));
         page.Items.Add(Setting("Genre split indicators", Summary(settings.GenreSplitIndicators), () => Indicators(false)));
+        if (s.DatabaseConnected)
+        {
+            var art = await Read<ArtworkStatus>(nameof(Admin.GetArtwork));
+            page.Items.Add(Setting("Artist artwork", art.Running ? $"{T("Fetching artwork…")} {art.Processed:N0} / {art.Total:N0}"
+                : string.Join(", ", art.Providers.Where(p => p.Enabled).Select(p => p.Name)) is { Length: > 0 } names ? names : T("Off"), ArtworkSettings));
+        }
     }
     private static string Summary(string[] values) => values.Length == 0 ? "—" : string.Join(" ", values.Select(v => v.Trim().Length == 0 ? "·" : v.Trim()));
     private async Task Scan(bool skip)

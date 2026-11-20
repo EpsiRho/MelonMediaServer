@@ -38,27 +38,35 @@ namespace Melon.LocalClasses
         private static ConcurrentDictionary<string, string> threads { get; set; }
 
         // DB Functions
-        private static void IndexCollections()
+        private static void IndexCollections() => EnsureSearchIndexes(StateManager.DbClient.GetDatabase("Melon"));
+
+        // Search filters are built without a collation, so these indexes must not have one either:
+        // a collated index can't evaluate the regex on its keys or provide the sort, which forces a full fetch + in-memory sort.
+        private static readonly (string Collection, string[] Fields)[] SearchIndexes =
+        [
+            ("Tracks", ["Name", "Album.Name", "TrackArtists.Name", "DateAdded", "PlayCounts.UserId"]),
+            ("Albums", ["Name", "AlbumArtists.Name", "DateAdded"]),
+            ("Artists", ["Name", "DateAdded"]),
+        ];
+
+        public static void EnsureSearchIndexes(IMongoDatabase db)
         {
-            try
+            foreach (var (name, fields) in SearchIndexes)
             {
-                var indexOptions = new CreateIndexOptions { Background = true, Collation = new Collation(locale: "en", strength: CollationStrength.Secondary) };
+                try
+                {
+                    var collection = db.GetCollection<BsonDocument>(name);
+                    // Replace the old collated Name index, which has the same key name.
+                    foreach (var index in collection.Indexes.List().ToList())
+                        if (index.Contains("collation") && index["name"].AsString != "_id_")
+                            collection.Indexes.DropOne(index["name"].AsString);
 
-                var artistIndexKeysDefinition = Builders<Artist>.IndexKeys.Ascending(x => x.Name);
-                var artistIndexModel = new CreateIndexModel<Artist>(artistIndexKeysDefinition, indexOptions);
-                artistsCollection.Indexes.CreateOne(artistIndexModel);
-
-                var albumIndexKeysDefinition = Builders<Album>.IndexKeys.Ascending(x => x.Name);
-                var albumIndexModel = new CreateIndexModel<Album>(albumIndexKeysDefinition, indexOptions);
-                albumsCollection.Indexes.CreateOne(albumIndexModel);
-
-                var trackIndexKeysDefinition = Builders<Track>.IndexKeys.Ascending(x => x.Name);
-                var trackIndexModel = new CreateIndexModel<Track>(trackIndexKeysDefinition, indexOptions);
-                tracksCollection.Indexes.CreateOne(trackIndexModel);
-            }
-            catch (Exception)
-            {
-
+                    collection.Indexes.CreateMany(fields.Select(f => new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending(f))));
+                }
+                catch (Exception ex)
+                {
+                    Serilog.Log.Warning(ex, "Could not create search indexes on {Collection}", name);
+                }
             }
         }
         public static void ResetDb()
@@ -148,7 +156,14 @@ namespace Melon.LocalClasses
             ServerAdministration.Instance.Messages.Publish("scan", "Library scan started.");
             _ = Task.Run(() =>
             {
-                try { Scan(skip); }
+                bool finished = false;
+                try
+                {
+                    // The scan rewrites artist documents from memory; let any artwork fetch finish its current artist first.
+                    ArtworkService.Instance.CancelAndWait();
+                    Scan(skip);
+                    finished = CurrentStatus != "Library folder unavailable";
+                }
                 catch (Exception error)
                 {
                     CurrentStatus = "Scan failed";
@@ -158,6 +173,11 @@ namespace Melon.LocalClasses
                 {
                     Volatile.Write(ref running, 0);
                     ServerAdministration.Instance.Messages.Publish("scan", CurrentStatus ?? "Scan finished.");
+                }
+                if (finished && ArtworkService.Instance.FetchAfterScan)
+                {
+                    try { ArtworkService.Instance.StartFetch(force: false); }
+                    catch (InvalidOperationException) { } // No providers enabled.
                 }
             });
             return true;

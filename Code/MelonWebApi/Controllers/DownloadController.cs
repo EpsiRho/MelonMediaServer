@@ -131,54 +131,27 @@ namespace MelonWebApi.Controllers
             var split = filename.Split(".");
             filename = filename.Replace(split[split.Length - 1], "mp3");
 
-            using (var reader = new AudioFileReader(track.Path))
+            fileStream.Dispose();
+            if (transcodeBitrate < 32 || transcodeBitrate > 320) transcodeBitrate = 256;
+
+            // Encode once into a cache file and serve that with range support. Media players (Windows Media Foundation,
+            // browsers) issue several Range requests per track; previously each one re-encoded the whole file in
+            // memory before sending a byte, which could stall playback start for many seconds under load.
+            string cached;
+            try { cached = await TranscodeCache.GetAsync(track._id, track.Path, transcodeBitrate, HttpContext.RequestAborted); }
+            catch (OperationCanceledException) { return new EmptyResult(); }
+            catch (Exception)
             {
-                // Wave format to convert to
-                WaveFormat targetFormat = new Mp3WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.Channels, 0, transcodeBitrate);
-                LameConfig config = new LameConfig()
-                {
-                    BitRate = transcodeBitrate,
-                    OutputSampleRate = reader.WaveFormat.SampleRate
-                };
-
-
-                // If the request has a range header, send the file through FileStreamResult to manage it
-                var rangeHeader = Request.Headers[HeaderNames.Range];
-                if (!string.IsNullOrEmpty(rangeHeader))
-                {
-                    MemoryStream ms = new MemoryStream();
-                    using (var writer = new LameMP3FileWriter(ms, reader.WaveFormat, config))
-                    {
-                        reader.CopyTo(writer);
-                        writer.Flush();
-                    }
-                    ms.Position = 0;
-                    args.SendEvent("Track file sent", 200, Program.mWebApi);
-                    return new FileStreamResult(ms, "audio/mpeg")
-                    {
-                        EnableRangeProcessing = true,
-                        FileDownloadName = filename
-                    };
-                }
-
-                // Otherwise, send file as it's transcoded (faster, but no ability for seek)
-                using (var writer = new LameMP3FileWriter(HttpContext.Response.Body, reader.WaveFormat, config))
-                {
-                    byte[] buffer = new byte[4096];
-                    HttpContext.Response.Headers["Accept-Ranges"] = "bytes";
-                    HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
-                    HttpContext.Response.StatusCode = 200;
-                    HttpContext.Response.ContentType = "audio/mpeg";
-                    int bytesRead;
-                    while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        writer.Write(buffer, 0, buffer.Length);
-                    }
-                    writer.Flush();
-                    args.SendEvent("Track file sent", 200, Program.mWebApi);
-                }
-                return ControllerBase.Empty;
+                args.SendEvent("Transcode failed", 500, Program.mWebApi);
+                return StatusCode(500, "Transcode failed");
             }
+
+            args.SendEvent("Track file sent", 200, Program.mWebApi);
+            return new FileStreamResult(new FileStream(cached, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 1 << 16, true), "audio/mpeg")
+            {
+                EnableRangeProcessing = true,
+                FileDownloadName = filename
+            };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpGet("track-wave")]
@@ -214,26 +187,28 @@ namespace MelonWebApi.Controllers
 
             using (var reader = new AudioFileReader(track.Path))
             {
-                // Number of samples to process
-                var sampleCount = (int)(reader.Length / (reader.WaveFormat.BitsPerSample / 8));
-                // The number of samples per point in the final waveform
-                var samplesPerPixel = sampleCount / w;
+                // AudioFileReader yields interleaved 32-bit float samples.
+                var sampleCount = reader.Length / sizeof(float);
+                var samplesPerPixel = (int)Math.Max(reader.WaveFormat.Channels, sampleCount / w);
+                samplesPerPixel -= samplesPerPixel % reader.WaveFormat.Channels; // keep channel frames together
                 var waveform = new float[w];
                 var buffer = new float[samplesPerPixel];
-                int waveformIndex = 0;
 
-                int samplesRead;
-                int count = track.Path.Contains(".wav") ? (reader.WaveFormat.BlockAlign / reader.WaveFormat.Channels) : buffer.Length;
-                while ((samplesRead = reader.Read(buffer, 0, count)) > 0)
+                // RMS per bucket instead of peak: mastered music hits ~0 dBFS peaks almost everywhere, which made
+                // the peak waveform flat. RMS tracks perceived loudness, then normalize to the loudest bucket.
+                int i = 0;
+                while (i < w)
                 {
-                    float max = buffer.Take(samplesRead).Select(v => Math.Abs(v)).Max();
-                    waveform[waveformIndex++] = max;
-                    if (waveformIndex >= w) break;
-                    if(max == 0)
-                    {
-                        Debug.WriteLine("penis");
-                    }
+                    int read = 0, n;
+                    while (read < buffer.Length && (n = reader.Read(buffer, read, buffer.Length - read)) > 0) read += n;
+                    if (read == 0) break;
+                    double sum = 0;
+                    for (int k = 0; k < read; k++) sum += buffer[k] * buffer[k];
+                    waveform[i++] = (float)Math.Sqrt(sum / read);
                 }
+                float loudest = waveform.Max();
+                if (loudest > 0)
+                    for (int k = 0; k < w; k++) waveform[k] = (float)Math.Round(waveform[k] / loudest, 4);
 
                 args.SendEvent("Track waveform sent", 200, Program.mWebApi);
                 return new ObjectResult(waveform) { StatusCode = 200 };
@@ -420,7 +395,7 @@ namespace MelonWebApi.Controllers
                 file.Read(bytes, 0, (int)file.Length);
                 args.SendEvent("Artist banner sent", 200, Program.mWebApi);
                 file.Dispose();
-                var mime = artist.ArtistPfpPaths[index].Split(".")[1];
+                var mime = artist.ArtistBannerPaths[index].Split(".")[1];
                 return File(bytes, $"image/{mime}");
             }
             catch (Exception)
@@ -498,6 +473,62 @@ namespace MelonWebApi.Controllers
                 args.SendEvent("Default artwork sent", 200, Program.mWebApi);
                 return File(StateManager.GetDefaultImage(), "image/jpeg");
             }
+        }
+    }
+    /// <summary>Per-track MP3 transcode cache (one encode per id+bitrate, shared by concurrent requests, LRU-trimmed).</summary>
+    internal static class TranscodeCache
+    {
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<Task<string>>> _inflight = new();
+        private static readonly string Dir = Path.Combine(Path.GetTempPath(), "MelonTranscodes");
+        private const long MaxBytes = 2L * 1024 * 1024 * 1024;
+
+        public static async Task<string> GetAsync(string id, string sourcePath, int kbps, CancellationToken ct)
+        {
+            Directory.CreateDirectory(Dir);
+            var stamp = File.GetLastWriteTimeUtc(sourcePath).Ticks;
+            var dest = Path.Combine(Dir, $"{id}_{kbps}_{stamp}.mp3");
+            if (File.Exists(dest)) { try { File.SetLastAccessTimeUtc(dest, DateTime.UtcNow); } catch { } return dest; }
+            var lazy = _inflight.GetOrAdd(dest, d => new Lazy<Task<string>>(() => Task.Run(() => Encode(sourcePath, d, kbps))));
+            try { return await lazy.Value.WaitAsync(ct); }
+            finally { if (lazy.Value.IsCompleted) _inflight.TryRemove(dest, out _); }
+        }
+
+        private static string Encode(string sourcePath, string dest, int kbps)
+        {
+            var part = dest + "." + Guid.NewGuid().ToString("N") + ".part";
+            try
+            {
+                using (var reader = new AudioFileReader(sourcePath))
+                using (var fs = new FileStream(part, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 16))
+                using (var writer = new LameMP3FileWriter(fs, reader.WaveFormat, new LameConfig { BitRate = kbps, OutputSampleRate = reader.WaveFormat.SampleRate }))
+                {
+                    reader.CopyTo(writer);
+                    writer.Flush();
+                }
+                File.Move(part, dest, true);
+            }
+            catch
+            {
+                try { File.Delete(part); } catch { }
+                throw;
+            }
+            _ = Task.Run(Trim);
+            return dest;
+        }
+
+        private static void Trim()
+        {
+            try
+            {
+                var files = new DirectoryInfo(Dir).EnumerateFiles("*.mp3").OrderBy(f => f.LastAccessTimeUtc).ToList();
+                long total = files.Sum(f => f.Length);
+                foreach (var f in files)
+                {
+                    if (total <= MaxBytes) break;
+                    try { total -= f.Length; f.Delete(); } catch { }
+                }
+            }
+            catch { }
         }
     }
 }

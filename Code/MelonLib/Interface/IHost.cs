@@ -22,6 +22,7 @@ namespace Melon.Interface
         IMelonScanner MelonScanner { get; }
         IStateManager StateManager { get; }
         IMelonAdministration Administration { get; }
+        IArtworkProviderRegistry Artwork { get; }
     }
     public interface IMelonAPI
     {

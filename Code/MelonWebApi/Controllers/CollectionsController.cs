@@ -40,7 +40,7 @@ namespace MelonWebApi.Controllers
         /// <response code="401">If the user does not have permission to perform this action.</response>
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create")]
-        public ObjectResult CreateCollection(string name, string description = "", [FromQuery] List<string> andFilters = null, [FromQuery] List<string> orFilters = null)
+        public ObjectResult CreateCollection(string name, string description = "", [FromQuery] List<string> andFilters = null, [FromQuery] List<string> orFilters = null, string defaultView = "")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -57,13 +57,12 @@ namespace MelonWebApi.Controllers
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var CollectionsCollection = mongoDatabase.GetCollection<Collection>("Collections");
 
-            if(andFilters == null)
+            andFilters ??= new List<string>();
+            orFilters ??= new List<string>();
+            if (andFilters.Count == 0 && orFilters.Count == 0)
             {
-                andFilters = new List<string>() { "Name;Contains;Dream" };
-            }
-            if(orFilters == null)
-            {
-                orFilters = new List<string>();
+                args.SendEvent("At least one filter is required", 400, Program.mWebApi);
+                return new ObjectResult("At least one filter is required") { StatusCode = 400 };
             }
 
             Collection col = new Collection();
@@ -78,6 +77,7 @@ namespace MelonWebApi.Controllers
             col.PublicViewing = false;
             col.PublicEditing = false;
             col.ArtworkPath = "";
+            col.DefaultView = new[] { "tracks", "albums", "artists" }.Contains(defaultView) ? defaultView : "tracks";
             col.Tracks = MelonAPI.FindTracks(andFilters, orFilters, curId, -1, -1).Select(x => new DbLink(x)).ToList();
             col.TrackCount = col.Tracks.Count();
 
@@ -353,7 +353,7 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin, User")]
         [HttpPost("update")]
         public ObjectResult updateCollection(string id, string description = "", string name = "", [FromQuery] List<string> editors = null, [FromQuery] List<string> viewers = null,
-                                           string publicEditing = "", string publicViewing = "")
+                                           string publicEditing = "", string publicViewing = "", string defaultView = "")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -415,6 +415,15 @@ namespace MelonWebApi.Controllers
                 collection.Viewers = viewers;
                 collection.PublicEditing = pubEditing;
                 collection.PublicViewing = pubViewing;
+                if (defaultView != "")
+                {
+                    if (!new[] { "tracks", "albums", "artists" }.Contains(defaultView))
+                    {
+                        args.SendEvent("Invalid Parameters", 400, Program.mWebApi);
+                        return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
+                    }
+                    collection.DefaultView = defaultView;
+                }
 
                 ColCollection.ReplaceOne(cFilter, collection);
             }
@@ -424,7 +433,7 @@ namespace MelonWebApi.Controllers
             }
 
             args.SendEvent("Collection updated", 200, Program.mWebApi);
-            return new ObjectResult("Collection updated") { StatusCode = 404 };
+            return new ObjectResult("Collection updated") { StatusCode = 200 };
         }
 
         /// <summary>

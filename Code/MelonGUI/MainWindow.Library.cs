@@ -82,6 +82,8 @@ public sealed partial class MainWindow
             ("Genre split indicators", config.GenreSplitIndicators, nameof(IMelonAdministration.SetGenreSplitIndicators)) })
             page.Children.Add(Card(Row(Stack(Text(T(label)), Text(string.Join("    ", values), "CaptionTextBlockStyle")),
                 ButtonFor("Edit", async () => { if (await EditList(label, values) is string[] indicators) await Command(method, new { indicators }); }))));
+
+        if (status.DatabaseConnected) await ArtworkSection(page);
     }
 
     private async Task Scan(bool skip)

@@ -19,11 +19,15 @@ namespace MelonWebApi
     {
         private static readonly HttpClient UpdateDownloads = new();
         public static MWebApi mWebApi;
-        public const string Version = "1.0.0.1756";
+        public const string Version = "1.0.0.172918";
         public const string Branch = "Beta";
 
         public static async Task<int> Main(string[] args)
         {
+            // Response models are projections of the stored documents; tolerate fields they don't declare
+            // instead of failing the whole request (e.g. Collection.StaticMembership broke collections/search).
+            MongoDB.Bson.Serialization.Conventions.ConventionRegistry.Register("MelonIgnoreExtraElements",
+                new MongoDB.Bson.Serialization.Conventions.ConventionPack { new MongoDB.Bson.Serialization.Conventions.IgnoreExtraElementsConvention(true) }, _ => true);
             StateManager.Version = Version;
             StateManager.Branch = Branch;
             StateManager.ParseArgs(args);

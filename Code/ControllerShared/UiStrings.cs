@@ -6,6 +6,8 @@ internal static class UiStrings
     {
         ["your Melon server"]="tu servidor Melon", ["Users"]="Usuarios", ["Stats"]="Estadísticas", ["Reset code"]="Código de recuperación", ["Delete user"]="Eliminar usuario",
         ["Delete user?"]="¿Eliminar usuario?", ["Delete"]="Eliminar", ["Listening stats are kept. You can prune them separately in Stats."]="Se conservan las estadísticas. Puedes depurarlas por separado en Estadísticas.",
+        ["Edit user type"]="Editar tipo de usuario", ["Account type"]="Tipo de cuenta",
+        ["Choose User or Admin."]="Selecciona Usuario o Administrador.", ["User not found."]="Usuario no encontrado.",
         ["Invites"]="Invitaciones", ["Create invite"]="Crear invitación", ["Expires in (minutes)"]="Caduca en (minutos)", ["Create"]="Crear",
         ["Enter a positive number of minutes."]="Introduce un número positivo de minutos.", ["Invalidate"]="Revocar", ["No active invites."]="No hay invitaciones activas.",
         ["Invite"]="Invitación", ["Expired"]="Caducado", ["Expires"]="Caduca", ["Password reset"]="Restablecer contraseña", ["Enter the code at"]="Introduce el código en",
@@ -75,7 +77,25 @@ internal static class UiStrings
         ["Updating Collections"]="Actualizando colecciones", ["Creating Albums"]="Creando álbumes", ["Creating Artists"]="Creando artistas",
         ["Updating Tracks"]="Actualizando canciones", ["Setting Lyrics"]="Guardando letras", ["Writing Tracks"]="Guardando canciones",
         ["Writing Albums"]="Guardando álbumes", ["Writing Artists"]="Guardando artistas", ["Scan failed"]="Falló el escaneo",
-        ["Library folder unavailable"]="Carpeta de biblioteca no disponible"
+        ["Library folder unavailable"]="Carpeta de biblioteca no disponible",
+        ["Artist artwork"]="Imágenes de artistas", ["Providers"]="Proveedores", ["After scans"]="Tras escanear",
+        ["On"]="Activado", ["Off"]="Desactivado", ["Fetch missing artwork"]="Buscar imágenes que faltan",
+        ["Fetching artwork…"]="Buscando imágenes…", ["Last fetch"]="Última búsqueda", ["Enable a provider to fill in missing artist pictures."]="Activa un proveedor para completar las imágenes de artistas que faltan.",
+        ["No artwork providers are enabled."]="No hay proveedores de imágenes activados.", ["Priority"]="Prioridad", ["Melon asks enabled providers from the top down and keeps the first image each one finds."]="Melon consulta los proveedores activados de arriba abajo y conserva la primera imagen que encuentra.",
+        ["Not loaded"]="No cargado", ["Needs API key"]="Necesita clave de API", ["Fetching"]="Búsqueda",
+        ["Fetch after library scans"]="Buscar tras escanear la biblioteca", ["Retry artists checked recently"]="Reintentar artistas revisados hace poco", ["Artwork can’t be fetched while a scan or another fetch is running."]="No se pueden buscar imágenes durante un escaneo u otra búsqueda.",
+        ["API key"]="Clave de API", ["Not needed"]="No necesaria", ["Saved"]="Guardada",
+        ["Not set"]="Sin configurar", ["of"]="de", ["Its settings are kept until the plugin is back."]="Su configuración se conserva hasta que vuelva el complemento.",
+        ["This provider’s plugin is not loaded."]="El complemento de este proveedor no está cargado.", ["Source"]="Origen", ["Built in"]="Integrado",
+        ["Plugin"]="Complemento", ["Provides"]="Proporciona", ["Artist pictures"]="Fotos de artistas",
+        ["Artist banners"]="Portadas de artistas", ["Get a key"]="Obtener clave", ["Move up"]="Subir",
+        ["Move down"]="Bajar", ["Make first"]="Poner primero", ["Change API key"]="Cambiar clave de API",
+        ["Set up"]="Configurar", ["Get an API key"]="Obtener una clave de API", ["Remove API key"]="Quitar clave de API",
+        ["The provider is disabled until you add a key again."]="El proveedor queda desactivado hasta que añadas otra clave.", ["Check"]="Comprobar", ["Test lookup"]="Probar búsqueda",
+        ["Artist name"]="Nombre del artista", ["Looking up artwork…"]="Buscando imágenes en línea…", ["Get a free key at"]="Obtén una clave gratuita en",
+        ["Enter an API key."]="Introduce una clave de API.", ["Checking the key…"]="Comprobando la clave…", ["Fills in missing artist pictures and banners."]="Completa las fotos y portadas de artistas que faltan.",
+        ["API key saved"]="Clave de API guardada", ["No API key needed"]="No necesita clave de API", ["Test"]="Probar",
+        ["Saved. Enter a new key to replace it."]="Guardada. Introduce otra clave para reemplazarla.", ["Get a free API key"]="Obtener una clave de API gratuita", ["Remove the saved key and disable this provider"]="Quitar la clave guardada y desactivar este proveedor"
     };
     internal static string Get(string language, string key) =>
         language.Split('-')[0].Equals("ES", StringComparison.OrdinalIgnoreCase) && Spanish.TryGetValue(key, out var text) ? text : key;

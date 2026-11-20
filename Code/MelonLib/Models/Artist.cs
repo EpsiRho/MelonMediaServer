@@ -21,6 +21,10 @@ namespace Melon.Models
         public List<string> Genres { get; set; }
         public DateTime DateAdded { get; set; }
         public List<DbLink> ConnectedArtists { get; set; }
+        /// <summary>Resolved by the artwork service when a provider needs it. Null until looked up, empty when no match.</summary>
+        public string? MusicBrainzArtistId { get; set; }
+        /// <summary>When online artwork providers were last asked about this artist.</summary>
+        public DateTime? ArtworkCheckedUtc { get; set; }
         public Artist()
         {
 

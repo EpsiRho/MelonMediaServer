@@ -23,6 +23,7 @@ namespace Melon.PluginModels
         public IMelonScanner MelonScanner => new Scanner();
         public IStateManager StateManager => new State();
         public IMelonAdministration Administration => ServerAdministration.Instance;
+        public IArtworkProviderRegistry Artwork => ArtworkService.Instance;
     }
     public class API : IMelonAPI
     {

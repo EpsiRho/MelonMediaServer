@@ -49,10 +49,9 @@ namespace MelonWebApi.Controllers
                 return;
             }
 
-            var webSocket = HttpContext.WebSockets.AcceptWebSocketAsync().Result;
-            StreamManager.AddSocket(webSocket, curId);
-
+            var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
             args.SendEvent("Websocket connected", 200, Program.mWebApi);
+            await StreamManager.AddSocket(webSocket, curId); // runs until the client disconnects
 
         }
         [Authorize(Roles = "Admin,User")]

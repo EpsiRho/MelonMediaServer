@@ -12,6 +12,8 @@ namespace Melon.Models
         public List<string> Viewers { get; set; }
         public bool PublicViewing { get; set; }
         public bool PublicEditing { get; set; }
+        /// <summary>The view the playlist/collection opens in: "tracks", "albums" or "artists" (null = tracks).</summary>
+        public string DefaultView { get; set; }
         public string ArtworkPath { get; set; }
         public List<string> AndFilters { get; set; }
         public List<string> OrFilters { get; set; }
@@ -19,6 +21,7 @@ namespace Melon.Models
     }
     public class ResponseCollection
     {
+        public bool StaticMembership { get; set; }
         public string _id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
@@ -28,6 +31,8 @@ namespace Melon.Models
         public List<string> Viewers { get; set; }
         public bool PublicViewing { get; set; }
         public bool PublicEditing { get; set; }
+        /// <summary>The view the playlist/collection opens in: "tracks", "albums" or "artists" (null = tracks).</summary>
+        public string DefaultView { get; set; }
         public List<string> AndFilters { get; set; }
         public List<string> OrFilters { get; set; }
     }

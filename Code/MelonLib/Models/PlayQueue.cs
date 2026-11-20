@@ -15,6 +15,8 @@
         public DateTime LastListen { get; set; }
         public List<DbLink> Tracks { get; set; }
         public List<string> OriginalTrackOrder { get; set; }
+        /// <summary>Shuffle mode the queue is currently in ("none" when in original order).</summary>
+        public string ShuffleMode { get; set; } = "none";
     }
     public class ResponseQueue
     {
@@ -28,5 +30,6 @@
         public List<string> Viewers { get; set; }
         public bool PublicViewing { get; set; }
         public bool PublicEditing { get; set; }
+        public string ShuffleMode { get; set; } = "none";
     }
 }

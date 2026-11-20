@@ -57,6 +57,12 @@ public sealed partial class ServerAdministration : IMelonAdministration
             if (!needsAdmin) File.Delete(Path.Combine(melonPath, "Configs", "setup.pending"));
             if (conversions.Length > 0 && LaunchArgs.ContainsKey("allowConversion"))
                 ConvertDatabase();
+            // Existing libraries only got indexes after a scan; make sure search has them without one.
+            if (conversions.Length == 0 || LaunchArgs.ContainsKey("allowConversion"))
+            {
+                var db = Database;
+                Task.Run(() => MelonScanner.EnsureSearchIndexes(db));
+            }
         }
     }
 
@@ -362,6 +368,7 @@ public sealed partial class ServerAdministration : IMelonAdministration
     {
         if (plugin.Destroy() != 0) throw new InvalidOperationException($"Plugin failed to stop: {plugin.Name}");
         active.Remove(plugin);
+        ArtworkService.Instance.UnregisterAssembly(plugin.GetType().Assembly);
     }
 
     public void UnloadPlugins()

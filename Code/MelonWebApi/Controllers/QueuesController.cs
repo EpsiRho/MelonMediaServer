@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
@@ -72,6 +72,7 @@ namespace MelonWebApi.Controllers
                 tracks.Add(track);
             }
 
+            var preShuffleOrder = tracks.Where(x => x != null).Select(x => x._id).ToList();
             switch (shuffle)
             {
                 case "none":
@@ -101,8 +102,8 @@ namespace MelonWebApi.Controllers
             
             queue.Tracks = tracks.Select(x=>new DbLink(x)).ToList();
             queue.TrackCount = tracks.Count;
-            queue.OriginalTrackOrder = (from track in queue.Tracks
-                                        select track._id).ToList();
+            queue.OriginalTrackOrder = preShuffleOrder;
+            queue.ShuffleMode = string.IsNullOrEmpty(shuffle) || shuffle.Equals("none", StringComparison.OrdinalIgnoreCase) ? "none" : shuffle;
             QCollection.InsertOne(queue);
 
             args.SendEvent("Queue Created", 200, Program.mWebApi);
@@ -169,6 +170,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            var preShuffleOrder = tracks.Where(x => x != null).Select(x => x._id).ToList();
             switch (shuffle)
             {
                 case "none":
@@ -198,8 +200,8 @@ namespace MelonWebApi.Controllers
 
             queue.Tracks = tracks.Select(x => new DbLink(x)).ToList();
             queue.TrackCount = tracks.Count;
-            queue.OriginalTrackOrder = (from track in queue.Tracks
-                                        select track._id).ToList();
+            queue.OriginalTrackOrder = preShuffleOrder;
+            queue.ShuffleMode = string.IsNullOrEmpty(shuffle) || shuffle.Equals("none", StringComparison.OrdinalIgnoreCase) ? "none" : shuffle;
             QCollection.InsertOne(queue);
 
             args.SendEvent("Queue Created", 200, Program.mWebApi);
@@ -267,6 +269,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            var preShuffleOrder = tracks.Where(x => x != null).Select(x => x._id).ToList();
             switch (shuffle)
             {
                 case "none":
@@ -296,8 +299,8 @@ namespace MelonWebApi.Controllers
 
             queue.Tracks = tracks.Select(x => new DbLink(x)).ToList();
             queue.TrackCount = tracks.Count;
-            queue.OriginalTrackOrder = (from track in queue.Tracks
-                                        select track._id).ToList();
+            queue.OriginalTrackOrder = preShuffleOrder;
+            queue.ShuffleMode = string.IsNullOrEmpty(shuffle) || shuffle.Equals("none", StringComparison.OrdinalIgnoreCase) ? "none" : shuffle;
             QCollection.InsertOne(queue);
 
             args.SendEvent("Queue Created", 200, Program.mWebApi);
@@ -360,6 +363,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            var preShuffleOrder = tracks.Where(x => x != null).Select(x => x._id).ToList();
             switch (shuffle)
             {
                 case "none":
@@ -389,8 +393,8 @@ namespace MelonWebApi.Controllers
 
             queue.Tracks = tracks.Select(x => new DbLink(x)).ToList();
             queue.TrackCount = tracks.Count;
-            queue.OriginalTrackOrder = (from track in queue.Tracks
-                                        select track._id).ToList();
+            queue.OriginalTrackOrder = preShuffleOrder;
+            queue.ShuffleMode = string.IsNullOrEmpty(shuffle) || shuffle.Equals("none", StringComparison.OrdinalIgnoreCase) ? "none" : shuffle;
             QCollection.InsertOne(queue);
 
             args.SendEvent("Queue Created", 200, Program.mWebApi);
@@ -453,6 +457,7 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            var preShuffleOrder = tracks.Where(x => x != null).Select(x => x._id).ToList();
             switch (shuffle)
             {
                 case "none":
@@ -482,8 +487,8 @@ namespace MelonWebApi.Controllers
 
             queue.Tracks = tracks.Select(x => new DbLink(x)).ToList();
             queue.TrackCount = tracks.Count;
-            queue.OriginalTrackOrder = (from track in queue.Tracks
-                                        select track._id).ToList();
+            queue.OriginalTrackOrder = preShuffleOrder;
+            queue.ShuffleMode = string.IsNullOrEmpty(shuffle) || shuffle.Equals("none", StringComparison.OrdinalIgnoreCase) ? "none" : shuffle;
             QCollection.InsertOne(queue);
 
             args.SendEvent("Queue Created", 200, Program.mWebApi);
@@ -790,10 +795,12 @@ namespace MelonWebApi.Controllers
 
             queue.LastListen = DateTime.Now.ToUniversalTime();
 
+            // Multi-track inserts keep the order they were sent in (inserting each at the same index reversed them).
+            int insertAt = Math.Clamp(place, 0, queue.Tracks.Count), frontAt = 0;
             foreach (var tid in trackIds)
             {
                 var trackFilter = Builders<Track>.Filter.Eq(x=>x._id, tid);
-                var track = TCollection.Find(trackFilter).ToList()[0];
+                var track = TCollection.Find(trackFilter).FirstOrDefault();
                 if (track == null)
                 {
                     continue;
@@ -810,8 +817,9 @@ namespace MelonWebApi.Controllers
                         {
                             queue.CurPosition++;
                         }
-                        queue.Tracks.Insert(0, new DbLink(track));
-                        queue.OriginalTrackOrder.Insert(0, track._id);
+                        queue.Tracks.Insert(frontAt, new DbLink(track));
+                        queue.OriginalTrackOrder.Insert(Math.Min(frontAt, queue.OriginalTrackOrder.Count), track._id);
+                        frontAt++;
                         break;
                     case "random":
                         int randIdx = new Random().Next(0, queue.Tracks.Count());
@@ -823,12 +831,13 @@ namespace MelonWebApi.Controllers
                         queue.OriginalTrackOrder.Insert(randIdx, track._id);
                         break;
                     case "at":
-                        if (queue.CurPosition >= place)
+                        if (queue.CurPosition >= insertAt)
                         {
                             queue.CurPosition++;
                         }
-                        queue.Tracks.Insert(place, new DbLink(track));
-                        queue.OriginalTrackOrder.Insert(place, track._id);
+                        queue.Tracks.Insert(insertAt, new DbLink(track));
+                        queue.OriginalTrackOrder.Insert(Math.Min(insertAt, queue.OriginalTrackOrder.Count), track._id);
+                        insertAt++;
                         break;
                 }
                 queue.TrackCount++;
@@ -1150,24 +1159,28 @@ namespace MelonWebApi.Controllers
             switch (shuffle)
             {
                 case "None":
+                case "none":
                     tracks.Clear();
-                    queue.Tracks.Remove(queue.Tracks[queue.CurPosition]);
+                    var curLink = queue.Tracks[queue.CurPosition];
+                    // Rebuild in original order (each link used once, so duplicates survive), then append anything
+                    // that isn't in the original list; the current track stays current wherever it lands.
+                    var pool = queue.Tracks.ToList();
                     List<DbLink> sTracks = new List<DbLink>();
-                    foreach (var tid in queue.OriginalTrackOrder)
+                    foreach (var tid in queue.OriginalTrackOrder ?? new List<string>())
                     {
-                        var track = (from t in queue.Tracks
-                                     where t._id == tid
-                                     select t).FirstOrDefault();
-
-                        if (track != null)
+                        var idx = pool.FindIndex(t => t._id == tid);
+                        if (idx >= 0)
                         {
-                            sTracks.Add(track);
+                            sTracks.Add(pool[idx]);
+                            pool.RemoveAt(idx);
                         }
                     }
-                    queue.Tracks.Clear();
-                    queue.Tracks.Add(new DbLink(currentTrack));
-                    queue.Tracks.AddRange(sTracks);
+                    sTracks.AddRange(pool);
+                    queue.Tracks = sTracks;
+                    queue.CurPosition = Math.Max(0, sTracks.IndexOf(curLink));
+                    queue.ShuffleMode = "none";
                     QCollection.ReplaceOne(qFilter, queue);
+                    StreamManager.AlertQueueUpdate(queue._id);
                     args.SendEvent("Tracks Reset", 200, Program.mWebApi);
                     return new ObjectResult("Tracks Reset") { StatusCode = 200 };
                 case "TrackRandom":
@@ -1197,6 +1210,7 @@ namespace MelonWebApi.Controllers
             queue.Tracks.Add(new DbLink(currentTrack));
             queue.CurPosition = 0;
             queue.Tracks.AddRange(tracks.Select(x=> new DbLink(x)));
+            queue.ShuffleMode = shuffle;
             QCollection.ReplaceOne(qFilter, queue);
 
             StreamManager.AlertQueueUpdate(queue._id);

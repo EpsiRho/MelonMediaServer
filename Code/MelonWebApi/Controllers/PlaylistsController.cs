@@ -24,7 +24,7 @@ namespace MelonWebApi.Controllers
 
         [Authorize(Roles = "Admin,User")]
         [HttpPost("create")]
-        public ObjectResult CreatePlaylist(string name, string description = "", [FromQuery] List<string> ids = null)
+        public ObjectResult CreatePlaylist(string name, string description = "", [FromQuery] List<string> ids = null, string defaultView = "")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -52,6 +52,7 @@ namespace MelonWebApi.Controllers
             playlist.PublicViewing = false;
             playlist.Description = description;
             playlist.ArtworkPath = "";
+            playlist.DefaultView = new[] { "tracks", "albums", "artists" }.Contains(defaultView) ? defaultView : "tracks";
             playlist.Tracks = new List<DbLink>();
             //var str = queue._id.ToString();
             var pFilter = Builders<Playlist>.Filter.Eq(x=>x._id, playlist._id);
@@ -226,7 +227,7 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin, User")]
         [HttpPost("update")]
         public ObjectResult updatePlaylist(string id, string description = "", string name = "", [FromQuery] List<string> editors = null, [FromQuery] List<string> viewers = null,
-                                           string publicEditing = "", string publicViewing = "")
+                                           string publicEditing = "", string publicViewing = "", string defaultView = "")
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                     .Where(c => c.Type == ClaimTypes.UserData)
@@ -291,6 +292,15 @@ namespace MelonWebApi.Controllers
                 plst.Viewers = viewers;
                 plst.PublicEditing = pubEditing;
                 plst.PublicViewing = pubViewing;
+                if (defaultView != "")
+                {
+                    if (!new[] { "tracks", "albums", "artists" }.Contains(defaultView))
+                    {
+                        args.SendEvent("Invalid Parameters", 400, Program.mWebApi);
+                        return new ObjectResult("Invalid Parameters") { StatusCode = 400 };
+                    }
+                    plst.DefaultView = defaultView;
+                }
 
                 PCollection.ReplaceOne(pFilter, plst);
             }
@@ -301,7 +311,7 @@ namespace MelonWebApi.Controllers
             }
 
             args.SendEvent("Playlist updated", 200, Program.mWebApi);
-            return new ObjectResult("Playlist updated") { StatusCode = 404 };
+            return new ObjectResult("Playlist updated") { StatusCode = 200 };
         }
         [Authorize(Roles = "Admin,User")]
         [HttpPost("move-track")]

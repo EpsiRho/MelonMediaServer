@@ -80,7 +80,7 @@ public sealed partial class MainWindow : WindowEx
             {
                 await foreach (var message in client.SubscribeAsync(lifetime.Token))
                 {
-                    refreshLibrary |= message.Topic is "scan" or "connected" or "settings";
+                    refreshLibrary |= message.Topic is "scan" or "connected" or "settings" or "artwork";
                     refreshUsers |= message.Topic is "users" or "connected";
                     refreshPlugins |= message.Topic is "plugins" or "connected";
                 }
@@ -120,7 +120,7 @@ public sealed partial class MainWindow : WindowEx
                 previous.Scanning != status.Scanning || previousSettings?.RestartRequired != settings.RestartRequired)
                 await Render();
             else if (tab == "Users" && !Setup && !Recovery) await RefreshInvites();
-            else UpdateProgress();
+            else { UpdateProgress(); await UpdateArtworkProgress(); }
         }
         catch (Exception ex) when (!lifetime.IsCancellationRequested)
         {
@@ -150,6 +150,7 @@ public sealed partial class MainWindow : WindowEx
             Sidebar.IsPaneVisible = !Recovery && !Setup;
             Heading.Text = T(Recovery ? "Database recovery" : Setup ? "Set up Melon" : tab);
             progressCard = null;
+            artworkBar = null; artworkText = null;
             if (Recovery) RecoveryPage(page);
             else if (Setup) SetupPage(page);
             else if (tab == "System") await SystemPage(page);

@@ -12,13 +12,16 @@ namespace Melon.LocalClasses
 {
     public static class StreamManager
     {
-        private static List<WSS> Sockets { get; set; }
-        public static void AddSocket(WebSocket socket, string userId)
+        private static List<WSS> Sockets { get; set; } = new List<WSS>();
+        private static readonly object SocketsLock = new object();
+        private static List<WSS> Snapshot() { lock (SocketsLock) { return Sockets.ToList(); } }
+
+        /// <summary>
+        /// Registers a client socket and runs it until it disconnects. The returned task must be awaited by the request
+        /// (ASP.NET closes the socket when the request ends); the socket is always removed from the device list afterwards.
+        /// </summary>
+        public static async Task AddSocket(WebSocket socket, string userId)
         {
-            if(Sockets == null)
-            {
-                Sockets = new List<WSS>();
-            }
             WSS wss = new WSS();
             wss._id = ObjectId.GenerateNewId().ToString();
             wss.Socket = socket;
@@ -26,27 +29,36 @@ namespace Melon.LocalClasses
             wss.UserId = userId;
             wss.IsPublic = false;
             wss.LastPing = DateTime.Now;
-            Sockets.Add(wss);
-            HandleWebSocketAsync(wss);
-            ManageSocket(wss);
+            lock (SocketsLock) { Sockets.Add(wss); }
+            try
+            {
+                await Task.WhenAll(HandleWebSocketAsync(wss), ManageSocket(wss));
+            }
+            finally
+            {
+                RemoveSocket(wss);
+            }
         }
         public static List<string> GetDevices(string userId)
         {
+            // Only live sockets that have named themselves; dead ones are dropped here too in case a close was missed.
             var devices = new List<string>();
-            foreach(var wss in Sockets)
+            foreach(var wss in Snapshot())
             {
+                if (wss.Socket.State != WebSocketState.Open) { RemoveSocket(wss); continue; }
+                if (string.IsNullOrWhiteSpace(wss.DeviceName)) continue;
                 if(wss.UserId == userId || wss.IsPublic == true)
                 {
                     devices.Add(wss.DeviceName);
                 }
             }
-            return devices;
+            return devices.Distinct().ToList();
         }
         public static WSS GetDevice(string name, string userId)
         {
-            foreach(var wss in Sockets)
+            foreach(var wss in Snapshot())
             {
-                if(wss.DeviceName == name)
+                if(wss.DeviceName == name && wss.Socket.State == WebSocketState.Open)
                 {
                     if(userId != wss.UserId && wss.IsPublic == false)
                     {
@@ -60,10 +72,16 @@ namespace Melon.LocalClasses
         }
         public static void RemoveSocket(WSS wss)
         {
+            // Remove first: closing an aborted socket throws, which used to leave dead devices listed forever.
+            lock (SocketsLock) { Sockets.Remove(wss); }
             try
             {
-                wss.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).Wait();
-                Sockets.Remove(wss);
+                wss.SendProgress = false;
+                if (wss.Socket.State == WebSocketState.Open || wss.Socket.State == WebSocketState.CloseReceived)
+                {
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                    wss.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", cts.Token).Wait();
+                }
             }
             catch (Exception)
             {
@@ -75,11 +93,14 @@ namespace Melon.LocalClasses
             while (wss.Socket.State == WebSocketState.Open)
             {
                 string message = await ReceiveAsync(wss.Socket);
+                if (message.Length > 0)
+                {
+                    wss.LastPing = DateTime.Now; // any traffic proves the client is alive
+                }
 
                 if (message.Contains("PONG"))
                 {
                     wss.LastPing = DateTime.Now;
-                    Sockets[Sockets.IndexOf(wss)] = wss;
                 }
                 else if (message.Contains("GET QUEUE"))
                 {
@@ -104,10 +125,16 @@ namespace Melon.LocalClasses
                     {
                         var name = message.Split(":")[1];
 
-                        var devices = (from sock in Sockets
-                                      where sock.DeviceName == name
+                        var devices = (from sock in Snapshot()
+                                      where sock != wss && sock.DeviceName == name
                                       select sock).ToList();
-                        if(devices.Count() != 0)
+                        // The same user reconnecting (restart, crash, network drop) replaces its old entry instead of
+                        // being told the name is taken; another user's live device keeps the name.
+                        foreach (var old in devices.Where(d => d.UserId == wss.UserId || d.Socket.State != WebSocketState.Open))
+                        {
+                            RemoveSocket(old);
+                        }
+                        if(devices.Any(d => d.UserId != wss.UserId && d.Socket.State == WebSocketState.Open))
                         {
                             WriteToSocket(wss.Socket, "Device Name Taken");
                             continue;
@@ -174,11 +201,7 @@ namespace Melon.LocalClasses
         }
         public static void AlertQueueUpdate(string id, string msg = "UPDATE QUEUE", string skipDevice = "")
         {
-            if(Sockets == null)
-            {
-                Sockets = new List<WSS>();
-            }
-            foreach(var wss in Sockets)
+            foreach(var wss in Snapshot())
             {
                 if(wss.CurrentQueue == id && wss.DeviceName != skipDevice)
                 {
@@ -186,27 +209,27 @@ namespace Melon.LocalClasses
                 }
             }
         }
-        public static void ManageSocket(WSS wss) 
+        public static async Task ManageSocket(WSS wss)
         {
-            while (Sockets.Any(x=>x._id == wss._id))
+            while (Snapshot().Any(x=>x._id == wss._id))
             {
                 try
                 {
-                    if (DateTime.Now - wss.LastPing > new TimeSpan(0, 3, 0))
+                    if (wss.Socket.State != WebSocketState.Open || DateTime.Now - wss.LastPing > new TimeSpan(0, 3, 0))
                     {
                         RemoveSocket(wss);
+                        break;
                     }
                     else if (DateTime.Now - wss.LastPing > new TimeSpan(0, 2, 0))
                     {
                         WriteToSocket(wss.Socket, "PING");
                     }
-                    Thread.Sleep(1000);
                 }
                 catch (Exception)
                 {
 
                 }
-                Thread.Sleep(1000);
+                await Task.Delay(2000);
             }
         }
         public static async void WriteToSocket(WebSocket ws, string message)

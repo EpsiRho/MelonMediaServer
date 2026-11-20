@@ -61,8 +61,9 @@ namespace MelonWebApi.Controllers
             {
                 if (!user.PublicStats && !roles.Contains("Admin"))
                 {
-                    args.SendEvent("Invalid Auth", 401, Program.mWebApi);
-                    return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                    // Private profile: only the name, so clients can show who owns a shared playlist/collection.
+                    args.SendEvent("Limited user info sent", 200, Program.mWebApi);
+                    return new ObjectResult(new ResponseUser { _id = user._id, Username = user.Username, Friends = new List<string>() }) { StatusCode = 200 };
                 }
             }
 

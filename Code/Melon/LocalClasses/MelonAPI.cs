@@ -220,7 +220,7 @@ namespace Melon.LocalClasses
 
                     return nTracks;
                 case ShuffleType.ByTrackFavorites:
-                    var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+                    var mongoClient = StateManager.DbClient;
                     var mongoDatabase = mongoClient.GetDatabase("Melon");
                     var TracksCollection = mongoDatabase.GetCollection<Artist>("Tracks");
 
@@ -259,7 +259,7 @@ namespace Melon.LocalClasses
 
                     return finalTracks;
                 case ShuffleType.ByTrackDiscovery:
-                    var mc = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+                    var mc = StateManager.DbClient;
                     var md = mc.GetDatabase("Melon");
                     var TCollection = md.GetCollection<Track>("Tracks");
 
@@ -326,7 +326,7 @@ namespace Melon.LocalClasses
                 return new List<Track>();
             }
 
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoClient = StateManager.DbClient;
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var TracksCollection = mongoDatabase.GetCollection<Track>("Tracks");
             var PlaylistsCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
@@ -387,6 +387,11 @@ namespace Melon.LocalClasses
                         var f = Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, artist => artist._id == value);
                         AndDefs.Add(f);
                     }
+                    else if (type == "Contains")
+                    {
+                        // Name match (e.g. "TrackArtists.Name"), so artist names are searchable like any other text field.
+                        AndDefs.Add(Builders<Track>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
+                    }
                 }
                 else
                 {
@@ -403,7 +408,7 @@ namespace Melon.LocalClasses
                     }
                     if (type == "Contains")
                     {
-                        AndDefs.Add(Builders<Track>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                        AndDefs.Add(Builders<Track>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
                     }
                     else if (type == "Eq")
                     {
@@ -480,6 +485,11 @@ namespace Melon.LocalClasses
                         var f = Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, artist => artist._id == value);
                         OrDefs.Add(f);
                     }
+                    else if (type == "Contains")
+                    {
+                        // Name match (e.g. "TrackArtists.Name"), so artist names are searchable like any other text field.
+                        OrDefs.Add(Builders<Track>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
+                    }
                 }
                 else
                 {
@@ -496,7 +506,7 @@ namespace Melon.LocalClasses
                     }
                     if (type == "Contains")
                     {
-                        OrDefs.Add(Builders<Track>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                        OrDefs.Add(Builders<Track>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
                     }
                     else if (type == "Eq")
                     {
@@ -707,7 +717,7 @@ namespace Melon.LocalClasses
                 return new List<Album>();
             }
 
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoClient = StateManager.DbClient;
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var AlbumsCollection = mongoDatabase.GetCollection<Album>("Albums");
             var PlaylistsCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
@@ -768,6 +778,11 @@ namespace Melon.LocalClasses
                         var f = Builders<Album>.Filter.ElemMatch(x => x.AlbumArtists, artist => artist._id == value);
                         AndDefs.Add(f);
                     }
+                    else if (type == "Contains")
+                    {
+                        // Name match (e.g. "AlbumArtists.Name"), so artist names are searchable like any other text field.
+                        AndDefs.Add(Builders<Album>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
+                    }
                 }
                 else if (property.Contains("ContributingArtists"))
                 {
@@ -775,6 +790,11 @@ namespace Melon.LocalClasses
                     {
                         var f = Builders<Album>.Filter.ElemMatch(x => x.ContributingArtists, artist => artist._id == value);
                         AndDefs.Add(f);
+                    }
+                    else if (type == "Contains")
+                    {
+                        // Name match (e.g. "ContributingArtists.Name"), so artist names are searchable like any other text field.
+                        AndDefs.Add(Builders<Album>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
                     }
                 }
                 else
@@ -792,7 +812,7 @@ namespace Melon.LocalClasses
                     }
                     if (type == "Contains")
                     {
-                        AndDefs.Add(Builders<Album>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                        AndDefs.Add(Builders<Album>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
                     }
                     else if (type == "Eq")
                     {
@@ -869,6 +889,11 @@ namespace Melon.LocalClasses
                         var f = Builders<Album>.Filter.ElemMatch(x => x.AlbumArtists, artist => artist._id == value);
                         OrDefs.Add(f);
                     }
+                    else if (type == "Contains")
+                    {
+                        // Name match (e.g. "AlbumArtists.Name"), so artist names are searchable like any other text field.
+                        OrDefs.Add(Builders<Album>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
+                    }
                 }
                 else if (property.Contains("ContributingArtists"))
                 {
@@ -876,6 +901,11 @@ namespace Melon.LocalClasses
                     {
                         var f = Builders<Album>.Filter.ElemMatch(x => x.ContributingArtists, artist => artist._id == value);
                         OrDefs.Add(f);
+                    }
+                    else if (type == "Contains")
+                    {
+                        // Name match (e.g. "ContributingArtists.Name"), so artist names are searchable like any other text field.
+                        OrDefs.Add(Builders<Album>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
                     }
                 }
                 else
@@ -893,7 +923,7 @@ namespace Melon.LocalClasses
                     }
                     if (type == "Contains")
                     {
-                        OrDefs.Add(Builders<Album>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                        OrDefs.Add(Builders<Album>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
                     }
                     else if (type == "Eq")
                     {
@@ -1083,7 +1113,7 @@ namespace Melon.LocalClasses
                 return new List<Artist>();
             }
 
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
+            var mongoClient = StateManager.DbClient;
             var mongoDatabase = mongoClient.GetDatabase("Melon");
             var ArtistsCollection = mongoDatabase.GetCollection<Artist>("Artists");
             var PlaylistsCollection = mongoDatabase.GetCollection<Playlist>("Playlists");
@@ -1152,7 +1182,7 @@ namespace Melon.LocalClasses
                     }
                     if (type == "Contains")
                     {
-                        AndDefs.Add(Builders<Artist>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                        AndDefs.Add(Builders<Artist>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
                     }
                     else if (type == "Eq")
                     {
@@ -1237,7 +1267,7 @@ namespace Melon.LocalClasses
                     }
                     if (type == "Contains")
                     {
-                        OrDefs.Add(Builders<Artist>.Filter.Regex(property, new BsonRegularExpression(value.ToString(), "i")));
+                        OrDefs.Add(Builders<Artist>.Filter.Regex(property, new BsonRegularExpression(Regex.Escape(value.ToString()), "i")));
                     }
                     else if (type == "Eq")
                     {
