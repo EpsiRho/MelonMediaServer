@@ -84,6 +84,7 @@ public sealed partial class MainWindow
                 ButtonFor("Edit", async () => { if (await EditList(label, values) is string[] indicators) await Command(method, new { indicators }); }))));
 
         if (status.DatabaseConnected) await ArtworkSection(page);
+        await VisualsSection(page);
     }
 
     private async Task Scan(bool skip)

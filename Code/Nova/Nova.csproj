@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Vendored from the Nova library (StarFruit, commit f8c103d). Make changes there first, then copy the sources here.
+       Melon decodes audio with NAudio and passes samples in, so Nova's ffmpeg decoder (Audio/AudioDecoder.cs) is unused. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

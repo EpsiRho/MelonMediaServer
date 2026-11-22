@@ -54,6 +54,8 @@ internal sealed partial class Controller
             page.Items.Add(Setting("Artist artwork", art.Running ? $"{T("Fetching artwork…")} {art.Processed:N0} / {art.Total:N0}"
                 : string.Join(", ", art.Providers.Where(p => p.Enabled).Select(p => p.Name)) is { Length: > 0 } names ? names : T("Off"), ArtworkSettings));
         }
+        var visuals = await Read<VisualsStatus>(nameof(Admin.GetVisuals));
+        page.Items.Add(Setting("Visualizations", visuals.Settings.Enabled ? VisualSummary(visuals.Settings.Defaults) : T("Off"), VisualsSettings));
     }
     private static string Summary(string[] values) => values.Length == 0 ? "—" : string.Join(" ", values.Select(v => v.Trim().Length == 0 ? "·" : v.Trim()));
     private async Task Scan(bool skip)

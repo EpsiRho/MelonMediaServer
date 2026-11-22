@@ -95,7 +95,24 @@ internal static class UiStrings
         ["Artist name"]="Nombre del artista", ["Looking up artwork…"]="Buscando imágenes en línea…", ["Get a free key at"]="Obtén una clave gratuita en",
         ["Enter an API key."]="Introduce una clave de API.", ["Checking the key…"]="Comprobando la clave…", ["Fills in missing artist pictures and banners."]="Completa las fotos y portadas de artistas que faltan.",
         ["API key saved"]="Clave de API guardada", ["No API key needed"]="No necesita clave de API", ["Test"]="Probar",
-        ["Saved. Enter a new key to replace it."]="Guardada. Introduce otra clave para reemplazarla.", ["Get a free API key"]="Obtener una clave de API gratuita", ["Remove the saved key and disable this provider"]="Quitar la clave guardada y desactivar este proveedor"
+        ["Saved. Enter a new key to replace it."]="Guardada. Introduce otra clave para reemplazarla.", ["Get a free API key"]="Obtener una clave de API gratuita", ["Remove the saved key and disable this provider"]="Quitar la clave guardada y desactivar este proveedor",
+
+        // Visualizations
+        ["Visualizations"]="Visualizaciones", ["Cache"]="Caché", ["files"]="archivos", ["Analysing"]="Analizando", ["tracks at once"]="canciones a la vez",
+        ["Clients download pre-computed frequency frames, beat times and moments instead of analysing audio live, which saves battery. Files are made the first time a client asks and kept in the cache."]="Los clientes descargan fotogramas de frecuencia, tiempos de pulso y momentos calculados de antemano en lugar de analizar el audio en directo, lo que ahorra batería. Los archivos se crean la primera vez que un cliente los pide y se guardan en la caché.",
+        ["Default format"]="Formato predeterminado", ["Bands"]="Bandas", ["bands"]="bandas", ["Frame rate"]="Fotogramas por segundo", ["Bit depth"]="Profundidad de bits",
+        ["Fall rate"]="Velocidad de caída", ["0 = off · 1.5–3 looks natural"]="0 = desactivado · 1,5–3 se ve natural", ["Stereo"]="Estéreo", ["No stereo"]="Sin estéreo",
+        ["Frequency mapping"]="Escala de frecuencias", ["Normalized"]="Normalizada", ["Mel"]="Mel", ["Log10"]="Logarítmica",
+        ["FFT size"]="Tamaño de FFT", ["Level range"]="Rango de niveles", ["Floor (dB)"]="Suelo (dB)", ["Range (dB)"]="Rango (dB)",
+        ["Frequency range"]="Rango de frecuencias", ["Lowest frequency (Hz)"]="Frecuencia más baja (Hz)", ["Highest frequency (Hz)"]="Frecuencia más alta (Hz)",
+        ["Smoothing"]="Suavizado", ["Compression"]="Compresión", ["Client limits"]="Límites para clientes",
+        ["Clients may ask for any format in this range, such as fewer bands for a watch or more for a TV."]="Los clientes pueden pedir cualquier formato dentro de este rango, como menos bandas para un reloj o más para un televisor.",
+        ["Fewest bands"]="Mínimo de bandas", ["Most bands"]="Máximo de bandas", ["Lowest frame rate"]="Mínimo de fotogramas por segundo", ["Highest frame rate"]="Máximo de fotogramas por segundo",
+        ["Lowest bit depth"]="Profundidad mínima", ["Highest bit depth"]="Profundidad máxima", ["Smallest FFT size"]="FFT más pequeña", ["Largest FFT size"]="FFT más grande",
+        ["Allow stereo"]="Permitir estéreo", ["Cache size"]="Tamaño de la caché", ["Cache size (MB)"]="Tamaño de la caché (MB)", ["Tracks analysed at once"]="Canciones analizadas a la vez",
+        ["Each track being analysed uses several CPU cores for a second or two. Lower this on small servers."]="Cada canción en análisis usa varios núcleos durante uno o dos segundos. Redúcelo en servidores pequeños.",
+        ["Clear cache"]="Vaciar caché", ["Visualizations are made again the next time clients ask for them."]="Las visualizaciones se vuelven a crear la próxima vez que los clientes las pidan.",
+        ["Cache cleared."]="Caché vaciada.", ["Enter a number from"]="Introduce un número de", ["to"]="a", ["minimum"]="mínimo", ["maximum"]="máximo"
     };
     internal static string Get(string language, string key) =>
         language.Split('-')[0].Equals("ES", StringComparison.OrdinalIgnoreCase) && Spanish.TryGetValue(key, out var text) ? text : key;

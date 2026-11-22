@@ -33,6 +33,35 @@ public record ArtworkProviderInfo(string Id, string Name, string Description, st
 public record ArtworkStatus(bool FetchAfterScan, bool Running, int Processed, int Total, int Updated, string? LastResult,
     ArtworkProviderInfo[] Providers);
 
+/// <summary>
+/// How FFTVIS (.fvz) frames are generated and stored. Clients may request any format within <see cref="VisualLimits"/>.
+/// </summary>
+/// <param name="Bands">Bars per frame.</param>
+/// <param name="Fps">Frames per second stored; clients interpolate between frames.</param>
+/// <param name="FftResolution">FFT window in samples, a power of two.</param>
+/// <param name="Mapping">Normalized, Mel or Log10.</param>
+/// <param name="DbFloor">Sound below this level (dB, negative) shows as 0.</param>
+/// <param name="DbRange">dB above the floor that map onto 0–1.</param>
+/// <param name="Smoothness">Average each bar with this many neighbours on each side.</param>
+/// <param name="Stereo">Store left and right instead of a mono mix.</param>
+/// <param name="QuantizeBits">Bits per stored value, 4–16.</param>
+/// <param name="DecayPerSecond">Peak-meter fall applied when encoding, full-scale units per second (0 = off).</param>
+/// <param name="Codec">Brotli, Zstd or None.</param>
+public record VisualFormat(int Bands = 64, int Fps = 60, int FftResolution = 4096, string Mapping = "Normalized",
+    double DbFloor = -80, double DbRange = 90, double FrequencyMin = 20, double FrequencyMax = 20000, int Smoothness = 0,
+    bool Stereo = false, int QuantizeBits = 8, double DecayPerSecond = 0, string Codec = "Brotli");
+
+/// <summary>The range of <see cref="VisualFormat"/> values clients may request. Requests outside it are clamped.</summary>
+public record VisualLimits(int MinBands = 4, int MaxBands = 256, int MinFps = 10, int MaxFps = 240,
+    int MinFftResolution = 1024, int MaxFftResolution = 16384, int MinQuantizeBits = 4, int MaxQuantizeBits = 16,
+    bool AllowStereo = true);
+
+public record VisualsSettings(bool Enabled, VisualFormat Defaults, VisualLimits Limits, int CacheMegabytes, int MaxConcurrentJobs);
+
+/// <param name="CacheBytes">Disk used by cached visualization files.</param>
+/// <param name="Running">Tracks being analysed right now.</param>
+public record VisualsStatus(VisualsSettings Settings, long CacheBytes, int CacheFiles, int Running);
+
 /// <summary>Optional controller-neutral settings and actions, executed in the server process.</summary>
 public interface IControllerPlugin
 {
@@ -98,6 +127,18 @@ public interface IMelonAdministration
     bool FetchArtistArtwork(bool force = false);
     /// <summary>Looks up one artist with one provider without saving anything, to check its setup.</summary>
     Task<string> TestArtworkProvider(string id, string artistName);
+    /// <summary>Visualization settings, client limits and cache usage.</summary>
+    VisualsStatus GetVisuals();
+    /// <summary>Turns visualization data (FFTVIS frames, beat times, moments) on or off for clients.</summary>
+    void SetVisualsEnabled(bool enabled);
+    /// <summary>The format generated when a client doesn't ask for one. Must lie within the limits.</summary>
+    void SetVisualDefaults(VisualFormat format);
+    /// <summary>The range of formats clients may request. Defaults outside the new limits are pulled inside them.</summary>
+    void SetVisualLimits(VisualLimits limits);
+    /// <summary>Disk cache size (64–102,400 MB) and how many tracks may be analysed at once (1–16).</summary>
+    void SetVisualsCache(int megabytes, int maxConcurrentJobs);
+    /// <summary>Deletes every cached visualization file. Returns the bytes freed.</summary>
+    long ClearVisualsCache();
     Task<ReleaseInfo> CheckForUpdates();
     Task<bool> ApplyUpdate();
     void PublishMessage(string topic, string message);

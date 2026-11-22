@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Visuals API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="visualscontroller-documentation">VisualsController Documentation</h1>
+        <p>The <code>VisualsController</code> gives clients pre-computed data for driving visualizations, so they don't
+            have to analyse audio live. That saves a lot of battery on phones and watches. It serves:</p>
+        <ul>
+            <li><strong>Waveforms</strong>: amplitude points for seek bars.</li>
+            <li><strong>FFTVIS frames</strong> (<code>.fvz</code>): per-frame frequency band levels for bar
+                visualizers, mesh shaders and similar effects. See <a href="https://github.com/EpsiRho/FFTVIS">FFTVIS</a>
+                for the format and decoders (C#, JavaScript).</li>
+            <li><strong>Beat times</strong>: the beat grid, downbeats and per-beat band energy, plus individual
+                kick/snare/hat hits. Good for album-art pulses and haptics.</li>
+            <li><strong>Moments</strong>: stretches to react to, such as soft passages, energetic sections, builds and
+                drops.</li>
+        </ul>
+        <p>Nothing is generated during scans. Files are made the first time a client asks for them, then kept in an LRU
+            cache (<code>{data}/Cache/Visuals</code>) whose size admins set. Generation takes about 0.3–2 seconds for
+            frames and 2–4 seconds for beat/moment analysis per track. Clients should <a href="#prefetch">prefetch</a> the
+            next few tracks in their queue so data is ready before playback starts.</p>
+        <p>The server admin can turn visualizations off entirely. When they are off, the data endpoints return
+            <code>403</code>.</p>
+        <h2 id="controller-route-api-visuals-">Controller Route: <code>/api/visuals</code></h2>
+        <p>All routes within the <code>VisualsController</code> are prefixed by <code>/api/visuals/</code>. Data routes
+            accept media tokens in the same way as <code>/api/download</code> and <code>/api/stream</code>.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/visuals/settings</code></td>
+                    <td>GET</td>
+                    <td>Whether visuals are on, the default format and the client limits.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/visuals/settings</code></td>
+                    <td>POST</td>
+                    <td>Change visual settings.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/visuals/status</code></td>
+                    <td>GET</td>
+                    <td>Settings plus cache usage and running jobs.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/visuals/cache</code></td>
+                    <td>DELETE</td>
+                    <td>Clear the visuals cache.</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td><code>/api/visuals/waveform</code></td>
+                    <td>GET</td>
+                    <td>A track's waveform at a given width.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/visuals/fvz</code></td>
+                    <td>GET</td>
+                    <td>A track's FFTVIS frequency frames, in the server default or a requested format.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/visuals/beat-times</code></td>
+                    <td>GET</td>
+                    <td>A track's beats, downbeats and drum hits.</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/visuals/moments</code></td>
+                    <td>GET</td>
+                    <td>A track's energy curve and moments (soft, energetic, peak, build, drop, beatless, silence).</td>
+                    <td>Admin, User</td>
+                </tr>
+                <tr>
+                    <td><code>/api/visuals/prefetch</code></td>
+                    <td>POST</td>
+                    <td>Ask the server to prepare data for upcoming tracks.</td>
+                    <td>Admin, User</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="visual-format">Visual Format</h3>
+        <p>An <code>.fvz</code> file's format is described by these fields. The server has a default for each. A client
+            can override any of them per request, for example 16 bands at 30 fps for a watch, or 256 bands at 120 fps for
+            a TV. Requested values are clamped to the admin's limits.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Default</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><code>bands</code></td><td>64</td><td>Number of frequency bands (bars).</td></tr>
+                <tr><td><code>fps</code></td><td>60</td><td>Frames per second. Lower rates with client-side interpolation
+                        make much smaller files.</td></tr>
+                <tr><td><code>fftResolution</code></td><td>4096</td><td>FFT window size, rounded to a power of two.
+                        Larger sizes resolve bass better but smear fast changes.</td></tr>
+                <tr><td><code>mapping</code></td><td>Normalized</td><td>How FFT bins map to bands: <code>Normalized</code>,
+                        <code>Mel</code> or <code>Log10</code>.</td></tr>
+                <tr><td><code>dbFloor</code></td><td>-80</td><td>Level (dB) shown as zero.</td></tr>
+                <tr><td><code>dbRange</code></td><td>90</td><td>dB range from the floor up to full scale.</td></tr>
+                <tr><td><code>frequencyMin</code></td><td>20</td><td>Lowest frequency (Hz).</td></tr>
+                <tr><td><code>frequencyMax</code></td><td>20000</td><td>Highest frequency (Hz).</td></tr>
+                <tr><td><code>smoothness</code></td><td>0</td><td>Smoothing across neighbouring bands.</td></tr>
+                <tr><td><code>stereo</code></td><td>false</td><td>Store left and right channels separately.</td></tr>
+                <tr><td><code>quantizeBits</code></td><td>8</td><td>Bits per value (4–16). 8 is plenty for display.
+                        Fewer bits make smaller files.</td></tr>
+                <tr><td><code>decayPerSecond</code></td><td>0</td><td>Bar fall rate baked in at encode time. 0 = off.
+                        1.5–3 looks natural and compresses better.</td></tr>
+                <tr><td><code>codec</code></td><td>Brotli</td><td><code>Brotli</code>, <code>Zstd</code> or
+                        <code>None</code>.</td></tr>
+            </tbody>
+        </table>
+        <p>Limits (admin-set) bound <code>bands</code>, <code>fps</code>, <code>fftResolution</code> and
+            <code>quantizeBits</code>, and can disallow <code>stereo</code>. Out-of-range values are clamped rather than
+            rejected. The decoded file's header always reports the format that was actually produced.</p>
+        <hr>
+        <h3 id="get-settings">Get Settings</h3>
+        <p>Returns what a client needs in order to choose a format.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/visuals/settings</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Example Response</strong>:</p>
+        <pre><code class="lang-json">{
+  "enabled": true,
+  "defaults": { "bands": 64, "fps": 60, "fftResolution": 4096, "mapping": "Normalized", "dbFloor": -80, "dbRange": 90,
+                "frequencyMin": 20, "frequencyMax": 20000, "smoothness": 0, "stereo": false, "quantizeBits": 8,
+                "decayPerSecond": 0, "codec": "Brotli" },
+  "limits": { "minBands": 4, "maxBands": 256, "minFps": 10, "maxFps": 240, "minFftResolution": 1024,
+              "maxFftResolution": 16384, "minQuantizeBits": 4, "maxQuantizeBits": 16, "allowStereo": true }
+}</code></pre>
+        <hr>
+        <h3 id="set-settings">Set Settings</h3>
+        <p>Replaces the visual settings. Limits are applied first, then the default format, which must sit within those
+            limits.</p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/visuals/settings</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <p><strong>Body</strong> (JSON):</p>
+        <ul>
+            <li><strong>enabled</strong> (bool)</li>
+            <li><strong>defaults</strong> (Visual Format)</li>
+            <li><strong>limits</strong> (Limits)</li>
+            <li><strong>cacheMegabytes</strong> (int, 64–102400): Cache size. The oldest-used files are removed when
+                the cache is full.</li>
+            <li><strong>maxConcurrentJobs</strong> (int, 1–16): How many tracks are analysed at once.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Returns the saved settings.</li>
+            <li><strong>400 Bad Request</strong>: A value is invalid or the defaults fall outside the limits.</li>
+        </ul>
+        <hr>
+        <h3 id="get-status">Get Status</h3>
+        <p>Returns the full settings plus <code>cacheBytes</code>, <code>cacheFiles</code> and <code>running</code>
+            (jobs in progress).</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/visuals/status</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <hr>
+        <h3 id="clear-cache">Clear Cache</h3>
+        <p>Deletes every cached visual file. Returns <code>{ "freedBytes": 123456 }</code>.</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/visuals/cache</code></li>
+            <li><strong>Method</strong>: <code>DELETE</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin role</li>
+        </ul>
+        <hr>
+        <h3 id="waveform">Waveform</h3>
+        <p>Returns a float array of amplitude points, one per pixel of the requested width. This replaces
+            <code>/api/download/track-wave</code>, which still works but is deprecated. The waveform endpoint works even
+            when visualizations are turned off.</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/visuals/waveform</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The track ID.</li>
+            <li><strong>width</strong> (float, required, 1–100000): Number of points.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Float array.</li>
+            <li><strong>400 Bad Request</strong>: Width missing or out of range.</li>
+            <li><strong>404 Not Found</strong>: Track not found.</li>
+        </ul>
+        <pre><code class="lang-bash">curl "https://your-melon-server.com/api/visuals/waveform?id=66bc9aadab7ba419497e6a97&amp;width=500" \
+     -H "Authorization: Bearer &lt;User-JWT&gt;"</code></pre>
+        <hr>
+        <h3 id="fvz">FFTVIS Frames</h3>
+        <p>Returns the track's <code>.fvz</code> file (<code>application/x-fvz</code>, FFTVIS v3). If the file isn't
+            cached in this format yet, it's generated before responding. Responses carry an <code>ETag</code> and are
+            cacheable by the client for a day.</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/visuals/fvz</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>:</p>
+        <ul>
+            <li><strong>id</strong> (string, required): The track ID.</li>
+            <li>Any <a href="#visual-format">Visual Format</a> field (optional): Overrides the server default.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>200 OK</strong>: The <code>.fvz</code> bytes.</li>
+            <li><strong>400 Bad Request</strong>: An unknown <code>mapping</code> or <code>codec</code>.</li>
+            <li><strong>403 Forbidden</strong>: Visualizations are turned off.</li>
+            <li><strong>404 Not Found</strong>: Track not found.</li>
+            <li><strong>500</strong>: The track couldn't be decoded.</li>
+        </ul>
+        <pre><code class="lang-bash"># A watch-friendly file: 16 bands, 30 fps, 6-bit, with bar fall-off baked in
+curl "https://your-melon-server.com/api/visuals/fvz?id=66bc9aadab7ba419497e6a97&amp;bands=16&amp;fps=30&amp;quantizeBits=6&amp;decayPerSecond=2" \
+     -H "Authorization: Bearer &lt;User-JWT&gt;" -o track.fvz</code></pre>
+        <p>Decode with <code>FFTVIS.AudioDecoder.Decode(stream)</code> in C#, or <code>fvzDecoder.js</code> in
+            JavaScript. Then call <code>GetFrameFromTime(positionMs)</code> (or <code>frameAt</code> in JS), which
+            interpolates between frames, so low frame rates still animate smoothly.</p>
+        <hr>
+        <h3 id="beat-times">Beat Times</h3>
+        <p>Returns the beat grid and drum hits for a track. Arrays are parallel ("struct of arrays") to keep the JSON
+            small: <code>beats.time[i]</code>, <code>beats.downbeat[i]</code>, <code>beats.strength[i]</code> and so on
+            all describe beat <code>i</code>.</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/visuals/beat-times</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>: <strong>id</strong> (string, required).</p>
+        <p><strong>Fields</strong>:</p>
+        <ul>
+            <li><strong>bpm</strong>: Tempo.</li>
+            <li><strong>rhythm</strong>: How confident the tempo is.
+                <ul>
+                    <li><code>pulse</code>: A clear beat.</li>
+                    <li><code>uncertain</code>: Use the beats lightly.</li>
+                    <li><code>noPulse</code>: The beats aren't meaningful. Fall back to <code>hits</code> or the
+                        energy curve.</li>
+                </ul>
+            </li>
+            <li><strong>downbeatConfidence</strong>, <strong>beatsPerBar</strong></li>
+            <li><strong>beats</strong>: Per-beat data.
+                <ul>
+                    <li><code>time</code> (seconds), <code>downbeat</code></li>
+                    <li><code>strength</code> (0–1)</li>
+                    <li><code>sharpness</code> (0–1): How much of the beat is in the high bands. Low means a soft
+                        thump, high means a crisp click. Useful for choosing haptic styles.</li>
+                    <li><code>low</code>, <code>lowMid</code>, <code>highMid</code>, <code>high</code>: Band energy at
+                        the beat (0–1, normalized per track).</li>
+                </ul>
+            </li>
+            <li><strong>hits</strong>: Individual drum onsets: <code>time</code>, <code>kind</code>
+                (<code>kick</code>, <code>snare</code> or <code>hat</code>) and <code>strength</code>.</li>
+        </ul>
+        <pre><code class="lang-json">{
+  "version": 1, "trackId": "66bc9aadab7ba419497e6a97", "duration": 243.1,
+  "bpm": 124.0, "rhythm": "pulse", "downbeatConfidence": 0.82, "beatsPerBar": 4,
+  "beats": { "time": [0.48, 0.97, 1.45], "downbeat": [true, false, false], "strength": [0.9, 0.6, 0.7],
+             "sharpness": [0.2, 0.5, 0.3], "low": [1.0, 0.4, 0.8], "lowMid": [0.5, 0.3, 0.4],
+             "highMid": [0.3, 0.6, 0.3], "high": [0.2, 0.5, 0.2] },
+  "hits": { "time": [0.48, 0.97], "kind": ["kick", "snare"], "strength": [0.95, 0.7] }
+}</code></pre>
+        <hr>
+        <h3 id="moments">Moments</h3>
+        <p>Returns a smoothed energy curve and a list of moments to react to, such as dimming the visuals in a piano
+            interlude or bursting on a drop.</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/visuals/moments</code></li>
+            <li><strong>Method</strong>: <code>GET</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Parameters</strong>: <strong>id</strong> (string, required).</p>
+        <p><strong>Fields</strong>:</p>
+        <ul>
+            <li><strong>hop</strong>: Seconds between curve samples (1.0).</li>
+            <li><strong>energy</strong>: Per-sample energy (0–1), relative to the track's own loud parts.</li>
+            <li><strong>pulse</strong>: Per-sample beat clarity (0–1).</li>
+            <li><strong>items</strong>: Moments, each with <code>kind</code>, <code>start</code>, <code>end</code>
+                (seconds) and <code>intensity</code> (0–1). Moments can overlap. For example, a <code>peak</code> sits
+                inside an <code>energetic</code> stretch, and a <code>build</code> ends where a <code>drop</code> starts.
+                <table>
+                    <thead>
+                        <tr><th>Kind</th><th>Meaning</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>soft</code></td><td>Quiet, sparse passage (≥ 6 s): piano, vocal solo, ambient
+                                pad.</td></tr>
+                        <tr><td><code>energetic</code></td><td>Loud, busy section (≥ 6 s).</td></tr>
+                        <tr><td><code>peak</code></td><td>The most intense energetic section of the track.</td></tr>
+                        <tr><td><code>build</code></td><td>Energy rising steadily over 4–20 s.</td></tr>
+                        <tr><td><code>drop</code></td><td>A sudden jump in energy and bass, snapped to a beat.
+                                <code>start</code> is the hit.</td></tr>
+                        <tr><td><code>beatless</code></td><td>No clear pulse (≥ 8 s).</td></tr>
+                        <tr><td><code>silence</code></td><td>Near-silent (≥ 2 s), such as gaps and hidden-track
+                                pauses.</td></tr>
+                    </tbody>
+                </table>
+            </li>
+            <li><strong>sections</strong>: Structural boundaries (<code>start</code>, <code>end</code>), such as verse
+                and chorus changes.</li>
+        </ul>
+        <pre><code class="lang-json">{
+  "version": 1, "trackId": "66bc9aadab7ba419497e6a97", "duration": 243.1, "hop": 1.0,
+  "energy": [0.12, 0.15, 0.2], "pulse": [0.1, 0.1, 0.3],
+  "items": [
+    { "kind": "soft", "start": 0.0, "end": 31.0, "intensity": 0.8 },
+    { "kind": "build", "start": 31.0, "end": 46.4, "intensity": 0.6 },
+    { "kind": "drop", "start": 46.4, "end": 47.4, "intensity": 0.9 },
+    { "kind": "energetic", "start": 47.0, "end": 110.0, "intensity": 0.85 }
+  ],
+  "sections": [ { "start": 0.0, "end": 31.0 }, { "start": 31.0, "end": 78.5 } ]
+}</code></pre>
+        <hr>
+        <h3 id="prefetch">Prefetch</h3>
+        <p>Queues generation for upcoming tracks in the background and returns immediately. Send the next few tracks
+            in the play queue, with the same format you'll request later, so the files are already cached by the time
+            each track starts.</p>
+        <ul>
+            <li><strong>Endpoint</strong>: <code>/api/visuals/prefetch</code></li>
+            <li><strong>Method</strong>: <code>POST</code></li>
+            <li><strong>Authorization</strong>: JWT with Admin or User role</li>
+        </ul>
+        <p><strong>Body</strong> (JSON):</p>
+        <ul>
+            <li><strong>ids</strong> (string[], required, at most 8): Track IDs.</li>
+            <li><strong>include</strong> (string[], optional): Any of <code>fvz</code>, <code>beat-times</code> and
+                <code>moments</code>. All three by default.</li>
+            <li><strong>format</strong> (Visual Format, optional): Fields to override for the <code>.fvz</code>
+                files.</li>
+        </ul>
+        <p><strong>Responses</strong>:</p>
+        <ul>
+            <li><strong>202 Accepted</strong>: <code>{ "queued": 3, "notFound": [] }</code></li>
+            <li><strong>400 Bad Request</strong>: Missing IDs, too many IDs, an unknown <code>include</code>, or a bad
+                format.</li>
+            <li><strong>403 Forbidden</strong>: Visualizations are turned off.</li>
+        </ul>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/visuals/prefetch" \
+     -H "Authorization: Bearer &lt;User-JWT&gt;" -H "Content-Type: application/json" \
+     -d '{ "ids": ["66bc9aadab7ba419497e6a98", "66bc9aadab7ba419497e6a99"], "format": { "bands": 32, "fps": 30 } }'</code></pre>
+    </div>
+    <script src="/sidebar.js"></script>
+</body>
+
+</html>

@@ -56,6 +56,7 @@ namespace Melon.LocalClasses
             Security.SetSSLConfig(Storage.LoadConfigFile<SSLConfig>("SSLConfig", new[] { "Password" }, out _) ?? new SSLConfig());
             DisabledPlugins = Storage.LoadConfigFile<List<string>>("DisabledPlugins", null, out _) ?? [];
             ArtworkService.Instance.LoadConfig();
+            VisualsService.Instance.LoadConfig();
             Plugins = [];
             PluginsContexts = [];
 

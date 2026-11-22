@@ -7,6 +7,7 @@ public sealed partial class ServerAdministration
     private ServerAdministration()
     {
         ArtworkService.Instance.Changed += message => Messages.Publish("artwork", message);
+        VisualsService.Instance.Changed += message => Messages.Publish("visuals", message);
     }
 
     public ArtworkStatus GetArtwork() => ArtworkService.Instance.GetStatus();

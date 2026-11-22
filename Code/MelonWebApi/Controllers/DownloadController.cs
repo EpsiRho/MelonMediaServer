@@ -153,6 +153,7 @@ namespace MelonWebApi.Controllers
                 FileDownloadName = filename
             };
         }
+        /// <summary>Deprecated: use api/visuals/waveform. Kept so existing clients keep working.</summary>
         [Authorize(Roles = "Admin,User")]
         [HttpGet("track-wave")]
         public ObjectResult DownloadTrackWaveform(string id, float width)
@@ -185,34 +186,9 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Track not found") { StatusCode = 404 };
             }
 
-            using (var reader = new AudioFileReader(track.Path))
-            {
-                // AudioFileReader yields interleaved 32-bit float samples.
-                var sampleCount = reader.Length / sizeof(float);
-                var samplesPerPixel = (int)Math.Max(reader.WaveFormat.Channels, sampleCount / w);
-                samplesPerPixel -= samplesPerPixel % reader.WaveFormat.Channels; // keep channel frames together
-                var waveform = new float[w];
-                var buffer = new float[samplesPerPixel];
-
-                // RMS per bucket instead of peak: mastered music hits ~0 dBFS peaks almost everywhere, which made
-                // the peak waveform flat. RMS tracks perceived loudness, then normalize to the loudest bucket.
-                int i = 0;
-                while (i < w)
-                {
-                    int read = 0, n;
-                    while (read < buffer.Length && (n = reader.Read(buffer, read, buffer.Length - read)) > 0) read += n;
-                    if (read == 0) break;
-                    double sum = 0;
-                    for (int k = 0; k < read; k++) sum += buffer[k] * buffer[k];
-                    waveform[i++] = (float)Math.Sqrt(sum / read);
-                }
-                float loudest = waveform.Max();
-                if (loudest > 0)
-                    for (int k = 0; k < w; k++) waveform[k] = (float)Math.Round(waveform[k] / loudest, 4);
-
-                args.SendEvent("Track waveform sent", 200, Program.mWebApi);
-                return new ObjectResult(waveform) { StatusCode = 200 };
-            }
+            var waveform = VisualsController.ComputeWaveform(track.Path, w);
+            args.SendEvent("Track waveform sent", 200, Program.mWebApi);
+            return new ObjectResult(waveform) { StatusCode = 200 };
         }
         [HttpGet("track-art")]
         public async Task<IActionResult> DownloadTrackArt(string id, int index = -1)
