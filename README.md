@@ -21,21 +21,24 @@ See the [Melon Docs](https://melon.docs.epsirho.com) for more info.
 	- Melon has in-depth plugin interfaces for easy access to making powerful plugins.
 
 ## Get Started Using Melon
-In the Windows x64 release, open `Controller\MelonGUI.exe`. It starts Melon, walks through setup, and manages the local library, database, networking, plugins, and updates. The GUI follows the server language and saves its theme locally.
+**[Download Melon](https://melon.docs.epsirho.com/Download.html)**: run MelonInstaller and it installs the latest release, then opens MelonGUI (or MelonCLI, when run from a terminal). See the [Installation Guide](https://melon.docs.epsirho.com/Guides/Installation.html).
 
-For the terminal controller, open `CLI\MelonCLI.exe` in the Windows bundle or run `dotnet run --project Code/MelonCLI` from a checkout with a built MelonWebApi. Use Tab to switch between sections and actions, the arrow keys to move, Enter to select, and Esc to go back. The CLI supports first-time setup, recovery, and the same seven sections as the GUI. Use `--status` to print JSON for a running server or `--dataPath DIRECTORY` to select another Melon profile. Managed MongoDB installation and bundled updates are available on Windows.
+Releases are tagged by branch and version, like `Beta-0.9.0.0`. There is a Beta branch today. A Stable branch follows once a Beta build is promoted.
 
-Run `MelonWebApi` to host the backend and WebUI. Local controllers and server plugins can manage the running server through the [administration interface](docs/Architecture/LocalControllers.md).
+| Folder | What it is |
+|---|---|
+| `Server` | MelonWebApi, the server |
+| `Controller` | MelonGUI, the Windows app for setup and administration |
+| `CLI` | MelonCLI, the terminal app for Windows, Linux and macOS |
+| `Installer` | MelonInstaller, for updates and switching branches |
 
-See the [Installation Guide](https://melon.docs.epsirho.com/Guides/Installation.html)!
+In MelonCLI, use Tab to switch between sections and actions, the arrow keys to move, Enter to select, and Esc to go back. Use `--status` to print JSON for a running server or `--dataPath DIRECTORY` to select another Melon profile. Local controllers and server plugins manage the running server through the [administration interface](docs/Architecture/LocalControllers.md).
 
 ### Clients
-There are currently no clients for Melon, but two are planned. 
-- Galia, the Windows application written with the WASDK.
-	- Galia's code is currently closed during early dev, but will be up on GitHub soon.
-- Watermelon, the iOS application written with Swift.
+- [Galia](https://github.com/EpsiRho/Galia), the Windows application written with the WASDK.
+- Watermelon, the iOS application written with Swift. It will arrive through TestFlight.
 
-Work has already begun on the windows application. When I have completed the Galia and Watermelon apps, I will work on more first-party apps as I can, hoping to get apps on MacOS, AppleTV, and Android. I personally do not want to work on a Web App, I just dislike working in JS, so there will likely not be one first-party.
+When I have completed the Galia and Watermelon apps, I will work on more first-party apps as I can, hoping to get apps on MacOS, AppleTV, and Android. I personally do not want to work on a Web App, I just dislike working in JS, so there will likely not be one first-party.
 
 ### Where to start building apps
 All endpoints require authentication except for logging in, so [auth](https://melon.docs.epsirho.com/api/Authorization.html) is a good place to start. 
@@ -84,3 +87,6 @@ There are a couple docs about how melon handles certain things behind the scenes
 - CaydoFox - 3D Melon Icon
 - Hypervis0r - Help with authentication
 - KindaConfusion - Testing, Bug fixes, Various Code Contributions
+
+## License
+Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
