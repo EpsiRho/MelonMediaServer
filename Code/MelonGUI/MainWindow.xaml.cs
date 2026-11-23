@@ -104,7 +104,7 @@ public sealed partial class MainWindow : WindowEx
             try { status = await Read<ServerStatus>(nameof(IMelonAdministration.GetStatus)); }
             catch (TimeoutException) when (startIfStopped && !stopRequested)
             {
-                await DesktopHost.StartAsync(dataPath, lifetime.Token);
+                await StartServer();
                 status = await Read<ServerStatus>(nameof(IMelonAdministration.GetStatus));
             }
             settings = await Read<ControllerSettings>(nameof(IMelonAdministration.GetSettings));
@@ -215,8 +215,24 @@ public sealed partial class MainWindow : WindowEx
     private async Task StartHost()
     {
         stopRequested = false;
-        await DesktopHost.StartAsync(dataPath, lifetime.Token);
+        await StartServer();
         await WaitForHost(null);
+    }
+
+    /// <summary>Starts Melon. If its server isn't next to MelonGUI or in the default folder, asks where Melon is installed.</summary>
+    private async Task StartServer()
+    {
+        try { await DesktopHost.StartAsync(dataPath, lifetime.Token); }
+        catch (Melon.Controllers.ServerNotFoundException)
+        {
+            var message = new TextBlock { TextWrapping = TextWrapping.Wrap,
+                Text = T("Melon's server wasn't found next to MelonGUI. Choose the folder Melon is installed in, the one with the Server folder inside it. You only need to do this once.") };
+            if (!await Dialog("Where is Melon installed?", message, "Choose folder")) throw;
+            var exe = Melon.Controllers.ServerLocator.Resolve(await PickFolder());
+            if (exe == null) throw new IOException(T("Melon's server wasn't found in that folder."));
+            Melon.Controllers.ServerLocator.Save(exe);
+            await DesktopHost.StartAsync(dataPath, lifetime.Token);
+        }
     }
 
     private async Task RestartHost()

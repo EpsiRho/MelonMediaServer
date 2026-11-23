@@ -44,16 +44,7 @@ internal static class Platform
                 throw new IOException("Could not start com.melon.server.");
             return;
         }
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        var candidates = new List<string> { Path.Combine(dir.FullName, "MelonWebApi"), Path.Combine(dir.Parent!.FullName, "Server", "MelonWebApi") };
-        for (var parent = dir; parent != null; parent = parent.Parent)
-        {
-            if (!File.Exists(Path.Combine(parent.FullName, "MelonCLI.csproj"))) continue;
-            foreach (var config in new[] { dir.FullName.Contains("/Debug/") ? "Debug" : "Release", "Debug", "Release" })
-                candidates.Add(Path.Combine(parent.Parent!.FullName, "MelonWebApi", "bin", config, "net10.0", "MelonWebApi"));
-            break;
-        }
-        var exe = candidates.FirstOrDefault(File.Exists) ?? Find("MelonWebApi") ?? throw new FileNotFoundException("MelonWebApi was not found.");
+        var exe = ServerLocator.Find("MelonCLI") ?? Find("MelonWebApi") ?? throw new ServerNotFoundException();
         // Detach the host from the terminal. Paths are positional arguments, never shell source.
         var start = Command("/bin/sh", "-c", "nohup \"$@\" </dev/null >/dev/null 2>&1 &", "melon", exe);
         start.WorkingDirectory = Path.GetDirectoryName(exe)!;

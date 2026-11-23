@@ -186,7 +186,20 @@ internal sealed partial class Controller
     }
 
     private void ToDatabase() { deferSetup = true; runSetup = false; section = "Database"; }
-    private async Task Start() { await Platform.Start(dataPath, token); await WaitForHost(null); }
+    private async Task Start()
+    {
+        try { await Platform.Start(dataPath, token); }
+        catch (ServerNotFoundException)
+        {
+            // The server isn't next to MelonCLI or in the default folder, so ask where Melon is installed.
+            var exe = ServerLocator.Resolve(await Ask("Where is Melon installed?",
+                help: T("The folder with the Server folder inside it. You only need to do this once.")));
+            if (exe == null) throw new IOException(T("Melon's server wasn't found in that folder."));
+            ServerLocator.Save(exe);
+            await Platform.Start(dataPath, token);
+        }
+        await WaitForHost(null);
+    }
     private async Task Restart()
     {
         var before = status?.RunId; await Write(nameof(Admin.Restart)); await WaitForHost(before);

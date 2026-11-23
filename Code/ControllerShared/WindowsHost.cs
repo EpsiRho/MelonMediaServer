@@ -37,21 +37,7 @@ internal static class WindowsHost
             }
             if (query != 1060) throw new InvalidOperationException($"Windows service error {query}.");
         }
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        var candidates = new List<string> { Path.Combine(directory.FullName, "MelonWebApi.exe"),
-            Path.Combine(directory.Parent?.FullName ?? directory.FullName, "Server", "MelonWebApi.exe"),
-            Path.Combine(directory.Parent?.FullName ?? directory.FullName, "MelonWebApi.exe") };
-        for (var cursor = directory; cursor != null; cursor = cursor.Parent)
-        {
-            if (cursor.Name != project || !File.Exists(Path.Combine(cursor.FullName, project + ".csproj"))) continue;
-            var bin = Path.Combine(cursor.Parent!.FullName, "MelonWebApi", "bin");
-            foreach (var config in new[] { directory.FullName.Contains("Debug", StringComparison.OrdinalIgnoreCase) ? "Debug" : "Release", "Debug", "Release" })
-                candidates.Add(Path.Combine(bin, config, "net10.0", "MelonWebApi.exe"));
-            break;
-        }
-        if (dataPath == null)
-            candidates.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MelonInstall", "MelonWebApi.exe"));
-        var exe = (project == "MelonCLI" ? candidates.FirstOrDefault(File.Exists) : candidates.LastOrDefault(File.Exists)) ?? throw new FileNotFoundException("MelonWebApi.exe was not found.");
+        var exe = ServerLocator.Find(project) ?? throw new ServerNotFoundException();
         var start = new ProcessStartInfo(exe) { WorkingDirectory = Path.GetDirectoryName(exe)!, UseShellExecute = false, CreateNoWindow = true };
         if (dataPath != null) { start.ArgumentList.Add("--dataPath"); start.ArgumentList.Add(dataPath); }
         using var process = Process.Start(start);
