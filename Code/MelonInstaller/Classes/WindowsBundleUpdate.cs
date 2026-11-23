@@ -6,7 +6,8 @@ namespace MelonInstaller.Classes;
 
 public static class WindowsBundleUpdate
 {
-    public const string AssetName = "Melon-win-x64.zip";
+    /// <summary>True for the Windows bundle zip, with or without the version in its name.</summary>
+    public static bool IsBundleAsset(string name) => Melon.Models.ReleaseTag.IsBundle(name, "win-x64");
 
     public static async Task Prepare(HttpClient http, string rootPath, string? url, string? digest, string dataDirectory,
         int serverProcess, bool service, bool restart = true, string? localArchive = null)

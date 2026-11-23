@@ -43,7 +43,7 @@ namespace MelonWebApi
             var admin = ServerAdministration.Instance;
             admin.PrepareWindowsUpdate = release =>
             {
-                var asset = release.assets.FirstOrDefault(a => a.name == MelonInstaller.Classes.WindowsBundleUpdate.AssetName);
+                var asset = release.assets.FirstOrDefault(a => MelonInstaller.Classes.WindowsBundleUpdate.IsBundleAsset(a.name));
                 return MelonInstaller.Classes.WindowsBundleUpdate.Prepare(UpdateDownloads, new DirectoryInfo(AppContext.BaseDirectory).Parent!.FullName,
                     asset?.browser_download_url, asset?.digest, StateManager.melonPath, Environment.ProcessId,
                     Microsoft.Extensions.Hosting.WindowsServices.WindowsServiceHelpers.IsWindowsService());

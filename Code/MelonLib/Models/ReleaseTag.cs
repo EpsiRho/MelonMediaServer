@@ -19,11 +19,30 @@ namespace Melon.Models
         public string Title => $"{Branch} {Version}";
         public override string ToString() => Title;
 
+        /// <summary>
+        /// The tag a GitHub release stands for. Uses the release's git tag when it's in the right shape, otherwise its
+        /// title, so a release tagged "b0.9.0.1" but titled "Beta 0.9.0.1" still counts. Null when neither works.
+        /// </summary>
+        public static string? TagOf(string? tagName, string? releaseName) =>
+            TryParse(tagName, out var fromTag) ? fromTag.Tag
+            : TryParse(releaseName, out var fromName) ? fromName.Tag
+            : null;
+
+        /// <summary>
+        /// True when <paramref name="assetName"/> is the bundle zip for <paramref name="rid"/> (like win-x64). The release
+        /// workflow names it "Melon-win-x64.zip"; MelonInstaller's build mode adds the tag, "Melon-Beta-0.9.0.1-win-x64.zip".
+        /// </summary>
+        public static bool IsBundle(string assetName, string rid) =>
+            assetName.Equals($"Melon-{rid}.zip", StringComparison.OrdinalIgnoreCase) ||
+            (assetName.StartsWith("Melon-", StringComparison.OrdinalIgnoreCase) && assetName.EndsWith($"-{rid}.zip", StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>Reads "Beta-0.9.0.1", "Beta-v0.9.0.1" or a release title like "Beta 0.9.0.1".</summary>
         public static bool TryParse(string? tag, out ReleaseTag release)
         {
             release = null!;
             if (string.IsNullOrWhiteSpace(tag)) return false;
-            var dash = tag.LastIndexOf('-');
+            tag = tag.Trim();
+            var dash = tag.LastIndexOfAny(['-', ' ']);
             if (dash <= 0 || dash == tag.Length - 1) return false;
             var branch = tag[..dash];
             if (!branch.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '.')) return false;

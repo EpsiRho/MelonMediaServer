@@ -29,7 +29,7 @@ namespace MelonInstaller.Classes
 
             if (update && OperatingSystem.IsWindows() && File.Exists(Path.Combine(installPath, "Server", "MelonWebApi.exe")))
             {
-                var asset = release?.assets.FirstOrDefault(a => a.name == WindowsBundleUpdate.AssetName);
+                var asset = release?.assets.FirstOrDefault(a => WindowsBundleUpdate.IsBundleAsset(a.name));
                 var exe = Path.GetFullPath(Path.Combine(installPath, "Server", "MelonWebApi.exe"));
                 using var server = Process.GetProcessesByName("MelonWebApi").FirstOrDefault(p =>
                     string.Equals(p.MainModule?.FileName, exe, StringComparison.OrdinalIgnoreCase));
@@ -46,8 +46,7 @@ namespace MelonInstaller.Classes
 
             if (archive == null)
             {
-                var asset = release!.assets.FirstOrDefault(a => a.name == BundleAssetName)
-                    ?? release.assets.FirstOrDefault(a => a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+                var asset = release!.assets.FirstOrDefault(a => ReleaseTag.IsBundle(a.name, BundleRid));
                 if (asset == null)
                 {
                     Console.WriteLine($"[!] {StringsManager.GetString("InstallFailed")}");
@@ -112,7 +111,7 @@ namespace MelonInstaller.Classes
                 Console.WriteLine($"[!] {StringsManager.GetString("ReleaseInformationError")}");
                 return (null, null);
             }
-            var tags = releases.Select(r => r.tag_name).ToArray();
+            var tags = releases.Select(r => ReleaseTag.TagOf(r.tag_name, r.name)!).ToArray();
             var branches = ReleaseTag.Branches(tags);
             var installed = ReadInstalled();
 
@@ -142,7 +141,7 @@ namespace MelonInstaller.Classes
                 target = ReleaseTag.Latest(tags, branch);
             }
             var release = target == null ? null : releases.FirstOrDefault(r =>
-                ReleaseTag.TryParse(r.tag_name, out var t) && t.Branch.Equals(target.Branch, StringComparison.OrdinalIgnoreCase) && t.Version == target.Version);
+                ReleaseTag.TryParse(ReleaseTag.TagOf(r.tag_name, r.name), out var t) && t.Branch.Equals(target.Branch, StringComparison.OrdinalIgnoreCase) && t.Version == target.Version);
             if (release == null)
             {
                 Console.WriteLine($"[!] {StringsManager.GetString("InstallFailed")}");
@@ -197,8 +196,8 @@ namespace MelonInstaller.Classes
             File.WriteAllText(Path.Combine(installPath, MarkerFile),
                 JsonSerializer.Serialize(new { tag = tag.Tag, branch = tag.Branch, version = tag.Version.ToString() }));
 
-        public static string BundleAssetName => OperatingSystem.IsWindows() ? WindowsBundleUpdate.AssetName
-            : OperatingSystem.IsMacOS() ? "Melon-osx-arm64.zip" : "Melon-linux-x64.zip";
+        public static string BundleRid => OperatingSystem.IsWindows() ? "win-x64" : OperatingSystem.IsMacOS() ? "osx-arm64" : "linux-x64";
+        public static string BundleAssetName => $"Melon-{BundleRid}.zip";
 
         public static async Task<List<GithubResponse>> GetGithubReleases()
         {
@@ -210,7 +209,7 @@ namespace MelonInstaller.Classes
                 {
                     var json = await httpClient.GetStringAsync($"https://api.github.com/repos/{repository}/releases?per_page=100&page={page}");
                     var batch = JsonSerializer.Deserialize<GithubResponse[]>(json) ?? [];
-                    all.AddRange(batch.Where(r => !r.draft && ReleaseTag.TryParse(r.tag_name, out _)));
+                    all.AddRange(batch.Where(r => !r.draft && ReleaseTag.TagOf(r.tag_name, r.name) != null));
                     if (batch.Length < 100) break;
                 }
             }

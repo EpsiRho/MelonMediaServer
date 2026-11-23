@@ -468,19 +468,20 @@ public sealed partial class ServerAdministration : IMelonAdministration
         using var response = await Releases.SendAsync(request);
         response.EnsureSuccessStatusCode();
         var releases = await response.Content.ReadFromJsonAsync<GithubResponse[]>() ?? throw new IOException("Empty release list.");
-        var latest = ReleaseTag.Latest(releases.Where(r => !r.draft).Select(r => r.tag_name), StateManager.Branch)
+        // A release counts by its tag, or by its title when the tag isn't "Branch-version" (see ReleaseTag.TagOf).
+        var latest = ReleaseTag.Latest(releases.Where(r => !r.draft).Select(r => ReleaseTag.TagOf(r.tag_name, r.name)).OfType<string>(), StateManager.Branch)
             ?? throw new IOException($"No releases on the {StateManager.Branch} branch.");
-        return releases.First(r => r.tag_name == latest.Tag);
+        return releases.First(r => !r.draft && ReleaseTag.TagOf(r.tag_name, r.name) == latest.Tag);
     }
 
     private static bool IsNewer(GithubResponse release) =>
-        ReleaseTag.TryParse(release.tag_name, out var tag) && tag.Version > System.Version.Parse(StateManager.Version);
+        ReleaseTag.TryParse(ReleaseTag.TagOf(release.tag_name, release.name), out var tag) && tag.Version > System.Version.Parse(StateManager.Version);
 
     public async Task<ReleaseInfo> CheckForUpdates()
     {
         var release = await FetchRelease();
         bool available = IsNewer(release);
-        return new(available, StateManager.Version, release.tag_name, release.body ?? "");
+        return new(available, StateManager.Version, ReleaseTag.TagOf(release.tag_name, release.name) ?? release.tag_name, release.body ?? "");
     }
 
     public async Task<bool> ApplyUpdate()

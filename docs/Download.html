@@ -69,9 +69,10 @@
     <script>
       const REPO = 'EpsiRho/MelonMediaServer';
       const $ = id => document.getElementById(id);
-      // Tags look like "Beta-0.9.0.0": branch, dash, four part version.
+      // Tags look like "Beta-0.9.0.0": branch, dash, four part version. Release titles like "Beta 0.9.0.0" work too,
+      // so a release with an odd tag still shows up as long as its title is right.
       const parse = tag => {
-        const m = /^([A-Za-z0-9_.]+)-v?(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(tag || '');
+        const m = /^([A-Za-z0-9_.]+)[- ]v?(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec((tag || '').trim());
         return m ? { branch: m[1], version: m.slice(2).join('.'), parts: m.slice(2).map(Number) } : null;
       };
       const cmp = (a, b) => { for (let i = 0; i < 4; i++) if (a[i] !== b[i]) return a[i] - b[i]; return 0; };
@@ -83,6 +84,8 @@
       let byBranch = {};
 
       const asset = (release, name) => release.assets.find(a => a.name === name || a.name.startsWith(name));
+      // The bundle is "Melon-win-x64.zip" from the release workflow, or "Melon-Beta-0.9.0.1-win-x64.zip" from build mode.
+      const bundleFor = (release, rid) => release.assets.find(a => a.name === `Melon-${rid}.zip` || (a.name.startsWith('Melon-') && a.name.endsWith(`-${rid}.zip`)));
       const fill = (select, items, label) => {
         select.innerHTML = '';
         for (const item of items) select.add(new Option(label(item), label === String ? item : item.tag));
@@ -94,7 +97,7 @@
         if (!r) return;
         const rid = $('platform').value;
         const installer = asset(r.release, `MelonInstaller-${rid}`);
-        const bundle = asset(r.release, `Melon-${rid}.zip`);
+        const bundle = bundleFor(r.release, rid);
         $('release-title').textContent = `${r.branch} ${r.version}`;
         $('release-date').textContent = new Date(r.release.published_at).toLocaleDateString();
         for (const [el, a] of [[$('get-installer'), installer], [$('get-bundle'), bundle]]) {
@@ -114,7 +117,7 @@
         btn.disabled = false;
         $('latest-note').textContent = `${branch} ${latest.version} · MelonInstaller for ${$('platform').selectedOptions[0].text}`;
         btn.onclick = () => {
-          const a = asset(latest.release, `MelonInstaller-${$('platform').value}`) || asset(latest.release, `Melon-${$('platform').value}.zip`);
+          const a = asset(latest.release, `MelonInstaller-${$('platform').value}`) || bundleFor(latest.release, $('platform').value);
           location.href = a ? a.browser_download_url : latest.release.html_url;
         };
       }
@@ -125,9 +128,9 @@
           if (!res.ok) throw new Error(`GitHub returned ${res.status}`);
           const releases = await res.json();
           for (const release of releases) {
-            const t = parse(release.tag_name);
+            const t = parse(release.tag_name) || parse(release.name);
             if (!t || release.draft) continue;
-            (byBranch[t.branch] ||= []).push({ ...t, tag: release.tag_name, release });
+            (byBranch[t.branch] ||= []).push({ ...t, tag: `${t.branch}-${t.version}`, release });
           }
           const branches = Object.keys(byBranch).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
           if (!branches.length) throw new Error('No releases yet.');
