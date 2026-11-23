@@ -25,7 +25,11 @@ public sealed partial class ServerAdministration
             EnsureAnotherAdmin(userId, user.Type);
             var result = Users.UpdateOne(u => u._id == userId, Builders<User>.Update.Set(u => u.Type, type));
             if (result.MatchedCount == 0) throw new ArgumentException("User not found.");
-            if (result.ModifiedCount != 0) Messages.Publish("users", "Account type changed.");
+            if (result.ModifiedCount != 0)
+            {
+                Messages.Publish("users", "Account type changed.");
+                SecurityLog.Record(SecurityEventKinds.RoleChanged, userId, NameOf(userId), detail: $"{user.Type} → {type}");
+            }
         }
     }
 
@@ -33,14 +37,27 @@ public sealed partial class ServerAdministration
     {
         lock (databaseLock)
         {
-            var user = Users.Find(u => u._id == userId).Project(u => new { u.Type }).FirstOrDefault();
+            var user = Users.Find(u => u._id == userId).Project(u => new { u.Type, u.Username, u.ProfilePicPath }).FirstOrDefault();
             if (user == null) return false;
             EnsureAnotherAdmin(userId, user.Type);
             bool deleted = Users.DeleteOne(u => u._id == userId).DeletedCount != 0;
-            if (deleted) Messages.Publish("users", "Account deleted.");
+            if (deleted)
+            {
+                AuthSessions.RevokeAll(userId);
+                EqFilters.DeleteOwnedBy(userId);
+                if (!string.IsNullOrEmpty(user.ProfilePicPath))
+                    try { File.Delete(Path.Combine(StateManager.melonPath, "UserPfps", Path.GetFileName(user.ProfilePicPath))); } catch { }
+                Messages.Publish("users", "Account deleted.");
+                SecurityLog.Record(SecurityEventKinds.AccountDeleted, userId, user.Username);
+            }
             return deleted;
         }
     }
+
+    private static string NameOf(string userId) =>
+        Users.Find(u => u._id == userId).Project(u => u.Username).FirstOrDefault() ?? "";
+
+    public SecurityEvent[] GetSecurityEvents(int count = 100, bool warningsOnly = false) => SecurityLog.Recent(count, null, warningsOnly);
 
     private static void EnsureAnotherAdmin(string userId, string currentType)
     {
@@ -50,9 +67,11 @@ public sealed partial class ServerAdministration
 
     public AccessCode CreatePasswordReset(string userId)
     {
-        var user = Users.Find(u => u._id == userId).Project(u => new { u.Password }).FirstOrDefault()
+        var user = Users.Find(u => u._id == userId).Project(u => new { u.Password, u.Username }).FirstOrDefault()
             ?? throw new ArgumentException("User not found.");
-        return Security.IssueReset(userId, user.Password);
+        var code = Security.IssueReset(userId, user.Password);
+        SecurityLog.Record(SecurityEventKinds.PasswordResetIssued, userId, user.Username, detail: $"Expires {code.ExpiresUtc:u}");
+        return code;
     }
 
     public bool ResetPassword(string code, string password)
@@ -61,8 +80,10 @@ public sealed partial class ServerAdministration
         return Security.RedeemReset(code, (id, currentHash) =>
         {
             var hash = Security.HashPassword(password, out var salt);
-            return Users.UpdateOne(u => u._id == id && u.Password == currentHash,
+            bool changed = Users.UpdateOne(u => u._id == id && u.Password == currentHash,
                 Builders<User>.Update.Set(u => u.Password, hash).Set(u => u.Salt, salt)).ModifiedCount == 1;
+            if (changed) SecurityLog.Record(SecurityEventKinds.PasswordReset, id, NameOf(id), detail: "Reset code used; every device signed out");
+            return changed;
         });
     }
 

@@ -46,10 +46,10 @@ namespace Melon.LocalClasses
         public static byte[] JWTKey { get; set; }
         public static void Initialize(IWebApi webApi)
         {
-            JWTKey = Security.GenerateSecretKey();
             Host = new MelonHost();
             WebApi = webApi;
             CreateDirectories();
+            JWTKey = AuthSessions.LoadOrCreateKey(); // persisted, so restarts no longer sign everyone out
             LoadSettings();
             SetLanguage(LaunchArgs.GetValueOrDefault("lang", ""));
             LoadFlags();

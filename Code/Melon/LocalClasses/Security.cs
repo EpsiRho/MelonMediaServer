@@ -26,7 +26,6 @@ namespace Melon.LocalClasses
         private static readonly Dictionary<string, DateTime> InviteCodes = new(StringComparer.Ordinal);
         private sealed record ResetGrant(string UserId, string PasswordHash, DateTime ExpiresUtc);
         private static readonly Dictionary<string, ResetGrant> ResetCodes = new(StringComparer.Ordinal);
-        private static readonly Dictionary<string, DateTime> SignupTickets = new(StringComparer.Ordinal);
         public IDataProtector _protector;
         public Security(IDataProtectionProvider provider)
         {
@@ -107,54 +106,14 @@ namespace Melon.LocalClasses
         public static string SessionStamp(string passwordHash) =>
             Convert.ToHexString(HMACSHA256.HashData(StateManager.JWTKey, Encoding.UTF8.GetBytes(passwordHash)));
 
-        public static string GenerateJwtToken(string username, string role, string id, int ExpireInMinutes = 0)
-        {
-            var hash = role == "Server" && id == "NA" ? null : StateManager.DbClient.GetDatabase("Melon")
-                .GetCollection<User>("Users").Find(u => u._id == id).Project(u => u.Password).FirstOrDefault();
-            return GenerateJwtToken(username, role, id, ExpireInMinutes, hash);
-        }
-
-        public static string GenerateJwtToken(string username, string role, string id, int ExpireInMinutes, string? passwordHash)
-        {
-            if(ExpireInMinutes == 0)
-            {
-                ExpireInMinutes = StateManager.MelonSettings.JWTExpireInMinutes;
-            }
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = StateManager.JWTKey;
-
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new []
-                {
-                    new Claim(ClaimTypes.Name, username),
-                    new Claim(ClaimTypes.Role, role),
-                    new Claim(ClaimTypes.UserData, id),
-                    new Claim("melon_session", passwordHash == null ? "" : SessionStamp(passwordHash))
-                }),
-                Expires = DateTime.UtcNow.AddMinutes(ExpireInMinutes),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-
-            if (role == "Server" && id == "NA")
-            {
-                var ticket = Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
-                tokenDescriptor.Subject.AddClaim(new Claim("melon_signup", ticket));
-                lock (CodeLock) { RemoveExpired(); SignupTickets.Add(ticket, tokenDescriptor.Expires!.Value); }
-            }
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var rToken = tokenHandler.WriteToken(token);
-            return rToken;
-        }
         internal static void ClearAccessCodes()
         {
-            lock (CodeLock) { InviteCodes.Clear(); ResetCodes.Clear(); SignupTickets.Clear(); }
+            lock (CodeLock) { InviteCodes.Clear(); ResetCodes.Clear(); }
         }
 
         private static void RemoveExpired()
         {
             var now = DateTime.UtcNow;
-            foreach (var key in SignupTickets.Where(x => x.Value <= now).Select(x => x.Key).ToArray()) SignupTickets.Remove(key);
             foreach (var key in InviteCodes.Where(x => x.Value <= now).Select(x => x.Key).ToArray()) InviteCodes.Remove(key);
             foreach (var key in ResetCodes.Where(x => x.Value.ExpiresUtc <= now).Select(x => x.Key).ToArray()) ResetCodes.Remove(key);
         }
@@ -170,6 +129,7 @@ namespace Melon.LocalClasses
                 var code = Convert.ToHexString(RandomNumberGenerator.GetBytes(10));
                 var expiry = DateTime.UtcNow.Add(lifetime);
                 InviteCodes.Add(code, expiry);
+                SecurityLog.Record(Melon.Models.SecurityEventKinds.InviteCreated, detail: $"Expires {expiry:u}");
                 return new(code, expiry);
             }
         }
@@ -186,24 +146,15 @@ namespace Melon.LocalClasses
         {
             lock (CodeLock) return InviteCodes.TryGetValue(code, out var end) && end > DateTime.UtcNow;
         }
-        public static bool RegisterInvitedUser(string? ticket, Action create)
-        {
-            lock (CodeLock)
-            {
-                if (ticket == null || !SignupTickets.TryGetValue(ticket, out var expires) || expires <= DateTime.UtcNow) return false;
-                create();
-                SignupTickets.Remove(ticket);
-                return true;
-            }
-        }
-
         public static bool RedeemInvite(string code)
         {
             lock (CodeLock) return InviteCodes.Remove(code, out var end) && end > DateTime.UtcNow;
         }
         public static void InvalidateInviteCode(string code)
         {
-            lock (CodeLock) InviteCodes.Remove(code);
+            bool removed;
+            lock (CodeLock) removed = code != null && InviteCodes.Remove(code);
+            if (removed) SecurityLog.Record(Melon.Models.SecurityEventKinds.InviteRevoked);
         }
 
         private static string Digest(string code) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(code)));

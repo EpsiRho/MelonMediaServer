@@ -15,7 +15,8 @@ public record Appearance(string Language, bool UseMenuColor, int Text, int Shade
     int BackgroundText, int Highlight, int Melon, int Error);
 public record ControllerSettings(string[] LibraryPaths, string[] ArtistSplitIndicators,
     string[] GenreSplitIndicators, double QueueCleanupHours, string ListeningUrl,
-    string? CertificatePath, Appearance Appearance, string[] MongoServers, bool RestartRequired);
+    string? CertificatePath, Appearance Appearance, string[] MongoServers, bool RestartRequired,
+    int ArtUploadMegabytes = 20, int PlaylistImportMegabytes = 2, int LogFileMegabytes = 100, int LogFilesKept = 5);
 public record ManagedUser(string Id, string Username, string Role);
 public record AccessCode(string Code, DateTime ExpiresUtc);
 public record ListeningDay(DateTime DateUtc, long Plays, long Skips, double Milliseconds);
@@ -84,6 +85,12 @@ public interface IMelonAdministration
     void SetArtistSplitIndicators(string[] indicators);
     void SetGenreSplitIndicators(string[] indicators);
     void SetQueueCleanupHours(double hours);
+    /// <summary>Upload size limits in megabytes (artwork 1–200, playlist imports 1–100). Not exposed over the web API.</summary>
+    void SetUploadLimits(int artMegabytes, int playlistMegabytes);
+    /// <summary>Server log size: megabytes per file (1–1024) and files kept (1–100). Applies after a restart.</summary>
+    void SetLogLimits(int fileMegabytes, int filesKept);
+    /// <summary>Signs out every device: rotates the token signing key and revokes all sessions.</summary>
+    void SignOutEveryone();
     void SetAppearance(Appearance appearance);
     void ResetColors();
     void SetListeningUrl(string url);
@@ -107,6 +114,8 @@ public interface IMelonAdministration
     AccessCode CreateInvite(int minutes = 10);
     AccessCode[] GetInvites();
     void RevokeInvite(string code);
+    /// <summary>Recent sign-ins, failures and account changes, newest first (kept 90 days).</summary>
+    SecurityEvent[] GetSecurityEvents(int count = 100, bool warningsOnly = false);
     ListeningSummary GetListeningSummary(string userId = "", int days = 7);
     void PruneDeletedUserStats();
     PluginInfo[] GetPlugins();

@@ -19,6 +19,10 @@ namespace Melon.Models
             lock (_middlewares) return new(_middlewares);
         }
 
+        /// <summary>Sign-ins, failures, signed-out devices and account changes (see <see cref="SecurityEventKinds"/>).</summary>
+        public event EventHandler<SecurityEvent> SecurityEventRaised;
+        public void OnSecurityEvent(SecurityEvent e) => SecurityEventRaised?.Invoke(this, e);
+
         // ArtDeleteController
         public event EventHandler<WebApiEventArgs> ArtDeleteTrack;
         public event EventHandler<WebApiEventArgs> ArtDeleteAlbum;

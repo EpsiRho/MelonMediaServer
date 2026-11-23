@@ -348,6 +348,8 @@ namespace Melon.LocalClasses
                 // Get the file metadata, in chunks of 200000 bytes
                 ATL.Settings.FileBufferSize = 32768;
                 var fileMetadata = new ATL.Track(file);
+                // ATL reports missing numbers as 0 and can stop early on malformed tags; recover what we can.
+                var numbers = TagRepair.Resolve(fileMetadata, file);
 
                 //CurrentStatus = StateManager.StringsManager.GetString("TagPreparationStatus");
 
@@ -377,8 +379,8 @@ namespace Melon.LocalClasses
                         Name = albumName,
                         DateAdded = DateTime.Now.ToUniversalTime(),
                         Bio = "",
-                        TotalDiscs = fileMetadata.DiscTotal ?? 1,
-                        TotalTracks = fileMetadata.TrackTotal ?? 0,
+                        TotalDiscs = numbers.DiscTotal,
+                        TotalTracks = numbers.TrackTotal,
                         Publisher = fileMetadata.Publisher ?? "",
                         ReleaseStatus = fileMetadata.AdditionalFields.TryGetValue("RELEASESTATUS", out var rs) ? rs : "",
                         ReleaseType = fileMetadata.AdditionalFields.TryGetValue("RELEASETYPE", out var rt) ? rt : "",
@@ -395,13 +397,13 @@ namespace Melon.LocalClasses
                         ServerURL = ""
                     },
                     Path = file.Replace("\\", "/"),
-                    Position = fileMetadata.TrackNumber ?? 0,
+                    Position = numbers.Track,
                     Format = Path.GetExtension(fileMetadata.Path)?.TrimStart('.') ?? "",
                     Bitrate = fileMetadata.Bitrate.ToString() ?? "",
                     SampleRate = fileMetadata.SampleRate.ToString() ?? "",
                     Channels = fileMetadata.ChannelsArrangement?.NbChannels.ToString() ?? "",
                     BitsPerSample = fileMetadata.BitDepth.ToString() ?? "",
-                    Disc = fileMetadata.DiscNumber ?? 1,
+                    Disc = numbers.Disc,
                     MusicBrainzID = fileMetadata.AdditionalFields.TryGetValue("MUSICBRAINZ_RELEASETRACKID", out var mbId) ? mbId : "",
                     ISRC = fileMetadata.AdditionalFields.TryGetValue("ISRC", out var isrc) ? isrc : "",
                     Year = fileMetadata.Year?.ToString() ?? "",

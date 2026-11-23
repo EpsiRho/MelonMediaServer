@@ -101,7 +101,7 @@ namespace MelonWebApi.Controllers
             }
             var cUser = currentUsers[0];
 
-            var userFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(username, "i"));
+            var userFilter = Builders<User>.Filter.Regex(x => x.Username, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(username ?? ""), "i"));
             var users = UserCollection.Find(userFilter).ToList();
 
             List<ResponseUser> pUsers = new List<ResponseUser>();
@@ -252,63 +252,6 @@ namespace MelonWebApi.Controllers
             args.SendEvent("User sent", 200, Program.mWebApi);
             return new ObjectResult(pUser) { StatusCode = 200 };
         }
-        [Authorize(Roles = "Admin,Server")]
-        [HttpPost("create")]
-        public ObjectResult CreateUser(string username, string password, string role = "User")
-        {
-            var roles = ((ClaimsIdentity)User.Identity).Claims
-                        .Where(c => c.Type == ClaimTypes.Role)
-                        .Select(c => c.Value);
-            if (roles.Contains("Server"))
-            {
-                role = "User";
-            }
-
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                        .Where(c => c.Type == ClaimTypes.UserData)
-                        .Select(c => c.Value).FirstOrDefault();
-            var args = new WebApiEventArgs("api/users/create", curId, new Dictionary<string, object>()
-            {
-                { "username", username },
-                { "role", role },
-            });
-
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var UserCollection = mongoDatabase.GetCollection<User>("Users");
-
-            if (username == "" || password == "")
-            {
-                args.SendEvent("User Not Found", 400, Program.mWebApi);
-                return new ObjectResult("Username/Password cannot be empty") { StatusCode = 400 };
-            }
-
-            byte[] tempSalt;
-            var protectedPassword = Security.HashPassword(password, out tempSalt);
-
-            var user = new User();
-            user._id = ObjectId.GenerateNewId().ToString();
-            user.Username = username;
-            user.Password = protectedPassword;
-            user.Salt = tempSalt;
-            user.Type = role;
-            user.Bio = "";
-            user.FavTrack = "";
-            user.FavAlbum = "";
-            user.FavArtist = "";
-            user.LastLogin = DateTime.MinValue;
-
-            if (roles.Contains("Server"))
-            {
-                if (!Security.RegisterInvitedUser(User.FindFirstValue("melon_signup"), () => UserCollection.InsertOne(user)))
-                    return new UnauthorizedObjectResult("Invalid or expired signup.");
-            }
-            else UserCollection.InsertOne(user);
-            ServerAdministration.Instance.PublishMessage("users", "Account created.");
-
-            args.SendEvent("User created", 200, Program.mWebApi);
-            return new ObjectResult(user._id) { StatusCode = 200 };
-        }
         [Authorize(Roles = "Admin")]
         [HttpPost("delete")]
         public ObjectResult Delete(string id)
@@ -380,10 +323,15 @@ namespace MelonWebApi.Controllers
 
             var changes = new List<UpdateDefinition<User>>();
             var update = Builders<User>.Update;
-            if (bio != null) changes.Add(update.Set(u => u.Bio, bio));
+            if (bio != null)
+            {
+                if (bio.Length > UserAccounts.MaxBioLength) return new ObjectResult($"Bio cannot be longer than {UserAccounts.MaxBioLength} characters.") { StatusCode = 400 };
+                changes.Add(update.Set(u => u.Bio, bio));
+            }
             if (role != null)
             {
                 if (!roles.Contains("Admin")) return new ObjectResult("Invalid Auth") { StatusCode = 401 };
+                if (!UserAccounts.IsRole(role)) return new ObjectResult("Role must be Admin, User or Pass.") { StatusCode = 400 };
                 changes.Add(update.Set(u => u.Type, role));
             }
             if (publicStats != null) changes.Add(update.Set(u => u.PublicStats, Convert.ToBoolean(publicStats)));
@@ -436,49 +384,30 @@ namespace MelonWebApi.Controllers
                 }
             }
 
+            var invalid = UserAccounts.CheckUsername(username);
+            if (invalid != null)
+            {
+                args.SendEvent(invalid, 400, Program.mWebApi);
+                return new ObjectResult(invalid) { StatusCode = 400 };
+            }
+            if (UserAccounts.UsernameTaken(UserCollection, username, user._id))
+            {
+                args.SendEvent("Username taken", 409, Program.mWebApi);
+                return new ObjectResult("Username is already taken.") { StatusCode = 409 };
+            }
+
+            var previousName = user.Username;
             user.Username = username;
 
-            UserCollection.UpdateOne(userFilter, Builders<User>.Update.Set(u => u.Username, username));
+            try { UserCollection.UpdateOne(userFilter, Builders<User>.Update.Set(u => u.Username, username)); }
+            catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                return new ObjectResult("Username is already taken.") { StatusCode = 409 };
+            }
 
+            SecurityLog.Record(SecurityEventKinds.UsernameChanged, user._id, username, detail: $"Was {previousName}");
             args.SendEvent("Username Changed", 200, Program.mWebApi);
             return new ObjectResult("Username Changed") { StatusCode = 200 };
-        }
-        [Authorize(Roles = "Admin,User,Pass")]
-        [HttpPatch("change-password")]
-        public ObjectResult ChangePassword(string id, string password)
-        {
-            var curId = ((ClaimsIdentity)User.Identity).Claims
-                       .Where(c => c.Type == ClaimTypes.UserData)
-                       .Select(c => c.Value).FirstOrDefault();
-            var args = new WebApiEventArgs("api/users/change-password", curId, new Dictionary<string, object>()
-            {
-                { "id", id }
-            });
-
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var UserCollection = mongoDatabase.GetCollection<User>("Users");
-
-            var userFilter = Builders<User>.Filter.Eq(x => x._id, id);
-            var users = UserCollection.Find(userFilter).ToList();
-
-            if (users.Count == 0)
-            {
-                args.SendEvent("User Not Found", 404, Program.mWebApi);
-                return new ObjectResult("User Not Found") { StatusCode = 404 };
-            }
-            var user = users[0];
-            if (user._id != curId) return new ObjectResult("Use a reset code for another account.") { StatusCode = 403 };
-            byte[] tempSalt;
-            var protectedPassword = Security.HashPassword(password, out tempSalt);
-
-            user.Password = protectedPassword;
-            user.Salt = tempSalt;
-
-            UserCollection.UpdateOne(userFilter, Builders<User>.Update.Set(u => u.Password, protectedPassword).Set(u => u.Salt, tempSalt));
-
-            args.SendEvent("Password Changed", 200, Program.mWebApi);
-            return new ObjectResult("Password Changed") { StatusCode = 200 };
         }
 
     }

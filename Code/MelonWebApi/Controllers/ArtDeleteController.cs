@@ -240,7 +240,7 @@ namespace MelonWebApi.Controllers
         /// <response code="200">If the artwork is successfully deleted.</response>
         /// <response code="401">If the user does not have permission to perform this action.</response>
         /// <response code="404">If the playlist or artwork file is not found.</response>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("playlist-art")]
         public ObjectResult DeletePlaylistArt([Required(ErrorMessage = "Playlist ID is required")] string id)
         {
@@ -261,6 +261,11 @@ namespace MelonWebApi.Controllers
             {
                 args.SendEvent("Playlist not found", 404, Program.mWebApi);
                 return new ObjectResult("Playlist not found") { StatusCode = 404 };
+            }
+            if (!MayChangeArt(playlist.Owner, curId))
+            {
+                args.SendEvent("Only the owner can change this playlist's artwork", 403, Program.mWebApi);
+                return new ObjectResult("Only the owner can change this playlist's artwork") { StatusCode = 403 };
             }
 
             var files = System.IO.Directory.GetFiles($"{StateManager.melonPath}/PlaylistArts/");
@@ -295,7 +300,7 @@ namespace MelonWebApi.Controllers
         /// <response code="200">If the artwork is successfully deleted.</response>
         /// <response code="401">If the user does not have permission to perform this action.</response>
         /// <response code="404">If the collection or artwork file is not found.</response>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("collection-art")]
         public ObjectResult DeleteCollectionArt([Required(ErrorMessage = "Collection ID is required")] string id)
         {
@@ -317,6 +322,11 @@ namespace MelonWebApi.Controllers
                 args.SendEvent("Collection not found", 404, Program.mWebApi);
                 return new ObjectResult("Collection not found") { StatusCode = 404 };
             }
+            if (!MayChangeArt(collection.Owner, curId))
+            {
+                args.SendEvent("Only the owner can change this collection's artwork", 403, Program.mWebApi);
+                return new ObjectResult("Only the owner can change this collection's artwork") { StatusCode = 403 };
+            }
 
             var files = System.IO.Directory.GetFiles($"{StateManager.melonPath}/CollectionArts/");
             var filePath = files.FirstOrDefault(x => x.Contains($"{StateManager.melonPath}/CollectionArts/{collection._id}"));
@@ -336,6 +346,48 @@ namespace MelonWebApi.Controllers
 
             args.SendEvent("Collection art removed", 200, Program.mWebApi);
             return new ObjectResult("Collection art removed") { StatusCode = 200 };
+        }
+
+        /// <summary>
+        /// Playlist/collection art: the owner changes their own; admins can change anyone's (to replace an abusive picture).
+        /// </summary>
+        private bool MayChangeArt(string owner, string curId) =>
+            User.IsInRole("Admin") || (!string.IsNullOrEmpty(owner) && (owner == curId || owner == User.Identity?.Name));
+
+        /// <summary>
+        /// Removes a user's profile picture. Users remove their own; admins can remove anyone's.
+        /// </summary>
+        /// <param name="id">The user (omit for yourself).</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User (own picture only)
+        /// </remarks>
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("user-pfp")]
+        public ObjectResult DeleteUserPfp(string id)
+        {
+            var curId = User.FindFirstValue(ClaimTypes.UserData);
+            id = string.IsNullOrEmpty(id) ? curId : id;
+            var args = new WebApiEventArgs("api/art/delete/user-pfp", curId, new Dictionary<string, object>() { { "id", id } });
+            if (id != curId && !User.IsInRole("Admin"))
+            {
+                args.SendEvent("You can only change your own profile picture", 403, Program.mWebApi);
+                return new ObjectResult("You can only change your own profile picture") { StatusCode = 403 };
+            }
+
+            var users = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString).GetDatabase("Melon").GetCollection<User>("Users");
+            var user = users.Find(Builders<User>.Filter.Eq(x => x._id, id)).FirstOrDefault();
+            if (user == null)
+            {
+                args.SendEvent("User not found", 404, Program.mWebApi);
+                return new ObjectResult("User not found") { StatusCode = 404 };
+            }
+            if (!string.IsNullOrEmpty(user.ProfilePicPath))
+                try { System.IO.File.Delete(MelonWebApi.Services.SafePath.Combine(System.IO.Path.Combine(StateManager.melonPath, "UserPfps"), user.ProfilePicPath)); } catch { }
+            users.UpdateOne(Builders<User>.Filter.Eq(x => x._id, id), Builders<User>.Update.Set(x => x.ProfilePicPath, null));
+
+            args.SendEvent("Profile picture removed", 200, Program.mWebApi);
+            return new ObjectResult("Profile picture removed") { StatusCode = 200 };
         }
 
         /// <summary>

@@ -207,11 +207,9 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Invalid Auth") { StatusCode = 401 };
             }
 
-            var filePath = $"{StateManager.melonPath}/PlaylistArts/{playlist.ArtworkPath}";
-
             try
             {
-                System.IO.File.Delete(filePath);
+                System.IO.File.Delete(Services.SafePath.Combine($"{StateManager.melonPath}/PlaylistArts", playlist.ArtworkPath));
             }
             catch (Exception)
             {
@@ -227,7 +225,7 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin, User")]
         [HttpPost("update")]
         public ObjectResult updatePlaylist(string id, string description = "", string name = "", [FromQuery] List<string> editors = null, [FromQuery] List<string> viewers = null,
-                                           string publicEditing = "", string publicViewing = "", string defaultView = "")
+                                           string publicEditing = "", string publicViewing = "", string defaultView = "", bool clearDescription = false)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                     .Where(c => c.Type == ClaimTypes.UserData)
@@ -267,7 +265,8 @@ namespace MelonWebApi.Controllers
                     }
                 }
 
-                description = description == "" ? plst.Description : description;
+                // An empty description means "unchanged"; clearDescription is how a client empties it.
+                description = clearDescription ? "" : string.IsNullOrEmpty(description) ? plst.Description : description;
                 name = name == "" ? plst.Name : name;
                 editors = editors == null ? plst.Editors : editors;
                 viewers = viewers == null ? plst.Viewers : viewers;
@@ -385,9 +384,9 @@ namespace MelonWebApi.Controllers
 
             if (plst != null)
             {
-                if (plst.PublicEditing == false)
+                if (!plst.PublicViewing && !plst.PublicEditing) // public editing implies public viewing
                 {
-                    if (plst.Owner != curId && !plst.Editors.Contains(curId) && !plst.Viewers.Contains(curId))
+                    if (plst.Owner != curId && plst.Editors?.Contains(curId) != true && plst.Viewers?.Contains(curId) != true)
                     {
                         args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
@@ -428,7 +427,7 @@ namespace MelonWebApi.Controllers
 
             // Combine filters with OR
             var combinedFilter = Builders<Playlist>.Filter.Or(ownerFilter, viewersFilter, publicViewingFilter, EditorsFilter);
-            combinedFilter = combinedFilter & Builders<Playlist>.Filter.Regex(x=>x.Name, new BsonRegularExpression(name, "i"));
+            combinedFilter = combinedFilter & Builders<Playlist>.Filter.Regex(x=>x.Name, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(name ?? ""), "i"));
             var plstProjection = Builders<Playlist>.Projection.Exclude(x => x.Tracks)
                                                               .Exclude(x => x.ArtworkPath);
 
@@ -473,9 +472,9 @@ namespace MelonWebApi.Controllers
             }
             var playlist = Playlists[0];
 
-            if (playlist.PublicEditing == false)
+            if (!playlist.PublicViewing && !playlist.PublicEditing) // public editing implies public viewing
             {
-                if (playlist.Owner != curId && !playlist.Editors.Contains(curId) && !playlist.Viewers.Contains(curId))
+                if (playlist.Owner != curId && playlist.Editors?.Contains(curId) != true && playlist.Viewers?.Contains(curId) != true)
                 {
                     args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
@@ -552,9 +551,9 @@ namespace MelonWebApi.Controllers
             }
             var playlist = Playlists[0];
 
-            if (playlist.PublicEditing == false)
+            if (!playlist.PublicViewing && !playlist.PublicEditing) // public editing implies public viewing
             {
-                if (playlist.Owner != curId && !playlist.Editors.Contains(curId) && !playlist.Viewers.Contains(curId))
+                if (playlist.Owner != curId && playlist.Editors?.Contains(curId) != true && playlist.Viewers?.Contains(curId) != true)
                 {
                     args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
@@ -633,9 +632,9 @@ namespace MelonWebApi.Controllers
             }
             var playlist = Playlists[0];
 
-            if (playlist.PublicEditing == false)
+            if (!playlist.PublicViewing && !playlist.PublicEditing) // public editing implies public viewing
             {
-                if (playlist.Owner != curId && !playlist.Editors.Contains(curId) && !playlist.Viewers.Contains(curId))
+                if (playlist.Owner != curId && playlist.Editors?.Contains(curId) != true && playlist.Viewers?.Contains(curId) != true)
                 {
                     args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };

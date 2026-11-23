@@ -22,6 +22,16 @@ namespace MelonWebApi.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Search abilities newer than the original API, so clients can turn options on only for servers that have them
+        /// (older servers answer 404). "stat-filters": PlayCounts, SkipCounts and Ratings filters compare numerically,
+        /// with never-played/unrated items counting as 0. "top-rated": api/top-rated/*. "oracle": api/oracle/daily and
+        /// monthly. "eq": saved EQ filters (api/eq/*) and the eq parameter on api/download/track and track-transcode.
+        /// </summary>
+        [Authorize(Roles = "Admin,User,Pass")]
+        [HttpGet("features")]
+        public ObjectResult Features() => new ObjectResult(new List<string> { "stat-filters", "top-rated", "oracle", "eq" }) { StatusCode = 200 };
+
         [Authorize(Roles = "Admin,User,Pass")]
         [HttpGet("tracks")]
         public ObjectResult SearchTracks(int page = 0, int count = 100, [FromQuery] List<string> andFilters = null, [FromQuery] List<string> orFilters = null, string sort = "NameAsc")

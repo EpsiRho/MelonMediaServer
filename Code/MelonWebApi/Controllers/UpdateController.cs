@@ -69,6 +69,9 @@ namespace MelonWebApi.Controllers
             updatedTrack.Ratings = UpdateUserStats(existingTrack.Ratings, updatedTrack.Ratings, userId);
             updatedTrack.PlayCounts = UpdateUserStats(existingTrack.PlayCounts, updatedTrack.PlayCounts, userId);
             updatedTrack.SkipCounts = UpdateUserStats(existingTrack.SkipCounts, updatedTrack.SkipCounts, userId);
+            // Tracks scanned before chapters existed have none stored; leaving them out keeps whatever is there.
+            updatedTrack.Chapters ??= existingTrack.Chapters ?? new List<Chapter>();
+            updatedTrack.TrackGenres ??= existingTrack.TrackGenres ?? new List<string>();
 
             // Fetch full Album and Artist documents
             var album = await _albumsCollection.Find(a => a._id == updatedTrack.Album._id).FirstOrDefaultAsync();
@@ -202,34 +205,28 @@ namespace MelonWebApi.Controllers
             updatedAlbumFull.AlbumArtPaths = existingAlbum.AlbumArtPaths; // Preserve the file path
             await _albumsCollection.ReplaceOneAsync(filter, updatedAlbumFull);
 
-            // Find all tracks in this album
+            // Point every track at the new album details in one write.
             var trackFilter = Builders<Track>.Filter.Eq(t => t.Album._id, id);
-            var albumTracks = await _tracksCollection.Find(trackFilter).ToListAsync();
+            await _tracksCollection.UpdateManyAsync(trackFilter, Builders<Track>.Update.Set(t => t.Album, new DbLink(updatedAlbumFull)));
 
-            // Update the album information in each track and the corresponding file metadata
-            foreach (var track in albumTracks)
+            // Rewriting the audio files' tags takes seconds for a large album, so it happens after the reply: the
+            // database already has the change, and clients see it straight away.
+            var paths = await _tracksCollection.Find(trackFilter).Project(t => t.Path).ToListAsync();
+            var name = updatedAlbum.Name;
+            var albumArtist = string.Join("; ", updatedAlbum.AlbumArtists.Select(a => a.Name));
+            var publisher = updatedAlbum.Publisher ?? "";
+            var year = updatedAlbum.ReleaseDate.Year;
+            var status = updatedAlbum.ReleaseStatus ?? "";
+            var type = updatedAlbum.ReleaseType ?? "";
+            WriteTagsLater(paths, atlTrack =>
             {
-                track.Album = new DbLink(updatedAlbumFull);
-                await _tracksCollection.ReplaceOneAsync(Builders<Track>.Filter.Eq(t => t._id, track._id), track);
-
-                // Update the audio file's metadata
-                try
-                {
-                    var atlTrack = new ATL.Track(track.Path);
-                    atlTrack.Album = updatedAlbum.Name;
-                    atlTrack.AlbumArtist = string.Join("; ", updatedAlbum.AlbumArtists.Select(a => a.Name));
-                    atlTrack.Publisher = updatedAlbum.Publisher ?? "";
-                    atlTrack.Year = updatedAlbum.ReleaseDate.Year;
-                    atlTrack.AdditionalFields["RELEASESTATUS"] = updatedAlbum.ReleaseStatus ?? "";
-                    atlTrack.AdditionalFields["RELEASETYPE"] = updatedAlbum.ReleaseType ?? "";
-                    atlTrack.Save();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error updating file metadata for track ID: {TrackId}", track._id);
-                    // Continue to next track without failing the entire operation
-                }
-            }
+                atlTrack.Album = name;
+                atlTrack.AlbumArtist = albumArtist;
+                atlTrack.Publisher = publisher;
+                atlTrack.Year = year;
+                atlTrack.AdditionalFields["RELEASESTATUS"] = status;
+                atlTrack.AdditionalFields["RELEASETYPE"] = type;
+            });
 
             args.SendEvent("Album updated successfully", 200, Program.mWebApi);
             return Ok("Album updated successfully.");
@@ -371,6 +368,36 @@ namespace MelonWebApi.Controllers
 
             args.SendEvent("Artist updated successfully", 200, Program.mWebApi);
             return Ok("Artist updated successfully.");
+        }
+
+        // One tag writer at a time, so two quick edits to the same album can't write a file at once.
+        private static readonly SemaphoreSlim TagWrites = new(1, 1);
+
+        /// <summary>Applies <paramref name="edit"/> to each file's tags in the background, logging files that fail.</summary>
+        private void WriteTagsLater(List<string> paths, Action<ATL.Track> edit)
+        {
+            var logger = _logger;
+            _ = Task.Run(async () =>
+            {
+                await TagWrites.WaitAsync();
+                try
+                {
+                    foreach (var path in paths)
+                    {
+                        try
+                        {
+                            var atlTrack = new ATL.Track(path);
+                            edit(atlTrack);
+                            atlTrack.Save();
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Error updating file metadata for {Path}", path);
+                        }
+                    }
+                }
+                finally { TagWrites.Release(); }
+            });
         }
 
         /// <summary>

@@ -297,29 +297,34 @@ public sealed class VisualsService
     /// </summary>
     public int Prefetch(IReadOnlyList<(string Id, string Path)> tracks, VisualFormat format, bool fvz, bool analysis)
     {
-        int queued = 0;
-        foreach (var (id, path) in tracks.Take(MaxPrefetch))
+        var batch = new List<(string Id, string Path)>();
+        foreach (var t in tracks.Take(MaxPrefetch))
         {
             if (Interlocked.Increment(ref prefetchQueued) > 4 * MaxPrefetch) { Interlocked.Decrement(ref prefetchQueued); break; }
-            queued++;
-            lock (prefetchLock)
-            {
-                prefetchChain = prefetchChain.ContinueWith(async _ =>
-                {
-                    try
-                    {
-                        if (fvz) await GetFvzAsync(id, path, format, CancellationToken.None);
-                        if (analysis) await GetAnalysisAsync(id, path, CancellationToken.None);
-                    }
-                    catch (Exception ex) { Serilog.Log.Debug(ex, "Visualization prefetch failed for {Id}", id); }
-                    finally { Interlocked.Decrement(ref prefetchQueued); }
-                }, TaskScheduler.Default).Unwrap();
-            }
+            batch.Add(t);
         }
-        return queued;
+        if (batch.Count == 0) return 0;
+
+        // Frames for every track first (quick, and what a client needs the moment a song starts), then the slower beat
+        // analysis. Each job still waits on the shared job gate, so this runs as wide as MaxConcurrentJobs allows. It
+        // used to run as one chain, one track at a time, so the next song's frames could wait behind other songs'
+        // analysis and arrive after the song had started.
+        _ = Task.Run(async () =>
+        {
+            async Task Run(Func<Task> job, string id)
+            {
+                try { await job(); }
+                catch (Exception ex) { Serilog.Log.Debug(ex, "Visualization prefetch failed for {Id}", id); }
+            }
+            try
+            {
+                if (fvz) await Task.WhenAll(batch.Select(t => Run(() => GetFvzAsync(t.Id, t.Path, format, CancellationToken.None), t.Id)));
+                if (analysis) await Task.WhenAll(batch.Select(t => Run(() => GetAnalysisAsync(t.Id, t.Path, CancellationToken.None), t.Id)));
+            }
+            finally { Interlocked.Add(ref prefetchQueued, -batch.Count); }
+        });
+        return batch.Count;
     }
-    private readonly object prefetchLock = new();
-    private Task prefetchChain = Task.CompletedTask;
 
     /// <summary>
     /// Returns once <paramref name="dest"/> exists, running <paramref name="produce"/> if it doesn't. Concurrent callers

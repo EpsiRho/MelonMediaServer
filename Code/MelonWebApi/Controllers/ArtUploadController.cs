@@ -13,6 +13,8 @@ using MongoDB.Bson.Serialization;
 using System.Security.Claims;
 using System.Net;
 using ATL.Playlist;
+using MelonWebApi.Services;
+using MelonWebApi.Middleware;
 
 namespace MelonWebApi.Controllers
 {
@@ -44,7 +46,8 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost("track-art")]
         [Consumes("multipart/form-data")]
-        public ObjectResult UploadTrackArt(string id, IFormFile image)
+        [UploadLimit(UploadKind.Artwork)]
+        public async Task<ObjectResult> UploadTrackArt(string id, IFormFile image)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -76,12 +79,16 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Track file not found") { StatusCode = 404 };
             }
 
+            var (picture, error) = await ImageUpload.Read(image);
+            if (picture == null)
+            {
+                args.SendEvent(error, 400, Program.mWebApi);
+                return new ObjectResult(error) { StatusCode = 400 };
+            }
+
             try
             {
-                using var fileStream = image.OpenReadStream();
-                byte[] bytes = new byte[image.Length];
-                fileStream.Read(bytes, 0, (int)image.Length);
-                file.EmbeddedPictures.Add(ATL.PictureInfo.fromBinaryData(bytes));
+                file.EmbeddedPictures.Add(ATL.PictureInfo.fromBinaryData(picture.Bytes));
                 file.Save();
             }
             catch (Exception)
@@ -115,7 +122,8 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost("artist-pfp")]
         [Consumes("multipart/form-data")]
-        public ObjectResult UploadArtistPfp(string id, IFormFile image)
+        [UploadLimit(UploadKind.Artwork)]
+        public async Task<ObjectResult> UploadArtistPfp(string id, IFormFile image)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -136,33 +144,15 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
-            var contentType = image.ContentType.Replace("image/", "");
-            // Save the file
-            var filePath = $"{StateManager.melonPath}/ArtistPfps/{artist._id}-{artist.ArtistPfpArtCount}.{contentType}";
-            if (!Directory.Exists($"{StateManager.melonPath}/ArtistPfps"))
-            {
-                Directory.CreateDirectory($"{StateManager.melonPath}/ArtistPfps");
-            }
-
-            try
-            {
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
-            }
-            catch (Exception)
-            {
-                args.SendEvent("Image error", 400, Program.mWebApi);
-                return new ObjectResult("Image error") { StatusCode = 400 };
-            }
+            var (name, failed) = await SaveImage(image, "ArtistPfps", $"{artist._id}-{artist.ArtistPfpArtCount}", args);
+            if (failed != null) return failed;
 
             if(artist.ArtistPfpPaths == null)
             {
                 artist.ArtistPfpPaths = new List<string>();
             }
 
-            artist.ArtistPfpPaths.Add($"{artist._id}-{artist.ArtistPfpArtCount}.{contentType}");
+            artist.ArtistPfpPaths.Add(name);
             artist.ArtistPfpArtCount++;
             ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, id), artist);
 
@@ -187,7 +177,8 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost("artist-banner")]
         [Consumes("multipart/form-data")]
-        public ObjectResult UploadArtistBanner(string id, IFormFile image)
+        [UploadLimit(UploadKind.Artwork)]
+        public async Task<ObjectResult> UploadArtistBanner(string id, IFormFile image)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -208,33 +199,15 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Artist not found") { StatusCode = 404 };
             }
 
-            // Save the file
-            var contentType = image.ContentType.Replace("image/", "");
-            var filePath = $"{StateManager.melonPath}/ArtistBanners/{artist._id}-{artist.ArtistBannerArtCount}.{contentType}";
-            if (!Directory.Exists($"{StateManager.melonPath}/ArtistBanners"))
-            {
-                Directory.CreateDirectory($"{StateManager.melonPath}/ArtistBanners");
-            }
-
-            try
-            {
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
-            }
-            catch (Exception)
-            {
-                args.SendEvent("Image error", 400, Program.mWebApi);
-                return new ObjectResult("Image error") { StatusCode = 400 };
-            }
+            var (name, failed) = await SaveImage(image, "ArtistBanners", $"{artist._id}-{artist.ArtistBannerArtCount}", args);
+            if (failed != null) return failed;
 
             if (artist.ArtistBannerPaths == null)
             {
                 artist.ArtistBannerPaths = new List<string>();
             }
 
-            artist.ArtistBannerPaths.Add($"{artist._id}-{artist.ArtistBannerArtCount}.{contentType}");
+            artist.ArtistBannerPaths.Add(name);
             artist.ArtistBannerArtCount++;
             ArtistsCollection.ReplaceOne(Builders<Artist>.Filter.Eq(x => x._id, id), artist);
 
@@ -259,7 +232,8 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost("album-art")]
         [Consumes("multipart/form-data")]
-        public ObjectResult UploadAlbumArtwork(string id, IFormFile image)
+        [UploadLimit(UploadKind.Artwork)]
+        public async Task<ObjectResult> UploadAlbumArtwork(string id, IFormFile image)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -280,33 +254,15 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Album not found") { StatusCode = 404 };
             }
 
-            // Save the file
-            var contentType = image.ContentType.Replace("image/", "");
-            var filePath = $"{StateManager.melonPath}/AlbumArts/{album._id}-{album.AlbumArtCount}.{contentType}";
-            if (!Directory.Exists($"{StateManager.melonPath}/AlbumArts"))
-            {
-                Directory.CreateDirectory($"{StateManager.melonPath}/ArtistBanners");
-            }
+            var (name, failed) = await SaveImage(image, "AlbumArts", $"{album._id}-{album.AlbumArtCount}", args);
+            if (failed != null) return failed;
 
-            try
-            {
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
-            }
-            catch (Exception)
-            {
-                args.SendEvent("Image error", 400, Program.mWebApi);
-                return new ObjectResult("Image error") { StatusCode = 400 };
-            }
-
-            if (album.AlbumArtists == null)
+            if (album.AlbumArtPaths == null)
             {
                 album.AlbumArtPaths = new List<string>();
             }
 
-            album.AlbumArtPaths.Add($"{album._id}-{album.AlbumArtCount}.{contentType}");
+            album.AlbumArtPaths.Add(name);
             album.AlbumArtCount++;
             AlbumCollection.ReplaceOne(Builders<Album>.Filter.Eq(x => x._id, id), album);
 
@@ -328,10 +284,11 @@ namespace MelonWebApi.Controllers
         /// <response code="400">If the input parameters are invalid.</response>
         /// <response code="401">If the user does not have permission to perform this action.</response>
         /// <response code="404">If the playlist is not found.</response>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("playlist-art")]
         [Consumes("multipart/form-data")]
-        public ObjectResult UploadPlaylistArt(string id, IFormFile image)
+        [UploadLimit(UploadKind.Artwork)]
+        public async Task<ObjectResult> UploadPlaylistArt(string id, IFormFile image)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -351,29 +308,16 @@ namespace MelonWebApi.Controllers
                 args.SendEvent("Playlist not found", 404, Program.mWebApi);
                 return new ObjectResult("Playlist not found") { StatusCode = 404 };
             }
-
-            // Save the file
-            var contentType = image.ContentType.Replace("image/", "");
-            var filePath = $"{StateManager.melonPath}/PlaylistArts/{playlist._id}.{contentType}";
-            if (!Directory.Exists($"{StateManager.melonPath}/PlaylistArts"))
+            if (!MayChangeArt(playlist.Owner, curId))
             {
-                Directory.CreateDirectory($"{StateManager.melonPath}/PlaylistArts");
+                args.SendEvent("Only the owner can change this playlist's artwork", 403, Program.mWebApi);
+                return new ObjectResult("Only the owner can change this playlist's artwork") { StatusCode = 403 };
             }
 
-            try
-            {
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
-            }
-            catch (Exception)
-            {
-                args.SendEvent("Image error", 400, Program.mWebApi);
-                return new ObjectResult("Image error") { StatusCode = 400 };
-            }
+            var (name, failed) = await SaveImage(image, "PlaylistArts", playlist._id, args);
+            if (failed != null) return failed;
 
-            playlist.ArtworkPath = $"{playlist._id}.{contentType}";
+            playlist.ArtworkPath = name;
             PlaylistsCollection.ReplaceOne(Builders<Playlist>.Filter.Eq(x => x._id, id), playlist);
 
             args.SendEvent("Playlist art uploaded", 200, Program.mWebApi);
@@ -394,10 +338,11 @@ namespace MelonWebApi.Controllers
         /// <response code="400">If the input parameters are invalid.</response>
         /// <response code="401">If the user does not have permission to perform this action.</response>
         /// <response code="404">If the collection is not found.</response>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("collection-art")]
         [Consumes("multipart/form-data")]
-        public ObjectResult UploadCollectionArt(string id, IFormFile image)
+        [UploadLimit(UploadKind.Artwork)]
+        public async Task<ObjectResult> UploadCollectionArt(string id, IFormFile image)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -417,33 +362,67 @@ namespace MelonWebApi.Controllers
                 args.SendEvent("Collection not found", 404, Program.mWebApi);
                 return new ObjectResult("Collection not found") { StatusCode = 404 };
             }
-
-            // Save the file
-            var contentType = image.ContentType.Replace("image/", "");
-            var filePath = $"{StateManager.melonPath}/CollectionArts/{collection._id}.{contentType}";
-            if (!Directory.Exists($"{StateManager.melonPath}/CollectionArts"))
+            if (!MayChangeArt(collection.Owner, curId))
             {
-                Directory.CreateDirectory($"{StateManager.melonPath}/CollectionArts");
+                args.SendEvent("Only the owner can change this collection's artwork", 403, Program.mWebApi);
+                return new ObjectResult("Only the owner can change this collection's artwork") { StatusCode = 403 };
             }
 
-            try
-            {
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
-            }
-            catch (Exception)
-            {
-                args.SendEvent("Image error", 400, Program.mWebApi);
-                return new ObjectResult("Image error") { StatusCode = 400 };
-            }
+            var (name, failed) = await SaveImage(image, "CollectionArts", collection._id, args);
+            if (failed != null) return failed;
 
-            collection.ArtworkPath = $"{collection._id}.{contentType}";
+            collection.ArtworkPath = name;
             CollectionsCollection.ReplaceOne(Builders<Collection>.Filter.Eq(x => x._id, id), collection);
 
             args.SendEvent("Collection art uploaded", 200, Program.mWebApi);
             return new ObjectResult("Collection art uploaded") { StatusCode = 200 };
+        }
+
+        /// <summary>
+        /// Sets a user's profile picture. Users set their own; admins can replace anyone's (abuse moderation).
+        /// </summary>
+        /// <param name="id">The user to change (omit for yourself).</param>
+        /// <param name="image">The picture (PNG or JPEG; re-encoded server-side).</param>
+        /// <remarks>
+        /// ### Authorization: JWT
+        /// - **Valid roles**: Admin, User (own picture only)
+        /// </remarks>
+        /// <response code="200">If the picture was saved.</response>
+        /// <response code="400">If the file isn't a usable image.</response>
+        /// <response code="403">If a non-admin tries to change someone else's picture.</response>
+        /// <response code="404">If the user doesn't exist.</response>
+        [Authorize(Roles = "Admin,User")]
+        [HttpPost("user-pfp")]
+        [Consumes("multipart/form-data")]
+        [UploadLimit(UploadKind.Artwork)]
+        public async Task<ObjectResult> UploadUserPfp(string id, IFormFile image)
+        {
+            var curId = User.FindFirstValue(ClaimTypes.UserData);
+            id = string.IsNullOrEmpty(id) ? curId : id;
+            var args = new WebApiEventArgs("api/art/upload/user-pfp", curId, new Dictionary<string, object>() { { "id", id } });
+            if (id != curId && !User.IsInRole("Admin"))
+            {
+                args.SendEvent("You can only change your own profile picture", 403, Program.mWebApi);
+                return new ObjectResult("You can only change your own profile picture") { StatusCode = 403 };
+            }
+
+            var users = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString).GetDatabase("Melon").GetCollection<User>("Users");
+            var user = users.Find(Builders<User>.Filter.Eq(x => x._id, id)).FirstOrDefault();
+            if (user == null)
+            {
+                args.SendEvent("User not found", 404, Program.mWebApi);
+                return new ObjectResult("User not found") { StatusCode = 404 };
+            }
+
+            var (name, failed) = await SaveImage(image, "UserPfps", user._id, args);
+            if (failed != null) return failed;
+            // A new picture in the other format would leave the old file behind.
+            if (!string.IsNullOrEmpty(user.ProfilePicPath) && user.ProfilePicPath != name)
+                try { System.IO.File.Delete(SafePath.Combine(Path.Combine(StateManager.melonPath, "UserPfps"), user.ProfilePicPath)); } catch { }
+            users.UpdateOne(Builders<User>.Filter.Eq(x => x._id, id), Builders<User>.Update.Set(x => x.ProfilePicPath, name));
+
+            args.SendEvent("Profile picture uploaded", 200, Program.mWebApi);
+            return new ObjectResult("Profile picture uploaded") { StatusCode = 200 };
         }
 
         /// <summary>
@@ -461,36 +440,55 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost("default-art")]
         [Consumes("multipart/form-data")]
-        public ObjectResult UploadDefaultArt(IFormFile image)
+        [UploadLimit(UploadKind.Artwork)]
+        public async Task<ObjectResult> UploadDefaultArt(IFormFile image)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
                       .Select(c => c.Value).FirstOrDefault();
             var args = new WebApiEventArgs("api/art/upload/default-art", curId, new Dictionary<string, object>());
 
-            // Save the file
-            var contentType = image.ContentType.Replace("image/", "");
-            var filePath = $"{StateManager.melonPath}/Assets/defaultArtwork.{contentType}";
-            if (!Directory.Exists($"{StateManager.melonPath}/Assets"))
+            // StateManager.GetDefaultImage reads defaultArtwork.jpg, so this one is always JPEG under that exact name.
+            var (_, failed) = await SaveImage(image, "Assets", "defaultArtwork", args, forceJpeg: true, extension: "jpg");
+            if (failed != null) return failed;
+
+            args.SendEvent("Default art uploaded", 200, Program.mWebApi);
+            return new ObjectResult("Default art uploaded") { StatusCode = 200 };
+        }
+
+        /// <summary>
+        /// Playlist/collection art: the owner changes their own; admins can change anyone's (to replace an abusive picture).
+        /// </summary>
+        private bool MayChangeArt(string owner, string curId) =>
+            User.IsInRole("Admin") || (!string.IsNullOrEmpty(owner) && (owner == curId || owner == User.Identity?.Name));
+
+        /// <summary>
+        /// Decodes and re-encodes <paramref name="image"/> (see <see cref="ImageUpload"/>) and writes it as
+        /// <c>&lt;melonPath&gt;/&lt;folder&gt;/&lt;stem&gt;.&lt;ext&gt;</c>. The extension comes from the re-encode, never from the request.
+        /// Returns the file name to store, or the error response to send.
+        /// </summary>
+        private static async Task<(string Name, ObjectResult Failed)> SaveImage(IFormFile image, string folder, string stem, WebApiEventArgs args, bool forceJpeg = false, string extension = null)
+        {
+            var (picture, error) = await ImageUpload.Read(image, forceJpeg);
+            if (picture == null)
             {
-                Directory.CreateDirectory($"{StateManager.melonPath}/Assets");
+                args.SendEvent(error, 400, Program.mWebApi);
+                return (null, new ObjectResult(error) { StatusCode = 400 });
             }
 
             try
             {
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
+                var dir = Path.Combine(StateManager.melonPath, folder);
+                Directory.CreateDirectory(dir);
+                var name = $"{stem}.{extension ?? picture.Extension}";
+                await System.IO.File.WriteAllBytesAsync(SafePath.Combine(dir, name), picture.Bytes);
+                return (name, null);
             }
             catch (Exception)
             {
                 args.SendEvent("Image error", 400, Program.mWebApi);
-                return new ObjectResult("Image error") { StatusCode = 400 };
+                return (null, new ObjectResult("Image error") { StatusCode = 400 });
             }
-
-            args.SendEvent("Default art uploaded", 404, Program.mWebApi);
-            return new ObjectResult("Default art uploaded") { StatusCode = 200 };
         }
 
     }

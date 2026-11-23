@@ -424,7 +424,7 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("User not found") { StatusCode = 404 };
             }
 
-            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device,"i"));
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(device ?? ""), "i"));
             statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if(userId != curId)
             {
@@ -491,7 +491,7 @@ namespace MelonWebApi.Controllers
             var uFilter = Builders<User>.Filter.Eq(x => x._id, userId);
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
-            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(device ?? ""), "i"));
             statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
@@ -563,7 +563,7 @@ namespace MelonWebApi.Controllers
             var uFilter = Builders<User>.Filter.Eq(x => x._id, userId);
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
-            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(device ?? ""), "i"));
             statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
@@ -636,7 +636,7 @@ namespace MelonWebApi.Controllers
             var uFilter = Builders<User>.Filter.Eq(x => x._id, userId);
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
-            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(device ?? ""), "i"));
             statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
@@ -708,7 +708,7 @@ namespace MelonWebApi.Controllers
             var uFilter = Builders<User>.Filter.Eq(x => x._id, userId);
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
-            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(device ?? ""), "i"));
             statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
@@ -767,7 +767,7 @@ namespace MelonWebApi.Controllers
             var uFilter = Builders<User>.Filter.Eq(x => x._id, userId);
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
-            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(device ?? ""), "i"));
             statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {
@@ -826,7 +826,7 @@ namespace MelonWebApi.Controllers
             var uFilter = Builders<User>.Filter.Eq(x => x._id, userId);
             var user = UsersCollection.Find(uFilter).FirstOrDefault();
 
-            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(device, "i"));
+            var statFilter = Builders<PlayStat>.Filter.Regex(x => x.Device, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(device ?? ""), "i"));
             statFilter = statFilter & Builders<PlayStat>.Filter.Eq(x => x.Type, "Play");
             if (user == null)
             {

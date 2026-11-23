@@ -2,10 +2,11 @@ using Melon.LocalClasses;
 using Melon.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MongoDB.Driver;
-using Net.Codecrete.QrCodeGenerator;
 using System.Security.Claims;
 using System.Text;
+using MelonWebApi.Services;
 
 
 namespace MelonWebApi.Controllers
@@ -15,54 +16,11 @@ namespace MelonWebApi.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ILogger<AuthController> _logger;
+        private const int MaxInviteMinutes = 30 * 24 * 60; // Galia offers up to 30 days
 
         public AuthController(ILogger<AuthController> logger)
         {
             _logger = logger;
-        }
-
-        /// <summary>
-        /// Login with a username and password to get a JWT for authenticating future api calls.
-        /// </summary>
-        /// <param name="username">The username to authenticate with.</param>
-        /// <param name="password">The password to authenticate with.</param>
-        /// <returns>Returns a JWT token on success.</returns>
-        /// <response code="200">The username and password match.</response>
-        /// <response code="401">If the username isn't found or the password doesn't match.</response>
-        [HttpGet("login")]
-        public ObjectResult Login(string username, string password)
-        {
-            var args = new WebApiEventArgs("auth/login", "No Auth", new Dictionary<string, object>());
-
-            var mongoClient = new MongoClient(StateManager.MelonSettings.MongoDbConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase("Melon");
-            var UserCollection = mongoDatabase.GetCollection<User>("Users");
-
-            var userFilter = Builders<User>.Filter.Eq(x => x.Username, username);
-            var users = UserCollection.Find(userFilter).ToList();
-            
-            if(users.Count == 0) 
-            {
-                args.SendEvent("Invalid username or password", 401, Program.mWebApi);
-                return new ObjectResult("Invalid username or password") { StatusCode = 401 };
-            }
-            var user = users[0];
-
-            bool check = Security.VerifyPassword(password, user.Password, user.Salt);
-
-            if (check)
-            {
-                user.LastLogin = DateTime.Now;
-                UserCollection.UpdateOne(u => u._id == user._id && u.Password == user.Password, Builders<User>.Update.Set(u => u.LastLogin, user.LastLogin));
-                args.User = user._id;
-                args.SendEvent("User Logged In", 200, Program.mWebApi);
-                return new ObjectResult(Security.GenerateJwtToken(username, user.Type, user._id, 0, user.Password)) { StatusCode = 200 };
-            }
-            else
-            {
-                args.SendEvent("Invalid username or password", 401, Program.mWebApi);
-                return new ObjectResult("Invalid username or password") { StatusCode = 401 };
-            }
         }
 
         /// <summary>
@@ -72,9 +30,7 @@ namespace MelonWebApi.Controllers
         /// ### Authorization: JWT
         /// - **Valid roles**: Admin
         /// ### Invite Codes:
-        /// - Last 10 minutes, used to create a JWT token for account creation.
-        /// - Use auth/code-authenticate to create a JWT with a "Server" Role. Lasts 10 minutes from creation.
-        /// - use api/users/create with the JWT to create the new user
+        /// - Redeemed once with POST auth/register, which creates the account and signs that device in.
         /// </remarks>
         /// <returns>Returns an invite code on success.</returns>
         /// <response code="200">On successful creation of an invite code.</response>
@@ -90,6 +46,7 @@ namespace MelonWebApi.Controllers
             var args = new WebApiEventArgs("auth/invite", curId, new Dictionary<string, object>());
 
             if (expireMinutes <= 0) return new BadRequestObjectResult("Choose a positive invite lifetime.");
+            if (expireMinutes > MaxInviteMinutes) return new BadRequestObjectResult($"Invites can last at most {MaxInviteMinutes / (24 * 60)} days.");
             var code = Security.CreateInviteCode(TimeSpan.FromMinutes(expireMinutes));
             if(code == "Timeout")
             {
@@ -99,46 +56,6 @@ namespace MelonWebApi.Controllers
 
             args.SendEvent("Created invite code", 200, Program.mWebApi);
             return new ObjectResult(code){ StatusCode = 200 };
-        }
-
-        /// <summary>
-        /// Get a JWT with the "Server" role using an invite code.
-        /// </summary>
-        /// <param name="code">The invite code.</param>
-        /// <remarks>
-        /// ### Server JWT:
-        /// - Last 10 minutes, used with api/users/create to create a new user.
-        /// - Invalidates the invite code after creating one JWT
-        /// </remarks>
-        /// <returns>Returns a JWT on success.</returns>
-        /// <response code="200">On successful creation of the JWT.</response>
-        /// <response code="401">If the user does not have permission to perform this action.</response>
-        [HttpGet("code-authenticate")]
-        public ObjectResult CodeAuth(string code)
-        {
-            var args = new WebApiEventArgs("auth/code-authenticate", "No Auth", new Dictionary<string, object>());
-
-            var check = Security.RedeemInvite(code);
-            if (!check)
-            {
-                args.SendEvent("Invalid Invite code", 200, Program.mWebApi);
-                return new ObjectResult("Invalid invite code") { StatusCode = 401 };
-            }
-
-            args.SendEvent("Created Server JWT", 200, Program.mWebApi);
-            return new ObjectResult(Security.GenerateJwtToken("NA", "Server", "NA", 10)) { StatusCode = 200 };
-        }
-
-        [HttpGet("qr")]
-        public ObjectResult QRCode(string code)
-        {
-            var args = new WebApiEventArgs("auth/qr", "No Auth", new Dictionary<string, object>());
-
-            var qrCode = QrCode.EncodeText($"{code}", QrCode.Ecc.Medium);
-            var svg = qrCode.ToSvgString(4);
-
-            args.SendEvent("Generated QR Code", 200, Program.mWebApi);
-            return new ObjectResult(svg) { StatusCode = 200 };
         }
 
         /// <summary>

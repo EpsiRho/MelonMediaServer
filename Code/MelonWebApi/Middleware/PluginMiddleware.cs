@@ -8,6 +8,7 @@ namespace MelonWebApi.Middleware
     public class PluginMiddleware
     {
         private readonly RequestDelegate _next;
+        private static readonly HashSet<string> SensitiveKeys = new(StringComparer.OrdinalIgnoreCase) { "password", "jwt", "code", "token" };
 
         public PluginMiddleware(RequestDelegate next)
         {
@@ -24,6 +25,8 @@ namespace MelonWebApi.Middleware
                 var parmameters = new Dictionary<string, object>();
                 foreach(var p in queryParameters)
                 {
+                    // Plugins never see credentials or tokens that older clients still put in the query string.
+                    if (SensitiveKeys.Contains(p.Key)) continue;
                     parmameters.Add(p.Key, p.Value.Select(x=>x).ToArray());
                 }
                 var args = new WebApiEventArgs(context.Request.Path.Value, userId, role, parmameters);
@@ -38,7 +41,7 @@ namespace MelonWebApi.Middleware
 
                     if (res != null)
                     {
-                        context.Response.Body.Write(res);
+                        await context.Response.Body.WriteAsync(res);
                         return;
                     }
                     // Proceed to the next middleware if not handling

@@ -142,11 +142,9 @@ namespace MelonWebApi.Controllers
             
             foreach(var path in album.AlbumArtPaths)
             {
-                var filePath = $"{StateManager.melonPath}/AlbumArts/{path}";
-
                 try
                 {
-                    System.IO.File.Delete(filePath);
+                    System.IO.File.Delete(Services.SafePath.Combine($"{StateManager.melonPath}/AlbumArts", path));
                 }
                 catch (Exception)
                 {
@@ -323,11 +321,9 @@ namespace MelonWebApi.Controllers
 
             foreach (var path in artist.ArtistPfpPaths)
             {
-                var filePath = $"{StateManager.melonPath}/ArtistPfps/{path}";
-
                 try
                 {
-                    System.IO.File.Delete(filePath);
+                    System.IO.File.Delete(Services.SafePath.Combine($"{StateManager.melonPath}/ArtistPfps", path));
                 }
                 catch (Exception)
                 {
@@ -336,11 +332,9 @@ namespace MelonWebApi.Controllers
             }
             foreach (var path in artist.ArtistBannerPaths)
             {
-                var filePath = $"{StateManager.melonPath}/ArtistBanners/{path}";
-
                 try
                 {
-                    System.IO.File.Delete(filePath);
+                    System.IO.File.Delete(Services.SafePath.Combine($"{StateManager.melonPath}/ArtistBanners", path));
                 }
                 catch (Exception)
                 {

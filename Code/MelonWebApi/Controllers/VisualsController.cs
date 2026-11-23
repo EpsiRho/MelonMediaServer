@@ -98,7 +98,14 @@ namespace MelonWebApi.Controllers
                 args.SendEvent("Track not found", 404, Program.mWebApi);
                 return new ObjectResult("Track not found") { StatusCode = 404 };
             }
-            var waveform = ComputeWaveform(track.Path, w);
+            float[] waveform;
+            try { waveform = ComputeWaveform(track.Path, w); }
+            catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or InvalidDataException or FormatException)
+            {
+                // Media Foundation can't decode every format (e.g. "byte stream type unsupported"); that isn't a server error.
+                args.SendEvent("Waveform unavailable for this file", 415, Program.mWebApi);
+                return new ObjectResult("Waveform unavailable for this file format.") { StatusCode = 415 };
+            }
             args.SendEvent("Track waveform sent", 200, Program.mWebApi);
             return new ObjectResult(waveform) { StatusCode = 200 };
         }

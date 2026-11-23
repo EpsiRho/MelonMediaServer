@@ -314,11 +314,9 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Invalid Auth") { StatusCode = 401 };
             }
 
-            var filePath = $"{StateManager.melonPath}/CollectionArts/{collection.ArtworkPath}";
-
             try
             {
-                System.IO.File.Delete(filePath);
+                System.IO.File.Delete(Services.SafePath.Combine($"{StateManager.melonPath}/CollectionArts", collection.ArtworkPath));
             }
             catch (Exception)
             {
@@ -353,7 +351,7 @@ namespace MelonWebApi.Controllers
         [Authorize(Roles = "Admin, User")]
         [HttpPost("update")]
         public ObjectResult updateCollection(string id, string description = "", string name = "", [FromQuery] List<string> editors = null, [FromQuery] List<string> viewers = null,
-                                           string publicEditing = "", string publicViewing = "", string defaultView = "")
+                                           string publicEditing = "", string publicViewing = "", string defaultView = "", bool clearDescription = false)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -391,7 +389,8 @@ namespace MelonWebApi.Controllers
                     }
                 }
 
-                description = description == "" ? collection.Description : description;
+                // An empty description means "unchanged"; clearDescription is how a client empties it.
+                description = clearDescription ? "" : string.IsNullOrEmpty(description) ? collection.Description : description;
                 name = name == "" ? collection.Name : name;
                 editors = editors == null ? collection.Editors : editors;
                 viewers = viewers == null ? collection.Viewers : viewers;
@@ -475,9 +474,9 @@ namespace MelonWebApi.Controllers
 
             if (collection != null)
             {
-                if (collection.PublicViewing == false)
+                if (!collection.PublicViewing && !collection.PublicEditing) // public editing implies public viewing
                 {
-                    if (collection.Owner != curId && !collection.Viewers.Contains(curId))
+                    if (collection.Owner != curId && collection.Editors?.Contains(curId) != true && collection.Viewers?.Contains(curId) != true)
                     {
                         args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                         return new ObjectResult("Invalid Auth") { StatusCode = 401 };
@@ -533,7 +532,7 @@ namespace MelonWebApi.Controllers
 
             // Combine filters with OR
             var combinedFilter = Builders<Collection>.Filter.Or(ownerFilter, viewersFilter, publicViewingFilter, EditorsFilter);
-            combinedFilter = combinedFilter & Builders<Collection>.Filter.Regex(x=>x.Name, new BsonRegularExpression(name, "i"));
+            combinedFilter = combinedFilter & Builders<Collection>.Filter.Regex(x=>x.Name, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(name ?? ""), "i"));
             var plstProjection = Builders<Collection>.Projection.Exclude(x => x.Tracks)
                                                               .Exclude(x => x.ArtworkPath);
 
@@ -592,9 +591,9 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Collection not found") { StatusCode = 404 };
             }
 
-            if (collection.PublicEditing == false)
+            if (!collection.PublicViewing && !collection.PublicEditing) // public editing implies public viewing
             {
-                if (collection.Owner != curId && !collection.Editors.Contains(curId) && !collection.Viewers.Contains(curId))
+                if (collection.Owner != curId && collection.Editors?.Contains(curId) != true && collection.Viewers?.Contains(curId) != true)
                 {
                     args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
@@ -670,9 +669,9 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Collection not found") { StatusCode = 404 };
             }
 
-            if (collection.PublicEditing == false)
+            if (!collection.PublicViewing && !collection.PublicEditing) // public editing implies public viewing
             {
-                if (collection.Owner != curId && !collection.Editors.Contains(curId) && !collection.Viewers.Contains(curId))
+                if (collection.Owner != curId && collection.Editors?.Contains(curId) != true && collection.Viewers?.Contains(curId) != true)
                 {
                     args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };
@@ -750,9 +749,9 @@ namespace MelonWebApi.Controllers
                 return new ObjectResult("Collection not found") { StatusCode = 404 };
             }
 
-            if (collection.PublicEditing == false)
+            if (!collection.PublicViewing && !collection.PublicEditing) // public editing implies public viewing
             {
-                if (collection.Owner != curId && !collection.Editors.Contains(curId) && !collection.Viewers.Contains(curId))
+                if (collection.Owner != curId && collection.Editors?.Contains(curId) != true && collection.Viewers?.Contains(curId) != true)
                 {
                     args.SendEvent("Invalid Auth", 401, Program.mWebApi);
                     return new ObjectResult("Invalid Auth") { StatusCode = 401 };

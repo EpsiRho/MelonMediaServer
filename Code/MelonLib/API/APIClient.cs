@@ -67,7 +67,7 @@ namespace MelonLib.API
 
             try
             {
-                var response = await client.GetAsync($"{BaseURL}auth/login?username=NA&password=NA");
+                var response = await client.GetAsync($"{BaseURL}api/server/features");
                 RequestClient = client;
                 return true;
             }

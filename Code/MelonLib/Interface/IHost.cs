@@ -64,6 +64,9 @@ namespace Melon.Interface
         public bool RemovePluginMiddleware(string name);
         public Dictionary<string, Func<WebApiEventArgs, byte[]>> GetPluginMiddlewares();
 
+        /// <summary>Sign-ins, failures, signed-out devices and account changes (see <see cref="SecurityEventKinds"/>).</summary>
+        public event EventHandler<SecurityEvent> SecurityEventRaised;
+
         // ArtDeleteController
         public event EventHandler<WebApiEventArgs> ArtDeleteTrack;
         public event EventHandler<WebApiEventArgs> ArtDeleteAlbum;

@@ -249,7 +249,8 @@ namespace MelonWebApi.Controllers
                 var artist = ACollection.Find(aFilter).FirstOrDefault();
                 if (artist != null)
                 {
-                    var filter = Builders<Track>.Filter.AnyIn("TrackArtists._id", id);
+                    // AnyIn on "TrackArtists._id" throws (the field isn't an array of ids); match the embedded artist instead.
+                    var filter = Builders<Track>.Filter.ElemMatch(x => x.TrackArtists, a => a._id == id);
                     var trackProjection = Builders<Track>.Projection.Exclude(x => x.Path)
                                                             .Exclude(x => x.LyricsPath);
                     var trackDocs = TCollection.Find(filter).Project(trackProjection)
@@ -558,7 +559,7 @@ namespace MelonWebApi.Controllers
             var EditorsFilter = Builders<PlayQueue>.Filter.AnyEq(x => x.Editors, curId);
             var viewersFilter = Builders<PlayQueue>.Filter.AnyEq(x => x.Viewers, curId);
             var publicViewingFilter = Builders<PlayQueue>.Filter.Eq(x => x.PublicViewing, true);
-            var nameFilter = Builders<PlayQueue>.Filter.Regex(x => x.Name, new BsonRegularExpression(name, "i"));
+            var nameFilter = Builders<PlayQueue>.Filter.Regex(x => x.Name, new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(name ?? ""), "i"));
 
             // Combine filters with OR
             var orFilter = Builders<PlayQueue>.Filter.Or(ownerFilter, viewersFilter, publicViewingFilter, EditorsFilter);

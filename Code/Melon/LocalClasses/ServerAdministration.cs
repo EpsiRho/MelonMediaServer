@@ -53,6 +53,10 @@ public sealed partial class ServerAdministration : IMelonAdministration
             Database.RunCommand<BsonDocument>(new BsonDocument("ping", 1));
             conversions = DbVersionManager.CheckVersionCompatibility().Split(',', StringSplitOptions.RemoveEmptyEntries);
             needsAdmin = !Database.GetCollection<User>("Users").Find(FilterDefinition<User>.Empty).Limit(1).Any();
+            UserAccounts.EnsureUniqueUsernames(Database);
+            AuthSessions.EnsureIndexes(Database);
+            SecurityLog.EnsureIndexes(Database);
+            EqFilters.EnsureIndexes(Database);
             connected = true;
             if (!needsAdmin) File.Delete(Path.Combine(melonPath, "Configs", "setup.pending"));
             if (conversions.Length > 0 && LaunchArgs.ContainsKey("allowConversion"))
@@ -88,7 +92,8 @@ public sealed partial class ServerAdministration : IMelonAdministration
             try { servers = new MongoUrl(pendingMongoConnection ?? s.MongoDbConnectionString).Servers.Select(host => host.ToString()).ToArray(); }
             catch (Exception) { servers = []; } // A controller can replace an invalid legacy connection.
             return new([.. s.LibraryPaths], [.. s.ArtistSplitIndicators], [.. s.GenreSplitIndicators],
-                s.QueueCleanupWaitInHours, s.ListeningURL, Security.GetSSLConfig().PathToCert, appearance, servers, restartRequired);
+                s.QueueCleanupWaitInHours, s.ListeningURL, Security.GetSSLConfig().PathToCert, appearance, servers, restartRequired,
+                s.MaxArtUploadMegabytes, s.MaxPlaylistImportMegabytes, s.LogFileMegabytes, s.LogFilesKept);
         }
     }
 
@@ -107,6 +112,7 @@ public sealed partial class ServerAdministration : IMelonAdministration
             settings.MongoDbConnectionString = desiredMongo;
             // Existing API handlers use this address directly. Switch all users of the database together on restart.
             restartRequired |= settings.ListeningURL != MelonSettings.ListeningURL ||
+                settings.LogFileMegabytes != MelonSettings.LogFileMegabytes || settings.LogFilesKept != MelonSettings.LogFilesKept ||
                 settings.MongoDbConnectionString != MelonSettings.MongoDbConnectionString;
             pendingMongoConnection = settings.MongoDbConnectionString;
             settings.MongoDbConnectionString = MelonSettings.MongoDbConnectionString;
@@ -167,6 +173,27 @@ public sealed partial class ServerAdministration : IMelonAdministration
         if (!double.IsFinite(hours) || hours < 0 && hours != -1 || hours > TimeSpan.MaxValue.TotalHours - 1)
             throw new ArgumentException("Specify hours or -1 to disable cleanup.");
         ChangeSettings(s => s.QueueCleanupWaitInHours = hours);
+    }
+
+    public void SetUploadLimits(int artMegabytes, int playlistMegabytes)
+    {
+        if (artMegabytes is < 1 or > 200) throw new ArgumentException("Artwork limit must be 1–200 MB.");
+        if (playlistMegabytes is < 1 or > 100) throw new ArgumentException("Playlist import limit must be 1–100 MB.");
+        ChangeSettings(s => { s.MaxArtUploadMegabytes = artMegabytes; s.MaxPlaylistImportMegabytes = playlistMegabytes; });
+    }
+
+    public void SetLogLimits(int fileMegabytes, int filesKept)
+    {
+        if (fileMegabytes is < 1 or > 1024) throw new ArgumentException("Log file size must be 1–1024 MB.");
+        if (filesKept is < 1 or > 100) throw new ArgumentException("Log files kept must be 1–100.");
+        ChangeSettings(s => { s.LogFileMegabytes = fileMegabytes; s.LogFilesKept = filesKept; });
+    }
+
+
+    public void SignOutEveryone()
+    {
+        AuthSessions.SignOutEveryone(connected ? Database : null);
+        Messages.Publish("users", "Every device was signed out.");
     }
 
     public void SetAppearance(Appearance appearance)
@@ -253,6 +280,7 @@ public sealed partial class ServerAdministration : IMelonAdministration
             users.InsertOne(new User { _id = firstAdminId, Username = username, Type = "Admin",
                 Password = Security.HashPassword(password, out var salt), Salt = salt, LastLogin = DateTime.UtcNow,
                 Bio = "", FavAlbum = "", FavTrack = "", Friends = [] });
+            SecurityLog.Record(SecurityEventKinds.AccountCreated, firstAdminId, username, detail: "First administrator");
             needsAdmin = false;
             File.Delete(Path.Combine(melonPath, "Configs", "setup.pending"));
             Messages.Publish("setup", "First administrator created.");
@@ -432,19 +460,26 @@ public sealed partial class ServerAdministration : IMelonAdministration
 
     public Func<GithubResponse, Task>? PrepareWindowsUpdate { private get; set; }
     private readonly SemaphoreSlim updateLock = new(1);
+    /// <summary>The newest release on this server's branch (tags look like "Beta-0.9.0.0").</summary>
     private static async Task<GithubResponse> FetchRelease()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/EpsiRho/MelonMediaServer/releases/latest");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/EpsiRho/MelonMediaServer/releases?per_page=100");
         request.Headers.UserAgent.ParseAdd("MelonUpdater");
         using var response = await Releases.SendAsync(request);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<GithubResponse>() ?? throw new IOException("Empty release.");
+        var releases = await response.Content.ReadFromJsonAsync<GithubResponse[]>() ?? throw new IOException("Empty release list.");
+        var latest = ReleaseTag.Latest(releases.Where(r => !r.draft).Select(r => r.tag_name), StateManager.Branch)
+            ?? throw new IOException($"No releases on the {StateManager.Branch} branch.");
+        return releases.First(r => r.tag_name == latest.Tag);
     }
+
+    private static bool IsNewer(GithubResponse release) =>
+        ReleaseTag.TryParse(release.tag_name, out var tag) && tag.Version > System.Version.Parse(StateManager.Version);
 
     public async Task<ReleaseInfo> CheckForUpdates()
     {
         var release = await FetchRelease();
-        bool available = System.Version.Parse(release.tag_name.Split('/')[0].TrimStart('v')) > System.Version.Parse(StateManager.Version);
+        bool available = IsNewer(release);
         return new(available, StateManager.Version, release.tag_name, release.body ?? "");
     }
 
@@ -454,7 +489,7 @@ public sealed partial class ServerAdministration : IMelonAdministration
         try
         {
             var release = await FetchRelease();
-            if (System.Version.Parse(release.tag_name.Split('/')[0].TrimStart('v')) <= System.Version.Parse(StateManager.Version)) return false;
+            if (!IsNewer(release)) return false;
             if (OperatingSystem.IsWindows())
             {
                 var prepare = PrepareWindowsUpdate ?? throw new InvalidOperationException("The host does not support Windows bundle updates.");
@@ -469,7 +504,10 @@ public sealed partial class ServerAdministration : IMelonAdministration
 
     private static void StartInstaller()
     {
-        var directory = AppContext.BaseDirectory;
+        // Bundle layout: <root>/Server (this process) and <root>/Installer.
+        var server = new DirectoryInfo(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        var root = server.Name.Equals("Server", StringComparison.OrdinalIgnoreCase) ? server.Parent!.FullName : server.FullName;
+        var directory = Directory.Exists(Path.Combine(root, "Installer")) ? Path.Combine(root, "Installer") : server.FullName;
         var program = Path.Combine(directory, OperatingSystem.IsWindows() ? "MelonInstaller.exe" : "MelonInstaller");
         var start = new ProcessStartInfo(program) { UseShellExecute = false };
         if (!File.Exists(program))
@@ -477,7 +515,7 @@ public sealed partial class ServerAdministration : IMelonAdministration
             start.FileName = "dotnet";
             start.ArgumentList.Add(Path.Combine(directory, "MelonInstaller.dll"));
         }
-        foreach (var arg in new[] { "-update", "-restart", "-installPath", directory, "-lang", Language }) start.ArgumentList.Add(arg);
+        foreach (var arg in new[] { "-update", "-restart", "-installPath", root, "-branch", StateManager.Branch, "-lang", Language }) start.ArgumentList.Add(arg);
         Process.Start(start);
     }
 

@@ -1,6 +1,7 @@
 using Melon.LocalClasses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace MelonWebApi.Controllers;
 
@@ -41,6 +42,7 @@ public sealed class AccountManagementController : ControllerBase
     public IActionResult ResetForm() => PhysicalFile(Path.Combine(AppContext.BaseDirectory, "wwwroot", "reset-password.html"), "text/html; charset=utf-8");
 
     [AllowAnonymous]
+    [EnableRateLimiting(Program.AuthRateLimit)]
     [HttpPost("auth/reset-password")]
     public IActionResult CompleteReset([FromBody] ResetRequest request)
     {

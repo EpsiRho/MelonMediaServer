@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using Melon.Controllers;
 using Melon.Interface;
+using Melon.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -11,6 +13,24 @@ namespace MelonGUI;
 
 public sealed partial class MainWindow
 {
+    /// <summary>Sign-ins, failures and account changes, newest first (Melon keeps 90 days).</summary>
+    private async Task ShowSecurityEvents(SecurityEvent[] events)
+    {
+        var list = new StackPanel { Spacing = 10, MinWidth = 460 };
+        list.Children.Add(Text(T("Sign-ins, failed attempts, signed-out devices and account changes. Kept for 90 days."), "CaptionTextBlockStyle"));
+        if (events.Length == 0) list.Children.Add(Text(T("Nothing recorded yet.")));
+        foreach (var e in events)
+        {
+            var title = Text($"{T(SecurityEventText.Label(e.Kind))}  ·  {e.Username}", "BodyStrongTextBlockStyle");
+            if (e.Warning) title.Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemFillColorCautionBrush"];
+            var where = SecurityEventText.Where(e);
+            list.Children.Add(Stack(title, Text(e.TimeUtc.ToLocalTime().ToString("g") + (where.Length > 0 ? "  ·  " + where : ""), "CaptionTextBlockStyle")));
+        }
+        var dialog = new ContentDialog { XamlRoot = Root.XamlRoot, RequestedTheme = Root.ActualTheme, Title = T("Security events"),
+            Content = new ScrollViewer { Content = list, MaxHeight = 520 }, CloseButtonText = T("Close") };
+        await dialog.ShowAsync();
+    }
+
     private StackPanel? inviteRows;
     private AccessCode[] activeInvites = [];
     private string InviteTime(DateTime expires)
@@ -57,6 +77,43 @@ public sealed partial class MainWindow
         activeInvites = invites;
         DrawInvites();
         page.Children.Add(rows);
+
+        // Security settings live here, not in the web API, so a stolen admin token can't change them.
+        var config = settings!;
+        Section(page, "Security");
+        var art = new NumberBox { Header = T("Artwork upload limit (MB)"), Value = config.ArtUploadMegabytes, Minimum = 1, Maximum = 200,
+            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+        var lists = new NumberBox { Header = T("Playlist import limit (MB)"), Value = config.PlaylistImportMegabytes, Minimum = 1, Maximum = 100,
+            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+        page.Children.Add(Card(Row(Stack(art, lists), ButtonFor("Save", async () =>
+        {
+            if (!double.IsFinite(art.Value) || !double.IsFinite(lists.Value)) throw new ArgumentException(T("Enter a whole number."));
+            await Command(nameof(IMelonAdministration.SetUploadLimits), new { artMegabytes = (int)art.Value, playlistMegabytes = (int)lists.Value });
+        }))));
+        var logSize = new NumberBox { Header = T("Log file size (MB)"), Value = config.LogFileMegabytes, Minimum = 1, Maximum = 1024,
+            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+        var logKept = new NumberBox { Header = T("Log files kept"), Value = config.LogFilesKept, Minimum = 1, Maximum = 100,
+            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+        page.Children.Add(Card(Row(Stack(logSize, logKept, Text(T("Older files are deleted. Applies after a restart."), "CaptionTextBlockStyle")), ButtonFor("Save", async () =>
+        {
+            if (!double.IsFinite(logSize.Value) || !double.IsFinite(logKept.Value)) throw new ArgumentException(T("Enter a whole number."));
+            await Command(nameof(IMelonAdministration.SetLogLimits), new { fileMegabytes = (int)logSize.Value, filesKept = (int)logKept.Value });
+        }))));
+        if (status!.DatabaseConnected)
+        {
+            var recent = await Read<SecurityEvent[]>(nameof(IMelonAdministration.GetSecurityEvents), new { count = 200, warningsOnly = false });
+            int warnings = recent.Count(e => e.Warning && e.TimeUtc > DateTime.UtcNow.AddDays(-1));
+            page.Children.Add(Card(Row(Stack(Text(T("Security events"), "BodyStrongTextBlockStyle"),
+                Text(warnings > 0 ? $"{warnings:N0} " + T("warnings in 24 h") : T("No warnings in 24 h"), "CaptionTextBlockStyle")),
+                ButtonFor("View", () => ShowSecurityEvents(recent), refresh: false))));
+        }
+        page.Children.Add(Card(Row(Stack(Text(T("Sign out every device"), "BodyStrongTextBlockStyle"),
+            Text(T("Every app on every device has to sign in again."), "CaptionTextBlockStyle")),
+            ButtonFor("Sign out every device", async () =>
+            {
+                if (await Dialog("Sign out every device?", Text(T("Every app on every device has to sign in again.")), "Sign out", true))
+                    await Command(nameof(IMelonAdministration.SignOutEveryone));
+            }))));
     }
 
     private async Task EditUserType(ManagedUser user)

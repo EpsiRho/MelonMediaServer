@@ -8,9 +8,11 @@ using MelonLib.API;
 using MelonWebApi.Middleware;
 using MelonWebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using System.Threading.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 using Serilog;
 
 namespace MelonWebApi
@@ -19,8 +21,10 @@ namespace MelonWebApi
     {
         private static readonly HttpClient UpdateDownloads = new();
         public static MWebApi mWebApi;
-        public const string Version = "1.0.0.172918";
+        public const string Version = "0.9.0.0";
         public const string Branch = "Beta";
+        public const string AuthRateLimit = "auth", AnonymousArtRateLimit = "anonymous-art";
+        public const long MaxRequestBodyBytes = 1024 * 1024;
 
         public static async Task<int> Main(string[] args)
         {
@@ -71,7 +75,13 @@ namespace MelonWebApi
                 mWebApi = new MWebApi();
                 StateManager.Initialize(mWebApi);
                 admin.BeginRun();
-                Log.Logger = new LoggerConfiguration().WriteTo.File(Path.Combine(StateManager.melonPath, "MelonWebLogs.txt"))
+                // Secrets in request URLs (?jwt= media tokens, old ?password= logins) are masked before any sink sees them.
+                // The file rolls at the configured size and only the newest files are kept.
+                var logLimits = StateManager.MelonSettings;
+                Log.Logger = new LoggerConfiguration().Enrich.With<LogRedaction>()
+                    .WriteTo.File(Path.Combine(StateManager.melonPath, "MelonWebLogs.txt"),
+                        fileSizeLimitBytes: Math.Clamp(logLimits?.LogFileMegabytes ?? 100, 1, 1024) * 1024L * 1024,
+                        rollOnFileSizeLimit: true, retainedFileCountLimit: Math.Clamp(logLimits?.LogFilesKept ?? 5, 1, 100))
                     .WriteTo.Console().CreateLogger();
                 admin.ShutdownRequested += Shutdown;
                 Console.CancelKeyPress += Interrupt;
@@ -119,7 +129,31 @@ namespace MelonWebApi
                 });
                 builder.WebHost.UseStaticWebAssets();
 
-                builder.Services.AddControllers().AddNewtonsoftJson();
+                // The models are plain DTOs without nullable annotations: a field a client leaves null (e.g. a track's Chapters
+                // on files scanned before chapters existed) must not fail validation as "required".
+                builder.Services.AddControllers(o =>
+                {
+                    o.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+                    o.Filters.Add<PagingLimits>();
+                }).AddNewtonsoftJson();
+
+                // Clients behind a local reverse proxy or tunnel arrive from loopback; take their address from
+                // X-Forwarded-For (trusted from loopback only, the framework default) so rate limits apply per client.
+                builder.Services.Configure<ForwardedHeadersOptions>(o => o.ForwardedHeaders = ForwardedHeaders.XForwardedFor);
+
+                builder.Services.AddRateLimiter(o =>
+                {
+                    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                    // Sign-in, invite and reset endpoints: per client address.
+                    o.AddPolicy(AuthRateLimit, context => RateLimitPartition.GetFixedWindowLimiter(
+                        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+                    // Artwork without a token (resizing costs CPU): per client address; signed-in callers aren't limited.
+                    o.AddPolicy(AnonymousArtRateLimit, context => context.User.Identity?.IsAuthenticated == true
+                        ? RateLimitPartition.GetNoLimiter("signed-in")
+                        : RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                            _ => new FixedWindowRateLimiterOptions { PermitLimit = 300, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+                });
 
                 builder.Logging.ClearProviders();
 
@@ -137,7 +171,6 @@ namespace MelonWebApi
                 builder.Host.UseSerilog();
                 builder.Host.UseWindowsService();
 
-                var key = StateManager.JWTKey;
                 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                         .AddJwtBearer(x =>
                         {
@@ -146,7 +179,9 @@ namespace MelonWebApi
                             x.TokenValidationParameters = new TokenValidationParameters
                             {
                                 ValidateIssuerSigningKey = true,
-                                IssuerSigningKey = new SymmetricSecurityKey(key),
+                                // Resolved per request: "sign out every device" swaps the key while the server runs.
+                                IssuerSigningKeyResolver = (_, _, _, _) => [new SymmetricSecurityKey(StateManager.JWTKey)],
+                                ClockSkew = TimeSpan.FromMinutes(1),
                                 ValidateIssuer = false,
                                 ValidateAudience = false
                             };
@@ -156,7 +191,8 @@ namespace MelonWebApi
                                 {
                                     var principal = context.Principal!;
                                     var id = principal.FindFirstValue(ClaimTypes.UserData);
-                                    if (id == "NA" && principal.IsInRole("Server")) return;
+                                    var failure = TokenRules.Check(context.HttpContext, principal);
+                                    if (failure != null) { context.Fail(failure); return; }
                                     var account = await StateManager.DbClient.GetDatabase("Melon").GetCollection<User>("Users")
                                         .Find(u => u._id == id).Project(u => new { u.Password, u.Type, u.Username }).FirstOrDefaultAsync(context.HttpContext.RequestAborted);
                                     if (account == null || account.Username != principal.Identity?.Name || !principal.IsInRole(account.Type) ||
@@ -178,6 +214,7 @@ namespace MelonWebApi
                                         if (!string.IsNullOrEmpty(token))
                                         {
                                             context.Token = token;
+                                            context.HttpContext.Items[TokenRules.FromQueryKey] = true;
                                         }
                                     }
 
@@ -185,43 +222,25 @@ namespace MelonWebApi
                                 }
                             };
                         });
-                builder.Services.AddEndpointsApiExplorer();
-                builder.Services.AddSwaggerGen(c =>
-                {
-                    // Use method name as operationId
-                    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Melon Web API", Version = "v1.0.0" });
-
-                    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                    c.IncludeXmlComments(xmlPath);
-
-                    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                    {
-                        Description = @"JWT Authorization header using the Bearer scheme.",
-                        Name = "Authorization",
-                        In = ParameterLocation.Header,
-                        Type = SecuritySchemeType.ApiKey,
-                        Scheme = "Bearer"
-                    });
-
-                    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement()
-                    {
-                    {
-                        new OpenApiSecuritySchemeReference("Bearer", document),
-                        new List<string>()
-                    }
-                    });
-                });
-
                 builder.Services.Configure<KestrelServerOptions>(options =>
                 {
-                    options.AllowSynchronousIO = true;
+                    options.AllowSynchronousIO = false;
+                    // Requests are small JSON or query strings; endpoints that take uploads raise this with [RequestSizeLimit].
+                    options.Limits.MaxRequestBodySize = MaxRequestBodyBytes;
                 });
 
                 await using var app = builder.Build();
 
+                app.UseForwardedHeaders();
                 app.UseAuthentication();
+                // Security events recorded during this request name the caller and their address.
+                app.Use((context, next) =>
+                {
+                    SecurityLog.SetOrigin(context.User.FindFirstValue(ClaimTypes.UserData), context.Connection.RemoteIpAddress?.ToString());
+                    return next(context);
+                });
                 app.UseAuthorization();
+                app.UseRateLimiter();
                 app.UseHttpsRedirection();
                 app.UseMiddleware<PluginMiddleware>();
 
@@ -231,17 +250,6 @@ namespace MelonWebApi
                 };
 
                 app.UseWebSockets(webSocketOptions);
-
-                app.UseSwagger(options =>
-                {
-                    options.OpenApiVersion = OpenApiSpecVersion.OpenApi2_0;
-                });
-
-                app.UseSwaggerUI(options =>
-                {
-                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-                    options.RoutePrefix = string.Empty;
-                });
 
                 app.MapControllers();
 

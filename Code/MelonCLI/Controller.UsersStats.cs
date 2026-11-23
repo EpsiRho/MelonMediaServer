@@ -1,4 +1,6 @@
+using Melon.Controllers;
 using Melon.Interface;
+using Melon.Models;
 using Net.Codecrete.QrCodeGenerator;
 using Admin = Melon.Interface.IMelonAdministration;
 
@@ -41,6 +43,63 @@ internal sealed partial class Controller
                 }
             }) { Value = T(user.Role) });
         }
+
+        // Security settings live here, not in the web API, so a stolen admin token can't change them.
+        var config = await Read<ControllerSettings>(nameof(Admin.GetSettings));
+        page.Items.Add(Entry.Header(T("Security")));
+        page.Items.Add(Setting("Artwork upload limit (MB)", config.ArtUploadMegabytes.ToString(), async () =>
+        {
+            if (!int.TryParse(await Ask("Artwork upload limit (MB)", config.ArtUploadMegabytes.ToString(), help: T("1–200 MB.")), out int art))
+                throw new ArgumentException(T("Enter a whole number."));
+            await Write(nameof(Admin.SetUploadLimits), new { artMegabytes = art, playlistMegabytes = config.PlaylistImportMegabytes });
+        }));
+        page.Items.Add(Setting("Playlist import limit (MB)", config.PlaylistImportMegabytes.ToString(), async () =>
+        {
+            if (!int.TryParse(await Ask("Playlist import limit (MB)", config.PlaylistImportMegabytes.ToString(), help: T("1–100 MB.")), out int lists))
+                throw new ArgumentException(T("Enter a whole number."));
+            await Write(nameof(Admin.SetUploadLimits), new { artMegabytes = config.ArtUploadMegabytes, playlistMegabytes = lists });
+        }));
+        page.Items.Add(Setting("Log file size (MB)", config.LogFileMegabytes.ToString(), async () =>
+        {
+            if (!int.TryParse(await Ask("Log file size (MB)", config.LogFileMegabytes.ToString(), help: T("1–1024 MB. A new file starts at this size. Applies after a restart.")), out int size))
+                throw new ArgumentException(T("Enter a whole number."));
+            await Write(nameof(Admin.SetLogLimits), new { fileMegabytes = size, filesKept = config.LogFilesKept });
+        }));
+        page.Items.Add(Setting("Log files kept", config.LogFilesKept.ToString(), async () =>
+        {
+            if (!int.TryParse(await Ask("Log files kept", config.LogFilesKept.ToString(), help: T("1–100. Older files are deleted. Applies after a restart.")), out int kept))
+                throw new ArgumentException(T("Enter a whole number."));
+            await Write(nameof(Admin.SetLogLimits), new { fileMegabytes = config.LogFileMegabytes, filesKept = kept });
+        }));
+        if (status.DatabaseConnected)
+        {
+            var recent = await Read<SecurityEvent[]>(nameof(Admin.GetSecurityEvents), new { count = 200, warningsOnly = false });
+            int warnings = recent.Count(e => e.Warning && e.TimeUtc > DateTime.UtcNow.AddDays(-1));
+            page.Items.Add(new Entry(T("Security events"), () => SecurityEvents(recent))
+            {
+                Value = warnings > 0 ? $"{warnings:N0} " + T("warnings in 24 h") : T("No warnings in 24 h"),
+                ValueTone = warnings > 0 ? Tone.Warn : Tone.Muted,
+            });
+        }
+        page.Items.Add(Action("Sign out every device", async () =>
+        {
+            await Confirm("Sign out every device?", T("Every app on every device has to sign in again."), true);
+            await Write(nameof(Admin.SignOutEveryone));
+            Say(T("Every device was signed out."));
+        }, Tone.Danger));
+    }
+
+    /// <summary>Sign-ins, failures and account changes, newest first (Melon keeps 90 days).</summary>
+    private async Task SecurityEvents(SecurityEvent[] events)
+    {
+        if (events.Length == 0) { await Show("Security events", T("Nothing recorded yet.")); return; }
+        var rows = events.Select(e => (new[]
+        {
+            e.TimeUtc.ToLocalTime().ToString("g"), T(SecurityEventText.Label(e.Kind)), e.Username ?? "", SecurityEventText.Where(e)
+        }, 0d, e.Warning ? Tone.Warn : Tone.Normal));
+        await ShowBlocks("Security events",
+            new Para(T("Sign-ins, failed attempts, signed-out devices and account changes. Kept for 90 days."), Tone.Muted),
+            new Table([T("Time"), T("Event"), T("User"), T("Details")], [false, false, false, false], rows));
     }
 
     private Tone Urgency(AccessCode grant)

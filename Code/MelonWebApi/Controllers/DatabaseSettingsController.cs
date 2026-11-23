@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Melon.Models;
 using MongoDB.Driver;
+using MelonWebApi.Middleware;
 
 namespace YourNamespace.Controllers
 {
@@ -14,6 +15,7 @@ namespace YourNamespace.Controllers
     [Route("api/settings/db")]
     public class DatabaseController : ControllerBase
     {
+
         // Backup Database
         [Authorize(Roles = "Admin")]
         [HttpPost("backup")]
@@ -79,7 +81,8 @@ namespace YourNamespace.Controllers
         // Import Playlist
         [Authorize(Roles = "Admin, User")]
         [HttpPost("import-playlist")]
-        public IActionResult ImportPlaylist(IFormFile plstFile)
+        [UploadLimit(UploadKind.PlaylistImport)]
+        public async Task<IActionResult> ImportPlaylist(IFormFile plstFile)
         {
             var curId = ((ClaimsIdentity)User.Identity).Claims
                       .Where(c => c.Type == ClaimTypes.UserData)
@@ -90,11 +93,14 @@ namespace YourNamespace.Controllers
             }
 
             if (string.IsNullOrEmpty(curId)) return Forbid();
-            var extension = Path.GetExtension(Path.GetFileName(plstFile.FileName));
+            if (plstFile.Length > UploadLimitAttribute.Bytes(UploadKind.PlaylistImport)) return BadRequest("Playlist file is too large.");
+            // The extension picks the parser, so keep it, but only as a short plain extension (no paths or streams).
+            var extension = Path.GetExtension(Path.GetFileName(plstFile.FileName ?? ""));
+            if (!System.Text.RegularExpressions.Regex.IsMatch(extension, @"^\.[A-Za-z0-9]{1,8}$")) return BadRequest("File Not Supported.");
             var tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + extension);
             try
             {
-                using (var stream = new FileStream(tempFilePath, FileMode.CreateNew)) plstFile.CopyTo(stream);
+                await using (var stream = new FileStream(tempFilePath, FileMode.CreateNew)) await plstFile.CopyToAsync(stream);
                 return ServerAdministration.Instance.ImportPlaylists(tempFilePath, curId) == 1
                     ? Ok("Playlist imported successfully.") : BadRequest("File Not Supported.");
             }

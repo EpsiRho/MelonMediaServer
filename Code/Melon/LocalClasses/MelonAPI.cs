@@ -1,4 +1,4 @@
-using Melon.Types;
+﻿using Melon.Types;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
@@ -309,6 +309,37 @@ namespace Melon.LocalClasses
 
             return null;
         }
+        private static bool IsUserStat(string property) =>
+            property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings");
+
+        /// <summary>
+        /// Filter on the requesting user's own play count, skip count or rating. The value is compared as a number
+        /// (it used to go to the database as text, which never equals the stored number, so these filters matched
+        /// nothing), and an item the user has never played or rated counts as 0, so "rating below 6" or "rating is 0"
+        /// include unrated items. Returns null when the value isn't a whole number.
+        /// </summary>
+        private static FilterDefinition<T> UserStatFilter<T>(string property, string type, string raw, string userId)
+        {
+            if (!long.TryParse(raw?.Trim(), out long v))
+            {
+                return null;
+            }
+            var stats = Builders<UserStat>.Filter;
+            var mine = stats.Eq(x => x.UserId, userId);
+            FilterDefinition<T> Has(FilterDefinition<UserStat> match) => Builders<T>.Filter.ElemMatch(property, stats.And(mine, match));
+            var none = Builders<T>.Filter.Not(Builders<T>.Filter.ElemMatch(property, mine));
+            FilterDefinition<T> OrNone(FilterDefinition<T> f, bool zeroMatches) => zeroMatches ? Builders<T>.Filter.Or(f, none) : f;
+
+            return type switch
+            {
+                "Eq" or "Contains" => OrNone(Has(stats.Eq(x => x.Value, v)), v == 0),
+                "NotEq" => OrNone(Has(stats.Ne(x => x.Value, v)), v != 0),
+                "Lt" => OrNone(Has(stats.Lt(x => x.Value, v)), 0 < v),
+                "Gt" => OrNone(Has(stats.Gt(x => x.Value, v)), 0 > v),
+                _ => Builders<T>.Filter.Empty // unknown comparison: no filter, as before
+            };
+        }
+
         public static List<Track> FindTracks(List<string> AndFilters, List<string> OrFilters, string UserId, int page, int count, string sort = "NameAsc")
         {
             if(AndFilters == null)
@@ -338,33 +369,14 @@ namespace Melon.LocalClasses
                 string type = filter.Split(";")[1];
                 object value = filter.Split(";")[2];
 
-                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                if (IsUserStat(property))
                 {
-                    if (type == "Contains")
+                    var stat = UserStatFilter<Track>(property, type, value.ToString(), UserId);
+                    if (stat == null)
                     {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                        return null;
                     }
-                    else if (type == "Eq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "NotEq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
-                        AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Lt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
-                        AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Gt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
-                        AndDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
-                    }
+                    AndDefs.Add(stat);
                 }
                 else if (property.Contains("Playlist"))
                 {
@@ -436,33 +448,14 @@ namespace Melon.LocalClasses
                 string type = filter.Split(";")[1];
                 object value = filter.Split(";")[2];
 
-                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                if (IsUserStat(property))
                 {
-                    if (type == "Contains")
+                    var stat = UserStatFilter<Track>(property, type, value.ToString(), UserId);
+                    if (stat == null)
                     {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
+                        return null;
                     }
-                    else if (type == "Eq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "NotEq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
-                        OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Lt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
-                        OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Gt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
-                        OrDefs.Add(Builders<Track>.Filter.ElemMatch(property, f));
-                    }
+                    OrDefs.Add(stat);
                 }
                 else if (property.Contains("Playlist"))
                 {
@@ -729,33 +722,14 @@ namespace Melon.LocalClasses
                 string type = filter.Split(";")[1];
                 object value = filter.Split(";")[2];
 
-                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                if (IsUserStat(property))
                 {
-                    if (type == "Contains")
+                    var stat = UserStatFilter<Album>(property, type, value.ToString(), UserId);
+                    if (stat == null)
                     {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        AndDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                        return null;
                     }
-                    else if (type == "Eq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        AndDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "NotEq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
-                        AndDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Lt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
-                        AndDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Gt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
-                        AndDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
-                    }
+                    AndDefs.Add(stat);
                 }
                 else if (property.Contains("Playlist"))
                 {
@@ -840,33 +814,14 @@ namespace Melon.LocalClasses
                 string type = filter.Split(";")[1];
                 object value = filter.Split(";")[2];
 
-                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                if (IsUserStat(property))
                 {
-                    if (type == "Contains")
+                    var stat = UserStatFilter<Album>(property, type, value.ToString(), UserId);
+                    if (stat == null)
                     {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        OrDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
+                        return null;
                     }
-                    else if (type == "Eq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        OrDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "NotEq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
-                        OrDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Lt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
-                        OrDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Gt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
-                        OrDefs.Add(Builders<Album>.Filter.ElemMatch(property, f));
-                    }
+                    OrDefs.Add(stat);
                 }
                 else if (property.Contains("Playlist"))
                 {
@@ -1125,33 +1080,14 @@ namespace Melon.LocalClasses
                 string type = filter.Split(";")[1];
                 object value = filter.Split(";")[2];
 
-                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                if (IsUserStat(property))
                 {
-                    if (type == "Contains")
+                    var stat = UserStatFilter<Artist>(property, type, value.ToString(), UserId);
+                    if (stat == null)
                     {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                        return null;
                     }
-                    else if (type == "Eq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "NotEq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
-                        AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Lt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
-                        AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Gt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
-                        AndDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
-                    }
+                    AndDefs.Add(stat);
                 }
                 //else if (property.Contains("Playlist"))
                 //{
@@ -1210,33 +1146,14 @@ namespace Melon.LocalClasses
                 string type = filter.Split(";")[1];
                 object value = filter.Split(";")[2];
 
-                if (property.Contains("PlayCounts") || property.Contains("SkipCounts") || property.Contains("Ratings"))
+                if (IsUserStat(property))
                 {
-                    if (type == "Contains")
+                    var stat = UserStatFilter<Artist>(property, type, value.ToString(), UserId);
+                    if (stat == null)
                     {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
+                        return null;
                     }
-                    else if (type == "Eq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Eq(x => x.Value, value));
-                        OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "NotEq")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Ne(x => x.Value, value));
-                        OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Lt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Lt(x => x.Value, value));
-                        OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
-                    }
-                    else if (type == "Gt")
-                    {
-                        var f = Builders<UserStat>.Filter.And(Builders<UserStat>.Filter.Eq(x => x.UserId, UserId), Builders<UserStat>.Filter.Gt(x => x.Value, value));
-                        OrDefs.Add(Builders<Artist>.Filter.ElemMatch(property, f));
-                    }
+                    OrDefs.Add(stat);
                 }
                 //else if (property.Contains("Playlist"))
                 //{

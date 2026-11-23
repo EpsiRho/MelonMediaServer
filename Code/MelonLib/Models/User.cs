@@ -14,6 +14,8 @@
         public bool PublicStats { get; set; }
         public List<string> Friends { get; set; }
         public DateTime LastLogin { get; set; }
+        /// <summary>File name of the user's profile picture in &lt;melonPath&gt;/UserPfps (null/empty = none).</summary>
+        public string ProfilePicPath { get; set; }
 
     }
     public class ResponseUser

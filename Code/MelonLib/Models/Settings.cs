@@ -28,6 +28,14 @@ namespace Melon.Models
         public Color Error { get; set; }
         public bool UseMenuColor { get; set; }
         public double QueueCleanupWaitInHours { get; set; } = 48;
+        /// <summary>Largest artwork upload accepted, in megabytes. Local controllers only.</summary>
+        public int MaxArtUploadMegabytes { get; set; } = 20;
+        /// <summary>Largest playlist/collection import accepted, in megabytes. Local controllers only.</summary>
+        public int MaxPlaylistImportMegabytes { get; set; } = 2;
+        /// <summary>Size at which the server log starts a new file, in megabytes. Local controllers only.</summary>
+        public int LogFileMegabytes { get; set; } = 100;
+        /// <summary>Log files kept, counting the current one; older ones are deleted. Local controllers only.</summary>
+        public int LogFilesKept { get; set; } = 5;
     }
     public class ShortSettings
     {

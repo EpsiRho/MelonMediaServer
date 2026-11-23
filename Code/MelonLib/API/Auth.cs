@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net;
 using System.Text;
@@ -21,10 +22,17 @@ namespace MelonLib.API
 
             try
             {
-                var response = await APIClient.RequestClient.GetAsync($"{APIClient.BaseURL}auth/login?username={username}&password={password}");
+                // Session sign-in: the password goes once in the Basic header; the access token lasts 15 minutes.
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{APIClient.BaseURL}auth/token")
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(new { deviceName = APIClient.UserAgent }), Encoding.UTF8, "application/json")
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}")));
+                var response = await APIClient.RequestClient.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
-                    APIClient.JWT = response.Content.ReadAsStringAsync().Result.Replace("\"", "");
+                    using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                    APIClient.JWT = doc.RootElement.GetProperty("accessToken").GetString();
                     APIClient.RequestClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", APIClient.JWT);
                     return 0;
                 }
