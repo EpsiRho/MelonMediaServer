@@ -457,6 +457,16 @@ pre code.hljs {
     gap: 10px;
 }
 
+.client-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.client-card p {
+    margin: 0 0 14px;
+}
+
 .cta {
     margin: 1.2em 0 1.6em;
 }

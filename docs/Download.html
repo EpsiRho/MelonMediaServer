@@ -63,6 +63,35 @@
           <tr><td>Full zip</td><td>Installing offline: <code>MelonInstaller -localPath Melon-win-x64.zip</code></td></tr>
         </tbody>
       </table>
+
+      <h2 id="download-clients">Download Clients</h2>
+      <p>
+        Melon is the server. To listen, you'll want a client on the device you're
+        listening on.
+      </p>
+      <div class="client-grid">
+        <div class="release-card client-card">
+          <div class="release-head">
+            <h3>Galia</h3>
+            <span id="galia-version" class="muted"></span>
+          </div>
+          <p>The Windows app. Windows 10 2004 or newer, x64.</p>
+          <div class="release-actions">
+            <a id="galia-get" class="btn disabled">Coming soon</a>
+            <a id="galia-notes" class="btn btn-ghost" hidden>Release notes ↗</a>
+          </div>
+        </div>
+        <div class="release-card client-card">
+          <div class="release-head">
+            <h3>Watermelon</h3>
+            <span class="muted"></span>
+          </div>
+          <p>The iOS app. It'll come through TestFlight.</p>
+          <div class="release-actions">
+            <a class="btn disabled">Coming soon</a>
+          </div>
+        </div>
+      </div>
     </div>
     </div>
     <script src="/sidebar.js"></script>
@@ -180,6 +209,44 @@
         }
       }
       load();
+
+      // Clients. Galia shows a download once its releases can be seen (the repo is private for now, so GitHub says
+      // 404 and it stays "Coming soon"). The answer is kept for 10 minutes either way, to go easy on GitHub's limit.
+      async function loadGalia() {
+        const KEY = 'galia-release';
+        let latest = null;
+        try {
+          const cached = JSON.parse(localStorage.getItem(KEY));
+          if (cached && Date.now() - cached.time < FRESH_MS) latest = cached.latest;
+          else throw 0;
+        } catch {
+          try {
+            const res = await fetch('https://api.github.com/repos/EpsiRho/Galia/releases?per_page=30');
+            if (res.ok || res.status === 404) {
+              const releases = res.ok ? await res.json() : [];
+              const found = releases
+                .filter(r => !r.draft)
+                .map(r => ({ r, t: parse(r.tag_name) || parse(r.name), zip: r.assets.find(a => /^Galia-.*-win-x64\.zip$/.test(a.name)) }))
+                .filter(x => x.t && x.zip)
+                .sort((a, b) => rank(a.t.branch) - rank(b.t.branch) || cmp(b.t.parts, a.t.parts))[0];
+              latest = found ? { branch: found.t.branch, version: found.t.version, url: found.zip.browser_download_url,
+                name: found.zip.name, size: found.zip.size, notes: found.r.html_url } : null;
+              try { localStorage.setItem(KEY, JSON.stringify({ time: Date.now(), latest })); } catch { }
+            }
+          } catch { }
+        }
+        if (!latest) return;
+        $('galia-version').textContent = `${latest.branch} ${latest.version}`;
+        const get = $('galia-get');
+        get.textContent = 'Download';
+        get.classList.remove('disabled');
+        get.classList.add('btn-primary');
+        get.href = latest.url;
+        get.title = `${latest.name} · ${(latest.size / 1048576).toFixed(0)} MB`;
+        $('galia-notes').href = latest.notes;
+        $('galia-notes').hidden = false;
+      }
+      loadGalia();
     </script>
   </body>
 </html>
