@@ -1,6 +1,0 @@
-node_modules/
-examples/bin/
-examples/obj/
-*.log
-artifacts/
-.sites-local/

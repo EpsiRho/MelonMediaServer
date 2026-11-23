@@ -5,7 +5,6 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RestoreAdditionalProjectSources>$(RestoreAdditionalProjectSources);$(MSBuildThisFileDirectory)vendor</RestoreAdditionalProjectSources>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\MelonLib\MelonLib.csproj" />

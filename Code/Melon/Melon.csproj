@@ -51,7 +51,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\MelonLib\MelonLib.csproj" />
-    <ProjectReference Include="..\FFTVIS\FFTVIS.csproj" />
+    <PackageReference Include="FFTVIS" Version="2.0.0" />
     <ProjectReference Include="..\Nova\Nova.csproj" />
   </ItemGroup>
 
