@@ -25,6 +25,18 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+      - name: MelonUI package
+        # MelonCLI needs MelonUI 1.0.0. Until it's on nuget.org, pack it from the MelonUI repo.
+        shell: pwsh
+        run: |
+          $ok = (Invoke-WebRequest https://api.nuget.org/v3-flatcontainer/melonui/index.json -SkipHttpErrorCheck).Content -match '"1\.0\.0"'
+          if (-not $ok) {
+            git clone --depth 1 https://github.com/EpsiRho/MelonUI.git "$env:RUNNER_TEMP/MelonUI"
+            Remove-Item "$env:RUNNER_TEMP/MelonUI/global.json"
+            dotnet pack "$env:RUNNER_TEMP/MelonUI/MelonUI/MelonUI.csproj" -c Release -o "$env:RUNNER_TEMP/feed"
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            dotnet nuget add source "$env:RUNNER_TEMP/feed" --name melonui-local
+          }
       - name: Stamp version
         if: github.event_name == 'release'
         shell: pwsh
