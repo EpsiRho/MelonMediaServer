@@ -21,7 +21,7 @@ namespace MelonWebApi
     {
         private static readonly HttpClient UpdateDownloads = new();
         public static MWebApi mWebApi;
-        public const string Version = "0.9.0.0";
+        public const string Version = "0.9.0.1";
         public const string Branch = "Beta";
         public const string AuthRateLimit = "auth", AnonymousArtRateLimit = "anonymous-art";
         public const long MaxRequestBodyBytes = 1024 * 1024;

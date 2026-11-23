@@ -1,4 +1,6 @@
 {
   "base": "0.9.0",
-  "branches": {}
+  "branches": {
+    "Beta": "0.9.0.1"
+  }
 }
