@@ -25,18 +25,6 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - name: MelonUI package
-        # MelonCLI needs MelonUI 1.0.0. Until it's on nuget.org, pack it from the MelonUI repo.
-        shell: pwsh
-        run: |
-          $ok = (Invoke-WebRequest https://api.nuget.org/v3-flatcontainer/melonui/index.json -SkipHttpErrorCheck).Content -match '"1\.0\.0"'
-          if (-not $ok) {
-            git clone --depth 1 https://github.com/EpsiRho/MelonUI.git "$env:RUNNER_TEMP/MelonUI"
-            Remove-Item "$env:RUNNER_TEMP/MelonUI/global.json"
-            dotnet pack "$env:RUNNER_TEMP/MelonUI/MelonUI/MelonUI.csproj" -c Release -o "$env:RUNNER_TEMP/feed"
-            if ($LASTEXITCODE) { exit $LASTEXITCODE }
-            dotnet nuget add source "$env:RUNNER_TEMP/feed" --name melonui-local
-          }
       - name: Stamp version
         if: github.event_name == 'release'
         shell: pwsh
@@ -54,15 +42,18 @@ jobs:
         shell: pwsh
         run: |
           $rid = '${{ matrix.rid }}'
-          dotnet publish Code/MelonWebApi/MelonWebApi.csproj -c Release -r $rid --self-contained -o bundle/Server
+          # Same flags as MelonInstaller's build mode: .NET bundled in, one exe per app, no .pdb files,
+          # and no translated library messages (Melon's own strings are built in).
+          $flags = '-c','Release','-r',$rid,'--self-contained','-p:PublishSingleFile=true','-p:DebugType=none','-p:SatelliteResourceLanguages=en'
+          dotnet publish Code/MelonWebApi/MelonWebApi.csproj @flags -o bundle/Server
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          dotnet publish Code/MelonCLI/MelonCLI.csproj -c Release -r $rid --self-contained -o bundle/CLI
+          dotnet publish Code/MelonCLI/MelonCLI.csproj @flags -o bundle/CLI
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          dotnet publish Code/MelonInstaller/MelonInstaller.csproj -c Release -r $rid --self-contained -p:PublishSingleFile=true -o bundle/Installer
+          dotnet publish Code/MelonInstaller/MelonInstaller.csproj @flags -o bundle/Installer
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $parts = 'Server','CLI','Installer'
           if ($rid -eq 'win-x64') {
-            dotnet publish Code/MelonGUI/MelonGUI.csproj -c Release -r $rid -p:Platform=x64 --self-contained -o bundle/Controller
+            dotnet publish Code/MelonGUI/MelonGUI.csproj @flags -p:Platform=x64 -o bundle/Controller
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
             $parts += 'Controller'
             Copy-Item bundle/Installer/MelonInstaller.exe MelonInstaller-win-x64.exe

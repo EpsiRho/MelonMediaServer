@@ -509,12 +509,9 @@ public sealed partial class ServerAdministration : IMelonAdministration
         var root = server.Name.Equals("Server", StringComparison.OrdinalIgnoreCase) ? server.Parent!.FullName : server.FullName;
         var directory = Directory.Exists(Path.Combine(root, "Installer")) ? Path.Combine(root, "Installer") : server.FullName;
         var program = Path.Combine(directory, OperatingSystem.IsWindows() ? "MelonInstaller.exe" : "MelonInstaller");
+        // Releases carry their own .NET, so the installer is always a native exe; there's no "dotnet MelonInstaller.dll" to fall back on.
+        if (!File.Exists(program)) throw new FileNotFoundException("MelonInstaller was not found next to the server.", program);
         var start = new ProcessStartInfo(program) { UseShellExecute = false };
-        if (!File.Exists(program))
-        {
-            start.FileName = "dotnet";
-            start.ArgumentList.Add(Path.Combine(directory, "MelonInstaller.dll"));
-        }
         foreach (var arg in new[] { "-update", "-restart", "-installPath", root, "-branch", StateManager.Branch, "-lang", Language }) start.ArgumentList.Add(arg);
         Process.Start(start);
     }

@@ -48,4 +48,16 @@
     <Folder Include="Services\" />
   </ItemGroup>
 
+  <!-- Release builds bundle the server into one exe (see MelonBuildManager). These stay as loose files beside it:
+       MelonLib.dll, so plugin projects can reference it from the Server folder, and NAudio.Lame.dll, because it
+       finds its native LAME library using its own file path.
+       It also drops native .pdb files (SkiaSharp ships a 100 MB one) that DebugType=none doesn't catch. -->
+  <Target Name="KeepLooseFiles" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'" />
+      <ResolvedFileToPublish Condition="'%(Filename)' == 'MelonLib' or '%(Filename)' == 'NAudio.Lame'">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 </Project>

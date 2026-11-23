@@ -130,9 +130,35 @@ Continue? (y/N)</code></pre>
         at the <code>Code</code> folder:
       </p>
       <pre><code class="language-bash">MelonInstaller -build -buildPath ./Code -branch Beta -outputPath ./Build</code></pre>
-      <pre><code class="language-plaintext">[+] Building Beta 0.9.0.3
-[+] Build Package created at ./Build/Melon-Beta-0.9.0.3-win-x64.zip
+      <pre><code class="language-plaintext">[+] Building Beta 0.9.0.3 (win-x64)
+
+[1/5] Server         45s
+[2/5] CLI            20s
+[3/5] Installer      15s
+[4/5] Controller     40s
+[5/5] Zip            10s
+
+[+] Build Package created at ./Build/Melon-Beta-0.9.0.3-win-x64.zip (231 MB, 2m 10s)
 [+] Publish it as GitHub release tag Beta-0.9.0.3 (Beta 0.9.0.3)</code></pre>
+      <p>
+        The Controller step only happens on Windows. The output from
+        <code>dotnet publish</code> goes to a <code>.log</code> file next to the
+        zip instead of the screen. If a step fails, the installer prints the
+        error lines and where the log is. If the build works, the log gets deleted.
+      </p>
+      <p>
+        Every app is built with its own copy of .NET, so people don't need .NET
+        installed to run Melon. Each app is also bundled into a single exe. A few
+        files have to stay next to the exe:
+      </p>
+      <ul>
+        <li>Native libraries the exe can't hold, like SkiaSharp and LAME.</li>
+        <li><code>MelonLib.dll</code> in <code>Server</code>, so plugins can reference it.</li>
+        <li><code>NAudio.Lame.dll</code> in <code>Server</code>, because it looks for LAME next to itself.</li>
+      </ul>
+      <p>
+        There are no <code>.pdb</code> debug files in a release.
+      </p>
       <p>
         The build count lives in <code>Code/MelonInstaller/BuildVersions.json</code>,
         so commit it after a build:

@@ -69,16 +69,12 @@ namespace MelonInstaller.Classes
 
             try
             {
-                UIManager.ZipProgressView(StringsManager.GetString("MelonExtracting")!);
-                ZipManager.ExtractZip(installTemp, installPath, new Progress<double>(x => UIManager.zipPercentage = x)).Wait();
-                UIManager.endDisplay = true;
-                Thread.Sleep(500);
+                using (var progress = new ProgressLine(StringsManager.GetString("MelonExtracting")!))
+                    ZipManager.ExtractZip(installTemp, installPath, new Progress<double>(progress.Report)).Wait();
                 Console.WriteLine($"[+] {StringsManager.GetString("MelonExtracted")} {installPath.Replace("\\", "/")}");
             }
             catch (Exception e)
             {
-                UIManager.endDisplay = true;
-                Thread.Sleep(500);
                 Console.WriteLine($"[!] {StringsManager.GetString("InstallFailed")}");
                 Console.WriteLine($"[!] {e.Message}");
                 return;
@@ -276,10 +272,9 @@ namespace MelonInstaller.Classes
         {
             var server = Path.Combine(installPath, "Server");
             var exe = Path.Combine(server, OperatingSystem.IsWindows() ? "MelonWebApi.exe" : "MelonWebApi");
-            var start = File.Exists(exe)
-                ? new ProcessStartInfo(exe) { UseShellExecute = false, WorkingDirectory = server }
-                : new ProcessStartInfo("dotnet", Path.Combine(installPath, "MelonWebApi.dll")) { UseShellExecute = false };
-            Process.Start(start);
+            // Releases carry their own .NET, so the server is always a native exe.
+            if (!File.Exists(exe)) throw new FileNotFoundException("MelonWebApi was not found after updating.", exe);
+            Process.Start(new ProcessStartInfo(exe) { UseShellExecute = false, WorkingDirectory = server });
             Environment.Exit(0);
         }
     }

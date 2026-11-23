@@ -1,81 +1,71 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 namespace MelonInstaller.Classes
 {
-    public static class UIManager
+    /// <summary>
+    /// One line of progress that redraws itself in place, like "[2/5] CLI          14s" or "Extracting    63%".
+    /// It shows the elapsed time until <see cref="Report"/> gives it a percentage. When output is redirected
+    /// (CI, logs) it skips the redrawing and just prints the finished line.
+    /// </summary>
+    public sealed class ProgressLine : IDisposable
     {
-        public static bool endDisplay = false;
-        public static double zipPercentage = 0;
-        public static void ZipProgressView(string action)
+        private static readonly bool Live = !Console.IsOutputRedirected;
+        private readonly string label;
+        private readonly Stopwatch clock = Stopwatch.StartNew();
+        private readonly Timer? timer;
+        private readonly object gate = new();
+        private double? percent;
+        private bool finished;
+
+        public ProgressLine(string label)
         {
-            endDisplay = false;
-            if (Console.IsOutputRedirected)
-            {
-                Console.WriteLine($"[+] {action}...");
-                return;
-            }
-            try { Console.CursorVisible = false; } catch (IOException) { }
-            Console.WriteLine();
-
-            endDisplay = false;
-            int sLeft = Console.CursorLeft;
-            int sTop = Console.CursorTop;
-            Thread DisplayThread = new Thread(() =>
-            {
-                int x = Console.WindowWidth;
-                while (!endDisplay)
-                {
-                    if (endDisplay)
-                    {
-                        return;
-                    }
-                    if (x != Console.WindowWidth)
-                    {
-                        x = Console.WindowWidth;
-                    }
-                    try
-                    {
-                        Console.CursorTop = sTop;
-                        Console.CursorLeft = sLeft;
-                        var msg = $"{action}: {(zipPercentage*100).ToString("000.00")}%";
-                        Console.Write(msg);
-                        Console.WriteLine(new string(' ', Console.WindowWidth - msg.Length - 1));
-                        DisplayProgressBar(zipPercentage, '#', '-');
-                        Console.WriteLine(new string(' ', Console.WindowWidth));
-                    }
-                    catch (Exception)
-                    {
-
-                    }
-                    Thread.Sleep(50);
-                }
-                Console.CursorVisible = true;
-            });
-            DisplayThread.IsBackground = true;
-            DisplayThread.Start();
+            this.label = label;
+            if (Live) timer = new Timer(_ => Draw(), null, 0, 250);
         }
-        private static void DisplayProgressBar(double progressPercentage, char foreground, char background)
+
+        public TimeSpan Elapsed => clock.Elapsed;
+
+        /// <summary>Show a percentage (0 to 1) instead of the elapsed time.</summary>
+        public void Report(double value) => percent = Math.Clamp(value, 0, 1);
+
+        /// <summary>Draw the line one last time with <paramref name="status"/> (the elapsed time if null) and move to the next line.</summary>
+        public void Finish(string? status = null)
         {
-            try
+            timer?.Dispose();
+            lock (gate)
             {
-                // 8 in the am pm gang
-                double completedWidth = (Console.WindowWidth - 4) * progressPercentage;
-                double remainingWidth = (Console.WindowWidth - 4) - completedWidth;
-
-                string progressBar = new string(foreground, (int)completedWidth);
-                string backgroundBar = new string(background, (int)remainingWidth);
-                Console.CursorLeft = 0;
-                Console.WriteLine($"[{progressBar}{backgroundBar}] ");
+                if (finished) return;
+                finished = true;
+                status ??= Seconds(clock.Elapsed);
+                if (Live) { Write(status); Console.WriteLine(); }
+                else Console.WriteLine($"{label.PadRight(20)} {status}");
             }
-            catch (Exception)
+        }
+
+        public void Dispose() => Finish();
+
+        private void Draw()
+        {
+            lock (gate)
             {
-
+                if (finished) return;
+                Write(percent is double p ? $"{p * 100,3:0}%" : Seconds(clock.Elapsed));
             }
+        }
 
+        private void Write(string status)
+        {
+            var line = $"{label.PadRight(20)} {status}";
+            // Pad with spaces so a shorter line covers up whatever the last one left behind.
+            Console.Write("\r" + line.PadRight(Math.Max(line.Length, Width() - 1)));
+        }
+
+        public static string Seconds(TimeSpan time) => time.TotalMinutes >= 1 ? $"{(int)time.TotalMinutes}m {time.Seconds:00}s" : $"{time.TotalSeconds:0}s";
+
+        private static int Width()
+        {
+            try { return Console.WindowWidth; }
+            catch (IOException) { return 80; }
         }
     }
 }

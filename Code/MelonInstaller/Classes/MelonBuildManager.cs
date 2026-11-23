@@ -53,7 +53,8 @@ namespace MelonInstaller.Classes
             var output = LaunchArgs.GetValueOrDefault("outputPath", "Build");
             Directory.CreateDirectory(output);
             outputPath = Path.Combine(output, $"Melon-{release.Tag}-{RuntimeIdentifier}.zip");
-            Console.WriteLine($"[+] {StringsManager.GetString("BuildingVersion")} {release.Title}");
+            Console.WriteLine($"[+] {StringsManager.GetString("BuildingVersion")} {release.Title} ({RuntimeIdentifier})");
+            Console.WriteLine();
             return true;
         }
 
@@ -62,35 +63,53 @@ namespace MelonInstaller.Classes
             var program = Path.Combine(codePath, "MelonWebApi", "Program.cs");
             var original = File.ReadAllText(program);
             var stage = Path.Combine(Path.GetTempPath(), "MelonBuild-" + Guid.NewGuid().ToString("N"));
+            // dotnet publish is noisy, so its output goes here instead of the screen. Kept only if the build fails.
+            var log = Path.ChangeExtension(outputPath, ".log");
+            if (File.Exists(log)) File.Delete(log);
+
+            // Each step is one line on screen: "[2/5] CLI    14s".
+            var steps = new List<(string Name, Action<ProgressLine> Run)>
+            {
+                ("Server", _ => Publish("MelonWebApi", Path.Combine(stage, "Server"), log)),
+                ("CLI", _ => Publish("MelonCLI", Path.Combine(stage, "CLI"), log)),
+                ("Installer", _ => Publish("MelonInstaller", Path.Combine(stage, "Installer"), log)),
+            };
+            if (OperatingSystem.IsWindows())
+                steps.Add(("Controller", _ => Publish("MelonGUI", Path.Combine(stage, "Controller"), log, "-p:Platform=x64")));
+            steps.Add(("Zip", progress => Zip(stage, progress)));
+
+            var total = Stopwatch.StartNew();
+            ProgressLine? current = null;
             try
             {
                 File.WriteAllText(program, StampVersion(original, release));
-                Publish("MelonWebApi", Path.Combine(stage, "Server"));
-                Publish("MelonCLI", Path.Combine(stage, "CLI"));
-                Publish("MelonInstaller", Path.Combine(stage, "Installer"));
-                if (OperatingSystem.IsWindows()) Publish("MelonGUI", Path.Combine(stage, "Controller"), "-p:Platform=x64");
-                foreach (var file in new[] { "LICENSE", "NOTICE" })
+                for (var i = 0; i < steps.Count; i++)
                 {
-                    var source = Path.Combine(codePath, "..", file);
-                    if (File.Exists(source)) File.Copy(source, Path.Combine(stage, file));
+                    current = new ProgressLine($"[{i + 1}/{steps.Count}] {steps[i].Name}");
+                    steps[i].Run(current);
+                    current.Finish();
                 }
 
-                UIManager.ZipProgressView(StringsManager.GetString("Compress")!);
-                if (File.Exists(outputPath)) File.Delete(outputPath);
-                ZipManager.CreateZip(outputPath, stage, new Progress<double>(x => UIManager.zipPercentage = x)).Wait();
-                UIManager.endDisplay = true;
-                Thread.Sleep(500);
-
                 SaveVersion(release);
-                Console.WriteLine($"[+] {StringsManager.GetString("BuildPackageCreated")} {Path.GetFullPath(outputPath)}");
+                File.Delete(log);
+                var size = new FileInfo(outputPath).Length / 1024d / 1024d;
+                Console.WriteLine();
+                Console.WriteLine($"[+] {StringsManager.GetString("BuildPackageCreated")} {Path.GetFullPath(outputPath)} ({size:0} MB, {ProgressLine.Seconds(total.Elapsed)})");
                 Console.WriteLine($"[+] {StringsManager.GetString("ReleaseTagHint")} {release.Tag} ({release.Title})");
                 return true;
             }
             catch (Exception e)
             {
-                UIManager.endDisplay = true;
-                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
-                Console.WriteLine($"[!] {e.Message}");
+                current?.Finish("X");
+                Console.WriteLine();
+                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")} {e.Message}");
+                if (File.Exists(log))
+                {
+                    // The lines that say what broke, so you don't have to open the log for the usual cases.
+                    var errors = File.ReadLines(log).Where(l => l.Contains(" error ", StringComparison.OrdinalIgnoreCase)).Distinct().Take(10).ToList();
+                    foreach (var line in errors) Console.WriteLine($"    {line.Trim()}");
+                    Console.WriteLine($"[!] {StringsManager.GetString("BuildLog")} {Path.GetFullPath(log)}");
+                }
                 return false;
             }
             finally
@@ -98,6 +117,17 @@ namespace MelonInstaller.Classes
                 File.WriteAllText(program, original);
                 if (Directory.Exists(stage)) Directory.Delete(stage, true);
             }
+        }
+
+        private static void Zip(string stage, ProgressLine progress)
+        {
+            foreach (var file in new[] { "LICENSE", "NOTICE" })
+            {
+                var source = Path.Combine(codePath, "..", file);
+                if (File.Exists(source)) File.Copy(source, Path.Combine(stage, file));
+            }
+            if (File.Exists(outputPath)) File.Delete(outputPath);
+            ZipManager.CreateZip(outputPath, stage, new Progress<double>(progress.Report)).Wait();
         }
 
         /// <summary>The next version on <paramref name="branch"/>; a new base restarts the count at base.0.</summary>
@@ -143,15 +173,38 @@ namespace MelonInstaller.Classes
         private static string RuntimeIdentifier => RuntimeInformation.RuntimeIdentifier.StartsWith("win") ? "win-x64"
             : OperatingSystem.IsMacOS() ? "osx-arm64" : "linux-x64";
 
-        private static void Publish(string project, string output, string? extra = null)
+        /// <summary>
+        /// Publishes one project for release. Every app carries its own copy of .NET, so nobody has to install it,
+        /// and is bundled into a single exe. Native libraries (SkiaSharp, LAME, WinUI) can't be bundled, so they sit
+        /// next to the exe, along with anything a project marks ExcludeFromSingleFile (see MelonWebApi.csproj).
+        /// </summary>
+        private static void Publish(string project, string output, string log, params string[] extra)
         {
-            Console.WriteLine($"[+] {StringsManager.GetString("BuildStart")} {project}");
-            var start = new ProcessStartInfo("dotnet") { UseShellExecute = false };
-            foreach (var arg in new[] { "publish", Path.Combine(codePath, project, $"{project}.csproj"), "-c", "Release",
-                "-r", RuntimeIdentifier, "--self-contained", "-o", output, "-v", "quiet", "-nologo" })
-                start.ArgumentList.Add(arg);
-            if (extra != null) start.ArgumentList.Add(extra);
+            var start = new ProcessStartInfo("dotnet")
+            {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+            string[] args =
+            [
+                "publish", Path.Combine(codePath, project, $"{project}.csproj"),
+                "-c", "Release", "-r", RuntimeIdentifier, "-o", output,
+                "--self-contained", "-p:PublishSingleFile=true",
+                "-p:DebugType=none",                 // no .pdb files in the release
+                "-p:SatelliteResourceLanguages=en",  // skip translated error messages from libraries; Melon's own strings are built in
+                "-nologo", "-v", "minimal", "-tl:off",
+                .. extra,
+            ];
+            foreach (var arg in args) start.ArgumentList.Add(arg);
+
+            using var writer = new StreamWriter(log, append: true);
+            writer.WriteLine($"> dotnet {string.Join(' ', args)}");
             using var process = Process.Start(start) ?? throw new IOException("Could not start dotnet.");
+            process.OutputDataReceived += (_, e) => { if (e.Data != null) lock (writer) writer.WriteLine(e.Data); };
+            process.ErrorDataReceived += (_, e) => { if (e.Data != null) lock (writer) writer.WriteLine(e.Data); };
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
             process.WaitForExit();
             if (process.ExitCode != 0) throw new InvalidOperationException($"{project}: dotnet publish exited with {process.ExitCode}.");
         }
