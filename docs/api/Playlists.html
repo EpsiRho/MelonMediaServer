@@ -47,7 +47,7 @@
                     <td>Admin, User</td>
                 </tr>
                 <tr>
-                    <td><code>/api/playlists/remove-tracks</code></td>
+                    <td><code>/api/playlists/remove-track</code></td>
                     <td>POST</td>
                     <td>Remove tracks from an existing playlist.</td>
                     <td>Admin, User</td>
@@ -154,8 +154,8 @@
              -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
         </code></pre>
         <hr>
-        <h3 id="remove-tracks-from-playlist">Remove Tracks from Playlist</h3>
-        <p>Remove tracks from a playlist by providing their positions in the playlist.</p>
+        <h3 id="remove-track-from-playlist">Remove Track from Playlist</h3>
+        <p>Remove a track from a playlist by providing its position in the playlist.</p>
         <p><strong>Details:</strong></p>
         <ul>
             <li><strong>Endpoint</strong>: <code>/api/playlists/remove-track</code></li>
@@ -165,18 +165,18 @@
         <p><strong>Parameters</strong>:</p>
         <ul>
             <li><strong>id</strong> (string, required): The ID of the playlist.</li>
-            <li><strong>positions</strong> (<code>List&lt;int&gt;</code>, required): A list of track positions to remove
+            <li><strong>position</strong> (<code>int</code>, required): The position of the track to remove
                 (starting at 0).</li>
         </ul>
         <p><strong>Responses</strong>:</p>
         <ul>
             <li><strong>200 OK</strong>: Returns a success message if tracks were removed successfully.</li>
-            <li><strong>404 Not Found</strong>: If the playlist or tracks at the specified positions are not found.</li>
+            <li><strong>404 Not Found</strong>: If the playlist or the track at that position is not found.</li>
             <li><strong>401 Unauthorized</strong>: If the user does not have the required permissions to edit the
                 playlist.</li>
         </ul>
         <p><strong>Example Request</strong> (using <code>curl</code>):</p>
-        <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/playlists/remove-tracks?id=66dd3bd79d629bfdda4c50be&amp;positions=5"</span> <span class="hljs-string">\</span>
+        <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/playlists/remove-track?id=66dd3bd79d629bfdda4c50be&amp;position=5"</span> <span class="hljs-string">\</span>
              -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
         </code></pre>
         <hr>

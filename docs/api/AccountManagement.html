@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Account Management API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+  </head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div class="container">
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="account-management-apis-documentation">Account Management APIs Documentation</h1>
+      <p>These endpoints let admins manage accounts, invites, and password resets from a client. They match the account tools in MelonGUI and MelonCLI. A reset code lasts ten minutes, can be used once, and replaces any earlier code for that account. Changing the password invalidates the account's login tokens.</p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/users/manage</code></td>
+            <td>GET</td>
+            <td>Lists every account.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/users/{id}/password-reset-code</code></td>
+            <td>POST</td>
+            <td>Issues a reset code for a user.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/auth/reset-password</code></td>
+            <td>POST</td>
+            <td>Sets a new password with a reset code.</td>
+            <td>None</td>
+          </tr>
+          <tr>
+            <td><code>/auth/invites</code></td>
+            <td>GET</td>
+            <td>Lists open invite codes.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/auth/invites/revoke</code></td>
+            <td>POST</td>
+            <td>Cancels an invite code.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/stats/summary</code></td>
+            <td>GET</td>
+            <td>Server or per-user listening summary.</td>
+            <td>Admin</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h3 id="list-users">List Users</h3>
+      <p>Returns every account's ID, name, and role.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/users/manage</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: A list of users.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET &quot;https://your-api-url.com/api/users/manage&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot;</code></pre>
+      <hr />
+      <h3 id="create-password-reset-code">Create Password Reset Code</h3>
+      <p>Creates a single-use, ten-minute reset code. Give it to the user, who enters it at <code>/auth/reset-password</code> on your server.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/users/{id}/password-reset-code</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The user's ID (in the path).</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: The reset code.</li>
+        <li><strong>404 Not Found</strong>: If the user is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST &quot;https://your-api-url.com/api/users/66bc99b8ab7ba419497e21af/password-reset-code&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot;</code></pre>
+      <hr />
+      <h3 id="reset-password">Reset Password</h3>
+      <p>Completes a reset. Opening this address with GET shows a simple reset form. Requests are rate limited per address.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/auth/reset-password</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: None</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>body</strong> (JSON, required): <code>{ "code": "...", "password": "..." }</code></li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>204 No Content</strong>: If the password was changed.</li>
+        <li><strong>400 Bad Request</strong>: If the code is invalid or expired, or the password is rejected.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST &quot;https://your-api-url.com/auth/reset-password&quot; \
+     -H &quot;Content-Type: application/json&quot; \
+     -d &#x27;{&quot;code&quot;:&quot;ABCD1234&quot;,&quot;password&quot;:&quot;new password&quot;}&#x27;</code></pre>
+      <hr />
+      <h3 id="list-invites">List Invites</h3>
+      <p>Returns the invite codes that haven't been used or revoked.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/auth/invites</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: A list of invites.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET &quot;https://your-api-url.com/auth/invites&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot;</code></pre>
+      <hr />
+      <h3 id="revoke-invite">Revoke Invite</h3>
+      <p>Revokes an invite so it can no longer be used to sign up.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/auth/invites/revoke</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>body</strong> (JSON string, required): The invite code.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>204 No Content</strong>: If the invite was revoked.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST &quot;https://your-api-url.com/auth/invites/revoke&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot; \
+     -H &quot;Content-Type: application/json&quot; \
+     -d &#x27;&quot;ABCD1234&quot;&#x27;</code></pre>
+      <hr />
+      <h3 id="listening-summary">Listening Summary</h3>
+      <p>Returns a listening summary for the last few days, for the whole server or one user.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/stats/summary</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>userId</strong> (string, optional): Limit the summary to one user. Leave empty for everyone.</li>
+        <li><strong>days</strong> (int, optional): How many days back to look. Defaults to 7.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: The summary.</li>
+        <li><strong>400 Bad Request</strong>: If the user or day count is invalid.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET &quot;https://your-api-url.com/api/stats/summary?days=30&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot;</code></pre>
+    </div>
+    </div>
+    <script src="/sidebar.js"></script>
+  </body>
+</html>

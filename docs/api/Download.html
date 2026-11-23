@@ -106,11 +106,17 @@
         <p><strong>Parameters</strong>:</p>
         <ul>
             <li><strong>id</strong> (string, required): The unique identifier of the track to be downloaded.</li>
+            <li><strong>eq</strong> (string, optional): The ID of an <a href="/api/Eq.html">EQ filter</a> the user owns
+                or that is public. The server decodes the track, applies the filter and sends a PCM WAV
+                (<code>audio/wav</code>; 16-bit dithered, or 24-bit for sources above 16 bits) at the track's own
+                sample rate. It is produced as it is sent, so playback starts at once, and Range requests work.</li>
         </ul>
         <p><strong>Responses</strong>:</p>
         <ul>
             <li><strong>200 OK</strong>: Returns the track file.</li>
-            <li><strong>404 Not Found</strong>: Track not found.</li>
+            <li><strong>404 Not Found</strong>: Track not found, or the EQ filter doesn't exist or isn't visible to the
+                user.</li>
+            <li><strong>415 Unsupported Media Type</strong>: <code>eq</code> was given and the file can't be decoded.</li>
         </ul>
         <p><strong>Example Request</strong> (using <code>curl</code>):</p>
         <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/track?id=66bc9aadab7ba419497e6a97"</span> \
@@ -136,11 +142,14 @@
                 downloaded.</li>
             <li><strong>transcodeBitrate</strong> (int, optional): The desired bitrate of the transcoded track (default
                 is 256 kbps).</li>
+            <li><strong>eq</strong> (string, optional): The ID of an <a href="/api/Eq.html">EQ filter</a> to apply
+                before encoding. Encodes are cached per filter version, so editing a filter makes a fresh one.</li>
         </ul>
         <p><strong>Responses</strong>:</p>
         <ul>
             <li><strong>200 OK</strong>: Returns the transcoded track.</li>
-            <li><strong>404 Not Found</strong>: Track not found.</li>
+            <li><strong>404 Not Found</strong>: Track not found, or the EQ filter doesn't exist or isn't visible to the
+                user.</li>
         </ul>
         <p><strong>Example Request</strong> (using <code>curl</code>):</p>
         <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-melon-server.com/api/download/track-transcode?id=66bc9aadab7ba419497e6a97&amp;transcodeBitrate=320"</span> \

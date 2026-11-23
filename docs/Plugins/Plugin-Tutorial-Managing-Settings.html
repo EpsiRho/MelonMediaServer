@@ -66,93 +66,43 @@
     }
         </code></pre>
       <h3>3. Use Settings in Your Plugin</h3>
-      <p>Modify your plugin main menu code to use the greeting setting.</p>
-      <pre><code class="language-C#">
-    private void MyPluginMenu()
+      <p>Read <code>Config</code> wherever your plugin needs it, for example in a middleware or an action:</p>
+      <pre><code class="language-csharp">var greeting = Config.GreetingMessage;</code></pre>
+      <h3>4. Edit Settings From a Controller Page</h3>
+      <p>
+        Show your settings as fields on your
+        <a href="/Plugins/Plugin-Tutorial-First-UI.html">controller page</a>,
+        and save them when the Save action is pressed:
+      </p>
+      <pre><code class="language-csharp">public PluginPage GetPage() => new(
+    [
+        new("greeting", "Greeting message", "text", Config.GreetingMessage),
+        new("featureX", "Enable feature X", "boolean", Config.EnableFeatureX),
+    ],
+    [new("save", "Save settings")]);
+
+public object? Invoke(string action, JsonElement values)
+{
+    if (action != "save") throw new ArgumentException("Unknown action.");
+    Config = new MyPluginConfig
     {
-        while (true)
-        {
-            Host.MelonUI.BreadCrumbBar(new List&lt;string&gt; { &quot;Melon&quot;, &quot;My First Plugin&quot; });
-            var choice = Host.MelonUI.OptionPicker(new List&lt;string&gt;
-            {
-                &quot;Back&quot;,
-                &quot;Greet&quot;,
-                &quot;Show Date&quot;,
-                &quot;Perform Calculation&quot;
-            });
-    
-            switch (choice)
-            {
-                case &quot;Back&quot;:
-                    return;
-                case &quot;Greet&quot;:
-                    // Use the new config set greeting 
-                    Console.WriteLine(Config.GreetingMessage);
-                    break;
-                case &quot;Show Date&quot;:
-                    Console.WriteLine($&quot;Today&#39;s date is {DateTime.Now.ToShortDateString()}&quot;);
-                    break;
-                case &quot;Perform Calculation&quot;:
-                    PerformCalculation();
-                    break;
-            }
-    
-            Console.WriteLine(&quot;Press any key to continue...&quot;);
-            Console.ReadKey();
-        }
-    }
-        </code></pre>
-      <h3>4. Create a Settings Menu</h3>
-      <p>Allow users to modify settings.</p>
-      <pre><code class="language-C#">
-    private void SettingsMenu()
-    {
-        while (true)
-        {
-            Host.MelonUI.BreadCrumbBar(new List&lt;string&gt; { &quot;Melon&quot;, &quot;My First Plugin Settings&quot; });
-            var choice = Host.MelonUI.OptionPicker(new List&lt;string&gt;
-            {
-                &quot;Back&quot;,
-                &quot;Change Greeting Message&quot;,
-                Config.EnableFeatureX ? &quot;Disable Feature X&quot; : &quot;Enable Feature X&quot;
-            });
-    
-            switch (choice)
-            {
-                case &quot;Back&quot;:
-                    return;
-                case &quot;Change Greeting Message&quot;:
-                    Console.Write(&quot;Enter new greeting message: &quot;);
-                    var input = Console.ReadLine();
-                    if (!string.IsNullOrWhiteSpace(input))
-                    {
-                        Config.GreetingMessage = input;
-                        SaveConfig();
-                    }
-                    break;
-                case &quot;Disable Feature X&quot;:
-                case &quot;Enable Feature X&quot;:
-                    Config.EnableFeatureX = !Config.EnableFeatureX;
-                    SaveConfig();
-                    break;
-            }
-        }
-    }
-        </code></pre>
-      <h3>5. Update LoadUI Method to Include Settings Menu</h3>
-      <pre><code class="language-C#">
-    public int LoadUI()
-    {
-        Host.DisplayManager.MenuOptions.Add(&quot;My First Plugin&quot;, MyPluginMenu);
-        Host.SettingsUI.MenuOptions.Add(&quot;My First Plugin Settings&quot;, SettingsMenu); // Add new Settings Menu Option to the SettinsUI.MenuOptions
-        return 0;
-    }
-        </code></pre>
+        GreetingMessage = values.GetProperty("greeting").GetString() ?? "",
+        EnableFeatureX = values.GetProperty("featureX").GetBoolean()
+    };
+    SaveConfig();
+    return GetPage(); // redraw with the saved values
+}</code></pre>
+      <h3>5. Protect Secrets</h3>
+      <p>
+        Pass property names in <code>protectedProperties</code> to encrypt them
+        in the saved file, such as API keys:
+      </p>
+      <pre><code class="language-csharp">Host.Storage.SaveConfigFile("MyPluginConfig", Config, ["ApiKey"]);
+Config = Host.Storage.LoadConfigFile&lt;MyPluginConfig&gt;("MyPluginConfig", ["ApiKey"], out _);</code></pre>
       <h3>6. Initialize Config</h3>
       <p>
-        Ensure you load the config when the plugin is initialized. Plugins get
-        initialized twice, once for UI and once for Server processes, but
-        you&#39;ll want to load your config both times.
+        Ensure you load the config when the plugin is initialized. Melon
+        calls both of these when your plugin loads, so loading in both is safe.
       </p>
       <pre><code class="language-C#">
     public void LoadMelonCommands(IHost host)
@@ -168,8 +118,7 @@
         </code></pre>
       <h3>7. Watching for changes</h3>
       <p>
-        When you update the config file through the console, or with a text
-        editor, the server wont have a way to know the config has changed unless
+        When someone edits the config file with a text editor, the server wont have a way to know the config has changed unless
         you tell it.
       </p>
       <pre><code class="language-C#">
@@ -186,14 +135,8 @@
     {
         if(args.Name == &quot;MyPluginConfig.json&quot;)
         {
-            // Check if settings have actually changed
-            var temp = Storage.LoadConfigFile&lt;Settings&gt;(&quot;MelonSettings&quot;, null, out _);
-            if (StateManager.MelonSettings == null || temp == null || 
-                Storage.PropertiesEqual(StateManager.MelonSettings, temp))
-            {
-                return;
-            }
-            StateManager.MelonSettings = temp;
+            var temp = Host.Storage.LoadConfigFile&lt;MyPluginConfig&gt;(&quot;MyPluginConfig&quot;, null, out _);
+            if (temp != null) Config = temp;
         }
     };
     
@@ -213,13 +156,13 @@
         <li>Copy the DLL to Melon&#39;s <code>Plugins</code> directory.</li>
         <li>Restart Melon.</li>
         <li>
-          Navigate to &quot;My First Plugin Settings&quot; to modify settings.
+          Open your plugin in MelonGUI or MelonCLI, change a setting, and press Save settings.
         </li>
         <li>Verify changes take effect in your plugin.</li>
       </ul>
       <p>
         <a href="/Plugins/Plugin-Tutorial-First-UI.html"
-          >Last Tutorial: First UI</a
+          >Last Tutorial: Controller Page</a
         >
         &lt;--- ---&gt;
         <a href="/Plugins/Plugin-Tutorial-Custom-Endpoints.html"

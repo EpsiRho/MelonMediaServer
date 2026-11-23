@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Top Rated API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+  </head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div class="container">
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="top-rated-apis-documentation">Top Rated APIs Documentation</h1>
+      <p>The <code>TopRatedController</code> ranks tracks, albums, and artists server-wide by their average rating across users. Only ratings clients are allowed to see count: those from users with public stats, plus your own. Unrated items are left out, and each item's <code>Ratings</code> holds exactly the ratings its average was taken over.</p>
+      <h2 id="controller-route">Controller Route: <code>/api/top-rated</code></h2>
+      <p>All routes within the <code>TopRatedController</code> are prefixed by <code>/api/top-rated</code>.</p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/top-rated/tracks</code></td>
+            <td>GET</td>
+            <td>Tracks by average rating.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/top-rated/albums</code></td>
+            <td>GET</td>
+            <td>Albums by average rating.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/top-rated/artists</code></td>
+            <td>GET</td>
+            <td>Artists by average rating.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h3 id="top-rated-tracks">Top Rated Tracks</h3>
+      <p>Returns tracks sorted by their average rating, highest first.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/top-rated/tracks</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>page</strong> (int, optional): The page to return. Defaults to 0.</li>
+        <li><strong>count</strong> (int, optional): Items per page, 1 to 500. Defaults to 50.</li>
+        <li><strong>minRatings</strong> (int, optional): Leave out items rated by fewer users than this. Defaults to 1.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: A list of <a href="/models/Track.html">ResponseTrack</a> objects.</li>
+        <li><strong>400 Bad Request</strong>: If the page is negative.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET &quot;https://your-api-url.com/api/top-rated/tracks?page=0&amp;count=50&amp;minRatings=2&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot;</code></pre>
+      <hr />
+      <h3 id="top-rated-albums">Top Rated Albums</h3>
+      <p>Returns albums sorted by their average rating, highest first.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/top-rated/albums</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>page</strong> (int, optional): The page to return. Defaults to 0.</li>
+        <li><strong>count</strong> (int, optional): Items per page, 1 to 500. Defaults to 50.</li>
+        <li><strong>minRatings</strong> (int, optional): Leave out items rated by fewer users than this. Defaults to 1.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: A list of <a href="/models/Album.html">ResponseAlbum</a> objects.</li>
+        <li><strong>400 Bad Request</strong>: If the page is negative.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET &quot;https://your-api-url.com/api/top-rated/albums?count=20&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot;</code></pre>
+      <hr />
+      <h3 id="top-rated-artists">Top Rated Artists</h3>
+      <p>Returns artists sorted by their average rating, highest first.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/top-rated/artists</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>page</strong> (int, optional): The page to return. Defaults to 0.</li>
+        <li><strong>count</strong> (int, optional): Items per page, 1 to 500. Defaults to 50.</li>
+        <li><strong>minRatings</strong> (int, optional): Leave out items rated by fewer users than this. Defaults to 1.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: A list of <a href="/models/Artist.html">ResponseArtist</a> objects.</li>
+        <li><strong>400 Bad Request</strong>: If the page is negative.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET &quot;https://your-api-url.com/api/top-rated/artists&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot;</code></pre>
+    </div>
+    </div>
+    <script src="/sidebar.js"></script>
+  </body>
+</html>

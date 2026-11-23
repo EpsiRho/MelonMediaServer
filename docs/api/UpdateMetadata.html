@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Metadata Updates API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+  </head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div class="container">
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="metadata-updates-apis-documentation">Metadata Updates APIs Documentation</h1>
+      <p>The <code>UpdateController</code> lets admins edit the stored metadata of tracks, albums, and artists. Send the whole object back with your changes.</p>
+      <h2 id="controller-route">Controller Route: <code>/api/update</code></h2>
+      <p>All routes within the <code>UpdateController</code> are prefixed by <code>/api/update</code>.</p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/update/track</code></td>
+            <td>PUT</td>
+            <td>Updates a track's metadata.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/update/album</code></td>
+            <td>PUT</td>
+            <td>Updates an album's metadata.</td>
+            <td>Admin</td>
+          </tr>
+          <tr>
+            <td><code>/api/update/artist</code></td>
+            <td>PUT</td>
+            <td>Updates an artist's metadata.</td>
+            <td>Admin</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h3 id="update-track">Update Track</h3>
+      <p>Replaces a track's editable metadata with the body you send.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/update/track</code></li>
+        <li><strong>Method</strong>: <code>PUT</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the track.</li>
+        <li><strong>body</strong> (<a href="/models/Track.html">ResponseTrack</a>, required): The track with your changes.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: If the track was updated.</li>
+        <li><strong>400 Bad Request</strong>: If the id or body is missing.</li>
+        <li><strong>404 Not Found</strong>: If the track is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X PUT &quot;https://your-api-url.com/api/update/track?id=66bc99b8ab7ba419497e21af&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot; \
+     -H &quot;Content-Type: application/json&quot; \
+     -d @track.json</code></pre>
+      <hr />
+      <h3 id="update-album">Update Album</h3>
+      <p>Replaces an album's editable metadata with the body you send.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/update/album</code></li>
+        <li><strong>Method</strong>: <code>PUT</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the album.</li>
+        <li><strong>body</strong> (<a href="/models/Album.html">ResponseAlbum</a>, required): The album with your changes.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: If the album was updated.</li>
+        <li><strong>400 Bad Request</strong>: If the id or body is missing.</li>
+        <li><strong>404 Not Found</strong>: If the album is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X PUT &quot;https://your-api-url.com/api/update/album?id=66bc99b8ab7ba419497e21af&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot; \
+     -H &quot;Content-Type: application/json&quot; \
+     -d @album.json</code></pre>
+      <hr />
+      <h3 id="update-artist">Update Artist</h3>
+      <p>Replaces an artist's editable metadata with the body you send.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/update/artist</code></li>
+        <li><strong>Method</strong>: <code>PUT</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The ID of the artist.</li>
+        <li><strong>body</strong> (<a href="/models/Artist.html">Artist</a>, required): The artist with your changes.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: If the artist was updated.</li>
+        <li><strong>400 Bad Request</strong>: If the id or body is missing.</li>
+        <li><strong>404 Not Found</strong>: If the artist is not found.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X PUT &quot;https://your-api-url.com/api/update/artist?id=66bc99b8ab7ba419497e21af&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot; \
+     -H &quot;Content-Type: application/json&quot; \
+     -d @artist.json</code></pre>
+    </div>
+    </div>
+    <script src="/sidebar.js"></script>
+  </body>
+</html>

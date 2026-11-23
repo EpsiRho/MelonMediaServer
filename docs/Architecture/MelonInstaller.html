@@ -3,89 +3,160 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MelonInstaller Architecture Docs</title>
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
-</head>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css"
+    />
+  </head>
 
-<script>hljs.highlightAll();</script>
+  <script>
+    hljs.highlightAll();
+  </script>
 
   <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
       <h1 id="meloninstaller">MelonInstaller</h1>
       <p>
-        The MelonInstaller exe/dll is used to Build, Install, and Update Melon.
+        MelonInstaller is used to Build, Install, and Update Melon. It has
+        translation support for EN and ES. You can switch language by using the
+        argument:
       </p>
+      <pre><code class="language-bash">MelonInstaller -lang ES</code></pre>
+
+      <h2 id="versions">Versions</h2>
       <p>
-        The application has translation support for EN and ES. You can switch
-        lang by using the argument:
+        Every release belongs to a <strong>branch</strong> and has a four part
+        version number. Each branch counts its own builds, adding one to the last
+        number every build:
       </p>
-      <pre><code class="lang-bash">&gt; MelonInstller <span class="hljs-comment">--lang ES</span>
-        </code></pre>
-      <h2 id="building">Building</h2>
+      <pre><code class="language-plaintext">Beta 0.9.0.0  →  Beta 0.9.0.1  →  …  →  Beta 0.9.0.6
+                                          ↓ promoted
+                                     Stable 0.9.0.1</code></pre>
       <p>
-        Melon can be built for Release by using the --build command line
-        argument. Example:
+        On GitHub, releases are tagged as the branch, a dash, then the version,
+        and titled with a space:
       </p>
-      <pre><code class="lang-bash">&gt; MelonInstaller -<span class="hljs-keyword">build </span>-<span class="hljs-keyword">buildPath </span>&lt;path to MelonWebApi Project root&gt; -outputPath &lt;output path&gt;
-        </code></pre>
+      <table>
+        <thead><tr><th>Tag</th><th>Title</th></tr></thead>
+        <tbody>
+          <tr><td><code>Beta-0.9.0.0</code></td><td>Beta 0.9.0.0</td></tr>
+          <tr><td><code>Stable-0.9.0.1</code></td><td>Stable 0.9.0.1</td></tr>
+        </tbody>
+      </table>
       <p>
-        This will update the Version number, build for Release, then pack it in
-        a zip file. Version numbers are generated to make easy representations
-        of the timeline of versions. They are a Major.Minor.Patch.Revision style
-        version number that are generated as:
+        Version numbers only order releases within a branch. MelonGUI, MelonCLI,
+        and <a href="/api/Updates.html">check-for-updates</a> show the running
+        version.
       </p>
-      <ul>
-        <li>
-          Major: Set manually in the code as the latest major release. Right
-          now, this number is 1.
-        </li>
-        <li>
-          Minor: Set manually in the code as the latest minor release, right now
-          that is 0.
-        </li>
-        <li>Build: Represents the days since Jan 1st, 2024.</li>
-        <li>
-          Revision: Represents the minutes since the start of the day this build
-          was generated on.
-        </li>
-      </ul>
+
+      <h2 id="branches">Branches</h2>
       <p>
-        The built zip will come with an extra number at the end, seconds since
-        last minute, to keep from builds overwriting each other. This number
-        should be removed in releases and is not set in the code, so will not be
-        shown when calling <code>MelonWebApi.exe -v</code>
+        Branches aren't hard coded: the installer reads every release tag and
+        offers each branch that has at least one release. Today that's just
+        <strong>Beta</strong>. Once a Stable release exists it becomes the
+        default for new installs.
       </p>
+      <pre><code class="language-bash">MelonInstaller -branch Beta                     # latest Beta
+MelonInstaller -branch Beta -version 0.9.0.3    # a specific Beta
+MelonInstaller -version Stable-0.9.0.1          # a full tag picks the branch too</code></pre>
+      <p>
+        The installed branch and version are kept in
+        <code>melon-release.json</code> in the install folder.
+      </p>
+      <h3 id="switching-branches">Switching Branches</h3>
+      <p>
+        You can move to another branch at any time. If the target has a
+        <strong>lower</strong> version number than what's installed, the
+        installer warns you first and asks to continue:
+      </p>
+      <pre><code class="language-plaintext">[!] Switching from Beta 0.9.0.6 to Stable 0.9.0.1 installs an older version number. ...
+Continue? (y/N)</code></pre>
+      <p>
+        When there's no one to ask (the <code>-update</code> flow, or input is
+        redirected), add <code>-force</code> to switch anyway. Server updates
+        never switch branches on their own.
+      </p>
+
       <h2 id="installing">Installing</h2>
       <p>
-        Melon can be easily installed just by running the MelonInstaller without
-        any arguments. It will ask you where you want to install, then install
-        the latest version from the github release. You can use the argument
-        <code>--installPath &lt;path&gt;</code> to skip this UI and install
-        quickly.
+        Run MelonInstaller with no arguments. It asks for a branch and an install
+        path, then installs the latest release on that branch. When it finishes
+        it opens MelonGUI, or MelonCLI in the same terminal if you ran it from
+        one.
       </p>
+      <table>
+        <thead><tr><th>Argument</th><th>Does</th></tr></thead>
+        <tbody>
+          <tr><td><code>-installPath &lt;path&gt;</code></td><td>Install here without asking.</td></tr>
+          <tr><td><code>-branch &lt;name&gt;</code></td><td>Install from this branch.</td></tr>
+          <tr><td><code>-version &lt;version or tag&gt;</code></td><td>Install this release instead of the latest.</td></tr>
+          <tr><td><code>-localPath &lt;zip&gt;</code></td><td>Install from a downloaded release zip.</td></tr>
+          <tr><td><code>-force</code></td><td>Switch to a lower version on another branch without asking.</td></tr>
+          <tr><td><code>-noLaunch</code></td><td>Don't open MelonGUI or MelonCLI afterwards.</td></tr>
+        </tbody>
+      </table>
+      <p>Each release has one zip per platform:</p>
+      <table>
+        <thead><tr><th>Asset</th><th>Contains</th></tr></thead>
+        <tbody>
+          <tr><td><code>Melon-win-x64.zip</code></td><td>Server, Controller (MelonGUI), CLI, Installer</td></tr>
+          <tr><td><code>Melon-linux-x64.zip</code></td><td>Server, CLI, Installer</td></tr>
+          <tr><td><code>Melon-osx-arm64.zip</code></td><td>Server, CLI, Installer</td></tr>
+          <tr><td><code>MelonInstaller-&lt;platform&gt;</code></td><td>The installer on its own</td></tr>
+        </tbody>
+      </table>
+
       <h2 id="updates">Updates</h2>
       <p>
-        Whenever you call to update Melon it will launch the MelonInstaller and
-        then close itself.
+        Whenever you ask Melon to update, it checks GitHub for the newest release
+        on its own branch. If that version number is higher, it launches
+        MelonInstaller and closes itself. On Windows the installer stages the new
+        bundle and swaps Server, Controller, CLI, and Installer together, then
+        restarts Melon.
       </p>
+      <p>You can call for an update yourself with:</p>
+      <pre><code class="language-bash">MelonInstaller -update -installPath &lt;installationDir&gt;</code></pre>
+      <p>Add <code>-restart</code> to start the server again afterwards:</p>
+      <pre><code class="language-bash">MelonInstaller -update -restart -installPath &lt;installationDir&gt;</code></pre>
+
+      <h2 id="building">Building</h2>
       <p>
-        Updates are downloaded from the MelonMediaServer GitHub&#39;s releases.
-        It pulls the latest release, and compares the version numbers. If the
-        version number is higher it will download the release zip and extract it
-        to the install folder, overwriting existing files.
+        MelonInstaller builds a release bundle with <code>-build</code>. Point it
+        at the <code>Code</code> folder:
       </p>
-      <p>You can call for an update for yourself by using this command:</p>
-      <pre><code class="lang-bash">&gt; MelonInstaller -<span class="hljs-keyword">update</span> -installPath <span class="hljs-symbol">&lt;installationDir&gt;</span>
-        </code></pre>
+      <pre><code class="language-bash">MelonInstaller -build -buildPath ./Code -branch Beta -outputPath ./Build</code></pre>
+      <pre><code class="language-plaintext">[+] Building Beta 0.9.0.3
+[+] Build Package created at ./Build/Melon-Beta-0.9.0.3-win-x64.zip
+[+] Publish it as GitHub release tag Beta-0.9.0.3 (Beta 0.9.0.3)</code></pre>
       <p>
-        You can tell it to restart the server after updating by adding the
-        <code>-restart</code> argument:
+        The build count lives in <code>Code/MelonInstaller/BuildVersions.json</code>,
+        so commit it after a build:
       </p>
-      <pre><code class="lang-bash">&gt; MelonInstaller -<span class="hljs-keyword">update</span> -restart -installPath <span class="hljs-symbol">&lt;installationDir&gt;</span>
-        </code></pre>
+      <pre><code class="language-json">{
+  "base": "0.9.0",
+  "branches": { "Beta": "0.9.0.3" }
+}</code></pre>
+      <table>
+        <thead><tr><th>Argument</th><th>Does</th></tr></thead>
+        <tbody>
+          <tr><td><code>-branch &lt;name&gt;</code></td><td>The branch to number against. Defaults to Beta.</td></tr>
+          <tr><td><code>-baseVersion 0.10.0</code></td><td>Start a new line at <code>0.10.0.0</code>. A four part version is used as is.</td></tr>
+          <tr><td><code>-outputPath &lt;dir&gt;</code></td><td>Where the zip goes. Defaults to <code>Build</code>.</td></tr>
+          <tr><td><code>-versionFile &lt;file&gt;</code></td><td>Use another build count file.</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Publishing a GitHub release with a <code>Branch-Version</code> tag runs
+        the <code>Release bundles</code> workflow, which stamps the version,
+        builds all three platforms, and attaches the zips and installers.
+      </p>
+    </div>
     </div>
     <script src="/sidebar.js"></script>
   </body>

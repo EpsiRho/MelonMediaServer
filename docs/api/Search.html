@@ -60,6 +60,12 @@
             <td>Search for artists based on filters and sorting.</td>
             <td>Admin, User, Pass</td>
           </tr>
+          <tr>
+            <td><code>/api/search/features</code></td>
+            <td>GET</td>
+            <td>Lists optional features this server supports.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
         </tbody>
       </table>
       <hr />
@@ -210,6 +216,32 @@
       <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/search/artists?page=0&amp;count=50&amp;andFilters=PlayCounts;Gt;10&amp;sort=NameAsc"</span> \
              -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
         </code></pre>
+      <hr />
+      <h3 id="search-features">Server Features</h3>
+      <p>
+        Lists the optional features this server supports, so clients can hide
+        what an older server doesn't have.
+      </p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/search/features</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: A list of feature names:
+          <ul>
+            <li><code>stat-filters</code>: Stat filters in search.</li>
+            <li><code>top-rated</code>: The <a href="/api/TopRated.html">Top Rated</a> endpoints.</li>
+            <li><code>oracle</code>: The <a href="/api/Oracle.html">Oracle Mixes</a> endpoints.</li>
+            <li><code>eq</code>: Saved <a href="/api/Eq.html">EQ filters</a> and the <code>eq</code> parameter on downloads.</li>
+          </ul>
+        </li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET "https://your-api-url.com/api/search/features" \
+     -H "Authorization: Bearer &lt;JWT-token&gt;"</code></pre>
     </div>
     <script src="/sidebar.js"></script>
   </body>

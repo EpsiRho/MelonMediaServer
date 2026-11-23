@@ -70,12 +70,6 @@
             <td>Admin, User, Pass</td>
           </tr>
           <tr>
-            <td><code>/api/users/create</code></td>
-            <td>POST</td>
-            <td>Creates a new user with specified role.</td>
-            <td>Admin, Server</td>
-          </tr>
-          <tr>
             <td><code>/api/users/delete</code></td>
             <td>POST</td>
             <td>Deletes a user by ID.</td>
@@ -94,9 +88,9 @@
             <td>Admin, User, Pass</td>
           </tr>
           <tr>
-            <td><code>/api/users/change-password</code></td>
+            <td><code>/api/users/password</code></td>
             <td>PATCH</td>
-            <td>Changes the password for a user.</td>
+            <td>Changes your password (needs the current one). See the <a href="/api/Authorization.html">Authorization API</a>.</td>
             <td>Admin, User, Pass</td>
           </tr>
         </tbody>
@@ -239,41 +233,6 @@
              -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
         </code></pre>
       <hr />
-      <h3 id="create-user">Create User</h3>
-      <p>Creates a new user with a username, password, and role.</p>
-      <p><strong>Details</strong>:</p>
-      <ul>
-        <li><strong>Endpoint</strong>: <code>/api/users/create</code></li>
-        <li><strong>Method</strong>: <code>POST</code></li>
-        <li><strong>Authorization</strong>: JWT (Roles: Admin, Server)</li>
-      </ul>
-      <p><strong>Parameters</strong>:</p>
-      <ul>
-        <li>
-          <strong>username</strong> (string, required): The username for the new
-          user.
-        </li>
-        <li>
-          <strong>password</strong> (string, required): The password for the new
-          user.
-        </li>
-        <li>
-          <strong>role</strong> (string, optional): The role for the new user
-          (defaults to <code>User</code>).
-        </li>
-      </ul>
-      <p><strong>Responses</strong>:</p>
-      <ul>
-        <li>
-          <strong>200 OK</strong>: Returns the user ID of the created user.
-        </li>
-        <li><strong>400 Bad Request</strong>: If the password is empty.</li>
-      </ul>
-      <p><strong>Example Request</strong>:</p>
-      <pre><code class="lang-bash">curl -X POST "https://your-api-url.com/api/users/<span class="hljs-keyword">create</span>?username=newuser&amp;<span class="hljs-keyword">password</span>=Password123&amp;<span class="hljs-keyword">role</span>=<span class="hljs-keyword">User</span><span class="hljs-string">" \
-             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
-        </code></pre>
-      <hr />
       <h3 id="delete-user">Delete User</h3>
       <p>Deletes a user by their user ID.</p>
       <p><strong>Details</strong>:</p>
@@ -383,38 +342,6 @@
       <p><strong>Example Request</strong>:</p>
       <pre><code class="lang-bash">curl -X PATCH <span class="hljs-string">"https://your-api-url.com/api/users/change-username?id=user123&amp;username=newusername"</span> <span class="hljs-string">\</span>
              -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
-        </code></pre>
-      <hr />
-      <h3 id="change-password">Change Password</h3>
-      <p>Changes the password of a user.</p>
-      <p><strong>Details</strong>:</p>
-      <ul>
-        <li>
-          <strong>Endpoint</strong>: <code>/api/users/change-password</code>
-        </li>
-        <li><strong>Method</strong>: <code>PATCH</code></li>
-        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
-      </ul>
-      <p><strong>Parameters</strong>:</p>
-      <ul>
-        <li><strong>id</strong> (string, required): The ID of the user.</li>
-        <li>
-          <strong>password</strong> (string, required): The new password for the
-          user.
-        </li>
-      </ul>
-      <p><strong>Responses</strong>:</p>
-      <ul>
-        <li>
-          <strong>200 OK</strong>: Returns success if the password is updated.
-        </li>
-        <li><strong>404 Not Found</strong>: If the user is not found.</li>
-        <li><strong>401 Unauthorized</strong></li>
-      </ul>
-      <p>: If the action is not authorized.</p>
-      <p><strong>Example Request</strong>:</p>
-      <pre><code class="lang-bash">curl -X PATCH "https://your-api-url.com/api/users/<span class="hljs-keyword">change</span>-<span class="hljs-keyword">password</span>?<span class="hljs-keyword">id</span>=user123&amp;<span class="hljs-keyword">password</span>=newpassword<span class="hljs-string">" \
-             -H "</span>Authorization: Bearer &lt;JWT-token&gt;<span class="hljs-string">"</span>
         </code></pre>
     </div>
   </body>

@@ -33,8 +33,8 @@
         Dictionary&lt;string, string&gt; GetHelpOptions();
         void LoadMelonCommands(IHost host);
         void LoadMelonServerCommands(IWebApi webapi);
-        int LoadUI();
-        int UnloadUI();
+        int LoadUI() => 0;   // optional
+        int UnloadUI() => 0; // optional
         int Execute();
         int Destroy();
     }
@@ -75,7 +75,7 @@
         <li>
           <strong>LoadUI()</strong>:
           <ul>
-            <li>Load UI elements into Melon.</li>
+            <li>Optional, defaults to returning <code>0</code>. Kept for older plugins.</li>
             <li>
               <strong>Returns</strong>: An integer indicating success
               (<code>0</code>) or failure.
@@ -85,7 +85,7 @@
         <li>
           <strong>UnloadUI()</strong>:
           <ul>
-            <li>Remove UI elements from Melon.</li>
+            <li>Optional, defaults to returning <code>0</code>. Kept for older plugins.</li>
             <li>
               <strong>Returns</strong>: An integer indicating success
               (<code>0</code>) or failure.
@@ -113,6 +113,22 @@
           </ul>
         </li>
       </ul>
+
+      <h2 id="icontrollerplugin">IControllerPlugin</h2>
+      <p>
+        Implement this alongside <code>IPlugin</code> to give your plugin a page
+        in MelonGUI and MelonCLI. See the
+        <a href="/Plugins/Plugin-Tutorial-First-UI.html">Controller Page</a> tutorial.
+      </p>
+      <pre><code class="language-csharp">public interface IControllerPlugin
+{
+    PluginPage GetPage();
+    object? Invoke(string action, JsonElement values);
+}
+
+public record PluginPage(PluginField[] Fields, PluginAction[] Actions);
+public record PluginField(string Key, string Label, string Type, object Value); // text, boolean, number, argb
+public record PluginAction(string Key, string Label);</code></pre>
     </div>
     <script src="/sidebar.js"></script>
   </body>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Download Melon</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+
+  <body>
+    <div class="container">
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="download">Download</h1>
+
+      <div class="download-hero">
+        <button id="install-latest" class="btn btn-primary" disabled>Loading releases…</button>
+        <p id="latest-note" class="muted">Downloads MelonInstaller for your system.</p>
+      </div>
+
+      <h2 id="choose-a-release">Choose a Release</h2>
+      <div class="download-panel">
+        <label>Branch
+          <select id="branch"></select>
+        </label>
+        <label>Version
+          <select id="version"></select>
+        </label>
+        <label>Platform
+          <select id="platform">
+            <option value="win-x64">Windows x64</option>
+            <option value="linux-x64">Linux x64</option>
+            <option value="osx-arm64">macOS Apple Silicon</option>
+          </select>
+        </label>
+      </div>
+      <div id="release-card" class="release-card" hidden>
+        <div class="release-head">
+          <h3 id="release-title"></h3>
+          <span id="release-date" class="muted"></span>
+        </div>
+        <div class="release-actions">
+          <a id="get-installer" class="btn btn-primary">Installer</a>
+          <a id="get-bundle" class="btn">Full zip</a>
+          <a id="get-notes" class="btn btn-ghost">Release notes ↗</a>
+        </div>
+      </div>
+      <p id="download-error" class="muted" hidden></p>
+
+      <h2 id="next-steps">Next Steps</h2>
+      <p>
+        Run the installer and follow the
+        <a href="/Guides/Installation.html">Installation Guide</a>. Releases come
+        with everything they need, so you don't need .NET installed.
+      </p>
+      <table>
+        <thead><tr><th>Download</th><th>Use it when</th></tr></thead>
+        <tbody>
+          <tr><td>Installer</td><td>Installing for the first time, or switching branch.</td></tr>
+          <tr><td>Full zip</td><td>Installing offline: <code>MelonInstaller -localPath Melon-win-x64.zip</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    </div>
+    <script src="/sidebar.js"></script>
+    <script>
+      const REPO = 'EpsiRho/MelonMediaServer';
+      const $ = id => document.getElementById(id);
+      // Tags look like "Beta-0.9.0.0": branch, dash, four part version.
+      const parse = tag => {
+        const m = /^([A-Za-z0-9_.]+)-v?(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(tag || '');
+        return m ? { branch: m[1], version: m.slice(2).join('.'), parts: m.slice(2).map(Number) } : null;
+      };
+      const cmp = (a, b) => { for (let i = 0; i < 4; i++) if (a[i] !== b[i]) return a[i] - b[i]; return 0; };
+      const rank = b => b === 'Stable' ? 0 : b === 'Beta' ? 1 : 2;
+
+      const ua = navigator.userAgent;
+      $('platform').value = /Mac/.test(ua) ? 'osx-arm64' : /Linux|X11/.test(ua) && !/Android/.test(ua) ? 'linux-x64' : 'win-x64';
+
+      let byBranch = {};
+
+      const asset = (release, name) => release.assets.find(a => a.name === name || a.name.startsWith(name));
+      const fill = (select, items, label) => {
+        select.innerHTML = '';
+        for (const item of items) select.add(new Option(label(item), label === String ? item : item.tag));
+      };
+
+      function showRelease() {
+        const list = byBranch[$('branch').value] || [];
+        const r = list.find(x => x.tag === $('version').value) || list[0];
+        if (!r) return;
+        const rid = $('platform').value;
+        const installer = asset(r.release, `MelonInstaller-${rid}`);
+        const bundle = asset(r.release, `Melon-${rid}.zip`);
+        $('release-title').textContent = `${r.branch} ${r.version}`;
+        $('release-date').textContent = new Date(r.release.published_at).toLocaleDateString();
+        for (const [el, a] of [[$('get-installer'), installer], [$('get-bundle'), bundle]]) {
+          el.classList.toggle('disabled', !a);
+          a ? el.href = a.browser_download_url : el.removeAttribute('href');
+          el.title = a ? `${a.name} · ${(a.size / 1048576).toFixed(0)} MB` : 'Not built for this platform yet';
+        }
+        $('get-notes').href = r.release.html_url;
+        $('release-card').hidden = false;
+      }
+
+      function setupLatest() {
+        const branch = Object.keys(byBranch).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))[0];
+        const latest = byBranch[branch][0];
+        const btn = $('install-latest');
+        btn.textContent = `Install Latest ${branch}`;
+        btn.disabled = false;
+        $('latest-note').textContent = `${branch} ${latest.version} · MelonInstaller for ${$('platform').selectedOptions[0].text}`;
+        btn.onclick = () => {
+          const a = asset(latest.release, `MelonInstaller-${$('platform').value}`) || asset(latest.release, `Melon-${$('platform').value}.zip`);
+          location.href = a ? a.browser_download_url : latest.release.html_url;
+        };
+      }
+
+      async function load() {
+        try {
+          const res = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=100`);
+          if (!res.ok) throw new Error(`GitHub returned ${res.status}`);
+          const releases = await res.json();
+          for (const release of releases) {
+            const t = parse(release.tag_name);
+            if (!t || release.draft) continue;
+            (byBranch[t.branch] ||= []).push({ ...t, tag: release.tag_name, release });
+          }
+          const branches = Object.keys(byBranch).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+          if (!branches.length) throw new Error('No releases yet.');
+          for (const b of branches) byBranch[b].sort((x, y) => cmp(y.parts, x.parts));
+          fill($('branch'), branches, String);
+          const versions = () => fill($('version'), byBranch[$('branch').value], r => r.version + (r === byBranch[$('branch').value][0] ? ' (latest)' : ''));
+          versions();
+          $('branch').onchange = () => { versions(); showRelease(); };
+          $('version').onchange = showRelease;
+          $('platform').onchange = () => { showRelease(); setupLatest(); };
+          $('download-error').hidden = true;
+          setupLatest();
+          showRelease();
+        } catch (e) {
+          $('install-latest').textContent = 'Releases unavailable';
+          $('download-error').hidden = false;
+          $('download-error').innerHTML = `${e.message} See <a href="https://github.com/${REPO}/releases">GitHub Releases</a>.`;
+        }
+      }
+      load();
+    </script>
+  </body>
+</html>

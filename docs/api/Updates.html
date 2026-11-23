@@ -68,8 +68,9 @@
       <h3 id="check-for-updates">Check for Updates</h3>
       <p>
         This endpoint checks if a new version of the Melon server is available
-        by comparing the current version of the server with the latest release
-        available on GitHub.
+        by comparing the current version of the server with the latest GitHub
+        release on the server's own branch. Release tags look like
+        <code>Beta-0.9.0.0</code>: the branch, a dash, then the version.
       </p>
       <p><strong>Details:</strong></p>
       <ul>
@@ -96,8 +97,8 @@
               currently running.
             </li>
             <li>
-              <strong>LatestVersion</strong>: The latest version available on
-              GitHub.
+              <strong>LatestVersion</strong>: The tag of the latest release on the server's branch,
+              for example <code>Beta-0.9.0.1</code>.
             </li>
             <li>
               <strong>ReleaseNotes</strong>: Notes related to the latest release
@@ -117,8 +118,8 @@
       <p><strong>Example Response</strong>:</p>
       <pre><code class="lang-json">{
             <span class="hljs-attr">"UpdateAvailable"</span>: <span class="hljs-literal">true</span>,
-            <span class="hljs-attr">"CurrentVersion"</span>: <span class="hljs-string">"1.0.0"</span>,
-            <span class="hljs-attr">"LatestVersion"</span>: <span class="hljs-string">"1.1.0"</span>,
+            <span class="hljs-attr">"CurrentVersion"</span>: <span class="hljs-string">"0.9.0.0"</span>,
+            <span class="hljs-attr">"LatestVersion"</span>: <span class="hljs-string">"Beta-0.9.0.1"</span>,
             <span class="hljs-attr">"ReleaseNotes"</span>: <span class="hljs-string">"Bug fixes and performance improvements."</span>
         }
         </code></pre>
@@ -167,7 +168,7 @@
       <ul>
         <li>
           The <code>check-for-updates</code> endpoint compares the current
-          server version with the latest release on GitHub.
+          server version with the latest release on its branch.
         </li>
         <li>
           The <code>update-melon</code> endpoint starts the update process,

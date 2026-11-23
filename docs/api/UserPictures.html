@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>User Pictures API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+  </head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div class="container">
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="user-pictures-apis-documentation">User Pictures APIs Documentation</h1>
+      <p>Users can set a profile picture. Users change their own picture, and admins can replace anyone's for moderation. Pictures are re-encoded on the server.</p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/art/upload/user-pfp</code></td>
+            <td>POST</td>
+            <td>Sets a profile picture.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/art/delete/user-pfp</code></td>
+            <td>POST</td>
+            <td>Removes a profile picture.</td>
+            <td>Admin, User</td>
+          </tr>
+          <tr>
+            <td><code>/api/download/user-pfp</code></td>
+            <td>GET</td>
+            <td>Gets a profile picture.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h3 id="upload-user-picture">Upload User Picture</h3>
+      <p>Uploads a PNG or JPEG as a user's profile picture.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/art/upload/user-pfp</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, optional): The user to change. Leave it out to change your own.</li>
+        <li><strong>image</strong> (form file, required): The picture.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: If the picture was saved.</li>
+        <li><strong>400 Bad Request</strong>: If the file isn't a usable image.</li>
+        <li><strong>403 Forbidden</strong>: If a non-admin tries to change someone else's picture.</li>
+        <li><strong>404 Not Found</strong>: If the user doesn't exist.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST &quot;https://your-api-url.com/api/art/upload/user-pfp&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot; \
+     -F &quot;image=@me.png&quot;</code></pre>
+      <hr />
+      <h3 id="delete-user-picture">Delete User Picture</h3>
+      <p>Removes a user's profile picture.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/art/delete/user-pfp</code></li>
+        <li><strong>Method</strong>: <code>POST</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, optional): The user to change. Leave it out to change your own.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: If the picture was removed.</li>
+        <li><strong>403 Forbidden</strong>: If a non-admin tries to change someone else's picture.</li>
+        <li><strong>404 Not Found</strong>: If the user doesn't exist.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X POST &quot;https://your-api-url.com/api/art/delete/user-pfp&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot;</code></pre>
+      <hr />
+      <h3 id="download-user-picture">Download User Picture</h3>
+      <p>Returns a user's profile picture. A user with no picture returns 404, so clients can draw their own placeholder, such as initials.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/download/user-pfp</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>id</strong> (string, required): The user's ID.</li>
+        <li><strong>size</strong> (int, optional): Resize to this many pixels wide. 0 returns the stored size.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: The image.</li>
+        <li><strong>404 Not Found</strong>: If the user has no picture.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET &quot;https://your-api-url.com/api/download/user-pfp?id=66bc99b8ab7ba419497e21af&amp;size=256&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot; -o pfp.jpg</code></pre>
+    </div>
+    </div>
+    <script src="/sidebar.js"></script>
+  </body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Oracle Mixes API Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+  </head>
+
+<script>hljs.highlightAll();</script>
+
+  <body>
+    <div class="container">
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="oracle-mixes-apis-documentation">Oracle Mixes APIs Documentation</h1>
+      <p>Oracle Mixes are the server's pick of the day or month. The pick comes from the server's local date, so everyone on the server sees the same mix regardless of their time zone or device. A theme genre is drawn first, then tracks from it, and a small library is topped up from all tracks. The same day always gives the same mix, and adding tracks only changes it slightly.</p>
+      <h2 id="controller-route">Controller Route: <code>/api/oracle</code></h2>
+      <p>All routes within the <code>OracleController</code> are prefixed by <code>/api/oracle</code>.</p>
+      <hr />
+      <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+            <th>Authorization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/api/oracle/daily</code></td>
+            <td>GET</td>
+            <td>Today's Oracle Mix.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+          <tr>
+            <td><code>/api/oracle/monthly</code></td>
+            <td>GET</td>
+            <td>This month's Oracle Mix.</td>
+            <td>Admin, User, Pass</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <h3 id="daily-mix">Daily Mix</h3>
+      <p>Returns today's mix.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/oracle/daily</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>count</strong> (int, optional): Number of tracks, 1 to 200. Defaults to 50.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: An object with <code>period</code> ("daily"), <code>date</code> (yyyy-MM-dd), <code>genre</code> (the drawn genre, or null), <code>refreshesAt</code> (UTC), and <code>tracks</code>.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET &quot;https://your-api-url.com/api/oracle/daily?count=50&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot;</code></pre>
+      <hr />
+      <h3 id="monthly-mix">Monthly Mix</h3>
+      <p>Returns this month's mix.</p>
+      <p><strong>Details</strong>:</p>
+      <ul>
+        <li><strong>Endpoint</strong>: <code>/api/oracle/monthly</code></li>
+        <li><strong>Method</strong>: <code>GET</code></li>
+        <li><strong>Authorization</strong>: JWT (Roles: Admin, User, Pass)</li>
+      </ul>
+      <p><strong>Parameters</strong>:</p>
+      <ul>
+        <li><strong>count</strong> (int, optional): Number of tracks, 1 to 200. Defaults to 50.</li>
+      </ul>
+      <p><strong>Responses</strong>:</p>
+      <ul>
+        <li><strong>200 OK</strong>: The same shape as the daily mix, with <code>period</code> "monthly" and <code>date</code> as yyyy-MM.</li>
+      </ul>
+      <p><strong>Example Request</strong>:</p>
+      <pre><code class="lang-bash">curl -X GET &quot;https://your-api-url.com/api/oracle/monthly&quot; \
+     -H &quot;Authorization: Bearer &lt;JWT-token&gt;&quot;</code></pre>
+    </div>
+    </div>
+    <script src="/sidebar.js"></script>
+  </body>
+</html>

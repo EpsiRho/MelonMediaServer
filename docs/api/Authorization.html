@@ -15,148 +15,66 @@
 <body>
     <div id="sidebar-placeholder"></div>
     <div class="content">
-        <h1 id="auth-controller-documentation">Auth Controller Documentation</h1>
-        <p>The <code>AuthController</code> handles user authentication and authorization. It provides endpoints for
-            logging in and inviting users.</p>
+        <h1 id="auth-controller-documentation">Authorization API</h1>
+        <p>Melon signs devices in with <strong>sessions</strong>. Each signed-in device holds a short-lived access token
+            and a refresh token, and shows up in the account's device list where it can be signed out.</p>
         <p>For more information on Users, check the <a href="/Guides/Users.html">Melon User Guide</a>.</p>
-        <h2 id="controller-route-auth-">Controller Route: <code>/auth/</code></h2>
-        <p>All routes within the <code>AuthController</code> are prefixed by <code>/auth/</code>.</p>
+        <h3 id="tokens">Tokens</h3>
+        <ul>
+            <li><strong>Access token</strong>: a JWT that lasts 15 minutes. Send it as <code>Authorization: Bearer &lt;token&gt;</code>.
+                It is refused in the query string.</li>
+            <li><strong>Refresh token</strong>: opaque, single use. Swap it at <code>auth/refresh</code> for a new pair before or
+                after the access token expires. Using an old refresh token again signs that device out (it was likely stolen).
+                Sessions end after 60 days without use, when the password changes, or when they're signed out.</li>
+            <li><strong>Media token</strong>: a read-only JWT that lasts 6 hours, for URLs that can't carry a header (audio,
+                playlist and collection art). Pass it as <code>?jwt=&lt;token&gt;</code>. It works only on <code>api/download/*</code>.</li>
+        </ul>
         <hr>
         <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
         <table>
             <thead>
-                <tr>
-                    <th>Endpoint</th>
-                    <th>Method</th>
-                    <th>Description</th>
-                    <th>Authorization</th>
-                </tr>
+                <tr><th>Endpoint</th><th>Method</th><th>Body</th><th>Description</th><th>Authorization</th></tr>
             </thead>
             <tbody>
-                <tr>
-                    <td><code>/auth/login</code></td>
-                    <td>GET</td>
-                    <td>Login with a username and password to obtain a JWT token.</td>
-                    <td>None</td>
-                </tr>
-                <tr>
-                    <td><code>/auth/invite</code></td>
-                    <td>GET</td>
-                    <td>Generate a new invite code for user registration.</td>
-                    <td>Admin</td>
-                </tr>
-                <tr>
-                    <td><code>/auth/code-authenticate</code></td>
-                    <td>GET</td>
-                    <td>Generate a &quot;Server&quot; role JWT using an invite code.</td>
-                    <td>None</td>
-                </tr>
-                <tr>
-                    <td><code>/auth/check</code></td>
-                    <td>GET</td>
-                    <td>Validate a JWT to check if it is still active.</td>
-                    <td>Admin, User, Pass</td>
-                </tr>
+                <tr><td><code>/api/server/features</code></td><td>GET</td><td></td><td>What the server supports, e.g. <code>["stat-filters","auth-v2"]</code>.</td><td>None</td></tr>
+                <tr><td><code>/auth/token</code></td><td>POST</td><td><code>{deviceName}</code> plus <code>Authorization: Basic base64(username:password)</code></td><td>Sign in and start a session.</td><td>None (rate limited)</td></tr>
+                <tr><td><code>/auth/refresh</code></td><td>POST</td><td><code>{refreshToken}</code></td><td>New access and refresh token.</td><td>None (rate limited)</td></tr>
+                <tr><td><code>/auth/logout</code></td><td>POST</td><td><code>{refreshToken}</code> (optional)</td><td>End that session, or the caller's. Returns 204.</td><td>None</td></tr>
+                <tr><td><code>/auth/media-token</code></td><td>POST</td><td></td><td><code>{token, expiresIn}</code></td><td>Admin, User, Pass</td></tr>
+                <tr><td><code>/auth/register</code></td><td>POST</td><td><code>{inviteCode, username, password, deviceName}</code></td><td>Create an account from an invite and sign this device in.</td><td>None (rate limited)</td></tr>
+                <tr><td><code>/auth/device-link</code></td><td>POST</td><td></td><td>One-time code to sign in another device: <code>{id, code, expiresAt}</code>. Valid 2 minutes.</td><td>Admin, User, Pass</td></tr>
+                <tr><td><code>/auth/device-link/redeem</code></td><td>POST</td><td><code>{code, deviceName}</code></td><td>Sign this device in with that code.</td><td>None</td></tr>
+                <tr><td><code>/auth/device-link/{id}</code></td><td>GET</td><td></td><td><code>{redeemed, deviceName, expiresAt}</code>, for the device showing the code.</td><td>Admin, User, Pass</td></tr>
+                <tr><td><code>/auth/invite</code></td><td>GET</td><td></td><td>Create an invite code (<code>?expireMinutes=</code>, up to 30 days).</td><td>Admin</td></tr>
+                <tr><td><code>/auth/check</code></td><td>GET</td><td></td><td>200 if the access token is valid.</td><td>Admin, User, Pass</td></tr>
+                <tr><td><code>/api/users/password</code></td><td>PATCH</td><td><code>{currentPassword, newPassword}</code></td><td>Change your password. Other devices are signed out; returns a fresh <code>accessToken</code> for this one.</td><td>Admin, User, Pass</td></tr>
+                <tr><td><code>/api/users/sessions</code></td><td>GET</td><td></td><td>Your signed-in devices (admins: <code>?userId=</code> for anyone's).</td><td>Admin, User, Pass</td></tr>
+                <tr><td><code>/api/users/sessions/revoke</code></td><td>POST</td><td><code>{sessionId}</code></td><td>Sign a device out. Returns 204.</td><td>Admin, User, Pass</td></tr>
             </tbody>
         </table>
+        <p>Token responses look like <code>{accessToken, refreshToken, expiresIn, sessionId, user: {id, username, role}}</code>.</p>
         <hr>
-        <h3 id="login">Login</h3>
-        <p>This endpoint handles logging in users with their username and password, returning a JWT token for
-            authenticating future API calls.</p>
-        <p><strong>Details:</strong></p>
-        <ul>
-            <li><strong>Endpoint</strong>: <code>/auth/login</code></li>
-            <li><strong>Method</strong>: <code>GET</code></li>
-            <li><strong>Authorization</strong>: None (No token required)</li>
-        </ul>
-        <p><strong>Parameters</strong>:</p>
-        <ul>
-            <li><strong>username</strong> (string, required): The username for the account.</li>
-            <li><strong>password</strong> (string, required): The password for the account.</li>
-        </ul>
-        <p><strong>Responses</strong>:</p>
-        <ul>
-            <li><strong>200 OK</strong>: The username and password match, and a JWT token is returned for use in future
-                requests.</li>
-            <li><strong>401 Unauthorized</strong>: The username or password does not match any account on the system.
-            </li>
-        </ul>
-        <p><strong>Example Request</strong>:</p>
-        <pre><code class="lang-http">GET <span class="hljs-meta-keyword">/auth/</span>login?username=johndoe<span class="hljs-variable">&amp;password</span>=secret
+        <h3 id="sign-in">Sign in</h3>
+        <pre><code class="lang-http">POST /auth/token
+Authorization: Basic am9obmRvZTpzZWNyZXQ=
+Content-Type: application/json
+
+{"deviceName": "Galia on DESKTOP"}
 </code></pre>
+        <p>401 means the username or password is wrong. After 5 wrong passwords for one username from one address, the server
+            answers 429 with <code>Retry-After</code> (15 seconds, doubling up to 15 minutes).</p>
         <hr>
-        <h3 id="create-invite-code">Create Invite Code</h3>
-        <p>Generates a four-character invite code that can be used to create new user accounts. This invite code lasts
-            for 10 minutes, during which it can be used to obtain a JWT for account creation. Once an invite code has
-            been used to generate a JWT token, it becomes invalid.</p>
-        <p><strong>Details:</strong></p>
-        <ul>
-            <li><strong>Endpoint</strong>: <code>/auth/invite</code></li>
-            <li><strong>Method</strong>: <code>GET</code></li>
-            <li><strong>Authorization</strong>: JWT with Admin Role</li>
-        </ul>
-        <p><strong>Notes</strong>:</p>
-        <ul>
-            <li>Only Admins can generate invite codes.</li>
-            <li>The invite code is temporary and will expire after 10 minutes.</li>
-            <li>A JWT with the &quot;Server&quot; role can be created from the invite code for the new user registration
-                process by calling <code>auth/code-authenticate</code></li>
-        </ul>
-        <p><strong>Responses</strong>:</p>
-        <ul>
-            <li><strong>200 OK</strong>: Successfully generated an invite code.</li>
-            <li><strong>401 Unauthorized</strong>: The user does not have Admin permissions.</li>
-            <li><strong>408 Request Timeout</strong>: There are too many active invite codes, try again later.</li>
-        </ul>
-        <p><strong>Example Request</strong>:</p>
-        <pre><code class="lang-http">GET <span class="hljs-meta-keyword">/auth/</span>invite 
-<span class="hljs-symbol">Authorization:</span> Bearer <span class="hljs-params">&lt;Admin-JWT&gt;</span>
-</code></pre>
+        <h3 id="invites">Invites</h3>
+        <p>An admin creates a code with <code>auth/invite</code> (or from MelonCLI / MelonGUI) and shares it with the server
+            address, for example as <code>https://your-server/auth/join?code=&lt;code&gt;</code>. Galia reads that link from a QR code
+            or paste. The new user calls <code>auth/register</code>, which checks the code, creates the account and signs the device
+            in. Each code works once.</p>
         <hr>
-        <h3 id="code-authenticate">Code Authenticate</h3>
-        <p>This endpoint generates a &quot;Server&quot; role JWT using an invite code. The invite code is invalidated
-            after being used once to create a token.</p>
-        <ul>
-            <li><strong>Endpoint</strong>: <code>/auth/code-authenticate</code></li>
-            <li><strong>Method</strong>: <code>GET</code></li>
-            <li><strong>Authorization</strong>: None (No token required)</li>
-        </ul>
-        <p><strong>Parameters</strong>:</p>
-        <ul>
-            <li><strong>code</strong> (string, required): The four-character invite code.</li>
-        </ul>
-        <p><strong>Notes</strong>:</p>
-        <ul>
-            <li>The JWT created lasts for 10 minutes and is meant to be used with <code>/api/users/create</code> to
-                register a new user.</li>
-            <li>The invite code is invalidated after one successful JWT creation.</li>
-            <li>Server roles can only be used with <code>api/users/create</code> to create the new user.</li>
-        </ul>
-        <p><strong>Responses</strong>:</p>
-        <ul>
-            <li><strong>200 OK</strong>: A JWT with the &quot;Server&quot; role is returned.</li>
-            <li><strong>401 Unauthorized</strong>: The invite code is invalid.</li>
-        </ul>
-        <p><strong>Example Request</strong>:</p>
-        <pre><code class="lang-http"><span class="hljs-symbol">GET</span> /auth/<span class="hljs-meta">code</span>-authenticate?<span class="hljs-meta">code</span><span class="hljs-symbol">=ABCD</span>
-</code></pre>
-        <hr>
-        <h3 id="jwt-authentication-test">JWT Authentication Test</h3>
-        <p>This endpoint verifies if the provided JWT token is valid.</p>
-        <ul>
-            <li><strong>Endpoint</strong>: <code>/auth/check</code></li>
-            <li><strong>Method</strong>: <code>GET</code></li>
-            <li><strong>Authorization</strong>: JWT with Admin, User, or Pass roles</li>
-        </ul>
-        <p><strong>Responses</strong>:</p>
-        <ul>
-            <li><strong>200 OK</strong>: The JWT is valid.</li>
-            <li><strong>401 Unauthorized</strong>: The JWT is invalid.</li>
-        </ul>
-        <p><strong>Example Request</strong>:</p>
-        <pre><code class="lang-http">GET <span class="hljs-meta-keyword">/auth/</span>check
-<span class="hljs-symbol">Authorization:</span> Bearer <span class="hljs-params">&lt;JWT&gt;</span>
-</code></pre>
+        <h3 id="device-link">Sign in another device</h3>
+        <p>A signed-in device calls <code>auth/device-link</code> and shows <code>https://your-server/auth/link?code=&lt;code&gt;</code>
+            as a QR code. The new device calls <code>auth/device-link/redeem</code>. The code holds no password, works once and
+            expires after 2 minutes.</p>
+        <p>Opening <code>/auth/join</code> or <code>/auth/link</code> in a browser shows a short page explaining what to do in the app.</p>
 
     </div>
     <script src="/sidebar.js"></script>

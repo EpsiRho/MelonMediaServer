@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>EQ Filters API Docs</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+</head>
+
+<script>hljs.highlightAll();</script>
+
+
+<body>
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+        <h1 id="eqcontroller-documentation">EqController Documentation</h1>
+        <p>EQ filters are saved equalizers that the server applies to a track before sending it. Each filter belongs to
+            the user who made it. The owner can make it public, and then any user can pick it. Only the owner can edit
+            a filter. The owner or an admin can delete it. When a user is deleted, their filters go with them.</p>
+        <p>In lists, show each filter's <code>name</code> and <code>ownerName</code>. To play a track through a filter,
+            add <code>eq=&lt;filter id&gt;</code> to <a href="/api/Download.html#download-track"><code>/api/download/track</code></a>
+            (an equalized WAV that starts at once and supports Range) or
+            <a href="/api/Download.html#download-track-with-transcoding"><code>/api/download/track-transcode</code></a>
+            (MP3, cached per filter version).</p>
+        <h2 id="how-it-sounds">How it sounds</h2>
+        <p>Filters are processed by Nova's <code>Equalizer</code>. Every band uses matched second-order filters, which
+            keep their analog shape all the way up the spectrum. A cookbook (bilinear) EQ squeezes high bells and
+            shelves against Nyquist, so a 16 kHz bell on a 44.1 kHz track gets narrower and loses its top. Processing
+            is in double precision, so narrow bass bands stay clean. With <code>autoHeadroom</code> on (the default),
+            the output is lowered by the curve's highest boost, so boosting doesn't clip. Anything that still goes
+            above −1 dBFS is soft-clipped rather than hard-clipped. Ten bands cost about 1–2 ms of CPU per second of
+            stereo audio, far less than decoding.</p>
+        <h2 id="controller-route-api-eq-">Controller Route: <code>/api/eq</code></h2>
+        <p>All routes are prefixed by <code>/api/eq/</code> and need a JWT with the Admin or User role.</p>
+        <hr>
+        <h3 id="summary-of-endpoints">Summary of Endpoints</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><code>/api/eq/list</code></td><td>GET</td><td>The user's filters plus public ones.</td></tr>
+                <tr><td><code>/api/eq/get</code></td><td>GET</td><td>One filter.</td></tr>
+                <tr><td><code>/api/eq/add</code></td><td>POST</td><td>Save a new filter. Returns its ID.</td></tr>
+                <tr><td><code>/api/eq/update</code></td><td>POST</td><td>Replace one of the user's filters.</td></tr>
+                <tr><td><code>/api/eq/set-public</code></td><td>POST</td><td>Show or hide a filter from other users.</td></tr>
+                <tr><td><code>/api/eq/delete</code></td><td>DELETE or POST</td><td>Delete a filter.</td></tr>
+                <tr><td><code>/api/eq/response</code></td><td>GET</td><td>A saved filter's response curve, for drawing.</td></tr>
+                <tr><td><code>/api/eq/response</code></td><td>POST</td><td>The curve of unsaved settings, for editors.</td></tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="eq-filter">EQ Filter</h3>
+        <pre><code class="lang-json">{
+  "_id": "6740f1c2ab7ba419497e6b01",
+  "name": "Warm",
+  "owner": "66bc9aadab7ba419497e6a90",
+  "ownerName": "epsi",
+  "isPublic": true,
+  "preamp": 0,
+  "autoHeadroom": true,
+  "bands": [
+    { "type": "highPass",  "frequency": 25,    "gain": 0,  "q": 0.707, "slope": 24, "enabled": true },
+    { "type": "lowShelf",  "frequency": 120,   "gain": 3,  "q": 0.707, "slope": 12, "enabled": true },
+    { "type": "peak",      "frequency": 3500,  "gain": -2, "q": 1.4,   "slope": 12, "enabled": true },
+    { "type": "highShelf", "frequency": 10000, "gain": 1.5,"q": 0.707, "slope": 12, "enabled": true }
+  ],
+  "created": "2026-11-22T18:00:00Z",
+  "updated": "2026-11-22T18:00:00Z"
+}</code></pre>
+        <table>
+            <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+            <tbody>
+                <tr><td><code>name</code></td><td>1–100 characters.</td></tr>
+                <tr><td><code>preamp</code></td><td>Output gain in dB, −30 to 30, applied after the bands.</td></tr>
+                <tr><td><code>autoHeadroom</code></td><td>Lower the output by the curve's highest boost (default
+                        <code>true</code>). Turn off to set the level yourself with <code>preamp</code>.</td></tr>
+                <tr><td><code>bands</code></td><td>Up to 32, applied in order.</td></tr>
+                <tr><td><code>bands[].type</code></td><td><code>peak</code>, <code>lowShelf</code>, <code>highShelf</code>,
+                        <code>lowPass</code>, <code>highPass</code>, <code>bandPass</code> or <code>notch</code>
+                        (case-insensitive; stored in this spelling).</td></tr>
+                <tr><td><code>bands[].frequency</code></td><td>Centre or corner in Hz, 10–40,000. Values at or near a
+                        track's Nyquist frequency are pulled just under it. A low-pass above it is skipped.</td></tr>
+                <tr><td><code>bands[].gain</code></td><td>Boost or cut in dB, −30 to 30. Used by <code>peak</code> and
+                        the shelves.</td></tr>
+                <tr><td><code>bands[].q</code></td><td>0.05–40; higher is narrower. Peak, band-pass and notch: 1.41 is
+                        about one octave wide. Shelves: 0.707 is a smooth transition, and higher adds a bump. Low/high-pass at
+                        12 dB/oct: resonance, where 0.707 is flat. Steeper slopes use a Butterworth response and ignore it.</td></tr>
+                <tr><td><code>bands[].slope</code></td><td>Low/high-pass roll-off: 6, 12, 18, 24, 36 or 48 dB per
+                        octave.</td></tr>
+                <tr><td><code>bands[].enabled</code></td><td>Disabled bands are kept but not applied.</td></tr>
+            </tbody>
+        </table>
+        <hr>
+        <h3 id="list">List</h3>
+        <p><code>GET /api/eq/list</code> returns the filters the user can pick: their own plus every public one, sorted by
+            name.</p>
+        <ul>
+            <li><strong>mine</strong> (bool, optional): Only the user's own filters.</li>
+            <li><strong>name</strong> (string, optional): Case-insensitive substring of the name.</li>
+            <li><strong>page</strong>, <strong>count</strong> (int, optional): Paging. Count defaults to 100, max 500.</li>
+        </ul>
+        <pre><code class="lang-bash">curl "https://your-melon-server.com/api/eq/list" -H "Authorization: Bearer &lt;User-JWT&gt;"</code></pre>
+        <hr>
+        <h3 id="get">Get</h3>
+        <p><code>GET /api/eq/get?id=…</code> returns one filter. <strong>404</strong> if it doesn't exist, or if it's
+            private and belongs to someone else.</p>
+        <hr>
+        <h3 id="add">Add</h3>
+        <p><code>POST /api/eq/add</code> with a JSON body of <code>name</code>, <code>isPublic</code> (optional, default
+            false), <code>preamp</code>, <code>autoHeadroom</code> and <code>bands</code>. Returns the new ID as a JSON
+            string. <strong>400</strong> with a message for invalid values, or when the user already has 200 filters.</p>
+        <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/eq/add" \
+     -H "Authorization: Bearer &lt;User-JWT&gt;" -H "Content-Type: application/json" \
+     -d '{ "name": "Vocal lift", "bands": [ { "type": "peak", "frequency": 2500, "gain": 3, "q": 1.2 } ] }'</code></pre>
+        <hr>
+        <h3 id="update">Update</h3>
+        <p><code>POST /api/eq/update?id=…</code> with the same body as Add. It replaces the name, bands, preamp and
+            headroom setting. <code>isPublic</code> changes visibility only when it's included. <strong>404</strong> if the
+            filter isn't the user's.</p>
+        <hr>
+        <h3 id="set-public">Set Public</h3>
+        <p><code>POST /api/eq/set-public?id=…&amp;isPublic=true</code> shows the filter to every user, or hides it
+            again with <code>false</code>. Owner only.</p>
+        <hr>
+        <h3 id="delete">Delete</h3>
+        <p><code>DELETE /api/eq/delete?id=…</code> (POST also works). Owners can delete their own filters, and admins can
+            delete any.</p>
+        <hr>
+        <h3 id="response">Response Curve</h3>
+        <p><code>GET /api/eq/response?id=…</code> returns the curve of a saved filter, and <code>POST
+            /api/eq/response</code> with an Add body returns the curve of unsaved settings. Use it to draw the curve while
+            the user edits.</p>
+        <ul>
+            <li><strong>points</strong> (int, optional): Number of log-spaced frequencies from 20 Hz to 20 kHz, 2–4096
+                (default 256).</li>
+            <li><strong>sampleRate</strong> (int, optional): The rate to design for (default 44100). The curve near
+                Nyquist depends on it.</li>
+        </ul>
+        <pre><code class="lang-json">{ "frequencies": [20, 20.5, …, 20000], "gains": [-9.1, -8.4, …, 1.5], "outputGain": -3.2, "sampleRate": 44100 }</code></pre>
+        <p><code>gains</code> is the bands' combined response in dB. <code>outputGain</code> is the preamp minus the
+            automatic headroom, applied to everything.</p>
+    </div>
+    <script src="/sidebar.js"></script>
+</body>
+
+</html>

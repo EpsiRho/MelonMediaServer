@@ -100,8 +100,7 @@
               <code>LoadMelonServerCommands</code>: Initialize plugin with Melon
               web API.
             </li>
-            <li><code>LoadUI</code>: Load UI elements.</li>
-            <li><code>UnloadUI</code>: Unload UI elements.</li>
+            <li><code>LoadUI</code> / <code>UnloadUI</code>: Optional, with default implementations. Controller pages come from <code>IControllerPlugin</code> instead.</li>
             <li>
               <code>Execute</code>: Start background processes or middleware.
             </li>
@@ -187,19 +186,6 @@
             {
                 WebApi = webapi;
             }
-    
-            public int LoadUI()
-            {
-                // Add UI elements here (will be covered in later tutorials)
-                return 0;
-            }
-    
-            public int UnloadUI()
-            {
-                // Remove UI elements here
-                return 0;
-            }
-    
             public int Execute()
             {
                 // Start background processes or middleware here
@@ -251,12 +237,10 @@
               the <code>IWebApi</code> interface.
             </li>
             <li>
-              <strong>LoadUI</strong>: Use this to add elements to Melon&#39;s
-              UI.
-            </li>
-            <li>
-              <strong>UnloadUI</strong>: Remove any UI elements you&#39;ve
-              added.
+              <strong>GetPage / Invoke</strong>: Optional. Implement
+              <code>IControllerPlugin</code> to give your plugin a page in MelonGUI
+              and MelonCLI (see the
+              <a href="/Plugins/Plugin-Tutorial-First-UI.html">Controller Page</a> tutorial).
             </li>
             <li>
               <strong>Execute</strong>: Start any continuous processes or
@@ -349,7 +333,7 @@
       </ul>
       <p>
         <a href="/Plugins/Introduction.html">Back to Introduction</a> &lt;--- ---&gt;
-        <a href="/Plugins/Plugin-Tutorial-First-UI.html">Next Tutorial: First UI</a>
+        <a href="/Plugins/Plugin-Tutorial-First-UI.html">Next Tutorial: Controller Page</a>
       </p>
     </div>
     <script src="/sidebar.js"></script>

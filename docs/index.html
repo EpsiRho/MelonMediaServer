@@ -4,6 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <title>Melon Docs Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styles.css" />
   </head>
 
@@ -84,26 +85,31 @@
           </li>
         </ul>
         <h2 id="get-started-using-melon">Get Started Using Melon</h2>
-        <p>
-          See the <a href="/Guides/Installation.html">Installation Guide</a>!
+        <p class="cta">
+          <a class="btn btn-primary" href="/Download.html">Download Melon</a>
+          <a class="btn btn-ghost" href="/Guides/Installation.html">Installation Guide</a>
         </p>
+        <p>
+          Melon comes with two controllers for setting up and managing your
+          server:
+        </p>
+        <ul>
+          <li><strong>MelonGUI</strong>, the Windows app.</li>
+          <li><strong>MelonCLI</strong>, the terminal app for Windows, Linux, and macOS.</li>
+        </ul>
         <h3 id="clients">Clients</h3>
-        <p>There are currently no clients for Melon, but two are planned.</p>
         <ul>
           <li>
-            Galia, the Windows application written with the WASDK.
-            <ul>
-              <li>
-                Galia&#39;s code is currently closed during early dev, but will
-                be up on GitHub soon.
-              </li>
-            </ul>
+            <a href="https://github.com/EpsiRho/Galia">Galia</a>, the Windows
+            app written with the WASDK.
           </li>
-          <li>Watermelon, the iOS application written with Swift.</li>
+          <li>
+            Watermelon, the iOS app written with Swift. It will arrive through
+            TestFlight.
+          </li>
         </ul>
         <p>
-          Work has already begun on the windows application. When I have
-          completed the Galia and Watermelon apps, I will work on more
+          When I have completed the Galia and Watermelon apps, I will work on more
           first-party apps as I can, hoping to get apps on MacOS, AppleTV, and
           Android. I personally do not want to work on a Web App, I just dislike
           working in JS, so there will likely not be one first-party.
@@ -198,8 +204,8 @@
             <a href="/Architecture/MelonInstaller.html">MelonInstaller</a>
             <ul>
               <li>
-                Documentation of the exe/dll MelonInstaller, which is used for
-                installs, updates, and building releases of Melon.
+                How MelonInstaller installs, updates, builds releases, and
+                handles branches and versions.
               </li>
             </ul>
           </li>
@@ -232,9 +238,9 @@
             </ul>
           </li>
           <li>
-            <a href="https://github.com/HavenDV/H.NotifyIcon">H.NotifyIcon</a>
+            <a href="https://github.com/dotMorten/WinUIEx">WinUIEx</a>
             <ul>
-              <li>Windows Tray Icon Support</li>
+              <li>Window helpers for MelonGUI</li>
             </ul>
           </li>
           <li>
@@ -251,9 +257,9 @@
             </ul>
           </li>
           <li>
-            <a href="https://github.com/silkfire/Pastel">Pastel</a>
+            <a href="https://github.com/EpsiRho/MelonUI">MelonUI</a>
             <ul>
-              <li>Used to color the console UI</li>
+              <li>Used to build MelonCLI</li>
             </ul>
           </li>
           <li>CaydoFox - 3D Melon Icon</li>

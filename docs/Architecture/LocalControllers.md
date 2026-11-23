@@ -25,7 +25,7 @@ When `setupRequired` is true, use `CreateFirstAdmin` and `SetLibraryPaths`. Use 
 
 Use `GetUsers` to list account IDs, names, and roles. An operator can issue a ten-minute, single-use password reset with `CreatePasswordReset`. The user opens `/auth/reset-password` on their server, or a client posts JSON containing `code` and `password` to that address. Issuing a replacement code invalidates the previous one for that account. Changing the password or deleting the account invalidates its login tokens.
 
-`CreateInvite` defaults to ten minutes. `GetInvites` returns the active codes and their UTC expiry, and `RevokeInvite` invalidates one. Codes are held in memory. A QR encodes the invite code itself for compatibility with `/auth/code-authenticate`.
+`CreateInvite` defaults to ten minutes. `GetInvites` returns the active codes and their UTC expiry, and `RevokeInvite` invalidates one. Codes are held in memory. A controller QR encodes just the code; Galia reads it in Sign up, and `POST auth/register` redeems it.
 
 `GetListeningSummary` returns daily UTC play/skip counts, listening duration for plays, and the five most-played tracks. An empty user ID includes every account, including retained history from deleted accounts. `PruneDeletedUserStats` removes those accounts’ listening events, play and skip counts, and ratings across all dates.
 

@@ -44,26 +44,13 @@
         temporary &quot;Pass Account&quot;, that only lets them listen along
         with the listening party, and then expires with the listening party.
       </p>
-      <h4 id="server-accounts">Server Accounts</h4>
-      <p>
-        This isn&#39;t technically an account, but it is a user type. This is
-        given to JWT that are granted through
-        <code>auth/code-authenticate</code>. When you invite a user, you
-        generate a code that allows them to call
-        <code>auth/code-authenticate</code> on your server. This generates them
-        a one time use JWT that is a server account. This allows them to call
-        <code>api/users/create</code>, the only api endpoint accessible by
-        server accounts. They create their user, then discard the server account
-        and login to their newly made one.
-      </p>
       <h2 id="how-to-invite-someone">How to Invite someone</h2>
-      <p>! There are currently no GUI methods for creating new users. !</p>
       <p>
-        They way this will work is the inviter will generate an invite code,
-        pass it to the new user along with the server url, and then create their
-        user. This can be accomplished now by calling <code>auth/invite</code>,
-        then <code>auth/code-authenticate</code>, and then using the JWT to call
-        <code>api/users/create</code>.
+        Create an invite in Galia (Settings → Server → Invites), MelonCLI or
+        MelonGUI. Galia shows it as a QR code and a link
+        (<code>https://your-server/auth/join?code=...</code>). The new user scans
+        or pastes it in Galia's Sign up screen, picks a username and password,
+        and is signed in. Each invite works once.
       </p>
       <h2 id="user-properties">User properties</h2>
       <p>
