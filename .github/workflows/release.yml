@@ -1,0 +1,76 @@
+name: Release bundles
+# Tags look like "Beta-0.9.0.0": branch, dash, four-part version. Publishing a release builds and attaches
+# Melon-win-x64.zip (Server, Controller, CLI, Installer), Melon-linux-x64.zip and Melon-osx-arm64.zip (Server, CLI, Installer).
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  bundle:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-latest
+            rid: osx-arm64
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Stamp version
+        if: github.event_name == 'release'
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^([A-Za-z0-9_.]+)-v?(\d+\.\d+\.\d+\.\d+)$') { throw "Tag must look like Beta-0.9.0.0" }
+          $branch = $Matches[1]; $version = $Matches[2]
+          $file = 'Code/MelonWebApi/Program.cs'
+          $source = (Get-Content $file -Raw)
+          $source = $source -replace 'public const string Version = "[^"]+";', ('public const string Version = "' + $version + '";')
+          $source = $source -replace 'public const string Branch = "[^"]+";', ('public const string Branch = "' + $branch + '";')
+          Set-Content -LiteralPath $file -Value $source -NoNewline
+      - name: Publish
+        shell: pwsh
+        run: |
+          $rid = '${{ matrix.rid }}'
+          dotnet publish Code/MelonWebApi/MelonWebApi.csproj -c Release -r $rid --self-contained -o bundle/Server
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet publish Code/MelonCLI/MelonCLI.csproj -c Release -r $rid --self-contained -o bundle/CLI
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet publish Code/MelonInstaller/MelonInstaller.csproj -c Release -r $rid --self-contained -p:PublishSingleFile=true -o bundle/Installer
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $parts = 'Server','CLI','Installer'
+          if ($rid -eq 'win-x64') {
+            dotnet publish Code/MelonGUI/MelonGUI.csproj -c Release -r $rid -p:Platform=x64 --self-contained -o bundle/Controller
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            $parts += 'Controller'
+            Copy-Item bundle/Installer/MelonInstaller.exe MelonInstaller-win-x64.exe
+          } else {
+            Copy-Item bundle/Installer/MelonInstaller "MelonInstaller-$rid"
+          }
+          Copy-Item LICENSE,NOTICE bundle
+          Push-Location bundle
+          Compress-Archive -Path ($parts + 'LICENSE','NOTICE') -DestinationPath "../Melon-$rid.zip"
+          Pop-Location
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Melon-${{ matrix.rid }}
+          path: |
+            Melon-${{ matrix.rid }}.zip
+            MelonInstaller-${{ matrix.rid }}*
+      - name: Attach to release
+        if: github.event_name == 'release'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$env:RELEASE_TAG" "Melon-${{ matrix.rid }}.zip" (Get-ChildItem "MelonInstaller-${{ matrix.rid }}*").FullName --clobber

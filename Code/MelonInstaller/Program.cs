@@ -1,5 +1,4 @@
 using MelonInstaller.Classes;
-using Microsoft.Build.Locator;
 using System.Diagnostics;
 using System.Resources;
 using System.Runtime.InteropServices;
@@ -12,7 +11,7 @@ namespace MelonInstaller
         public static string installPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}/MelonInstall";
         public static string versionToFind = "latest";
         public static bool addAppIcons = false;
-        public static string Version = "1.1.5";
+        public static string Version = "2.0.0";
         public static ResourceManager StringsManager { get; set; }
         [DllImport("libc")]
         public static extern int system(string exec);
@@ -34,7 +33,7 @@ namespace MelonInstaller
         {
             ParseArgs(args);
 
-            if (LaunchArgs.ContainsKey("v") || LaunchArgs.ContainsKey("version"))
+            if (LaunchArgs.ContainsKey("v") || LaunchArgs.GetValueOrDefault("version") == "")
             {
                 Console.WriteLine($"Melon Installer {Version}");
                 return 0;
@@ -63,14 +62,12 @@ namespace MelonInstaller
             }
             else if (LaunchArgs.ContainsKey("build"))
             {
-                SetupMSBuild();
                 var check = MelonBuildManager.PrepareBuild();
                 if(!check)
                 {
                     return -1;
                 }
-                MelonBuildManager.Build();
-                return 2;
+                return MelonBuildManager.Build() ? 0 : 2;
             }
 
             // Install UI: Get install path
@@ -110,15 +107,6 @@ namespace MelonInstaller
 
             return 0;
         }
-        private static void SetupMSBuild()
-        {
-            if (!MSBuildLocator.IsRegistered)
-            {
-                var instance = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(
-                                instance => instance.Version).First();
-                MSBuildLocator.RegisterDefaults();
-            }
-        }
         private static void ParseArgs(string[] args)
         {
             LaunchArgs = new Dictionary<string, string>();
@@ -154,6 +142,11 @@ namespace MelonInstaller
             if (LaunchArgs.ContainsKey("installPath"))
             {
                 installPath = LaunchArgs["installPath"];
+            }
+
+            if (LaunchArgs.ContainsKey("version") && !string.IsNullOrEmpty(LaunchArgs["version"]))
+            {
+                versionToFind = LaunchArgs["version"];
             }
 
             if (LaunchArgs.ContainsKey("versionToFind"))

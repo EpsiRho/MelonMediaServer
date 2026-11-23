@@ -25,3 +25,14 @@ MelonExtracting=Extracting Melon
 DownloadFromGithub=Downloading {} from GitHub
 InvalidVersion=Invalid version
 MissingVersion=Missing version
+
+BuildingVersion=Building
+ReleaseTagHint=Publish it as GitHub release tag
+InvalidBranch=Unknown branch:
+AvailableBranches=Available branches:
+BranchPrompt=Which branch would you like to install? Enter a number or press Enter for the default.
+DowngradeWarning=Switching from {from} to {to} installs an older version number. Your library is kept, but newer settings or data may not carry over.
+DowngradeForce=Run again with -force to switch anyway.
+ContinuePrompt=Continue?
+LaunchingController=Opening Melon...
+LaunchingCli=Starting MelonCLI...

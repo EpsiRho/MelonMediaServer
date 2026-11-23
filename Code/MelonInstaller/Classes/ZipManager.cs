@@ -27,12 +27,6 @@ namespace MelonInstaller.Classes
             double size = allFilesToZip.Length;
             double finished = 0;
 
-            // To have relative paths in the zip.
-            string pathToRemove = buildFolderPath;
-            if(pathToRemove.EndsWith("\\") == false)
-            {
-                pathToRemove += "\\";
-            }
 
             // Create the zip file by file
             using (ZipArchive zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
@@ -40,7 +34,8 @@ namespace MelonInstaller.Classes
                 // Go over all files and zip them.
                 foreach (var file in allFilesToZip)
                 {
-                    String fileRelativePath = file.Replace(pathToRemove, "");
+                    // Forward slashes so the archive extracts correctly on Linux and macOS too.
+                    string fileRelativePath = Path.GetRelativePath(buildFolderPath, file).Replace('\\', '/');
 
                     zip.CreateEntryFromFile(file, fileRelativePath);
                     finished++;

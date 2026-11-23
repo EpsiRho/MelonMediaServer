@@ -12,8 +12,13 @@ namespace MelonInstaller.Classes
         public static double zipPercentage = 0;
         public static void ZipProgressView(string action)
         {
-            // Title
-            Console.CursorVisible = false;
+            endDisplay = false;
+            if (Console.IsOutputRedirected)
+            {
+                Console.WriteLine($"[+] {action}...");
+                return;
+            }
+            try { Console.CursorVisible = false; } catch (IOException) { }
             Console.WriteLine();
 
             endDisplay = false;
@@ -46,10 +51,11 @@ namespace MelonInstaller.Classes
                     {
 
                     }
+                    Thread.Sleep(50);
                 }
                 Console.CursorVisible = true;
             });
-            DisplayThread.Priority = ThreadPriority.Highest;
+            DisplayThread.IsBackground = true;
             DisplayThread.Start();
         }
         private static void DisplayProgressBar(double progressPercentage, char foreground, char background)

@@ -1,219 +1,159 @@
-﻿using Microsoft.Build.Evaluation;
-using Microsoft.Build.Execution;
-using Microsoft.Build.Framework;
-using Microsoft.Build.Locator;
-using Microsoft.Build.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Melon.Models;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using static MelonInstaller.Program;
 
 namespace MelonInstaller.Classes
 {
+    /// <summary>
+    /// Builds a release bundle (Server, Controller, CLI, Installer) and numbers it.
+    /// Each branch counts its own builds in BuildVersions.json: the first build on a base version is base.0, and every
+    /// build after it adds one to the last number. The file is committed with the source, never read from GitHub.
+    /// </summary>
     public static class MelonBuildManager
     {
-        public static string version = "";
-        public static string branch = "";
-        public static string buildPath = "";
-        public static string outputPath = "";
+        private static string codePath = "";
+        private static string versionFile = "";
+        private static string outputPath = "";
+        private static ReleaseTag release = null!;
+
         public static bool PrepareBuild()
         {
-            // Get Build Path
-            if (!Program.LaunchArgs.ContainsKey("buildPath"))
+            if (!LaunchArgs.TryGetValue("buildPath", out var buildPath) || !Directory.Exists(buildPath))
             {
-                Console.WriteLine($"[!] {StringsManager.GetString("PathMissing")}");
+                Console.WriteLine($"[!] {StringsManager.GetString("BuildPathRequirementPrompt")}");
                 return false;
             }
-            buildPath = Program.LaunchArgs["buildPath"];
-
-            if (!Directory.Exists(buildPath))
+            // buildPath may be the Code folder or the MelonWebApi project inside it.
+            var dir = new DirectoryInfo(buildPath);
+            codePath = Directory.Exists(Path.Combine(dir.FullName, "MelonWebApi")) ? dir.FullName : dir.Parent!.FullName;
+            if (!File.Exists(Path.Combine(codePath, "MelonWebApi", "Program.cs")))
             {
-                Console.WriteLine($"[!] \"{buildPath}\" {StringsManager.GetString("PathMissing")}");
-                return false;
-            }
-
-            // Generate Version Number
-            (version, branch) = CreateVersionNumber();
-            if(string.IsNullOrEmpty(version))
-            {
-                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
-                return false;
-            }
-            try
-            {
-                SetVersionNumber(buildPath, version, branch);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
-                Console.WriteLine($"[!] {e.Message}");
+                Console.WriteLine($"[!] {StringsManager.GetString("ProgramcsMissing")}");
                 return false;
             }
 
-            // Get Output Path
-            outputPath = $"Build/{branch}-{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
-            if (Program.LaunchArgs.ContainsKey("outputPath"))
+            versionFile = LaunchArgs.GetValueOrDefault("versionFile", Path.Combine(codePath, "MelonInstaller", "BuildVersions.json"));
+            var branch = LaunchArgs.GetValueOrDefault("branch", ReleaseTag.FallbackBranch).Trim();
+            if (!ReleaseTag.TryParse($"{branch}-0.0.0.0", out _))
             {
-                outputPath = $"{Program.LaunchArgs["outputPath"]}/{branch}-{version.Replace(".", "-")}-{DateTime.Now.TimeOfDay.Seconds}.zip";
+                Console.WriteLine($"[!] {StringsManager.GetString("InvalidBranch")} {branch}");
+                return false;
             }
-            else
+            var next = NextVersion(branch, LaunchArgs.GetValueOrDefault("baseVersion"));
+            if (next == null)
             {
-                Directory.CreateDirectory("Build");
+                Console.WriteLine($"[!] {StringsManager.GetString("InvalidVersion")}");
+                return false;
             }
+            release = new ReleaseTag(branch, next);
 
+            var output = LaunchArgs.GetValueOrDefault("outputPath", "Build");
+            Directory.CreateDirectory(output);
+            outputPath = Path.Combine(output, $"Melon-{release.Tag}-{RuntimeIdentifier}.zip");
+            Console.WriteLine($"[+] {StringsManager.GetString("BuildingVersion")} {release.Title}");
             return true;
         }
-        public static void Build()
-        {
 
-            // Build Melon
-            string buildOutputPath = "";
+        public static bool Build()
+        {
+            var program = Path.Combine(codePath, "MelonWebApi", "Program.cs");
+            var original = File.ReadAllText(program);
+            var stage = Path.Combine(Path.GetTempPath(), "MelonBuild-" + Guid.NewGuid().ToString("N"));
             try
             {
-                buildOutputPath = BuildProject(buildPath);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
-                Console.WriteLine($"[!] {e.Message}");
-                return;
-            }
-
-
-            try
-            {
-                UIManager.ZipProgressView(StringsManager.GetString("Compress"));
-                var t = ZipManager.CreateZip(outputPath, buildOutputPath, new Progress<double>(x=>
-                    UIManager.zipPercentage = x
-                ));
-
-                t.Wait();
-                UIManager.endDisplay = true;
-                Thread.Sleep(500);
-                Console.WriteLine($"[+] {StringsManager.GetString("BuildCreated")} {buildOutputPath}");
-                Console.WriteLine($"[+] {StringsManager.GetString("BuildPackageCreated")} {outputPath}");
-            }
-            catch (Exception e)
-            {
-                UIManager.endDisplay = true;
-                Thread.Sleep(500);
-                Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
-                Console.WriteLine($"[!] {e.Message}");
-                return;
-            }
-        }
-        private static void SetVersionNumber(string projectFolderPath, string version, string branch)
-        {
-            string vString = $"        public const string Version = \"{version}\";";
-            string bString = $"        public const string Branch = \"{branch}\";";
-
-            string[] files = System.IO.Directory.GetFiles(projectFolderPath, "*.cs", System.IO.SearchOption.AllDirectories);
-
-            var prog = files.FirstOrDefault(x => x.EndsWith("Program.cs"));
-            if (String.IsNullOrEmpty(prog))
-            {
-                throw new InvalidOperationException(StringsManager.GetString("ProgramcsMissing"));
-            }
-
-            var txt = File.ReadAllText(prog);
-            var split = txt.Contains("\r\n") ? txt.Split("\r\n") : txt.Split("\n");
-            string repl = split.FirstOrDefault(x => x.Contains("public const string Version = "));
-            string repl2 = split.FirstOrDefault(x => x.Contains("public const string Branch = "));
-
-            txt = txt.Replace(repl, vString);
-            txt = txt.Replace(repl2, bString);
-            using (var fileStream = new FileStream(prog, FileMode.Create, FileAccess.Write, FileShare.None))
-            {
-                using (var writer = new StreamWriter(fileStream))
+                File.WriteAllText(program, StampVersion(original, release));
+                Publish("MelonWebApi", Path.Combine(stage, "Server"));
+                Publish("MelonCLI", Path.Combine(stage, "CLI"));
+                Publish("MelonInstaller", Path.Combine(stage, "Installer"));
+                if (OperatingSystem.IsWindows()) Publish("MelonGUI", Path.Combine(stage, "Controller"), "-p:Platform=x64");
+                foreach (var file in new[] { "LICENSE", "NOTICE" })
                 {
-                    writer.Write(txt);
-                    writer.Flush();
+                    var source = Path.Combine(codePath, "..", file);
+                    if (File.Exists(source)) File.Copy(source, Path.Combine(stage, file));
                 }
+
+                UIManager.ZipProgressView(StringsManager.GetString("Compress")!);
+                if (File.Exists(outputPath)) File.Delete(outputPath);
+                ZipManager.CreateZip(outputPath, stage, new Progress<double>(x => UIManager.zipPercentage = x)).Wait();
+                UIManager.endDisplay = true;
+                Thread.Sleep(500);
+
+                SaveVersion(release);
+                Console.WriteLine($"[+] {StringsManager.GetString("BuildPackageCreated")} {Path.GetFullPath(outputPath)}");
+                Console.WriteLine($"[+] {StringsManager.GetString("ReleaseTagHint")} {release.Tag} ({release.Title})");
+                return true;
             }
-            Thread.Sleep(1000);
-        }
-        private static string BuildProject(string projectFolderPath)
-        {
-            var projectFilePath = System.IO.Directory.GetFiles(projectFolderPath, "*.csproj").FirstOrDefault(x=>!x.Contains("Backup"));
-            if (String.IsNullOrEmpty(projectFilePath))
+            catch (Exception e)
             {
-                throw new InvalidOperationException(StringsManager.GetString("ProjectMissing"));
-            }
-
-            // Stop mucking up my version number >:(
-            ProjectCollection.GlobalProjectCollection.UnloadAllProjects();
-
-            // Load the project
-            var project = new Project(projectFilePath, null, null);
-
-            // Retrieve the SDK path
-            var sdkPath = project.GetPropertyValue("MSBuildSDKsPath");
-
-            var globalProperties = new Dictionary<string, string>
-            {
-                ["Configuration"] = "Release"
-            };
-
-            foreach(var prop in project.GlobalProperties)
-            {
-                globalProperties.TryAdd(prop.Key, prop.Value);
-            }
-
-            var projectCollection = new ProjectCollection(globalProperties);
-
-            var buildParameters = new BuildParameters(projectCollection)
-            {
-                Loggers = new List<ILogger> { new BuildLogger() }
-            };
-
-
-            var buildRequest = new BuildRequestData(projectFilePath, globalProperties, null, new[] { "Build" }, null);
-
-            var buildResult = BuildManager.DefaultBuildManager.Build(buildParameters, buildRequest);
-
-            if (buildResult.OverallResult == BuildResultCode.Success)
-            {
-                var outputDir = buildResult.ResultsByTarget["Build"].Items.FirstOrDefault().ItemSpec.Replace("MelonWebApi.dll", "");
-                return outputDir;
-            }
-            else
-            {
+                UIManager.endDisplay = true;
                 Console.WriteLine($"[!] {StringsManager.GetString("BuildFailed")}");
-                Console.WriteLine($"[!] {buildResult.Exception}");
-                return "";
+                Console.WriteLine($"[!] {e.Message}");
+                return false;
+            }
+            finally
+            {
+                File.WriteAllText(program, original);
+                if (Directory.Exists(stage)) Directory.Delete(stage, true);
             }
         }
-        public static (string, string) CreateVersionNumber()
+
+        /// <summary>The next version on <paramref name="branch"/>; a new base restarts the count at base.0.</summary>
+        public static Version? NextVersion(string branch, string? baseOverride)
         {
-            if (!Program.LaunchArgs.ContainsKey("buildVersion"))
+            var root = ReadVersions();
+            var baseText = baseOverride ?? root["base"]?.GetValue<string>() ?? "0.9.0";
+            if (!System.Version.TryParse(baseText, out var baseVersion) || baseVersion.Build < 0) return null;
+            if (baseVersion.Revision >= 0) return baseVersion; // a full version was given: use it as is
+
+            var lastText = root["branches"]?[branch]?.GetValue<string>();
+            if (lastText != null && System.Version.TryParse(lastText, out var last) &&
+                last.Major == baseVersion.Major && last.Minor == baseVersion.Minor && last.Build == baseVersion.Build)
+                return new System.Version(last.Major, last.Minor, last.Build, last.Revision + 1);
+            return new System.Version(baseVersion.Major, baseVersion.Minor, baseVersion.Build, 0);
+        }
+
+        private static JsonObject ReadVersions() =>
+            File.Exists(versionFile) ? JsonNode.Parse(File.ReadAllText(versionFile))!.AsObject() : new JsonObject { ["base"] = "0.9.0" };
+
+        private static void SaveVersion(ReleaseTag built)
+        {
+            var root = ReadVersions();
+            var branches = root["branches"] as JsonObject ?? new JsonObject();
+            branches[built.Branch] = built.Version.ToString();
+            root["branches"] = branches;
+            File.WriteAllText(versionFile, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine);
+        }
+
+        private static string StampVersion(string source, ReleaseTag tag)
+        {
+            var lines = source.Split('\n');
+            for (var i = 0; i < lines.Length; i++)
             {
-                Console.WriteLine($"[!] {StringsManager.GetString("MissingVersion")}");
-                return ("", "");
+                if (lines[i].Contains("public const string Version = "))
+                    lines[i] = $"        public const string Version = \"{tag.Version}\";{(lines[i].EndsWith('\r') ? "\r" : "")}";
+                else if (lines[i].Contains("public const string Branch = "))
+                    lines[i] = $"        public const string Branch = \"{tag.Branch}\";{(lines[i].EndsWith('\r') ? "\r" : "")}";
             }
+            return string.Join('\n', lines);
+        }
 
-            string ver = Program.LaunchArgs["buildVersion"];
-            string[] num = ver.Split(".");
-            string[] branch = ver.Split("/");
-            if(num.Length != 3)
-            {
-                Console.WriteLine($"[!] {StringsManager.GetString("InvalidVersion")}");
-                return ("", "");
-            }
-            if (branch.Length != 2)
-            {
-                Console.WriteLine($"[!] {StringsManager.GetString("InvalidVersion")}");
-                return ("", "") ;
-            }
+        private static string RuntimeIdentifier => RuntimeInformation.RuntimeIdentifier.StartsWith("win") ? "win-x64"
+            : OperatingSystem.IsMacOS() ? "osx-arm64" : "linux-x64";
 
-            var now = DateTime.UtcNow;
-
-            string version = $"{num[0]}.{num[1]}.{num[2].Split("/")[0]}.{now.Hour}{now.Minute}{now.Second}";
-            string branchName = $"{branch[1]}";
-
-            return (version, branchName);
+        private static void Publish(string project, string output, string? extra = null)
+        {
+            Console.WriteLine($"[+] {StringsManager.GetString("BuildStart")} {project}");
+            var start = new ProcessStartInfo("dotnet") { UseShellExecute = false };
+            foreach (var arg in new[] { "publish", Path.Combine(codePath, project, $"{project}.csproj"), "-c", "Release",
+                "-r", RuntimeIdentifier, "--self-contained", "-o", output, "-v", "quiet", "-nologo" })
+                start.ArgumentList.Add(arg);
+            if (extra != null) start.ArgumentList.Add(extra);
+            using var process = Process.Start(start) ?? throw new IOException("Could not start dotnet.");
+            process.WaitForExit();
+            if (process.ExitCode != 0) throw new InvalidOperationException($"{project}: dotnet publish exited with {process.ExitCode}.");
         }
     }
 }

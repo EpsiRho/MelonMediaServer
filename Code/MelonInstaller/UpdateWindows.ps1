@@ -21,8 +21,8 @@ try {
             if ($app.Path -eq $controller -and !$app.WaitForExit(30000)) { throw 'Close the other Melon controllers and retry.' }
         }
     }
-    foreach ($component in 'Server','Controller','CLI') {
-        if ($component -eq 'CLI' -and !(Test-Path -LiteralPath (Join-Path $payload $component))) { continue }
+    foreach ($component in 'Server','Controller','CLI','Installer') {
+        if ($component -in 'CLI','Installer' -and !(Test-Path -LiteralPath (Join-Path $payload $component))) { continue }
         foreach ($file in Get-ChildItem -LiteralPath (Join-Path $payload $component) -File -Recurse) {
             $relative = $file.FullName.Substring($payload.Length + 1)
             $destination = Join-Path $root $relative
