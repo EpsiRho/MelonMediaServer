@@ -122,11 +122,39 @@
         };
       }
 
-      async function load() {
+      // GitHub only answers 60 requests an hour per visitor (by IP), and when it says no the browser often reports it
+      // as a CORS error. So the list is kept for 10 minutes, and an older copy is used when GitHub won't answer.
+      const CACHE_KEY = 'melon-releases', FRESH_MS = 10 * 60 * 1000;
+      const readCache = () => { try { return JSON.parse(localStorage.getItem(CACHE_KEY)); } catch { return null; } };
+      const writeCache = releases => {
+        // Only keep what this page uses, so it stays small.
+        const slim = releases.map(r => ({ tag_name: r.tag_name, name: r.name, draft: r.draft, published_at: r.published_at, html_url: r.html_url,
+          assets: r.assets.map(a => ({ name: a.name, size: a.size, browser_download_url: a.browser_download_url })) }));
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), releases: slim })); } catch { }
+      };
+      let staleNote = '';
+
+      async function getReleases() {
+        const cached = readCache();
+        if (cached && Date.now() - cached.time < FRESH_MS) return cached.releases;
         try {
           const res = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=100`);
           if (!res.ok) throw new Error(`GitHub returned ${res.status}`);
           const releases = await res.json();
+          writeCache(releases);
+          return releases;
+        } catch (e) {
+          if (cached) {
+            staleNote = `GitHub isn't answering right now, so this list is from ${new Date(cached.time).toLocaleString()}.`;
+            return cached.releases;
+          }
+          throw new Error("Couldn't get the release list from GitHub. It only allows so many requests an hour, so try again in a few minutes.");
+        }
+      }
+
+      async function load() {
+        try {
+          const releases = await getReleases();
           for (const release of releases) {
             const t = parse(release.tag_name) || parse(release.name);
             if (!t || release.draft) continue;
@@ -141,7 +169,8 @@
           $('branch').onchange = () => { versions(); showRelease(); };
           $('version').onchange = showRelease;
           $('platform').onchange = () => { showRelease(); setupLatest(); };
-          $('download-error').hidden = true;
+          $('download-error').hidden = !staleNote;
+          $('download-error').textContent = staleNote;
           setupLatest();
           showRelease();
         } catch (e) {
