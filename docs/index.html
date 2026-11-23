@@ -3,6 +3,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Melon Docs Home</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styles.css" />
@@ -13,100 +15,57 @@
       <div id="sidebar-placeholder"></div>
       <div class="content">
         <h1 id="melon-media-server">Melon Media Server</h1>
-        <h2 id="about">About</h2>
         <p>
           Melon is a media server that scans your music files and lets you
-          stream them. This project is focused on including lots of
-          customization and functionality to make this the best way to view,
-          manage, and listen to your local music library.
+          stream them. The goal is lots of customization and features, to make
+          it the best way to view, manage, and listen to your own music library.
         </p>
-        <h3 id="standout-features">Standout features</h3>
-        <ul>
-          <li>
-            Shuffle Modes:
-            <ul>
-              <li>
-                Shuffle your music randomly, prioritize your favorite tracks,
-                prioritize track discovery, group tracks by album, and group
-                tracks by artist.
-              </li>
-              <li>
-                Track Links keep tracks that flow back to back next to each
-                other in shuffled queues (For example: Nirvana -&gt; Mania from
-                Madeon&#39;s Good Faith album).
-              </li>
-              <li>
-                See the <a href="/Guides/Shuffling.html">Shuffling</a> Guide for
-                more info.
-              </li>
-            </ul>
-          </li>
-          <li>
-            Play Statistics:
-            <ul>
-              <li>
-                Get in-depth music listening stats including your favorite
-                tracks, genres, and times to listen.
-              </li>
-            </ul>
-          </li>
-          <li>
-            Multiple Queues:
-            <ul>
-              <li>
-                Melon keeps track of queues on all your devices. So you can pick
-                up where you left off when moving to a different device, control
-                queues playing on other devices, and save queues for later.
-              </li>
-              <li>
-                Queues are removed after a controllable time (Default 48 hours),
-                unless they are favorited.
-              </li>
-            </ul>
-          </li>
-          <li>
-            Multiple Users
-            <ul>
-              <li>
-                An invite code allows your friends and family to sign up on your
-                server and listen along with their own stats, ratings,
-                playlists, and user page.
-              </li>
-            </ul>
-          </li>
-          <li>
-            Plugin support
-            <ul>
-              <li>
-                Melon has in-depth plugin interfaces for easy access to making
-                powerful plugins.
-              </li>
-            </ul>
-          </li>
-        </ul>
-        <h2 id="get-started-using-melon">Get Started Using Melon</h2>
         <p class="cta">
           <a class="btn btn-primary" href="/Download.html">Download Melon</a>
           <a class="btn btn-ghost" href="/Guides/Installation.html">Installation Guide</a>
         </p>
-        <p>
-          Melon comes with two controllers for setting up and managing your
-          server:
-        </p>
+
+        <h2 id="features">Features</h2>
+        <ul>
+          <li>
+            <strong>Shuffle modes.</strong> Shuffle randomly, favor the tracks you
+            love, favor ones you haven't heard much, or keep albums or artists
+            together. Track Links keep songs that flow into each other back to
+            back, even when shuffled (like Nirvana into Mania on Madeon's Good
+            Faith). See <a href="/Guides/Shuffling.html">Shuffling</a>.
+          </li>
+          <li>
+            <strong>Play stats.</strong> Your top tracks, genres, and the times you
+            listen the most.
+          </li>
+          <li>
+            <strong>Queues on every device.</strong> Melon keeps track of the queue
+            on each of your devices, so you can pick up where you left off on
+            another one, control a queue playing somewhere else, or save one for
+            later. Queues get cleaned up after 48 hours (you can change that)
+            unless you favorite them.
+          </li>
+          <li>
+            <strong>Multiple users.</strong> Send friends and family an invite code
+            and they get their own account with their own stats, ratings,
+            playlists, and user page.
+          </li>
+          <li>
+            <strong>Plugins.</strong> Add your own endpoints, settings pages, and
+            artwork sources. See <a href="/Plugins/Introduction.html">Plugins</a>.
+          </li>
+        </ul>
+
+        <h2 id="apps">Apps</h2>
+        <p>Melon comes with two controllers for setting up and running your server:</p>
         <ul>
           <li><strong>MelonGUI</strong>, the Windows app.</li>
           <li><strong>MelonCLI</strong>, the terminal app for Windows, Linux, and macOS.</li>
         </ul>
-        <h3 id="clients">Clients</h3>
+        <p>And for listening:</p>
         <ul>
-          <li>
-            <a href="https://github.com/EpsiRho/Galia">Galia</a>, the Windows
-            app written with the WASDK.
-          </li>
-          <li>
-            Watermelon, the iOS app written with Swift. It will arrive through
-            TestFlight.
-          </li>
+          <li><a href="https://github.com/EpsiRho/Galia">Galia</a>, the Windows app, written with the WASDK.</li>
+          <li>Watermelon, the iOS app, written in Swift. It'll come out through TestFlight.</li>
         </ul>
         <p>
           When I have completed the Galia and Watermelon apps, I will work on more
@@ -114,159 +73,46 @@
           Android. I personally do not want to work on a Web App, I just dislike
           working in JS, so there will likely not be one first-party.
         </p>
-        <h3 id="where-to-start-building-apps">Where to start building apps</h3>
+
+        <h2 id="building-apps">Building Your Own App</h2>
         <p>
-          All endpoints require authentication except for logging in, so
-          <a href="/api/Authorization.html">auth</a> is a good place to start.
-        </p>
-        <p>
-          Once you&#39;ve obtained a JWT, a good way to test the API is with
-          <a href="/api/Search.html">search</a>
-          endpoints.
-        </p>
-        <p>
-          The rest of the endpoints can be found at the
-          <a href="/api/EndpointsOverview.html">Endpoints Overview</a> and
-          models can be found at
+          Every endpoint needs you to be signed in except logging in itself, so
+          start with <a href="/api/Authorization.html">Authorization</a>. Once you
+          have a token, the <a href="/api/Search.html">Search</a> endpoints are an
+          easy way to try things out. Everything else is in the
+          <a href="/api/EndpointsOverview.html">Endpoints Overview</a> and the
           <a href="/models/modelsOverview.html">Models Overview</a>.
         </p>
-        <h3 id="where-to-start-building-plugins">
-          Where to start building plugins
-        </h3>
-        <p>
-          Check out the
-          <a href="/Plugins/Introduction.html">Plugins Introduction</a> page.
-        </p>
-        <h3 id="user-guides">User Guides</h3>
-        <p>
-          We provide guides on how different parts of melon work and how to use
-          them:
-        </p>
+
+        <h2 id="guides">Guides</h2>
         <ul>
-          <li>
-            <a href="/Guides/Configure.html">Configure Melon</a>
-            <ul>
-              <li>
-                A guide on the different settings and launch arguments
-                available.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <a href="/Guides/Installation.html">Installation Guide</a>
-            <ul>
-              <li>Info on how to install Melon for the first time</li>
-            </ul>
-          </li>
-          <li>
-            <a href="/Guides/Playlists.html">Playlists</a>
-            <ul>
-              <li>Info on how playlists and collections work.</li>
-            </ul>
-          </li>
-          <li>
-            <a href="/Guides/Search.html">Search</a>
-            <ul>
-              <li>Info about search filters and sorting</li>
-            </ul>
-          </li>
-          <li>
-            <a href="/Guides/Shuffling.html">Shuffling</a>
-            <ul>
-              <li>Info about Melon&#39;s Shuffle modes.</li>
-            </ul>
-          </li>
-          <li>
-            <a href="/Guides/Users.html">Users</a>
-            <ul>
-              <li>
-                A guide on the different user types and how to invite new users
-              </li>
-            </ul>
-          </li>
-        </ul>
-        <h3 id="architecture-information">Architecture Information</h3>
-        <p>
-          There are a couple docs about how melon handles certain things behind
-          the scenes or contain more info on how to use APIs:
-        </p>
-        <ul>
-          <li>
-            <a href="/Architecture/Artwork.html">Artwork</a>
-            <ul>
-              <li>
-                Information about how melon handles and stores images for
-                track/album/artist/etc.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <a href="/Architecture/MelonInstaller.html">MelonInstaller</a>
-            <ul>
-              <li>
-                How MelonInstaller installs, updates, builds releases, and
-                handles branches and versions.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <a href="/Architecture/MelonScanner.html">Melon Scanner</a>
-            <ul>
-              <li>
-                Details about how the Scanner scans files and creates the
-                database.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <a href="/Architecture/WebSockets.html">WebSockets</a>
-            <ul>
-              <li>
-                Melon uses WebSockets to give clients Realtime updates, allowing
-                clients to control each other.
-              </li>
-            </ul>
-          </li>
+          <li><a href="/Guides/Installation.html">Installation</a>: installing Melon for the first time, and HTTPS.</li>
+          <li><a href="/Guides/Configure.html">Configure</a>: every setting and launch argument.</li>
+          <li><a href="/Guides/Users.html">Users</a>: user roles and inviting people.</li>
+          <li><a href="/Guides/Playlists.html">Playlists</a>: how playlists and collections work.</li>
+          <li><a href="/Guides/Search.html">Search</a>: search filters and sorting.</li>
+          <li><a href="/Guides/Shuffling.html">Shuffling</a>: the shuffle modes.</li>
         </ul>
 
-        <h3>Extra Credits</h3>
+        <h2 id="how-it-works">How It Works</h2>
+        <p>A few pages on what Melon does behind the scenes:</p>
         <ul>
-          <li>
-            <a href="https://github.com/Zeugma440/atldotnet">ATL</a>
-            <ul>
-              <li>Used for reading track metadata</li>
-            </ul>
-          </li>
-          <li>
-            <a href="https://github.com/dotMorten/WinUIEx">WinUIEx</a>
-            <ul>
-              <li>Window helpers for MelonGUI</li>
-            </ul>
-          </li>
-          <li>
-            <a href="https://www.mongodb.com/">MongoDb</a>
-            <ul>
-              <li>Used as Melon&#39;s database.</li>
-            </ul>
-          </li>
-          <li>
-            <a href="https://github.com/naudio/NAudio">NAudio</a> and
-            <a href="https://github.com/Corey-M/NAudio.Lame">NAudio.Lame</a>
-            <ul>
-              <li>Used for transcoding</li>
-            </ul>
-          </li>
-          <li>
-            <a href="https://github.com/EpsiRho/MelonUI">MelonUI</a>
-            <ul>
-              <li>Used to build MelonCLI</li>
-            </ul>
-          </li>
-          <li>CaydoFox - 3D Melon Icon</li>
-          <li>Hypervis0r - Help with authentication</li>
-          <li>
-            KindaConfusion - Testing, Bug fixes, Various Code Contributions
-          </li>
+          <li><a href="/Architecture/Artwork.html">Artwork</a>: how Melon finds and stores images.</li>
+          <li><a href="/Architecture/MelonInstaller.html">MelonInstaller</a>: installs, updates, branches and versions.</li>
+          <li><a href="/Architecture/MelonScanner.html">Melon Scanner</a>: how scans read your files into the database.</li>
+          <li><a href="/Architecture/WebSockets.html">WebSockets</a>: live updates, and how clients control each other.</li>
+        </ul>
+
+        <h2 id="credits">Credits</h2>
+        <ul>
+          <li><a href="https://github.com/Zeugma440/atldotnet">ATL</a>, for reading track metadata.</li>
+          <li><a href="https://www.mongodb.com/">MongoDB</a>, Melon's database.</li>
+          <li><a href="https://github.com/naudio/NAudio">NAudio</a> and <a href="https://github.com/Corey-M/NAudio.Lame">NAudio.Lame</a>, for transcoding.</li>
+          <li><a href="https://github.com/dotMorten/WinUIEx">WinUIEx</a>, window helpers for MelonGUI.</li>
+          <li><a href="https://github.com/EpsiRho/MelonUI">MelonUI</a>, which MelonCLI is built with.</li>
+          <li>CaydoFox, for the 3D melon icon.</li>
+          <li>Hypervis0r, for help with authentication.</li>
+          <li>KindaConfusion, for testing, bug fixes, and code contributions.</li>
         </ul>
       </div>
     </div>

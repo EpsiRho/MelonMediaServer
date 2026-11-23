@@ -3,6 +3,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>WebSocket Architecture Docs</title>
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -12,232 +15,103 @@
 <script>hljs.highlightAll();</script>
 
   <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
-      <h1 id="websocket-architecture-documentation">
-        WebSocket Architecture Documentation
-      </h1>
-      <h2 id="overview">Overview</h2>
-      <p>
-        The WebSocket system in this architecture provides real-time
-        communication between clients. It is primarily designed to manage
-        client-to-client controls, where a user on one device (like a phone) can
-        control playback or the queue on another device (like a TV).
-      </p>
-      <p>
-        The <code>StreamManager</code> class is the core of this WebSocket
-        system, responsible for managing active WebSocket connections,
-        processing incoming messages, sending responses, and handling tasks such
-        as updating play queues and sending commands across devices. Client
-        connections are stored as <a href="/models/WSS.html">WSS</a> objects.
-      </p>
-      <hr />
-      <h2 id="flow-of-websocket-connections">Flow of WebSocket Connections</h2>
-      <h3 id="establishing-a-connection">Establishing a Connection</h3>
-      <p>
-        When a new WebSocket connection is initiated, it is handled by the
-        <code>AddSocket</code> method in <code>StreamManager</code>. This
-        method:
-      </p>
-      <ul>
-        <li>Creates a new <code>WSS</code> object.</li>
-        <li>Adds the WebSocket session to the <code>Sockets</code> list.</li>
-        <li>
-          Begins handling incoming WebSocket messages asynchronously using the
-          <code>HandleWebSocketAsync</code> method.
-        </li>
-        <li>
-          Starts managing the connection via <code>ManageSocket</code>, which
-          handles ping checks and connection closures.
-          <ul>
-            <li>
-              The server will send a PING message out on the connection every 2
-              minutes, and if it isn&#39;t responded to by a PONG message, then
-              the server will consider the client dead and disconnect from it.
-            </li>
-          </ul>
-        </li>
-      </ul>
-      <h2 id="managing-websocket-connections">
-        Managing WebSocket Connections
-      </h2>
-      <p>
-        WebSocket connections are monitored for activity. The server pings each
-        connection at intervals to ensure it is still active. If a client fails
-        to respond after a specific duration, the connection is closed.
-      </p>
-      <h3 id="ping-pong-mechanism">Ping-Pong Mechanism</h3>
-      <ul>
-        <li>
-          The server sends a <strong>PING</strong> every two minutes to each
-          connected WebSocket.
-        </li>
-        <li>
-          The client must respond with a <strong>PONG</strong> message within
-          the next minute.
-        </li>
-        <li>
-          If no <strong>PONG</strong> is received, the server closes the
-          connection.
-        </li>
-      </ul>
-      <hr />
-      <h3 id="sending-commands">Sending Commands</h3>
-      <p>
-        Once a WebSocket is connected, the
-        <code>HandleWebSocketAsync</code> method listens for incoming messages.
-        The system supports a variety of commands:
-      </p>
-      <ul>
-        <li>
-          <strong>GET QUEUE</strong>: Request to retrieve the current queue id
-          associated with this session/client.
-          <ul>
-            <li>Example: <code>GET QUEUE</code></li>
-          </ul>
-        </li>
-        <li>
-          <strong>SET QUEUE</strong>: Sets the queue for the session.
-          <ul>
-            <li>Example: <code>SET QUEUE:66bc99b8ab7ba419497e21af</code></li>
-            <li>
-              Clients should send this command anytime they change the queue
-              they are playing back from.
-            </li>
-          </ul>
-        </li>
-        <li>
-          <strong>SET DEVICE</strong>: Sets the name of the device controlled by
-          this WebSocket.
-          <ul>
-            <li>Example: <code>SET Device:Epsi&#39;s Phone</code></li>
-            <li>
-              Clients are not given a name by default, and are not findable
-              without one. Client should send this message once after
-              connecting, and again anytime the user wants to change the
-              client&#39;s name.
-            </li>
-            <li>
-              Client names MUST be unique, and the server will respond on the
-              WebSocket with <code>Device Name Taken</code> if you try to set a
-              duplicate name.
-            </li>
-          </ul>
-        </li>
-        <li>
-          <strong>SET PUBLIC</strong>: Makes the WebSocket connection publicly
-          accessible or private.
-          <ul>
-            <li>Example: <code>SET PUBLIC:true</code></li>
-            <li>
-              This makes the client&#39;s WebSocket session visible. Clients can
-              use the <a href="/api/Stream.html">Stream</a> API endpoints to see
-              visible connections and send commands to them.
-            </li>
-            <li>
-              Returns <code>DEVICE IS PUBLIC:true</code> indicating success and
-              the current value.
-            </li>
-          </ul>
-        </li>
-        <li>
-          <strong>SEND PROGRESS</strong>: Begins sending media scanning
-          progress.
-          <ul>
-            <li>Example: <code>SEND PROGRESS</code></li>
-            <li>
-              Clients can choose to have scan progress sent down the WebSocket
-              for Realtime updates, instead of calling
-              <a href="/api/Scan.html#get-scan-progress">api/scan/progress</a> and getting progress from
-              one point in time.
-            </li>
-            <li>
-              Response progress updates will return every 100ms ish and look
-              like
-              <code
-                >PROGRESS:&lt;Num of Scanned Files&gt;:&lt;Num of Total Files to
-                Scan&gt;</code
-              >
-            </li>
-            <li>
-              It will also send a progress info response anytime the status
-              string changes, and will look like
-              <code>PROGRESS INFO:Scanning track metadata</code>
-            </li>
-          </ul>
-        </li>
-        <li>
-          <strong>STOP PROGRESS</strong>: Stops the progress updates.
-          <ul>
-            <li>Example: <code>STOP PROGRESS</code></li>
-          </ul>
-        </li>
-      </ul>
-      <hr />
-      <h2 id="client-to-client-communication">
-        Client-to-Client Communication
-      </h2>
-      <p>
-        One of the key features of the WebSocket system is enabling
-        <strong>client-to-client communication</strong>. For example, a user
-        might use their phone to control media playback on a TV. This is done
-        by:
-      </p>
-      <ul>
-        <li>
-          <strong>Identifying the device</strong>: Each device has a name that
-          is registered with the WebSocket.
-        </li>
-        <li>
-          <strong>Sending commands</strong>: Commands can be sent to a WebSocket
-          by using the <a href="/api/Stream.html">Stream</a> API endpoints, and are
-          received by the desired client over it&#39;s WebSocket. Those commands
-          are:
-          <ul>
-            <li>
-              PLAY: will look like
-              <code>PLAY QUEUE:66bc99b8ab7ba419497e21af</code> where the right
-              side of <code>:</code> is the queue the client should attempt to
-              play.
-              <ul>
-                <li>
-                  If the queue is the same as the one already playing, resume
-                  playback instead of swapping queues.
-                </li>
-              </ul>
-            </li>
-            <li>
-              PAUSE: will look like <code>PAUSE</code> and should tell the
-              client to pause playback
-            </li>
-            <li>
-              SKIP: will look like <code>SKIP</code> and should tell the client
-              to skip to the next song
-            </li>
-            <li>
-              REWIND: will look like <code>REWIND</code> and is supposed to tell
-              the client to go back a song, but may also instead rewind the
-              current track and require a second rewind call to go back a song.
-            </li>
-            <li>
-              VOLUME: will look like <code>VOLUME:20</code> where the volume the
-              client should set to is on the right side of the <code>:</code>
-            </li>
-            <li>
-              QUEUE UPDATE: will look like <code>UPDATE QUEUE</code> and tells
-              the client that the queue has changed in some way, so it should
-              reload it&#39;s info.
-              <ul>
-                <li>
-                  This is done by calling AlertQueueUpdate() anytime a queue is
-                  impacted by an API.
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-      </ul>
-      <hr />
+        <h1 id="websockets">WebSockets</h1>
+        <p>
+          Clients keep a WebSocket open to Melon so the server can talk to them
+          without being asked. That's how one device controls another (your
+          phone playing and pausing music on your PC), how clients find out a
+          queue changed, and how they can get live scan progress.
+        </p>
+        <p>
+          Connect to <code>/api/stream/connect</code> with your token. Every
+          message, both ways, is plain text. Each connected client is a
+          <a href="/models/WSS.html">WSS</a> on the server.
+        </p>
+
+        <h2 id="staying-connected">Staying Connected</h2>
+        <p>
+          If Melon hasn't heard anything from a client for 2 minutes, it sends
+          <code>PING</code>. Reply with <code>PONG</code>. If it still hasn't heard
+          anything after 3 minutes, it closes the connection. Any message counts,
+          so a client that's busy talking never gets pinged.
+        </p>
+
+        <h2 id="messages-you-send">Messages You Send</h2>
+        <table>
+          <thead><tr><th>Message</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>SET DEVICE:Epsi's Phone</code></td>
+              <td>
+                Names this device. A device without a name can't be found or
+                controlled, so send this right after connecting. Melon replies
+                with the name, or <code>Device Name Taken</code> if another
+                device of yours already has it.
+              </td>
+            </tr>
+            <tr>
+              <td><code>SET PUBLIC:true</code></td>
+              <td>Lets this device show up in the <a href="/api/Stream.html">Stream</a> endpoints so it can be controlled. Replies <code>DEVICE IS PUBLIC:true</code>.</td>
+            </tr>
+            <tr>
+              <td><code>SET QUEUE:&lt;queue id&gt;</code></td>
+              <td>Tells Melon which queue you're playing. Send it every time you switch queues. Replies with the id.</td>
+            </tr>
+            <tr>
+              <td><code>GET QUEUE</code></td>
+              <td>Replies with the queue id Melon thinks you're playing.</td>
+            </tr>
+            <tr>
+              <td><code>SET STATE:&lt;json&gt;</code></td>
+              <td>Your playback state (what's playing, position, paused, whatever your client wants to share). Melon passes it on to every device watching you.</td>
+            </tr>
+            <tr>
+              <td><code>WATCH DEVICE:&lt;name&gt;</code></td>
+              <td>Start getting another device's state, as <code>DEVICE STATE:&lt;json&gt;</code>. Use this when you're controlling it. Replies <code>WATCH DENIED</code> if you can't see that device.</td>
+            </tr>
+            <tr>
+              <td><code>UNWATCH DEVICE</code></td>
+              <td>Stop watching.</td>
+            </tr>
+            <tr>
+              <td><code>SEND PROGRESS</code></td>
+              <td>
+                Start getting scan progress about every 100ms, as
+                <code>PROGRESS:&lt;scanned&gt;:&lt;found&gt;</code>, plus
+                <code>PROGRESS INFO:&lt;status&gt;</code> when the status changes
+                and <code>END PROGRESS</code> when it's done. Nicer than calling
+                <a href="/api/Scan.html#get-scan-progress">api/scan/progress</a> over and over.
+              </td>
+            </tr>
+            <tr>
+              <td><code>STOP PROGRESS</code></td>
+              <td>Stop the progress messages.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>A message Melon can't make sense of gets <code>Invalid Syntax</code> back.</p>
+
+        <h2 id="messages-you-get">Messages You Get</h2>
+        <p>
+          Other devices control you by calling the <a href="/api/Stream.html">Stream</a>
+          endpoints, and Melon passes the command down your WebSocket:
+        </p>
+        <table>
+          <thead><tr><th>Message</th><th>What your client should do</th></tr></thead>
+          <tbody>
+            <tr><td><code>PLAY QUEUE:&lt;queue id&gt;</code></td><td>Play that queue. If it's the one already playing, just resume.</td></tr>
+            <tr><td><code>PAUSE</code></td><td>Pause.</td></tr>
+            <tr><td><code>SKIP</code></td><td>Go to the next song.</td></tr>
+            <tr><td><code>REWIND</code></td><td>Go back. It's up to you whether that restarts the song first, like most players do.</td></tr>
+            <tr><td><code>VOLUME:20</code></td><td>Set the volume to 20.</td></tr>
+            <tr><td><code>UPDATE QUEUE</code></td><td>The queue you're playing changed through the API. Load it again.</td></tr>
+            <tr><td><code>WATCHERS:2</code></td><td>How many devices are watching you right now. Handy for showing "being controlled".</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     <script src="/sidebar.js"></script>
   </body>

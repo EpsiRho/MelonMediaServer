@@ -4,6 +4,9 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Shuffling Guide</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -14,11 +17,11 @@
 
 
 <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
         <h1 id="shuffling">Shuffling</h1>
-        <p>Melon provides a couple options for Shuffling tracks in the API. These options are designed to bring shuffle
-            modes for any situation or personal desires. </p>
+        <p>Melon has a few shuffle modes, so there's one for whatever you're in the mood for. Clients pick one by name when they make a queue.</p>
         <h2 id="shuffle-modes">Shuffle Modes</h2>
         <ul>
             <li>TrackRandom<ul>
@@ -38,7 +41,7 @@
             </li>
             <li>TrackDiscovery<ul>
                     <li>Shuffles tracks weighted based on characteristics that will make the top of the queue more
-                        likely to be songs you rarely hear or haven&#39;t listen to.</li>
+                        likely to be songs you rarely hear or haven&#39;t listened to.</li>
                     <li>Uses track plays to weigh against songs.</li>
                 </ul>
             </li>
@@ -49,7 +52,7 @@
                 </ul>
             </li>
             <li>AlbumRandom<ul>
-                    <li>Groups track by album, then shuffles the album order around. Plays each album&#39;s songs in
+                    <li>Groups tracks by album, then shuffles the album order around. Plays each album&#39;s songs in
                         album order.</li>
                 </ul>
             </li>
@@ -68,6 +71,7 @@
         <p>Track Links are set by an Admin account but they affect every user, unless other users disable track links
             during shuffling.</p>
 
+    </div>
     </div>
     <script src="/sidebar.js"></script>
 </body>

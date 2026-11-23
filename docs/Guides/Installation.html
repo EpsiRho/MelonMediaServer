@@ -4,154 +4,163 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Installation Guide</title>
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css" />
   </head>
 
-  <script>
-    hljs.highlightAll();
-  </script>
+  <script>hljs.highlightAll();</script>
 
   <body>
     <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
       <h1 id="installation">Installation</h1>
-      <h2 id="prerequisites">Prerequisites</h2>
-      <p>Installing Melon is super easy, and releases come with everything they need to run, so you don't need .NET installed. The one thing you need is a database.</p>
+      <p>
+        Melon releases come with everything they need to run, so you don't need
+        .NET installed. The one thing Melon needs from you is a database.
+      </p>
+
+      <h2 id="mongodb">MongoDB</h2>
+      <p>
+        Melon keeps your library in <a href="https://www.mongodb.com/try/download/community">MongoDB</a>.
+      </p>
       <ul>
         <li>
-          Melon stores your library in
-          <a href="https://www.mongodb.com/try/download/community">MongoDB</a>.
-          <ul>
-            <li>
-              On Windows, MelonGUI's setup can install a dedicated, password
-              protected MongoDB service for you. You can also point it at one
-              you already run.
-            </li>
-            <li>
-              On Linux and macOS, install MongoDB first by following the
-              <a href="https://www.mongodb.com/docs/manual/administration/install-on-linux/">MongoDB Linux Installation Docs</a>
-              or the
-              <a href="https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/">MongoDB macOS Installation Docs</a>.
-            </li>
-          </ul>
+          <strong>Windows:</strong> skip this. MelonGUI's setup can install a
+          MongoDB service just for Melon, with a password on it. If you already
+          run MongoDB you can point Melon at that instead.
+        </li>
+        <li>
+          <strong>Linux / macOS:</strong> install MongoDB first, using MongoDB's
+          <a href="https://www.mongodb.com/docs/manual/administration/install-on-linux/">Linux</a>
+          or <a href="https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/">macOS</a> guide.
         </li>
       </ul>
 
       <h2 id="install-melon">Install Melon</h2>
-      <ul>
-        <li>
-          Head to the <a href="/Download.html">Download</a> page and click
-          <strong>Install Latest</strong>. This grabs the MelonInstaller for your
-          system.
-        </li>
-        <li>
-          Run the installer. It will ask which branch you want (if there is more
-          than one) and where to install, then download and extract the latest
-          release on that branch.
-          <ul>
-            <li>
-              Prefer to skip the questions? Pass them in:
-              <pre><code class="language-bash">MelonInstaller -branch Beta -installPath "C:\Melon"</code></pre>
-            </li>
-            <li>
-              Already downloaded a release zip? Install it with
-              <code>-localPath &lt;zip&gt;</code>.
-            </li>
-          </ul>
-        </li>
-        <li>
-          When it finishes, the installer opens a controller for you:
-          <ul>
-            <li>
-              Opened by double-clicking: <strong>MelonGUI</strong> opens.
-            </li>
-            <li>
-              Run from a terminal: <strong>MelonCLI</strong> starts in that same
-              terminal.
-            </li>
-            <li>Add <code>-noLaunch</code> to skip this.</li>
-          </ul>
-        </li>
-      </ul>
+      <p>
+        Go to the <a href="/Download.html">Download</a> page and click
+        <strong>Install Latest</strong>. That downloads MelonInstaller for your
+        system. Run it, pick a branch (if there's more than one) and a folder,
+        and it downloads and unzips the latest release for you.
+      </p>
+      <p>You can also skip the questions by passing the answers in:</p>
+      <pre><code class="language-bash">MelonInstaller -branch Beta -installPath "C:\Melon"</code></pre>
+      <p>
+        Already have a release zip? Use <code>-localPath &lt;zip&gt;</code> and it
+        installs from that instead of downloading.
+      </p>
+      <p>
+        When it's done the installer opens a controller for you. If you
+        double-clicked it, that's <strong>MelonGUI</strong>. If you ran it from
+        a terminal, <strong>MelonCLI</strong> starts right there in the same
+        terminal. Add <code>-noLaunch</code> if you don't want either.
+      </p>
 
-      <h2 id="whats-installed">What's Installed</h2>
+      <h3 id="whats-installed">What gets installed</h3>
       <table>
-        <thead>
-          <tr><th>Folder</th><th>What it is</th></tr>
-        </thead>
+        <thead><tr><th>Folder</th><th>What it is</th></tr></thead>
         <tbody>
           <tr><td><code>Server</code></td><td>MelonWebApi, the server itself.</td></tr>
-          <tr><td><code>Controller</code></td><td>MelonGUI, the Windows app for setup and administration. Windows only.</td></tr>
-          <tr><td><code>CLI</code></td><td>MelonCLI, the terminal app for setup and administration.</td></tr>
-          <tr><td><code>Installer</code></td><td>MelonInstaller, used for updates and switching branches.</td></tr>
+          <tr><td><code>Controller</code></td><td>MelonGUI, the Windows app for setting up and running the server. Windows only.</td></tr>
+          <tr><td><code>CLI</code></td><td>MelonCLI, the same thing in a terminal. Works everywhere.</td></tr>
+          <tr><td><code>Installer</code></td><td>MelonInstaller, kept around for updates and switching branches.</td></tr>
         </tbody>
       </table>
       <p>
-        The default install folder is <code>%LocalAppData%\MelonInstall</code>
-        on Windows and <code>~/.local/share/MelonInstall</code> on Linux.
+        By default this all goes in <code>%LocalAppData%\MelonInstall</code> on
+        Windows and <code>~/.local/share/MelonInstall</code> on Linux.
       </p>
 
       <h2 id="first-time-setup">First Time Setup</h2>
-      <ul>
-        <li>
-          MelonGUI or MelonCLI will start the server and walk you through setup.
-          <ul>
-            <li>
-              Here you'll set up your Admin account's Username and Password,
-              link Melon to your MongoDB instance, and link to the folders you
-              store your music files in.
-            </li>
-          </ul>
-        </li>
-        <li>
-          Start a scan as soon as possible, as no songs will be available in
-          your library until a scan has completed.
-          <ul>
-            <li>
-              You have the choice between Full and Short scan, but for a first
-              scan they will both end up being full scans. This is because the
-              short scan skips files that haven't been modified since last scan.
-            </li>
-          </ul>
-        </li>
-      </ul>
-      <p>Installation is complete! But there are a few more things to configure.</p>
+      <p>
+        MelonGUI or MelonCLI starts the server and walks you through setup. You'll
+        make your admin account, connect Melon to MongoDB, and add the folders
+        your music lives in.
+      </p>
+      <p>
+        Then start a scan. Nothing shows up in your library until a scan has
+        finished. There's a Full scan and a Short scan, but on the first run they
+        both end up doing a full scan, since Short only skips files that haven't
+        changed since the last one.
+      </p>
 
-      <h2 id="configuration">Configuration</h2>
+      <h2 id="connecting">Letting Other Devices Connect</h2>
+      <p>
+        Out of the box Melon listens on <code>http://localhost:14524</code>, which
+        means only the computer it's running on can reach it. That's on purpose:
+        you choose how it gets exposed. There are two ways to do it.
+      </p>
+
+      <h3 id="caddy">Recommended: Caddy</h3>
+      <p>
+        <a href="https://caddyserver.com/">Caddy</a> is a small web server that
+        sits in front of Melon. It gets an HTTPS certificate for you from Let's
+        Encrypt and renews it on its own, so you never have to think about
+        certs again. Melon stays on <code>localhost</code> and only Caddy talks
+        to it.
+      </p>
+      <p>What you need:</p>
       <ul>
-        <li>
-          You may need to port forward to the PC/Server you're hosting Melon on.
-          The port Melon uses by default is <code>14524</code>, but you can
-          change it by setting the listening URL in Networking settings.
-        </li>
-        <li>
-          HTTPS allows Melon to send traffic securely, and some clients /
-          devices may require it.
-          <ul>
-            <li>To set up HTTPS, open Networking settings in MelonGUI or MelonCLI.</li>
-            <li>
-              You'll need an SSL cert, which you can get through
-              <a href="https://certbot.eff.org/">CertBot</a>.
-            </li>
-            <li>
-              SSL Certs expire, but Melon will inform you if your cert is
-              expired on startup, or when you visit the HTTPS settings.
-            </li>
-          </ul>
-        </li>
+        <li>A domain name (or a free subdomain from something like <a href="https://www.duckdns.org/">Duck DNS</a>) pointed at your public IP.</li>
+        <li>Ports <code>80</code> and <code>443</code> forwarded on your router to the computer running Melon. Caddy needs both to get its certificate.</li>
       </ul>
-      <p>See <a href="/Guides/Configure.html">Configure</a> for every setting.</p>
+      <p>
+        <a href="https://caddyserver.com/docs/install">Install Caddy</a>, then make
+        a file called <code>Caddyfile</code> with this in it:
+      </p>
+      <pre><code class="language-plaintext"># Your domain. Caddy gets the certificate for this name.
+music.example.com {
+    # Send everything to Melon. WebSockets (casting) work through this too.
+    reverse_proxy localhost:14524
+}</code></pre>
+      <p>Then run Caddy from the same folder:</p>
+      <pre><code class="language-bash">caddy run</code></pre>
+      <p>
+        That's it. Clients connect to <code>https://music.example.com</code>.
+        Once it works, set Caddy up to start with your computer: Caddy's
+        <a href="https://caddyserver.com/docs/running">Running Caddy</a> page
+        shows how on each OS.
+      </p>
+      <p>
+        Leave Melon's listening URL alone for this, and don't forward port
+        <code>14524</code>. Caddy is the only thing that should be reachable from
+        outside.
+      </p>
+
+      <h3 id="manual-certificate">Optional: your own certificate</h3>
+      <p>
+        If you'd rather not run Caddy, Melon can serve HTTPS itself with a
+        certificate you give it. You'll need the certificate as a
+        <code>.pfx</code> (or <code>.p12</code>) file. You can get one from
+        <a href="https://certbot.eff.org/">Certbot</a> and convert it with
+        <code>openssl pkcs12 -export</code>.
+      </p>
+      <ol>
+        <li>Open <strong>Networking</strong> in MelonGUI or MelonCLI.</li>
+        <li>Pick <strong>Apply HTTPS</strong>, choose your <code>.pfx</code> file, enter its password, and pick a port.</li>
+        <li>Restart Melon when it asks.</li>
+        <li>Forward that port on your router.</li>
+      </ol>
+      <p>
+        Certificates expire, and you have to renew this one yourself. Melon
+        warns you on startup and on the Networking page when it has expired.
+        <strong>Disable HTTPS</strong> on the same page goes back to plain HTTP.
+      </p>
+      <p>
+        Just want other devices on your home network to connect, no HTTPS? Change
+        the listening URL in Networking to <code>http://*:14524</code>. Don't
+        forward that to the internet.
+      </p>
+      <p>See <a href="/Guides/Configure.html">Configure</a> for every other setting.</p>
 
       <h2 id="updating">Updating</h2>
       <p>
-        Melon checks GitHub for newer releases on its branch. Update from
+        Melon checks GitHub for newer releases on its branch. You can update from
         MelonGUI, MelonCLI, or a client, or run the installer yourself:
       </p>
       <pre><code class="language-bash">MelonInstaller -update -restart -installPath "C:\Melon"</code></pre>

@@ -12,6 +12,11 @@
     --code: #1a1d1b;
 }
 
+html {
+    background-color: #111312;
+    color-scheme: dark;
+}
+
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg);
@@ -38,6 +43,41 @@ body {
     bottom: 0;
     overflow-y: auto;
     font-size: 0.92em;
+}
+
+.sidebar .brand {
+    display: block;
+    font-size: 1.25em;
+    font-weight: 700;
+    color: var(--melon);
+    opacity: 1;
+    margin: 0 0 16px;
+}
+
+/* "On this page" sits in its own box, so it reads apart from the site nav below it. */
+.toc-panel {
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 4px 14px 10px;
+    max-height: 45vh;
+    overflow-y: auto;
+}
+
+.toc-panel h2 {
+    margin-top: 0.9em !important;
+}
+
+.docs-nav {
+    margin-top: 22px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+}
+
+.sidebar a.current {
+    color: var(--melon);
+    opacity: 1;
+    font-weight: 600;
 }
 
 .sidebar h2 {
@@ -260,6 +300,49 @@ pre code.hljs {
     padding: 0.1em 0.35em;
     border-radius: 4px;
     border: 1px solid var(--line);
+}
+
+/* Previous / next links at the bottom of every page */
+.pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 3.5em;
+    padding-top: 1.5em;
+    border-top: 1px solid var(--line);
+}
+
+.pager a {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--text);
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.pager a:hover {
+    border-color: var(--melon);
+    background: var(--raised);
+    color: var(--text);
+}
+
+.pager .next {
+    grid-column: 2;
+    text-align: right;
+}
+
+.pager-label {
+    font-size: 0.8em;
+    color: var(--muted);
+}
+
+.pager-title {
+    font-weight: 600;
+    color: var(--melon);
 }
 
 /* Buttons */

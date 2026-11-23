@@ -4,6 +4,9 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Visuals API Docs</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -14,6 +17,7 @@
 
 
 <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
         <h1 id="visualscontroller-documentation">VisualsController Documentation</h1>
@@ -377,6 +381,7 @@ curl "https://your-melon-server.com/api/visuals/fvz?id=66bc9aadab7ba419497e6a97&
         <pre><code class="lang-bash">curl -X POST "https://your-melon-server.com/api/visuals/prefetch" \
      -H "Authorization: Bearer &lt;User-JWT&gt;" -H "Content-Type: application/json" \
      -d '{ "ids": ["66bc9aadab7ba419497e6a98", "66bc9aadab7ba419497e6a99"], "format": { "bands": 32, "fps": 30 } }'</code></pre>
+    </div>
     </div>
     <script src="/sidebar.js"></script>
 </body>

@@ -3,160 +3,141 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Plugin Tutorial: Custom Endpoints</title>
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css" />
   </head>
 
-  <script>
-    hljs.highlightAll();
-  </script>
+  <script>hljs.highlightAll();</script>
 
   <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
-      <h1>Plugin Tutorial: Custom Endpoints and Overrides</h1>
+      <h1 id="plugin-tutorial-custom-endpoints">Plugin Tutorial: Custom Endpoints</h1>
       <p>
-        Plugins can extend or override Melon&#39;s API endpoints using
-        <code>IWebApi</code>. This allows you to add new functionality
-        accessible over HTTP.
+        Plugins can add their own API endpoints, replace Melon's, or just run
+        some code whenever an endpoint is called. All of that goes through
+        <code>WebApi</code>, the <a href="/Plugins/IWebApi.html">IWebApi</a>
+        Melon gave your plugin when it loaded.
       </p>
-      <h2>Step-by-Step Guide</h2>
-      <h3>1. Understanding IWebApi</h3>
-      <p><code>IWebApi</code> provides methods to:</p>
+      <p>There are two ways in:</p>
       <ul>
-        <li>Add middleware functions.</li>
-        <li>Access events for API endpoints.</li>
+        <li><strong>Middleware</strong> runs <em>before</em> Melon handles a request. Return something and that's the response. Return <code>null</code> and Melon carries on like normal.</li>
+        <li><strong>Events</strong> fire <em>after</em> Melon handled a request, right before the response goes out. They can't change the response, they just let you know it happened.</li>
       </ul>
-      <h3>2. Create a Custom Endpoint</h3>
-      <p>We&#39;ll add a new API endpoint: <code>/api/myplugin/info</code>.</p>
-      <h4>a. Implement Middleware Function</h4>
-      <pre><code class="language-C#">
-    public byte[] MyPluginMiddleware(WebApiEventArgs args)
-    {
-        if (args.Api == &quot;/api/myplugin/info&quot;)
-        {
-            var result = $&quot;{Name}\n{Authors}\n{Version}\n{Description}&quot;;
-            return Encoding.UTF8.GetBytes(result);
-        }
-    
-        // Return null to let other middlewares or the core handle the request
-        // If you return a response here, it will override the endpoint&#39;s original function if there is one.
-        return null;
-    }
-        </code></pre>
-      <h4>b. Register Middleware in Execute Method</h4>
-      <pre><code class="language-C#">
-    public int Execute()
-    {
-        // MyPluginMiddleware is a key that can be used
-        WebApi.UsePluginMiddleware(new KeyValuePair&lt;string, Func&lt;WebApiEventArgs, byte[]&gt;&gt;(&quot;MyPluginMiddleware&quot;, MyPluginMiddleware));
-        return 0;
-    }
-        </code></pre>
-      <h4>c. Clean Up in Destroy Method</h4>
-      <pre><code class="language-C#">
-    public int Destroy()
-    {
-        WebApi.RemovePluginMiddleware(&quot;MyPluginMiddleware&quot;);
-        return 0;
-    }
-        </code></pre>
-      <h3>3. Test the Custom Endpoint</h3>
-      <h4>a. Rebuild and Deploy</h4>
-      <ul>
-        <li>Rebuild your plugin.</li>
-        <li>Copy the DLL to Melon&#39;s <code>Plugins</code> directory.</li>
-        <li>Restart Melon.</li>
-      </ul>
-      <h4>b. Use a Tool to Test the Endpoint</h4>
-      <ul>
-        <li><strong>Using Curl</strong>:</li>
-      </ul>
-      <pre><code class="language-bash">curl http://localhost:your_port/api/myplugin/info</code></pre>
-      <h3>4. Override Existing Endpoints</h3>
+
+      <h2 id="1-add-an-endpoint">1. Add an Endpoint</h2>
       <p>
-        You can also override existing endpoints by handling the same API paths.
+        Middleware is a function that gets every request and returns bytes or
+        <code>null</code>. This one answers <code>/api/myplugin/info</code> and
+        ignores everything else:
       </p>
-      <h4>a. Handle an Existing Endpoint</h4>
-      <pre><code class="language-C#">
-    public byte[] OverrideGetTrack(WebApiEventArgs args)
-    {
-        if (args.Api == &quot;/api/track&quot;)
-        {
-            var response = &quot;This is a custom response from MyFirstPlugin.&quot;;
-            return Encoding.UTF8.GetBytes(response);
-        }
-    
-        return null;
-    }
-        </code></pre>
-      <h4>b. Register the Middleware</h4>
-      <pre><code class="language-C#">
-    public int Execute()
-    {
-        WebApi.UsePluginMiddleware(new KeyValuePair&lt;string, Func&lt;WebApiEventArgs, byte[]&gt;&gt;(&quot;OverrideGetTrack&quot;, OverrideGetTrack));
-        return 0;
-    }
-        </code></pre>
-      <h4>c. Caution</h4>
-      <ul>
-        <li>
-          Overriding core endpoints can disrupt Melon&#39;s functionality.
-        </li>
-        <li>
-          Ensure you handle requests appropriately or consider calling the
-          original functionality after your code, rather than outright
-          overriding the function.
-        </li>
-      </ul>
-      <h3>5. Using API Events</h3>
+      <pre><code class="language-csharp">using System.Text;
+using Melon.Models;
+
+private byte[]? InfoEndpoint(WebApiEventArgs args)
+{
+    // args.Api is the request path.
+    if (args.Api != "/api/myplugin/info") return null; // not ours, let Melon handle it
+
+    return Encoding.UTF8.GetBytes($"{Name} {Version} by {Authors}");
+}</code></pre>
+      <p>Register it in <code>Execute</code>, and remove it in <code>Destroy</code>. The string is just a name for it:</p>
+      <pre><code class="language-csharp">public int Execute()
+{
+    WebApi.UsePluginMiddleware(new("MyPlugin.Info", InfoEndpoint));
+    return 0;
+}
+
+public int Destroy()
+{
+    WebApi.RemovePluginMiddleware("MyPlugin.Info");
+    return 0;
+}</code></pre>
       <p>
-        Alternatively, you can subscribe to API events. While Plugin Middleware
-        executes before a request, API Events go off right before the server
-        response to the client.
+        Middleware only runs for signed-in requests, so you have to send a token
+        to try it (see <a href="/api/Authorization.html">Authorization</a> for
+        how to get one):
       </p>
-      <pre><code class="language-C#">
-    public int Execute()
-    {
-        WebApi.GetTrack += OnGetTrack;
-        return 0;
-    }
-        
-    private void OnGetTrack(object sender, WebApiEventArgs args)
-    {
-        // Add custom logic here
-        Console.WriteLine($&quot;Track requested by user {args.User}&quot;);
-    }
-        </code></pre>
-      <ul>
-        <li><a href="/models/WebApiEventArgs.html">WebApiEventArgs</a></li>
-      </ul>
-      <h3>7. Clean Up Events in Destroy Method</h3>
-      <pre><code class="language-C#">
-    public int Destroy()
-    {
-        WebApi.GetTrack -= OnGetTrack;
-        WebApi.RemovePluginMiddleware(&quot;OverrideGetTrack&quot;);
-        return 0;
-    }
-        </code></pre>
-      <h3>8. Rebuild and Test</h3>
-      <ul>
-        <li>Rebuild your plugin.</li>
-        <li>Deploy and restart Melon.</li>
-        <li>
-          Test the overridden endpoint and observe the console output.<br />
-          <a href="/Plugins/Plugin-Tutorial-Managing-Settings.html"
-            >Last Tutorial: Managing Settings</a
-          >
-          &lt;---
-        </li>
-      </ul>
+      <pre><code class="language-bash">curl http://localhost:14524/api/myplugin/info -H "Authorization: Bearer &lt;token&gt;"</code></pre>
+
+      <h2 id="2-reading-the-request">2. Reading the Request</h2>
+      <p><code>WebApiEventArgs</code> tells you who's asking and what they sent:</p>
+      <table>
+        <thead><tr><th>Property</th><th>What it is</th></tr></thead>
+        <tbody>
+          <tr><td><code>Api</code></td><td>The request path, like <code>/api/myplugin/info</code>.</td></tr>
+          <tr><td><code>User</code></td><td>The user's id.</td></tr>
+          <tr><td><code>Role</code></td><td>Their role: <code>Admin</code>, <code>User</code> or <code>Pass</code>.</td></tr>
+          <tr><td><code>Args</code></td><td>The query string. Each value is a <code>string[]</code>, since a key can show up more than once.</td></tr>
+        </tbody>
+      </table>
+      <pre><code class="language-csharp">// /api/myplugin/hello?name=Epsi
+if (args.Api == "/api/myplugin/hello" &amp;&amp; args.Args.TryGetValue("name", out var value))
+{
+    var name = ((string[])value)[0];
+    return Encoding.UTF8.GetBytes($"Hello, {name}!");
+}</code></pre>
+      <p>
+        Passwords and tokens are taken out of <code>Args</code> before your
+        plugin sees them. Check <code>Role</code> yourself if an endpoint should
+        be admin only.
+      </p>
+
+      <h2 id="3-replace-an-endpoint">3. Replace an Endpoint</h2>
+      <p>
+        Since middleware runs first, answering one of Melon's own paths replaces
+        it. This makes <code>/api/track</code> return your text instead of the
+        track:
+      </p>
+      <pre><code class="language-csharp">private byte[]? OverrideTrack(WebApiEventArgs args)
+{
+    if (args.Api != "/api/track") return null;
+    return Encoding.UTF8.GetBytes("This is a custom response from My First Plugin.");
+}</code></pre>
+      <p>
+        Be careful with this. Every client expects Melon's endpoints to answer in
+        their usual shape, and if yours doesn't, they break. Only take over the
+        requests you actually need to, and return <code>null</code> for the rest.
+      </p>
+
+      <h2 id="4-listen-for-events">4. Listen for Events</h2>
+      <p>
+        If you only want to know something happened, use an event instead. Every
+        endpoint has one on <code>WebApi</code> (the full list is on
+        <a href="/Plugins/IWebApi.html">IWebApi</a>):
+      </p>
+      <pre><code class="language-csharp">public int Execute()
+{
+    WebApi.GetTrack += OnGetTrack;
+    return 0;
+}
+
+public int Destroy()
+{
+    WebApi.GetTrack -= OnGetTrack; // always unhook, or you get called after you're disabled
+    return 0;
+}
+
+private void OnGetTrack(object? sender, WebApiEventArgs args)
+{
+    Console.WriteLine($"Track requested by user {args.User}, status {args.StatusCode}");
+}</code></pre>
+      <p>
+        Events also get <code>StatusCode</code> and <code>Message</code>, what
+        Melon answered with. See <a href="/models/WebApiEventArgs.html">WebApiEventArgs</a>.
+      </p>
+      <p>
+        That's the whole plugin system. From here, the
+        <a href="/Plugins/IHost.html">IHost</a> page lists everything else your
+        plugin can use.
+      </p>
+    </div>
     </div>
     <script src="/sidebar.js"></script>
   </body>

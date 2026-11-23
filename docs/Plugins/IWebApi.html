@@ -3,6 +3,9 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Album Model Docs</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -13,12 +16,19 @@
 
 
 <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
-        <h1>IWebApi Interface Documentation</h1>
-        <p>The <code>IWebApi</code> interface allows plugins to interact with Melon&#39;s web API, enabling them to add middleware, handle API events, and extend functionality.</p>
-        <h2>Interface Definition</h2>
-        <pre><code class="language-C#">
+        <h1 id="iwebapi">IWebApi</h1>
+        <p>
+          <code>IWebApi</code> is how a plugin gets into Melon's web API. You can
+          add middleware, which runs before Melon handles a request and can answer
+          it instead, or listen to events, which fire after Melon handled one.
+          <a href="/Plugins/Plugin-Tutorial-Custom-Endpoints.html">Custom Endpoints</a>
+          shows both.
+        </p>
+        <h2 id="interface">The Interface</h2>
+        <pre><code class="language-csharp">
     public interface IWebApi
     {
         bool UsePluginMiddleware(KeyValuePair&lt;string, Func&lt;WebApiEventArgs, byte[]&gt;&gt; middleware);
@@ -186,33 +196,32 @@
         public event EventHandler&lt;WebApiEventArgs&gt; UsersChangePassword;
     }
         </code></pre>
-        <p>NOTE: Some Endpoints are missing API Events. This will be fixed in the future.</p>
-        <h3>Methods</h3>
-        <ul>
-        <li><strong>UsePluginMiddleware</strong>:<ul>
-        <li><strong>Parameters</strong>:<ul>
-        <li><code>middleware</code>: A key-value pair where the key is the middleware name, and the value is the function handling the middleware.</li>
-        </ul>
-        </li>
-        <li><strong>Returns</strong>: <code>true</code> if added successfully, <code>false</code> otherwise.</li>
-        </ul>
-        </li>
-        <li><strong>RemovePluginMiddleware</strong>:<ul>
-        <li><strong>Parameters</strong>:<ul>
-        <li><code>name</code>: Name of the middleware to remove.</li>
-        </ul>
-        </li>
-        <li><strong>Returns</strong>: <code>true</code> if removed successfully, <code>false</code> otherwise.</li>
-        </ul>
-        </li>
-        <li><strong>GetPluginMiddlewares</strong>:<ul>
-        <li><strong>Returns</strong>: A dictionary of all registered plugin middlewares.</li>
-        </ul>
-        </li>
-        </ul>
-        <h3>Events</h3>
-        <p>Events get triggered whenever the server is about to send a response to the client. This differs from Middleware in that it comes after the request, while middleware will come before. Events come with args that include information about the response and the request. </p>
+        <p>A few endpoints don't have an event yet.</p>
+        <h2 id="middleware">Middleware</h2>
+        <table>
+          <thead><tr><th>Method</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>UsePluginMiddleware(new(name, func))</code></td><td>Adds your middleware. <code>name</code> is just a label so you can remove it later. Returns <code>false</code> if that name is taken.</td></tr>
+            <tr><td><code>RemovePluginMiddleware(name)</code></td><td>Removes it. Do this in <code>Destroy</code>.</td></tr>
+            <tr><td><code>GetPluginMiddlewares()</code></td><td>Every middleware that's registered, from every plugin.</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Your function gets a <a href="/models/WebApiEventArgs.html">WebApiEventArgs</a>
+          for every signed-in request. Return bytes and that's the response.
+          Return <code>null</code> and the request carries on to the next
+          middleware, then to Melon.
+        </p>
+        <h2 id="events">Events</h2>
+        <p>
+          Each endpoint has an event that fires right before Melon sends its
+          response. You get the same <code>WebApiEventArgs</code>, plus the
+          <code>StatusCode</code> and <code>Message</code> Melon is answering with.
+          Events can't change the response, they just tell you it happened.
+          Remember to unhook them in <code>Destroy</code>.
+        </p>
         
+    </div>
     </div>  
     <script src="/sidebar.js"></script>
 </body>

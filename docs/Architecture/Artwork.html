@@ -3,6 +3,9 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Artwork Architecture Docs</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -13,16 +16,84 @@
 
 
 <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
-        <h1 id="artwork-management">Artwork Management</h1>
-<p>Melon does not download any images automatically currently (though it might in the future). Melon comes with a default artwork, but otherwise pulls artwork from within track file metadata. Using the <a href="/api/ArtUpload.html">ArtUpload</a> endpoints users can upload artwork to tracks, albums, artists (pfps + banners), playlists, collections, and a custom default artwork. <a href="/api/ArtDeletion.html">ArtDeletion</a> endpoints allows you to delete artwork. Downloading artwork from the server is done with the <a href="/api/Download.html">Download</a> endpoints.</p>
-<p>Artwork is stored on disk under the linked object&#39;s id + index position, except for track artwork which is stored inside the track&#39;s file metadata. <code>Example: Melon/ArtistPfps/66bc9aadab7ba419497e6a97-0.jpeg</code></p>
-<p>When an album has no specific artwork set, it pulls from the first track in it that has artwork. By default, albums are not given their own artwork, so all albums by default pull the artwork from the first track that has artwork. When calling for an album image that doesn&#39;t have one set, the index you call for will be based on the track. Example: <code>https://your-melon-server.com/api/art/delete/album-art?id=66bc9aadab7ba419497e6a97&amp;index=2</code> will get the 3rd image from the first track found to have any artwork. If 2 is out of bounds, you&#39;ll be sent the default artwork.</p>
-<p>If no artwork can be found for an object, the default artwork is sent. Melon&#39;s Default artwork is stored in the exe, but can be overridden by uploading a custom one. Custom default artwork is stored on disk. The default internal artwork cannot be removed or changed (without rebuilding Melon with a different one).</p>
-<p>Tracks, Albums, Artist pfps and Artist banners can all have multiple images, and Tracks/Albums/Artists have properties for setting the default image to pick. </p>
-<p>Playlists, Collections, and the default artwork can only have one set at a time.</p>
+        <h1 id="artwork-management">Artwork</h1>
+        <p>
+          Melon gets artwork from a few places: the pictures embedded in your
+          music files, artwork people upload, and for artists, online sources
+          called artwork providers. Anything without art gets Melon's default
+          image.
+        </p>
 
+        <h2 id="where-art-comes-from">Where Art Comes From</h2>
+        <ul>
+          <li><strong>Tracks</strong> use the pictures inside the file's own tags.</li>
+          <li>
+            <strong>Albums</strong> don't have their own art unless someone
+            uploads some. Until then, an album uses the art of its first track
+            that has any.
+          </li>
+          <li>
+            <strong>Artists</strong> get their picture and banner from artwork
+            providers, or from an upload.
+          </li>
+          <li><strong>Playlists and collections</strong> only have art if someone uploads it.</li>
+        </ul>
+        <p>
+          You upload with the <a href="/api/ArtUpload.html">Art Upload</a>
+          endpoints, remove with <a href="/api/ArtDeletion.html">Art Deletion</a>,
+          and get art with the <a href="/api/Download.html">Download</a> endpoints.
+        </p>
+
+        <h2 id="artwork-providers">Artwork Providers</h2>
+        <p>
+          A provider is an online source Melon can ask for artist pictures and
+          banners. Melon comes with two:
+        </p>
+        <table>
+          <thead><tr><th>Provider</th><th>Gives</th><th>Needs</th></tr></thead>
+          <tbody>
+            <tr><td>Deezer</td><td>Artist pictures</td><td>Nothing, it's on by default.</td></tr>
+            <tr><td>fanart.tv</td><td>Artist pictures and banners</td><td>A free API key, and the artist's MusicBrainz id in your tags.</td></tr>
+          </tbody>
+        </table>
+        <p>
+          In MelonGUI or MelonCLI, under Library → Artwork, you turn providers on
+          and off, put them in order, and add API keys. Melon asks the providers
+          in that order and keeps the first image it finds for each kind. Plugins
+          can add more providers, see <a href="/Plugins/IHost.html#artwork">IHost</a>.
+        </p>
+
+        <h2 id="how-its-stored">How It's Stored</h2>
+        <p>
+          Track art stays inside the track's file. Everything else is saved in
+          Melon's data folder, named by the object's id and the image's index:
+          <code>ArtistPfps/66bc9aadab7ba419497e6a97-0.jpeg</code>.
+        </p>
+        <p>
+          Tracks, albums, and artist pictures and banners can have more than one
+          image, and tracks, albums and artists have a property for which one is
+          the default. Playlists, collections, and the default artwork only have
+          one at a time.
+        </p>
+        <p>
+          When you ask for an album's art and it doesn't have its own, the index
+          you ask for is used on the track it borrows from. So
+          <code>/api/download/album-art?id=66bc9aadab7ba419497e6a97&amp;index=2</code>
+          gets the 3rd picture of that album's first track with art. If there is
+          no 3rd picture, you get the default artwork.
+        </p>
+
+        <h2 id="default-artwork">Default Artwork</h2>
+        <p>
+          Melon's default image is built into Melon itself, so it can't be
+          deleted. You can replace it by uploading your own default; that one is
+          saved on disk, and deleting it brings the built-in one back.
+        </p>
+
+</div>
     </div>  
     <script src="/sidebar.js"></script>
 </body>

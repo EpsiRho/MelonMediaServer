@@ -3,6 +3,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>IHost Interface Docs</title>
     <link rel="stylesheet" href="/styles.css" />
@@ -16,14 +18,14 @@
     <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
-      <h1 id="ihost-interface-documentation">IHost Interface Documentation</h1>
+      <h1 id="ihost">IHost</h1>
       <p>
-        The <code>IHost</code> interface provides plugins with access to Melon's
-        core services and functionalities. It acts as a gateway to interact with
-        various aspects of the server.
+        <code>IHost</code> is everything Melon lets your plugin use: the library,
+        settings, scans, admin tools and artwork. Melon gives it to you in
+        <code>LoadMelonCommands</code>, and you use it through <code>Host</code>.
       </p>
 
-      <h2 id="interface-definition">Interface Definition</h2>
+      <h2 id="interface">The Interface</h2>
       <pre><code class="language-csharp">public interface IHost
 {
     string Version { get; }
@@ -38,11 +40,11 @@
       <h2 id="version">Version</h2>
       <ul>
         <li><strong>Type</strong>: <code>string</code></li>
-        <li><strong>Description</strong>: The current version of the Plugin Interface.</li>
+        <li><strong>Description</strong>: The version of the plugin interface, so you can check what this Melon supports.</li>
       </ul>
 
       <h2 id="imelonapi">IMelonAPI</h2>
-      <p>Provides access to database functionalities.</p>
+      <p>Library helpers.</p>
       <pre><code class="language-csharp">public interface IMelonAPI
 {
     List&lt;Track&gt; ShuffleTracks(List&lt;Track&gt; tracks, string UserId, ShuffleType type, bool fullRandom = false, bool enableTrackLinks = true);

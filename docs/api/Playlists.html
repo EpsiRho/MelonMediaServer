@@ -4,6 +4,9 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Playlist API Docs</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -14,12 +17,12 @@
 
 
 <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
         <h1 id="playlists-controller-documentation">Playlists Controller Documentation</h1>
         <p>The <code>PlaylistsController</code> handles the creation, modification, and retrieval of playlists and their
-            associated tracks, albums, and artists. This controller manages all playlist-related functionality within
-            the API. For more info on playlists see the <a href="/Guides/Playlists.html">Playlist Guide</a>.</p>
+            associated tracks, albums, and artists. For more info on playlists see the <a href="/Guides/Playlists.html">Playlist Guide</a>.</p>
         <h2 id="controller-route-api-playlists-">Controller Route: <code>/api/playlists</code></h2>
         <p>All routes within the <code>PlaylistsController</code> are prefixed by <code>/api/playlists</code>.</p>
         <hr>
@@ -387,6 +390,7 @@
              -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
         </code></pre>
 
+    </div>
     </div>
     <script src="/sidebar.js"></script>
 </body>

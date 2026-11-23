@@ -3,6 +3,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>IPlugin Model Docs</title>
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -12,123 +15,72 @@
 <script>hljs.highlightAll();</script>
 
   <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
-      <h1>IPlugin Interface Documentation</h1>
+      <h1 id="iplugin">IPlugin</h1>
       <p>
-        The <code>IPlugin</code> interface is the core contract that all plugins
-        must implement to integrate with Melon.
+        Every plugin has one class that implements <code>IPlugin</code>. It's
+        how Melon finds your plugin, tells you about itself, and starts and stops
+        it. The <a href="/Plugins/Plugin-Tutorial-Getting-Started.html">Getting Started</a>
+        tutorial walks through a full one.
       </p>
-      <h2>Interface Definition</h2>
-      <pre><code class="language-C#">
-    public interface IPlugin
-    {
-        string Name { get; }
-        string Version { get; }
-        string Authors { get; }
-        string Description { get; }
-        IHost Host { get; set; }
-        IWebApi WebApi { get; set; }
-    
-        Dictionary&lt;string, string&gt; GetHelpOptions();
-        void LoadMelonCommands(IHost host);
-        void LoadMelonServerCommands(IWebApi webapi);
-        int LoadUI() => 0;   // optional
-        int UnloadUI() => 0; // optional
-        int Execute();
-        int Destroy();
-    }
-        </code></pre>
-      <h3>Properties</h3>
-      <ul>
-        <li><strong>Name</strong>: Name of the plugin.</li>
-        <li><strong>Version</strong>: Version number.</li>
-        <li><strong>Authors</strong>: Comma-separated list of authors.</li>
-        <li><strong>Description</strong>: Brief description.</li>
-        <li>
-          <strong>Host</strong>: Provides access to Melon&#39;s host services.
-        </li>
-        <li>
-          <strong>WebApi</strong>: Provides access to Melon&#39;s web API.
-        </li>
-      </ul>
-      <h3>Methods</h3>
-      <ul>
-        <li>
-          <strong>GetHelpOptions()</strong>:
-          <ul>
-            <li>Returns command-line options and descriptions.</li>
-          </ul>
-        </li>
-        <li>
-          <strong>LoadMelonCommands(IHost host)</strong>:
-          <ul>
-            <li>Called to initialize the plugin with the Melon host.</li>
-          </ul>
-        </li>
-        <li>
-          <strong>LoadMelonServerCommands(IWebApi webapi)</strong>:
-          <ul>
-            <li>Called to initialize the plugin with the Melon web API.</li>
-          </ul>
-        </li>
-        <li>
-          <strong>LoadUI()</strong>:
-          <ul>
-            <li>Optional, defaults to returning <code>0</code>. Kept for older plugins.</li>
-            <li>
-              <strong>Returns</strong>: An integer indicating success
-              (<code>0</code>) or failure.
-            </li>
-          </ul>
-        </li>
-        <li>
-          <strong>UnloadUI()</strong>:
-          <ul>
-            <li>Optional, defaults to returning <code>0</code>. Kept for older plugins.</li>
-            <li>
-              <strong>Returns</strong>: An integer indicating success
-              (<code>0</code>) or failure.
-            </li>
-          </ul>
-        </li>
-        <li>
-          <strong>Execute()</strong>:
-          <ul>
-            <li>Start any background processes or middleware.</li>
-            <li>
-              <strong>Returns</strong>: An integer indicating success
-              (<code>0</code>) or failure.
-            </li>
-          </ul>
-        </li>
-        <li>
-          <strong>Destroy()</strong>:
-          <ul>
-            <li>Clean up resources and stop processes.</li>
-            <li>
-              <strong>Returns</strong>: An integer indicating success
-              (<code>0</code>) or failure.
-            </li>
-          </ul>
-        </li>
-      </ul>
+      <pre><code class="language-csharp">public interface IPlugin
+{
+    // About your plugin
+    string Name { get; }
+    string Version { get; }
+    string Authors { get; }       // separate more than one with commas
+    string Description { get; }
+
+    // Filled in by Melon when it loads you
+    IHost Host { get; set; }
+    IWebApi WebApi { get; set; }
+    void LoadMelonCommands(IHost host);
+    void LoadMelonServerCommands(IWebApi webapi);
+
+    // Start and stop. Return 0 when it worked.
+    int Execute();
+    int Destroy();
+
+    // Launch arguments you read, shown in MelonWebApi --help
+    Dictionary&lt;string, string&gt; GetHelpOptions();
+
+    // Old, kept so older plugins still load. You don't need these.
+    int LoadUI() =&gt; 0;
+    int UnloadUI() =&gt; 0;
+}</code></pre>
+
+      <h2 id="members">What Each One Is For</h2>
+      <table>
+        <thead><tr><th>Member</th><th>What it's for</th></tr></thead>
+        <tbody>
+          <tr><td><code>Name</code>, <code>Authors</code></td><td>Shown in the plugin list. Together they're your plugin's id, so keep the pair unique.</td></tr>
+          <tr><td><code>Version</code></td><td>Your plugin's version, like <code>1.0.0</code>.</td></tr>
+          <tr><td><code>Description</code></td><td>One line about what it does.</td></tr>
+          <tr><td><code>LoadMelonCommands</code></td><td>Called first, with <a href="/Plugins/IHost.html">IHost</a>. Save it to <code>Host</code>.</td></tr>
+          <tr><td><code>LoadMelonServerCommands</code></td><td>Called next, with <a href="/Plugins/IWebApi.html">IWebApi</a>. Save it to <code>WebApi</code>.</td></tr>
+          <tr><td><code>Execute</code></td><td>Called when your plugin starts. Register middleware, hook events, start timers. Anything but 0 means it failed to start.</td></tr>
+          <tr><td><code>Destroy</code></td><td>Called when it's disabled, reloaded, or Melon stops. Undo everything <code>Execute</code> did.</td></tr>
+          <tr><td><code>GetHelpOptions</code></td><td>Your launch arguments and what they do. Read them from <code>Host.StateManager.LaunchArgs</code>.</td></tr>
+        </tbody>
+      </table>
 
       <h2 id="icontrollerplugin">IControllerPlugin</h2>
       <p>
-        Implement this alongside <code>IPlugin</code> to give your plugin a page
-        in MelonGUI and MelonCLI. See the
-        <a href="/Plugins/Plugin-Tutorial-First-UI.html">Controller Page</a> tutorial.
+        Implement this as well to get a page in MelonGUI and MelonCLI. See
+        <a href="/Plugins/Plugin-Tutorial-First-UI.html">Controller Page</a>.
       </p>
       <pre><code class="language-csharp">public interface IControllerPlugin
 {
-    PluginPage GetPage();
-    object? Invoke(string action, JsonElement values);
+    PluginPage GetPage();                                // the fields and buttons
+    object? Invoke(string action, JsonElement values);   // a button was pressed
 }
 
 public record PluginPage(PluginField[] Fields, PluginAction[] Actions);
-public record PluginField(string Key, string Label, string Type, object Value); // text, boolean, number, argb
+public record PluginField(string Key, string Label, string Type, object Value);
 public record PluginAction(string Key, string Label);</code></pre>
+    </div>
     </div>
     <script src="/sidebar.js"></script>
   </body>

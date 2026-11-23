@@ -4,10 +4,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Plugin Tutorial: Controller Page</title>
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css" />
   </head>
 
   <script>hljs.highlightAll();</script>
@@ -18,114 +20,107 @@
     <div class="content">
       <h1 id="plugin-tutorial-controller-page">Plugin Tutorial: Controller Page</h1>
       <p>
-        In this tutorial, we'll give your plugin a page in Melon's controllers.
-        You describe the page once, as fields and actions, and both MelonGUI and
-        MelonCLI draw it for you. When someone presses an action, Melon calls your
-        plugin on the server with the values they entered.
-      </p>
-      <p>
-        This tutorial continues from
-        <a href="/Plugins/Plugin-Tutorial-Getting-Started.html">Getting Started</a>.
+        Now let's give the plugin from <a href="/Plugins/Plugin-Tutorial-Getting-Started.html">Getting Started</a>
+        its own page in MelonGUI and MelonCLI. You don't write any UI for this.
+        You describe the page as a list of fields and buttons, and both
+        controllers draw it for you. When someone presses a button, Melon calls
+        your plugin on the server with whatever they typed in.
       </p>
 
-      <h2 id="step-by-step-guide">Step-by-Step Guide</h2>
-      <h3 id="1-implement-icontrollerplugin">1. Implement IControllerPlugin</h3>
-      <p>Add <code>IControllerPlugin</code> next to <code>IPlugin</code>:</p>
-      <pre><code class="language-csharp">public class MyFirstPlugin : IPlugin, IControllerPlugin
+      <h2 id="1-add-icontrollerplugin">1. Add IControllerPlugin</h2>
+      <p>Add <code>IControllerPlugin</code> next to <code>IPlugin</code> and implement its two methods:</p>
+      <pre><code class="language-csharp">using System.Text.Json;
+using Melon.Interface;
+
+public class MyPlugin : IPlugin, IControllerPlugin
 {
-    // ... IPlugin members from Getting Started ...
+    // ... everything from Getting Started ...
 
+    // What the page looks like: the fields, then the buttons.
     public PluginPage GetPage() => new(
         [
-            new("name", "Your name", "text", "Melon"),
-            new("loud", "Shout it", "boolean", false),
+            //  key     label         type       starting value
+            new("name", "Your name",  "text",    "Melon"),
+            new("loud", "Shout it",   "boolean", false),
         ],
         [
+            //  key      button text
             new("greet", "Say hello"),
         ]);
 
+    // Called when a button is pressed. values has every field, by key.
     public object? Invoke(string action, JsonElement values)
     {
         if (action != "greet") throw new ArgumentException("Unknown action.");
-        var name = values.GetProperty("name").GetString();
-        var text = $"Hello, {name}!";
-        return values.GetProperty("loud").GetBoolean() ? text.ToUpper() : text;
+
+        var text = $"Hello, {values.GetProperty("name").GetString()}!";
+        if (values.GetProperty("loud").GetBoolean()) text = text.ToUpper();
+
+        return text; // a string shows up as a message
     }
 }</code></pre>
 
-      <h3 id="2-understanding-the-code">2. Understanding the Code</h3>
-      <ul>
-        <li>
-          <strong>GetPage</strong> returns a
-          <code>PluginPage(PluginField[] Fields, PluginAction[] Actions)</code>.
-        </li>
-        <li>
-          <strong>PluginField</strong>: <code>(Key, Label, Type, Value)</code>.
-          The key is how you read the value back, the label is what people see,
-          and the value is what the field starts with.
-        </li>
-        <li>
-          <strong>PluginAction</strong>: <code>(Key, Label)</code>, shown as a
-          button.
-        </li>
-        <li>
-          <strong>Invoke</strong> gets the pressed action's key and every field's
-          current value as JSON, keyed by field key.
-          <ul>
-            <li>Return a string to show a message.</li>
-            <li>Return a new <code>PluginPage</code> to redraw the page.</li>
-            <li>Throw an <code>ArgumentException</code> to show an error.</li>
-          </ul>
-        </li>
-      </ul>
+      <h2 id="2-how-it-works">2. How It Works</h2>
+      <p>
+        <code>GetPage</code> returns a <code>PluginPage</code>, which is just two
+        lists. Each <code>PluginField</code> is a key (how you read it back), a
+        label (what people see), a type, and a starting value. Each
+        <code>PluginAction</code> is a key and the text on its button.
+      </p>
+      <p>These are the field types the controllers know how to draw:</p>
       <table>
-        <thead><tr><th>Field type</th><th>Shows as</th><th>Value</th></tr></thead>
+        <thead><tr><th>Type</th><th>Shows as</th><th>Value you get back</th></tr></thead>
         <tbody>
           <tr><td><code>text</code></td><td>Text box</td><td>string</td></tr>
           <tr><td><code>boolean</code></td><td>Toggle</td><td>bool</td></tr>
           <tr><td><code>number</code></td><td>Number box</td><td>number</td></tr>
-          <tr><td><code>argb</code></td><td>Color picker</td><td>int (<code>Color.ToArgb()</code>)</td></tr>
+          <tr><td><code>argb</code></td><td>Color picker</td><td>int, from <code>Color.ToArgb()</code></td></tr>
         </tbody>
       </table>
-
-      <h3 id="3-rebuild-and-test">3. Rebuild and Test</h3>
+      <p>What you return from <code>Invoke</code> decides what happens next:</p>
       <ul>
-        <li>Rebuild your plugin and copy the <code>.dll</code> into Melon's <code>Plugins</code> folder.</li>
-        <li>Restart Melon.</li>
-        <li>Open MelonGUI or MelonCLI, go to <strong>Plugins</strong>, and select your plugin.</li>
-        <li>Press <strong>Say hello</strong>.</li>
+        <li>Return a <strong>string</strong> and the controller shows it as a message.</li>
+        <li>Return a new <strong><code>PluginPage</code></strong> and the page redraws with it. Handy after saving, or to show different fields.</li>
+        <li>Throw an <strong><code>ArgumentException</code></strong> and its message shows as an error.</li>
       </ul>
-
-      <h3 id="4-add-help-options">4. Add Help Options</h3>
       <p>
-        Launch arguments your plugin reads are listed by
-        <code>MelonWebApi --help</code>. Add them in
-        <code>GetHelpOptions</code>:
+        <code>Invoke</code> runs on the server, not in the controller, so it can
+        use everything in <code>Host</code>, including
+        <a href="/Plugins/IHost.html#administration">Host.Administration</a>.
+        Keep it quick though. Long running work belongs in something you start
+        from <code>Execute</code>.
+      </p>
+
+      <h2 id="3-try-it">3. Try It</h2>
+      <p>
+        Rebuild, copy the <code>.dll</code> into <code>Plugins</code> again, and
+        restart Melon. Open <strong>Plugins</strong> in MelonGUI or MelonCLI,
+        pick your plugin, and press <strong>Say hello</strong>. The page only
+        shows while your plugin is enabled.
+      </p>
+
+      <h2 id="4-launch-arguments">4. Launch Arguments</h2>
+      <p>
+        Some things are better as a launch argument than a button, like a reset
+        switch. List yours in <code>GetHelpOptions</code> so they show up in
+        <code>MelonWebApi --help</code>:
       </p>
       <pre><code class="language-csharp">public Dictionary&lt;string, string&gt; GetHelpOptions() => new()
 {
     { "--resetMyPlugin", "Resets My First Plugin's settings." }
 };</code></pre>
-      <p>Read them in <code>Execute</code> through <code>Host.StateManager.LaunchArgs</code>.</p>
-
-      <h3 id="5-extra-considerations">5. Extra Considerations</h3>
-      <ul>
-        <li>
-          Pages are drawn from your field list, so keep pages short and save
-          anything long-running for <code>Execute</code>.
-        </li>
-        <li>
-          <code>Invoke</code> runs on the server, not in the controller. It can
-          use everything in <code>Host</code>, including
-          <a href="/Plugins/IHost.html#administration">Host.Administration</a>.
-        </li>
-        <li>
-          The page only shows while your plugin is enabled.
-        </li>
-      </ul>
       <p>
-        Next, save what people enter in
-        <a href="/Plugins/Plugin-Tutorial-Managing-Settings.html">Managing Settings</a>.
+        Then check for it in <code>Execute</code>. <code>Host.StateManager.LaunchArgs</code>
+        has every argument Melon started with, without the leading dashes:
+      </p>
+      <pre><code class="language-csharp">if (Host.StateManager.LaunchArgs.ContainsKey("resetMyPlugin"))
+{
+    // reset here
+}</code></pre>
+      <p>
+        Next up, the page forgets what you typed as soon as Melon restarts.
+        <a href="/Plugins/Plugin-Tutorial-Managing-Settings.html">Managing Settings</a>
+        fixes that.
       </p>
     </div>
     </div>

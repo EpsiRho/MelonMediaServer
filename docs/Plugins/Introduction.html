@@ -1,39 +1,64 @@
 <!DOCTYPE html>
 
 <html lang="en">
-<head>
+  <head>
     <meta charset="utf-8" />
-    <title>Plugins Introduction</title>
-    <link rel="stylesheet" href="/styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
-</head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
+    <title>Plugins</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
 
-<script>hljs.highlightAll();</script>
-
-
-<body>
+  <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
-        <h1>Introduction to the Plugin System</h1>
-        <p>Melon is designed with extensibility in mind, allowing developers to enhance its functionality through plugins. The plugin system is based on dynamic libraries, <code>.dll</code> files in C#, that implement a specific interface (<code>IPlugin</code>). Plugins can interact with Melon&#39;s core functionalities, access its APIs, add a page to MelonGUI and MelonCLI, provide artwork, and even override or extend API endpoints.</p>
-        <h1>Installing Plugins</h1>
-        <p>After making sure the plugin you are trying to install is compatible with the version of Melon you are using, all you have to do is drag it&#39;s dll into the Melon/Plugins folder. You can easily find this folder by going into the console menu -&gt; Settings -&gt; Open Melon Folder.</p>
-        <h1>Developing Plugins</h1>
-        <p>There are tutorials on how to make plugins for Melon:</p>
-        <ul>
-        <li><a href="/Plugins/Plugin-Tutorial-Getting-Started.html">Getting Started</a></li>
-        <li><a href="/Plugins/Plugin-Tutorial-First-UI.html">Controller Page</a></li>
-        <li><a href="/Plugins/Plugin-Tutorial-Managing-Settings.html">Managing Settings</a></li>
-        <li><a href="/Plugins/Plugin-Tutorial-Custom-Endpoints.html">Custom Endpoints</a></li>
-        </ul>
-        <p>Along with documentation on the Plugin Interfaces:</p>
-        <ul>
-        <li><a href="/Plugins/IHost.html">IHost</a></li>
-        <li><a href="/Plugins/IPlugin.html">IPlugin</a></li>
-        <li><a href="/Plugins/IWebApi.html">IWebApi</a></li>
-        </ul>
-        
-    </div>  
+      <h1 id="plugins">Plugins</h1>
+      <p>
+        Plugins are how you add your own stuff to Melon without changing Melon
+        itself. A plugin is just a C# class library (a <code>.dll</code>) with a
+        class that implements <code>IPlugin</code>. Melon loads every
+        <code>.dll</code> in its <code>Plugins</code> folder when it starts.
+      </p>
+      <p>From a plugin you can:</p>
+      <ul>
+        <li>Use Melon's own services through <a href="/Plugins/IHost.html">IHost</a>: the library, settings, scans, users, artwork, and so on.</li>
+        <li>Add new API endpoints, or replace existing ones, through <a href="/Plugins/IWebApi.html">IWebApi</a>.</li>
+        <li>Run code when an endpoint is called, through IWebApi's events.</li>
+        <li>Give yourself a page in MelonGUI and MelonCLI with settings and buttons.</li>
+        <li>Add a source of artist pictures and banners.</li>
+      </ul>
+
+      <h2 id="installing-plugins">Installing a Plugin</h2>
+      <p>
+        Drop the plugin's <code>.dll</code> into the <code>Plugins</code> folder
+        in Melon's data folder, then restart Melon. The data folder is
+        <code>%LocalAppData%\Melon</code> on Windows and
+        <code>~/.local/share/Melon</code> on Linux. MelonGUI and MelonCLI both
+        have a button that opens it for you.
+      </p>
+      <p>
+        Make sure the plugin was built for your version of Melon. A plugin built
+        against an older <code>MelonLib.dll</code> may fail to load, and Melon
+        logs why.
+      </p>
+
+      <h2 id="making-plugins">Making Plugins</h2>
+      <p>The tutorials build one plugin step by step. Start with Getting Started and go in order:</p>
+      <ol>
+        <li><a href="/Plugins/Plugin-Tutorial-Getting-Started.html">Getting Started</a>: make the project and a plugin Melon loads.</li>
+        <li><a href="/Plugins/Plugin-Tutorial-First-UI.html">Controller Page</a>: give it a page in MelonGUI and MelonCLI.</li>
+        <li><a href="/Plugins/Plugin-Tutorial-Managing-Settings.html">Managing Settings</a>: save and load its settings.</li>
+        <li><a href="/Plugins/Plugin-Tutorial-Custom-Endpoints.html">Custom Endpoints</a>: add your own API endpoints.</li>
+      </ol>
+      <p>
+        The interface pages (<a href="/Plugins/IPlugin.html">IPlugin</a>,
+        <a href="/Plugins/IHost.html">IHost</a>,
+        <a href="/Plugins/IWebApi.html">IWebApi</a>) list everything available.
+      </p>
+    </div>
+    </div>
     <script src="/sidebar.js"></script>
-</body>
+  </body>
+</html>

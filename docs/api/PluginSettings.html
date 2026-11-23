@@ -3,6 +3,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Plugin Settings API Docs</title>
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -12,6 +15,7 @@
 <script>hljs.highlightAll();</script>
 
   <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
       <h1 id="plugins-api-documentation">Plugins API Documentation</h1>
@@ -219,6 +223,7 @@
       <pre><code class="lang-bash">curl -X POST <span class="hljs-string">"https://your-api-url.com/api/settings/plugins/reload"</span> <span class="hljs-string">\</span>
              -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
         </code></pre>
+    </div>
     </div>
     <script src="/sidebar.js"></script>
   </body>

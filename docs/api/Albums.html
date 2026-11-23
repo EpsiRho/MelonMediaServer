@@ -4,6 +4,9 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
     <title>Album API Docs</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -14,6 +17,7 @@
 
 
 <body>
+    <div class="container">
     <div id="sidebar-placeholder"></div>
     <div class="content">
         <h1 id="albums-apis-documentation">Album APIs Documentation</h1>
@@ -124,6 +128,7 @@
         <pre><code class="lang-bash"><span class="hljs-symbol">curl</span> -X <span class="hljs-meta">GET</span> <span class="hljs-string">"https://your-api-url.com/api/album/tracks?id=66bc99b8ab7ba419497e21af&amp;page=&lt;page-number&gt;&amp;count=&lt;count&gt;"</span> \
      -H <span class="hljs-string">"Authorization: Bearer &lt;JWT-token&gt;"</span>
 </code></pre>
+    </div>
     </div>
     <script src="/sidebar.js"></script>
 </body>
