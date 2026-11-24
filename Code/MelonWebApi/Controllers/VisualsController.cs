@@ -112,8 +112,8 @@ namespace MelonWebApi.Controllers
 
         internal static float[] ComputeWaveform(string path, int w)
         {
-            using var reader = new AudioFileReader(path);
-            // AudioFileReader yields interleaved 32-bit float samples.
+            using var reader = AudioFiles.OpenReader(path);
+            // The reader yields interleaved 32-bit float samples.
             var sampleCount = reader.Length / sizeof(float);
             var samplesPerPixel = (int)Math.Max(reader.WaveFormat.Channels, sampleCount / w);
             samplesPerPixel -= samplesPerPixel % reader.WaveFormat.Channels; // keep channel frames together

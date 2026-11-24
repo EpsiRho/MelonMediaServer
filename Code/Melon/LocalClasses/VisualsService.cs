@@ -364,7 +364,7 @@ public sealed class VisualsService
         int threads;
         lock (gate) threads = Math.Max(1, Environment.ProcessorCount / config.MaxConcurrentJobs);
         int rate;
-        using (var probe = new AudioFileReader(sourcePath)) rate = probe.WaveFormat.SampleRate;
+        using (var probe = AudioFiles.OpenReader(sourcePath)) rate = probe.WaveFormat.SampleRate;
 
         var encoder = new AudioEncoder(new EncoderOptions
         {
@@ -385,9 +385,30 @@ public sealed class VisualsService
             // Hi-res files are analysed at 48 kHz so the FFT window covers the same time as for CD audio.
             TargetSampleRate = rate > 48000 ? 48000 : 0,
         });
-        if (!encoder.LoadAudio(sourcePath)) throw new InvalidOperationException("The track could not be decoded.");
+        if (AudioFiles.NeedsTrim(sourcePath))
+        {
+            // FFTVIS opens files with Media Foundation itself, which can't open this one; hand it decoded samples.
+            int target = rate > 48000 ? 48000 : rate;
+            encoder.LoadSamples(DecodeChannels(sourcePath, target), target);
+        }
+        else if (!encoder.LoadAudio(sourcePath)) throw new InvalidOperationException("The track could not be decoded.");
         encoder.GenerateFrames();
         WriteAtomically(dest, stream => encoder.Save(stream));
+    }
+
+    /// <summary>One float array per channel at <paramref name="rate"/>.</summary>
+    private static float[][] DecodeChannels(string path, int rate)
+    {
+        using var reader = AudioFiles.OpenReader(path);
+        int channels = reader.WaveFormat.Channels;
+        ISampleProvider provider = reader.WaveFormat.SampleRate == rate ? reader : new NAudio.Wave.SampleProviders.WdlResamplingSampleProvider(reader, rate);
+        var lists = Enumerable.Range(0, channels).Select(_ => new List<float>((int)Math.Min(int.MaxValue / 4, reader.TotalTime.TotalSeconds * rate + 4096))).ToArray();
+        var buffer = new float[16384 * channels];
+        int read;
+        while ((read = provider.Read(buffer, 0, buffer.Length)) > 0)
+            for (int i = 0; i + channels <= read; i += channels)
+                for (int c = 0; c < channels; c++) lists[c].Add(buffer[i + c]);
+        return lists.Select(l => l.ToArray()).ToArray();
     }
 
     private static void GenerateAnalysis(string trackId, string sourcePath, string beatsPath, string momentsPath)

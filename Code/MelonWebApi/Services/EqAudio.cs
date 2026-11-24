@@ -41,7 +41,7 @@ namespace MelonWebApi.Services
         /// band, a narrow 10 Hz bell, decays well under this).</summary>
         private const double WarmupSeconds = 0.5;
 
-        private readonly AudioFileReader _reader;
+        private readonly Melon.LocalClasses.AudioFiles.AudioReader _reader;
         private readonly Equalizer _eq;
         private readonly int _channels, _bytesPerSample, _blockAlign;
         private readonly long _frames, _length;
@@ -57,7 +57,7 @@ namespace MelonWebApi.Services
 
         public EqWaveStream(string path, EqualizerSettings settings, int sourceBits)
         {
-            _reader = new AudioFileReader(path);
+            _reader = Melon.LocalClasses.AudioFiles.OpenReader(path);
             try
             {
                 var format = _reader.WaveFormat;

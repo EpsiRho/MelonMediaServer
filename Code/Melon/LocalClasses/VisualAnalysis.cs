@@ -50,7 +50,7 @@ internal static class VisualAnalysis
     /// <summary>Decodes to mono at <paramref name="rate"/> with NAudio, so Nova never needs ffmpeg.</summary>
     internal static MonoSignal DecodeMono(string path, int rate, CancellationToken token)
     {
-        using var reader = new AudioFileReader(path);
+        using var reader = AudioFiles.OpenReader(path);
         ISampleProvider provider = reader;
         int channels = reader.WaveFormat.Channels;
         if (reader.WaveFormat.SampleRate != rate) provider = new WdlResamplingSampleProvider(provider, rate);

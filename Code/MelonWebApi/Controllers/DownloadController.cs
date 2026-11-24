@@ -119,13 +119,9 @@ namespace MelonWebApi.Controllers
                 };
             }
 
-            FileStream fileStream = new FileStream(track.Path, FileMode.Open, FileAccess.Read);
-
-            if (fileStream == null)
-            {
-                args.SendEvent("Track file not found", 404, Program.mWebApi);
-                return NotFound();
-            }
+            // The file as stored, except a FLAC whose huge embedded cover pushes the audio past what Windows players
+            // can open: that one is sent without its picture/padding blocks (the audio bytes are the same).
+            Stream fileStream = AudioFiles.OpenRead(track.Path);
 
             string filename = Path.GetFileName(track.Path);
             args.SendEvent("Sent track file", 200, Program.mWebApi);
@@ -583,7 +579,7 @@ namespace MelonWebApi.Controllers
             var part = dest + "." + Guid.NewGuid().ToString("N") + ".part";
             try
             {
-                using (var reader = new AudioFileReader(sourcePath))
+                using (var reader = AudioFiles.OpenReader(sourcePath))
                 {
                     // LAME refuses input above 48 kHz outright (not just output), so hi-res sources are resampled first.
                     int rate = Mp3Rate(reader.WaveFormat.SampleRate);
