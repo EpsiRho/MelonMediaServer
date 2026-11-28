@@ -111,7 +111,8 @@ public sealed partial class ServerAdministration : IMelonAdministration
             Storage.SaveConfigFile("MelonSettings", settings, null);
             settings.MongoDbConnectionString = desiredMongo;
             // Existing API handlers use this address directly. Switch all users of the database together on restart.
-            restartRequired |= settings.ListeningURL != MelonSettings.ListeningURL ||
+            restartRequired |= settings.ListeningURL != MelonSettings.ListeningURL || settings.NetworkMode != MelonSettings.NetworkMode ||
+                settings.HttpPort != MelonSettings.HttpPort || settings.HttpsPort != MelonSettings.HttpsPort ||
                 settings.LogFileMegabytes != MelonSettings.LogFileMegabytes || settings.LogFilesKept != MelonSettings.LogFilesKept ||
                 settings.MongoDbConnectionString != MelonSettings.MongoDbConnectionString;
             pendingMongoConnection = settings.MongoDbConnectionString;
@@ -284,6 +285,7 @@ public sealed partial class ServerAdministration : IMelonAdministration
             needsAdmin = false;
             File.Delete(Path.Combine(melonPath, "Configs", "setup.pending"));
             Messages.Publish("setup", "First administrator created.");
+            Networking.RemoteAccessService.Kick(); // setup is done: start the local network broadcast
             return firstAdminId;
         }
     }

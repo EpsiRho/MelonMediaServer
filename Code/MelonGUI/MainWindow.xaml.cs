@@ -1,3 +1,4 @@
+using Melon.Controllers;
 using Melon.Interface;
 using MelonLib.API;
 using Microsoft.UI.Xaml;
@@ -147,19 +148,21 @@ public sealed partial class MainWindow : WindowEx
         var page = new StackPanel { Spacing = 10 };
         try
         {
-            Sidebar.IsPaneVisible = !Recovery && !Setup;
-            Heading.Text = T(Recovery ? "Database recovery" : Setup ? "Set up Melon" : tab);
+            bool intro = networkIntro && !Recovery && !Setup && status != null;
+            Sidebar.IsPaneVisible = !Recovery && !Setup && !intro;
+            Heading.Text = T(Recovery ? "Database recovery" : Setup ? "Set up Melon" : intro ? NetworkText.IntroTitle : tab);
             progressCard = null;
             artworkBar = null; artworkText = null;
             if (Recovery) RecoveryPage(page);
             else if (Setup) SetupPage(page);
+            else if (intro) await NetworkIntroPage(page);
             else if (tab == "System") await SystemPage(page);
             else if (status == null || settings == null) page.Children.Add(serviceRunning ? ButtonFor("System", () => { tab = "System"; BuildNavigation(); return Task.CompletedTask; }) : ButtonFor("Start Melon", StartHost));
             else switch (tab)
             {
                 case "Library": await LibraryPage(page); break;
                 case "Database": await DatabasePage(page); break;
-                case "Networking": NetworkingPage(page); break;
+                case "Networking": await NetworkingPage(page); break;
                 case "Users": await UsersPage(page); break;
                 case "Stats": await StatsPage(page); break;
                 case "Plugins": await PluginsPage(page); break;

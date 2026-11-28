@@ -24,5 +24,8 @@ internal static class DesktopHost
     public static bool IsServiceRunning() => WindowsHost.IsServiceRunning();
     public static Task StopService(CancellationToken token) => WindowsHost.StopService(token);
     public static Task StartAsync(string? dataPath, CancellationToken token) => WindowsHost.StartAsync(dataPath, "MelonGUI", token);
+    public static Task<bool> FirewallRuleExists(CancellationToken token) => WindowsHost.FirewallRuleExists(token);
+    public static Task AllowThroughFirewall(int[] ports, CancellationToken token) => WindowsHost.AllowThroughFirewall(ports, token);
+    public static void OpenLink(string url) => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     public static Task InstallMongo(CancellationToken token) => WindowsHost.InstallMongo(token);
 }

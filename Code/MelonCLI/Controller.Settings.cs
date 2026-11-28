@@ -10,48 +10,6 @@ internal sealed partial class Controller
 {
     private ReleaseInfo? release;
     private string pluginSort = "Name";
-    private void Networking(Screen page)
-    {
-        bool https = settings.ListeningUrl.StartsWith("https:", StringComparison.OrdinalIgnoreCase);
-        page.Body.Add(new Cards([
-            new Card(T("Listening URL"), settings.ListeningUrl),
-            new Card("HTTPS", T(https ? "Enabled" : "Disabled"), https ? null : T("Traffic is not encrypted"), Tone.Warn, Dot: https ? Tone.Good : Tone.Warn)], 30));
-        if (!string.IsNullOrEmpty(settings.CertificatePath))
-            page.Body.Add(new Panel(T("Certificate (.pfx)"), new Para(settings.CertificatePath)));
-        page.Items.Add(Entry.Header(T("Address")));
-        page.Items.Add(Action("Change listening URL", async () =>
-        {
-            await Write(nameof(Admin.SetListeningUrl), new { url = await Ask("Listening URL", settings.ListeningUrl, help: "http://*:14524") });
-        }));
-        page.Items.Add(Entry.Header(T("Security")));
-        page.Items.Add(Action("Apply HTTPS", async () =>
-        {
-            var path = await ui.PickPath(T("Certificate (.pfx)"), false, settings.CertificatePath ?? "", ".pfx", ".p12");
-            var password = await Ask("Certificate password", secret: true);
-            var url = await Port("https");
-            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException(T("Certificate (.pfx)"));
-            if (path != settings.CertificatePath || password.Length > 0)
-                await Write(nameof(Admin.SetCertificate), new { path = Path.GetFullPath(path), password });
-            await Write(nameof(Admin.SetListeningUrl), new { url });
-        }));
-        if (https || !string.IsNullOrEmpty(settings.CertificatePath))
-            page.Items.Add(Action("Disable HTTPS", async () =>
-            {
-                var url = await Port("http");
-                await Confirm("Disable HTTPS?", url); await Write(nameof(Admin.SetListeningUrl), new { url }); await Write(nameof(Admin.DisableCertificate));
-            }, Tone.Warn));
-    }
-    private async Task<string> Port(string scheme)
-    {
-        var current = settings.ListeningUrl;
-        var normalized = current.Replace("://*:", "://localhost:").Replace("://+:", "://localhost:");
-        if (!Uri.TryCreate(normalized, UriKind.Absolute, out var uri)) throw new ArgumentException(T("Invalid listening URL."));
-        if (!int.TryParse(await Ask(scheme == "https" ? "HTTPS port" : "HTTP port", uri.Port.ToString()), out var port) || port is < 1 or > 65535)
-            throw new ArgumentException(T("Enter a valid port."));
-        string host = current.Contains("://*:") ? "*" : current.Contains("://+:") ? "+" : uri.Host;
-        return $"{scheme}://{host}:{port}";
-    }
-
     private async Task Plugins(Screen page)
     {
         var all = await Read<PluginInfo[]>(nameof(Admin.GetPlugins));
@@ -216,6 +174,6 @@ internal sealed partial class Controller
             await Write(nameof(Admin.SetLibraryPaths), new { paths = folders });
             await Write(nameof(Admin.CreateFirstAdmin), new { username, password });
         }
-        section = "Library"; runSetup = deferSetup = false; Say(T("Setup complete."));
+        section = "Library"; runSetup = deferSetup = false; networkIntro = true; Say(T("Setup complete."));
     }
 }

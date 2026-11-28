@@ -61,6 +61,32 @@ internal static class WindowsHost
         });
     }
 
+    public const string FirewallRule = "Melon Media Server";
+
+    /// <summary>Whether Windows Firewall has Melon's inbound rule. Reading rules doesn't need administrator rights.</summary>
+    public static async Task<bool> FirewallRuleExists(CancellationToken token)
+    {
+        var netsh = Path.Combine(Environment.SystemDirectory, "netsh.exe");
+        return await Run(netsh, ["advfirewall", "firewall", "show", "rule", "name=" + FirewallRule], false, token) == 0;
+    }
+
+    /// <summary>
+    /// Lets other devices reach Melon's ports through Windows Firewall (asks for administrator rights). Without it, Windows
+    /// blocks the Melon service from the network, and other devices can't connect even on the same Wi-Fi.
+    /// </summary>
+    public static async Task AllowThroughFirewall(int[] ports, CancellationToken token)
+    {
+        var list = string.Join(",", ports.Where(p => p is > 0 and < 65536).Distinct());
+        if (list.Length == 0) throw new ArgumentException("No ports to allow.");
+        var netsh = Path.Combine(Environment.SystemDirectory, "netsh.exe");
+        // One elevated call (one prompt): update the rule's ports if it exists, else add it.
+        string[] args = await FirewallRuleExists(token)
+            ? ["advfirewall", "firewall", "set", "rule", "name=" + FirewallRule, "new", "localport=" + list, "protocol=TCP", "action=allow", "enable=yes"]
+            : ["advfirewall", "firewall", "add", "rule", "name=" + FirewallRule, "dir=in", "action=allow", "protocol=TCP", "localport=" + list, "profile=any"];
+        var result = await Run(netsh, args, true, token);
+        if (result != 0) throw new InvalidOperationException($"Windows Firewall didn't accept the rule ({result}).");
+    }
+
     private static async Task<int> Run(string program, string[] arguments, bool elevate, CancellationToken token)
     {
         var start = new ProcessStartInfo(program) { UseShellExecute = elevate, CreateNoWindow = true,

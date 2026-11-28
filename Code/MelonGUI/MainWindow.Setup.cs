@@ -71,7 +71,7 @@ public sealed partial class MainWindow
                 await Command(nameof(IMelonAdministration.CreateFirstAdmin), new { username = user.Text.Trim(), password = password.Password });
             }
             password.Password = uri.Password = "";
-            manualSetup = deferSetup = false; tab = "Library"; BuildNavigation();
+            manualSetup = deferSetup = false; tab = "Library"; networkIntro = true; BuildNavigation();
             Notice("Setup complete.");
         }, true)));
     }

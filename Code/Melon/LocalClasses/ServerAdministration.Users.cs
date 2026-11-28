@@ -87,7 +87,16 @@ public sealed partial class ServerAdministration
         });
     }
 
-    public AccessCode CreateInvite(int minutes = 10) => Security.IssueInvite(TimeSpan.FromMinutes(minutes));
-    public AccessCode[] GetInvites() => Security.ViewInviteCodes().OrderBy(x => x.Value).Select(x => new AccessCode(x.Key, x.Value)).ToArray();
+    public AccessCode CreateInvite(int minutes = 10)
+    {
+        var code = Security.IssueInvite(TimeSpan.FromMinutes(minutes));
+        return code with { Link = InviteLink(code.Code) };
+    }
+    public AccessCode[] GetInvites() => Security.ViewInviteCodes().OrderBy(x => x.Value).Select(x => new AccessCode(x.Key, x.Value, InviteLink(x.Key))).ToArray();
+    private static string? InviteLink(string code)
+    {
+        try { return Networking.RemoteAccessService.BuildLink("join", code); }
+        catch (Exception ex) { Serilog.Log.Warning("Couldn't build the invite link: {Message}", ex.Message); return null; }
+    }
     public void RevokeInvite(string code) => Security.InvalidateInviteCode(code);
 }

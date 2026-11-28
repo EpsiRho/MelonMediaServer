@@ -21,7 +21,7 @@ public sealed partial class MainWindow
         if (events.Length == 0) list.Children.Add(Text(T("Nothing recorded yet.")));
         foreach (var e in events)
         {
-            var title = Text($"{T(SecurityEventText.Label(e.Kind))}  ·  {e.Username}", "BodyStrongTextBlockStyle");
+            var title = Text(T(SecurityEventText.Label(e.Kind)) + (string.IsNullOrEmpty(e.Username) ? "" : "  ·  " + e.Username), "BodyStrongTextBlockStyle");
             if (e.Warning) title.Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemFillColorCautionBrush"];
             var where = SecurityEventText.Where(e);
             list.Children.Add(Stack(title, Text(e.TimeUtc.ToLocalTime().ToString("g") + (where.Length > 0 ? "  ·  " + where : ""), "CaptionTextBlockStyle")));
@@ -154,28 +154,32 @@ public sealed partial class MainWindow
                 time.Text = InviteTime(invites[i].ExpiresUtc);
     }
 
+    /// <summary>A QR code on a white square, 220 px.</summary>
+    private static async Task<UIElement> QrImage(string text)
+    {
+        var source = new SvgImageSource { RasterizePixelWidth = 220, RasterizePixelHeight = 220 };
+        using var stream = new InMemoryRandomAccessStream();
+        using (var writer = new DataWriter(stream))
+        {
+            writer.WriteBytes(System.Text.Encoding.UTF8.GetBytes(QrCode.EncodeText(text, QrCode.Ecc.Medium).ToSvgString(4)));
+            await writer.StoreAsync();
+            writer.DetachStream();
+        }
+        stream.Seek(0); await source.SetSourceAsync(stream);
+        return new Border { Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White),
+            HorizontalAlignment = HorizontalAlignment.Center, Child = new Image { Source = source, Width = 220, Height = 220 } };
+    }
+
     private async Task ShowCode(AccessCode grant, string? username)
     {
         var content = Stack();
-        if (username == null)
-        {
-            var source = new SvgImageSource { RasterizePixelWidth = 220, RasterizePixelHeight = 220 };
-            using var stream = new InMemoryRandomAccessStream();
-            using (var writer = new DataWriter(stream))
-            {
-                writer.WriteBytes(System.Text.Encoding.UTF8.GetBytes(QrCode.EncodeText(grant.Code, QrCode.Ecc.Medium).ToSvgString(4)));
-                await writer.StoreAsync();
-                writer.DetachStream();
-            }
-            stream.Seek(0); await source.SetSourceAsync(stream);
-            content.Children.Add(new Border { Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White),
-                HorizontalAlignment = HorizontalAlignment.Center, Child = new Image { Source = source, Width = 220, Height = 220 } });
-        }
+        if (username == null) content.Children.Add(await QrImage(grant.Link ?? grant.Code));
         else content.Children.Add(Text(username, "BodyStrongTextBlockStyle"));
         var code = Text(grant.Code); code.IsTextSelectionEnabled = true;
         content.Children.Add(code);
         content.Children.Add(Text(T("Expires") + " " + grant.ExpiresUtc.ToLocalTime().ToString("g")));
-        var message = grant.Code;
+        if (username == null && await InviteReach() is string reach) content.Children.Add(Text(T(reach), "CaptionTextBlockStyle"));
+        var message = username == null && grant.Link != null ? grant.Code + "\n" + grant.Link : grant.Code;
         if (username != null)
         {
             var address = T("your Melon server") + " · /auth/reset-password";

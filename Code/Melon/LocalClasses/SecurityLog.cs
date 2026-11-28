@@ -27,7 +27,8 @@ public static class SecurityLog
     private static readonly HashSet<string> WarningKinds =
     [
         SecurityEventKinds.SignInFailed, SecurityEventKinds.SignInThrottled, SecurityEventKinds.TokenReuse,
-        SecurityEventKinds.PasswordChangeFailed, SecurityEventKinds.SignOutEveryone,
+        SecurityEventKinds.PasswordChangeFailed, SecurityEventKinds.SignOutEveryone, SecurityEventKinds.OutsideRequestRefused,
+        SecurityEventKinds.BlockedRequest,
     ];
 
     public static SecurityEvent Record(string kind, string? userId = null, string? username = null, string? sessionId = null,
@@ -60,7 +61,7 @@ public static class SecurityLog
     }
 
     /// <summary>Newest first. <paramref name="userId"/> limits to one account; <paramref name="warningsOnly"/> to failures and alerts.</summary>
-    public static SecurityEvent[] Recent(int count = 100, string? userId = null, bool warningsOnly = false)
+    public static SecurityEvent[] Recent(int count = 100, string? userId = null, bool warningsOnly = false, DateTime? sinceUtc = null)
     {
         var c = Collection;
         if (c == null) return [];
@@ -68,7 +69,9 @@ public static class SecurityLog
         var filter = f.Empty;
         if (!string.IsNullOrEmpty(userId)) filter &= f.Eq(x => x.UserId, userId);
         if (warningsOnly) filter &= f.Eq(x => x.Warning, true);
-        return c.Find(filter).SortByDescending(x => x.TimeUtc).Limit(Math.Clamp(count, 1, 1000)).ToList().ToArray();
+        if (sinceUtc is { } since) filter &= f.Gte(x => x.TimeUtc, since);
+        try { return c.Find(filter).SortByDescending(x => x.TimeUtc).Limit(Math.Clamp(count, 1, 5000)).ToList().ToArray(); }
+        catch (Exception ex) when (ex is MongoException or TimeoutException) { return []; }
     }
 
     public static void EnsureIndexes(IMongoDatabase db)

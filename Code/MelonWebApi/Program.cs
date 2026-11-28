@@ -3,6 +3,7 @@ using System.Security.Claims;
 using MongoDB.Driver;
 using System.Security.Cryptography.X509Certificates;
 using Melon.LocalClasses;
+using Melon.LocalClasses.Networking;
 using Melon.Models;
 using MelonLib.API;
 using MelonWebApi.Middleware;
@@ -87,6 +88,7 @@ namespace MelonWebApi
                 Console.CancelKeyPress += Interrupt;
                 var control = new LocalControllerServer(admin, LocalControllerClient.GetPipeName(StateManager.melonPath)).RunAsync(stopping.Token);
                 var cleaner = Task.CompletedTask;
+                var network = Task.CompletedTask;
                 try
                 {
                     if (control.IsFaulted) await control;
@@ -94,6 +96,7 @@ namespace MelonWebApi
                     catch (Exception ex) { Log.Warning("Database unavailable ({ErrorType}). Local management is available.", ex.GetType().Name); }
                     admin.ReloadPlugins(true);
                     cleaner = QueuesCleaner.RunAsync(stopping.Token);
+                    network = RemoteAccessService.RunAsync(stopping.Token);
                     var web = RunWebAsync(stopping.Token);
                     if (await Task.WhenAny(web, control) == control)
                     {
@@ -107,6 +110,7 @@ namespace MelonWebApi
                     stopping.Cancel();
                     await control;
                     await cleaner;
+                    try { await network; } catch (Exception ex) { Log.Warning(ex, "Remote Access stopped with an error."); }
                     while (MelonScanner.Scanning) await Task.Delay(100);
                     admin.UnloadPlugins();
                     StateManager.DbClient?.Dispose();
@@ -157,16 +161,29 @@ namespace MelonWebApi
 
                 builder.Logging.ClearProviders();
 
-                builder.WebHost.UseUrls(StateManager.MelonSettings.ListeningURL);
-
-                // Load SSL Certificate
-                var sslConfig = Security.GetSSLConfig();
-
-                if (!string.IsNullOrEmpty(sslConfig.PathToCert))
+                // Automatic: HTTP for the home network (and older apps), HTTPS with Melon's own certificate, which apps pin by
+                // fingerprint. Outside addresses are refused unless Remote Access is on (NetworkGate). Custom: as set up by hand.
+                bool automatic = RemoteAccessService.Automatic;
+                if (automatic)
                 {
-                    if (Security.VerifySSLConfig(sslConfig) != "Valid") throw new InvalidOperationException("Invalid HTTPS certificate.");
-                    var certificate = X509CertificateLoader.LoadPkcs12FromFile(sslConfig.PathToCert, sslConfig.Password);
-                    builder.WebHost.ConfigureKestrel(options => options.ConfigureHttpsDefaults(https => https.ServerCertificate = certificate));
+                    var settings = StateManager.MelonSettings;
+                    var certificate = NetworkIdentity.Certificate;
+                    builder.WebHost.ConfigureKestrel(options =>
+                    {
+                        options.ListenAnyIP(settings.HttpPort);
+                        options.ListenAnyIP(settings.HttpsPort, listen => listen.UseHttps(certificate));
+                    });
+                }
+                else
+                {
+                    builder.WebHost.UseUrls(StateManager.MelonSettings.ListeningURL);
+                    var sslConfig = Security.GetSSLConfig();
+                    if (!string.IsNullOrEmpty(sslConfig.PathToCert))
+                    {
+                        if (Security.VerifySSLConfig(sslConfig) != "Valid") throw new InvalidOperationException("Invalid HTTPS certificate.");
+                        var certificate = X509CertificateLoader.LoadPkcs12FromFile(sslConfig.PathToCert, sslConfig.Password);
+                        builder.WebHost.ConfigureKestrel(options => options.ConfigureHttpsDefaults(https => https.ServerCertificate = certificate));
+                    }
                 }
                 builder.Host.UseSerilog();
                 builder.Host.UseWindowsService();
@@ -231,7 +248,9 @@ namespace MelonWebApi
 
                 await using var app = builder.Build();
 
+                app.Use(NetworkGate.Outer);
                 app.UseForwardedHeaders();
+                app.Use(NetworkGate.Inner);
                 app.UseAuthentication();
                 // Security events recorded during this request name the caller and their address.
                 app.Use((context, next) =>
@@ -241,7 +260,8 @@ namespace MelonWebApi
                 });
                 app.UseAuthorization();
                 app.UseRateLimiter();
-                app.UseHttpsRedirection();
+                // Automatic mode keeps plain HTTP for the home network, so there's nothing to redirect.
+                if (!automatic) app.UseHttpsRedirection();
                 app.UseMiddleware<PluginMiddleware>();
 
                 var webSocketOptions = new WebSocketOptions

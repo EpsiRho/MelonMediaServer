@@ -80,7 +80,7 @@ namespace Melon.LocalClasses
                 BackgroundText = Color.FromArgb(66,66,66), Highlight = Color.FromArgb(97,214,214),
                 Melon = Color.FromArgb(26,225,19), Error = Color.Red,
                 ListeningURL = "http://localhost:14524", DefaultLanguage = "EN", JWTExpireInMinutes = 60,
-                UseMenuColor = true, QueueCleanupWaitInHours = 48
+                UseMenuColor = true, QueueCleanupWaitInHours = 48, NetworkMode = "Automatic"
             };
             var loaded = Storage.LoadConfigFile<Settings>("MelonSettings", null, out _);
             MelonSettings = loaded ?? defaults;
@@ -98,6 +98,15 @@ namespace Melon.LocalClasses
             MelonSettings.GenreSplitIndicators ??= defaults.GenreSplitIndicators;
             if (string.IsNullOrEmpty(MelonSettings.DefaultLanguage)) MelonSettings.DefaultLanguage = defaults.DefaultLanguage;
             if (string.IsNullOrEmpty(MelonSettings.ListeningURL)) MelonSettings.ListeningURL = defaults.ListeningURL;
+            // Settings saved before automatic networking keep working exactly as they were set up.
+            if (MelonSettings.NetworkMode is not ("Automatic" or "Custom")) MelonSettings.NetworkMode = "Custom";
+            MelonSettings.RemoteAccess ??= new();
+            MelonSettings.RemoteAccess.PkarrRelays ??= [];
+            MelonSettings.BlockedAddresses ??= [];
+            MelonSettings.PublicAddressHistory ??= [];
+            MelonSettings.BroadcastName ??= "";
+            if (MelonSettings.HttpPort is < 1 or > 65535) MelonSettings.HttpPort = 14524;
+            if (MelonSettings.HttpsPort is < 1 or > 65535) MelonSettings.HttpsPort = 14525;
             if (loaded == null)
             {
                 File.WriteAllText(Path.Combine(melonPath, "Configs", "setup.pending"), "");
