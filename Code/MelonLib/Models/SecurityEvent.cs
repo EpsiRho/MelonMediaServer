@@ -52,5 +52,15 @@ namespace Melon.Models
         public const string PasswordReset = "PasswordReset";
         public const string InviteCreated = "InviteCreated";
         public const string InviteRevoked = "InviteRevoked";
+        public const string RemoteAccessEnabled = "RemoteAccessEnabled";
+        public const string RemoteAccessDisabled = "RemoteAccessDisabled";
+        /// <summary>The first request of the day from an address outside the home network.</summary>
+        public const string RemoteClientSeen = "RemoteClientSeen";
+        /// <summary>A request from outside the home network while Remote Access was off (or over plain HTTP).</summary>
+        public const string OutsideRequestRefused = "OutsideRequestRefused";
+        public const string AddressBlocked = "AddressBlocked";
+        public const string AddressUnblocked = "AddressUnblocked";
+        /// <summary>A blocked address tried again (recorded at most once an hour per address).</summary>
+        public const string BlockedRequest = "BlockedRequest";
     }
 }

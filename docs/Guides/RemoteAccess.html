@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
+    <title>Remote Access</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+
+  <body>
+    <div class="container">
+    <div id="sidebar-placeholder"></div>
+    <div class="content">
+      <h1 id="remote-access">Remote Access</h1>
+      <p>
+        At home, Melon just works: anything on the same network can find it. Remote
+        Access is for listening when you're out, on mobile data or at a friend's place.
+        Melon can set it up for you, no domain name or port forwarding guide needed,
+        and nothing runs on anyone else's server.
+      </p>
+
+      <h2 id="before">Before you turn it on</h2>
+      <p>
+        Remote Access means Melon can be reached from the internet, not just your house.
+        Melon is built to be secure, but nothing is perfect, and a bug nobody knows
+        about yet could let someone use Melon to get into your computer. While it's on,
+        Melon keeps Security Logs of who's connecting and what they're sending, and
+        suggests blocking addresses that look sketchy. More on that
+        <a href="#security">below</a>.
+      </p>
+
+      <h2 id="setup">Setting it up</h2>
+      <p>
+        Open <strong>Networking</strong> in MelonGUI or MelonCLI and pick
+        <strong>Set up Remote Access</strong>. You'll get the warning above, then Melon
+        checks your network for a few seconds. It looks at:
+      </p>
+      <ul>
+        <li><strong>Your public address</strong>, the one the internet sees.</li>
+        <li><strong>CGNAT</strong>: some internet providers share one public address between lots of customers. If yours does, a router port can't help, since the port you'd need isn't yours.</li>
+        <li><strong>Double NAT</strong>: two routers in a row, like your provider's modem-router plus your own.</li>
+        <li><strong>Automatic port opening</strong>: whether your router lets apps open a port by themselves (UPnP or NAT-PMP).</li>
+        <li><strong>IPv6</strong>: whether it works on your connection.</li>
+        <li><strong>Dynamic or static address</strong>: whether your public address changes now and then. Most home connections do.</li>
+      </ul>
+      <p>
+        Then you get three switches. Each one is marked <strong>Recommended</strong>,
+        <strong>Required</strong>, <strong>Optional</strong> or <strong>Not available</strong>
+        based on what Melon found, with a line saying why. If you're not sure, go with
+        what it recommends.
+      </p>
+
+      <h3 id="router-port">Open your router port</h3>
+      <p>
+        Melon asks your router to open a port to it, so apps can reach it from outside.
+        This is the main way in for most people. If your router won't do it on its own
+        (lots don't, or have it turned off), Melon tells you on the Networking page, and you
+        can forward the port by hand in your router's settings: TCP port <code>14525</code>
+        to this computer's home address, unless you changed the port.
+      </p>
+
+      <h3 id="ipv6">IPv6</h3>
+      <p>
+        Only shows up if IPv6 works on your network. IPv6 gives every device its own
+        public address, which gets around CGNAT and double NAT. If you're stuck behind
+        CGNAT, this is usually the one that saves you. The catch: the phone has to have
+        IPv6 too, which most mobile networks do, but not every Wi-Fi network does.
+      </p>
+      <p>
+        One more catch: most routers block incoming IPv6 connections until you allow them.
+        If phones can't connect over IPv6, look for an IPv6 firewall (or "pinhole") setting
+        in your router and allow TCP port <code>14525</code> to this computer. Testing from
+        the same computer doesn't count, it never leaves your house. Try a phone on mobile
+        data with Wi-Fi off.
+      </p>
+
+      <h3 id="pkarr">Pkarr</h3>
+      <p>
+        If your public address changes, apps lose track of Melon until they're back on
+        your home network. With Pkarr on, Melon publishes its current address, signed
+        with its own key, to a big shared network (the same one BitTorrent uses for
+        finding peers). Apps look it up there when Melon's address changes. Nobody can
+        fake the record, since apps check the signature against the key from the QR code.
+      </p>
+      <p>
+        Leave it off and things still work, you'll just sometimes have to bring a phone
+        home to resync it.
+      </p>
+
+      <p>
+        Pick <strong>Turn on</strong> and you're done. The Networking page shows whether
+        it's working, and it says so once the first app connects from outside.
+      </p>
+
+      <h2 id="advanced">Advanced setup</h2>
+      <p>The same screen has <strong>Advanced setup</strong>, for other ways in:</p>
+      <ul>
+        <li>
+          <strong>Reverse proxy</strong>: you run something like Caddy in front of Melon
+          with your own domain. Enter the address apps should use, like
+          <code>https://music.example.com</code>. The
+          <a href="/Guides/Installation.html#caddy">Caddy guide</a> walks through it.
+        </li>
+        <li>
+          <strong>Tailscale</strong>: if <a href="https://tailscale.com/download">Tailscale</a>
+          is installed and connected, Melon can use it. Nothing is open to the internet
+          at all, but every phone needs Tailscale too. Good if you're behind CGNAT with no IPv6.
+        </li>
+        <li>
+          <strong>Custom listening URL and certificate</strong>: the old manual setup.
+          See <a href="/Guides/Installation.html#manual-certificate">Installation</a>.
+        </li>
+      </ul>
+
+      <h2 id="security">Security logs and blocking</h2>
+      <p>
+        While Remote Access is on, the Networking page has a Security section. It shows
+        who's connected from outside, what's been happening, and suggestions when an
+        address looks off (lots of failed sign-ins, poking at random paths, that kind of
+        thing). Each suggestion asks if you want to block it, yes or no. You can also block
+        an address by hand, and unblock it again from the blocked list.
+      </p>
+
+      <h2 id="apps">In the apps</h2>
+      <p>
+        Galia and Watermelon show whether Remote Access is on and how it's set up, but
+        they can't change it. That only happens on the computer running Melon, so a
+        stolen phone or sign-in can't open your server up.
+      </p>
+      <p>
+        Apps save every address Melon gives them and try them all at once, so they
+        switch between home and away by themselves. When your phone moves between Wi-Fi
+        and mobile data, they check again within a few seconds. If none of the addresses
+        work, they look on the local network, then ask Pkarr.
+      </p>
+
+      <h2 id="invites">Inviting people</h2>
+      <p>
+        Invite QR codes and links carry Melon's addresses too, so a friend can sign up
+        from their own house. That only works with Remote Access on. With it off, the
+        invite only works on your home network, and MelonGUI and MelonCLI tell you so
+        when you make one.
+      </p>
+
+      <h2 id="turning-off">Turning it off</h2>
+      <p>
+        <strong>Turn off Remote Access</strong> on the Networking page closes the router
+        port, stops publishing to Pkarr, and goes back to home-only. Apps keep working at home.
+      </p>
+    </div>
+    </div>
+    <script src="/sidebar.js"></script>
+  </body>
+</html>

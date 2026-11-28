@@ -47,7 +47,8 @@ namespace MelonWebApi.Controllers
         [HttpGet("api/server/features")]
         public IActionResult Features()
         {
-            return Ok(new List<string> { "stat-filters", "auth-v2" });
+            // "connection-v1": api/server/identity, api/server/connection and QR links carrying addresses (see ConnectionController).
+            return Ok(new List<string> { "stat-filters", "auth-v2", "connection-v1" });
         }
 
         /// <summary>
@@ -194,7 +195,10 @@ namespace MelonWebApi.Controllers
             {
                 var link = AuthSessions.CreateDeviceLink(CurrentUserId);
                 SecurityLog.Record(SecurityEventKinds.DeviceLinkCreated, CurrentUserId, User.Identity?.Name, TokenRules.SessionId(User));
-                return Ok(new { id = link.Id, code = link.Code, expiresAt = link.ExpiresUtc });
+                string linkText = null;
+                try { linkText = Melon.LocalClasses.Networking.RemoteAccessService.BuildLink("link", link.Code); } catch (Exception) { }
+                // "link" is the text to put in the QR code: it carries the server's addresses and certificate fingerprint.
+                return Ok(new { id = link.Id, code = link.Code, expiresAt = link.ExpiresUtc, link = linkText });
             }
             catch (InvalidOperationException ex) { return StatusCode(429, ex.Message); }
         }

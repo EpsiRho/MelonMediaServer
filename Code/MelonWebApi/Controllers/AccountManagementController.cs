@@ -25,6 +25,16 @@ public sealed class AccountManagementController : ControllerBase
     [HttpGet("auth/invites")]
     public IActionResult ListInvites() => Ok(Admin.GetInvites());
 
+    /// <summary>Creates an invite and returns it with <c>link</c>, the text to put in a QR code (it carries the server's addresses).</summary>
+    [HttpPost("auth/invites")]
+    [EnableRateLimiting(Program.AuthRateLimit)]
+    public IActionResult CreateInvite(int expireMinutes = 10)
+    {
+        if (expireMinutes <= 0 || expireMinutes > 60 * 24 * 30) return BadRequest("Choose an invite lifetime of up to 30 days.");
+        try { return Ok(Admin.CreateInvite(expireMinutes)); }
+        catch (InvalidOperationException ex) { return StatusCode(408, ex.Message); }
+    }
+
     [HttpPost("auth/invites/revoke")]
     public IActionResult Revoke([FromBody] string code) { Admin.RevokeInvite(code); return NoContent(); }
 

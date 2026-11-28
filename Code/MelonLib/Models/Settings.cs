@@ -36,6 +36,45 @@ namespace Melon.Models
         public int LogFileMegabytes { get; set; } = 100;
         /// <summary>Log files kept, counting the current one; older ones are deleted. Local controllers only.</summary>
         public int LogFilesKept { get; set; } = 5;
+        /// <summary>
+        /// "Automatic": Melon listens on <see cref="HttpPort"/> and <see cref="HttpsPort"/> with its own certificate, broadcasts on the
+        /// local network and refuses outside addresses unless Remote Access is on. "Custom": <see cref="ListeningURL"/> and the
+        /// configured certificate, as set up by hand. Settings from before this option load as Custom so nothing changes for them.
+        /// </summary>
+        public string? NetworkMode { get; set; }
+        public int HttpPort { get; set; } = 14524;
+        public int HttpsPort { get; set; } = 14525;
+        /// <summary>Advertise Melon on the local network (mDNS, _melon._tcp).</summary>
+        public bool Broadcast { get; set; } = true;
+        /// <summary>Instance name other devices see. Empty means "Melon on {computer}".</summary>
+        public string BroadcastName { get; set; } = "";
+        public RemoteAccessSettings RemoteAccess { get; set; } = new();
+        /// <summary>Addresses or CIDR ranges refused before any other handling.</summary>
+        public List<BlockedAddress> BlockedAddresses { get; set; } = [];
+        /// <summary>Public IPv4 addresses seen over time, newest last, to tell whether the address changes.</summary>
+        public List<string> PublicAddressHistory { get; set; } = [];
+    }
+    public class RemoteAccessSettings
+    {
+        public bool Enabled { get; set; }
+        /// <summary>Automatic, Tailscale or ReverseProxy.</summary>
+        public string Method { get; set; } = "Automatic";
+        public bool OpenRouterPort { get; set; } = true;
+        /// <summary>Port opened on the router; 0 means the same as HttpsPort.</summary>
+        public int ExternalPort { get; set; }
+        public bool UseIPv6 { get; set; }
+        public bool PublishPkarr { get; set; } = true;
+        /// <summary>ReverseProxy: the address clients use.</summary>
+        public string? PublicUrl { get; set; }
+        /// <summary>Pkarr relays to publish through. Empty means <see cref="DefaultPkarrRelays"/>. (Not pre-filled: Newtonsoft appends to lists.)</summary>
+        public List<string> PkarrRelays { get; set; } = [];
+        public static readonly string[] DefaultPkarrRelays = ["https://relay.pkarr.org", "https://pkarr.pubky.app"];
+    }
+    public class BlockedAddress
+    {
+        public string Address { get; set; } = "";
+        public string Reason { get; set; } = "";
+        public DateTime BlockedUtc { get; set; }
     }
     public class ShortSettings
     {

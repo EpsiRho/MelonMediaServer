@@ -91,18 +91,37 @@
 
       <h2 id="connecting">Letting Other Devices Connect</h2>
       <p>
-        Out of the box Melon listens on <code>http://localhost:14524</code>, which
-        means only the computer it's running on can reach it. That's on purpose:
-        you choose how it gets exposed. There are two ways to do it.
+        Once setup's done, Melon sets up its own networking. It listens on
+        <code>14524</code> (HTTP) and <code>14525</code> (HTTPS, with a certificate
+        it makes for itself), and it tells your network it's there, so phones and
+        other computers on the same Wi-Fi can find it without you typing an address.
+      </p>
+      <p>
+        On Windows, MelonGUI and MelonCLI ask to let Melon through Windows Firewall.
+        Say yes, or nothing else on your network can reach it.
+      </p>
+      <p>
+        To sign in a phone, make an invite in <strong>Users</strong> and scan the QR
+        code with Galia or Watermelon. The code carries everything the app needs to
+        find Melon and trust its certificate, so there's nothing else to set up.
+      </p>
+      <p>
+        Already have an account and just need the app to find Melon? Use
+        <strong>Networking</strong> → <strong>Server QR code</strong>. It has Melon's
+        addresses but no sign-in code, so you scan it and then sign in like normal.
+      </p>
+      <p>
+        Want to listen away from home? That's <strong>Remote Access</strong>, and
+        it has its own guide: <a href="/Guides/RemoteAccess.html">Remote Access</a>.
       </p>
 
-      <h3 id="caddy">Recommended: Caddy</h3>
+      <h3 id="caddy">Your own domain with Caddy</h3>
       <p>
-        <a href="https://caddyserver.com/">Caddy</a> is a small web server that
-        sits in front of Melon. It gets an HTTPS certificate for you from Let's
-        Encrypt and renews it on its own, so you never have to think about
-        certs again. Melon stays on <code>localhost</code> and only Caddy talks
-        to it.
+        If you've got a domain and want a normal HTTPS address like
+        <code>https://music.example.com</code>, put
+        <a href="https://caddyserver.com/">Caddy</a> in front of Melon. Caddy gets
+        a certificate from Let's Encrypt and renews it on its own. You don't need
+        this for Remote Access, it's just the nicest setup if you already have a domain.
       </p>
       <p>What you need:</p>
       <ul>
@@ -121,40 +140,37 @@ music.example.com {
       <p>Then run Caddy from the same folder:</p>
       <pre><code class="language-bash">caddy run</code></pre>
       <p>
-        That's it. Clients connect to <code>https://music.example.com</code>.
+        Then tell Melon about it: in <strong>Networking</strong>, pick
+        <strong>Set up Remote Access</strong> → <strong>Advanced setup</strong> →
+        <strong>Reverse proxy</strong>, and enter <code>https://music.example.com</code>.
+        Melon puts that address in its QR codes, so apps use it.
+      </p>
+      <p>
         Once it works, set Caddy up to start with your computer: Caddy's
         <a href="https://caddyserver.com/docs/running">Running Caddy</a> page
-        shows how on each OS.
-      </p>
-      <p>
-        Leave Melon's listening URL alone for this, and don't forward port
-        <code>14524</code>. Caddy is the only thing that should be reachable from
-        outside.
+        shows how on each OS. Don't forward <code>14524</code> or <code>14525</code>
+        for this. Caddy is the only thing that should be reachable from outside.
       </p>
 
-      <h3 id="manual-certificate">Optional: your own certificate</h3>
+      <h3 id="manual-certificate">Advanced: your own listening URL and certificate</h3>
       <p>
-        If you'd rather not run Caddy, Melon can serve HTTPS itself with a
-        certificate you give it. You'll need the certificate as a
+        This is the old way, from before Melon did its own networking. You pick the
+        exact address Melon listens on and give it a certificate as a
         <code>.pfx</code> (or <code>.p12</code>) file. You can get one from
         <a href="https://certbot.eff.org/">Certbot</a> and convert it with
         <code>openssl pkcs12 -export</code>.
       </p>
       <ol>
         <li>Open <strong>Networking</strong> in MelonGUI or MelonCLI.</li>
-        <li>Pick <strong>Apply HTTPS</strong>, choose your <code>.pfx</code> file, enter its password, and pick a port.</li>
-        <li>Restart Melon when it asks.</li>
-        <li>Forward that port on your router.</li>
+        <li>Pick <strong>Set up Remote Access</strong> → <strong>Advanced setup</strong> → <strong>Custom listening URL and certificate</strong>.</li>
+        <li>Enter the listening URL (like <code>https://*:14524</code>), choose your <code>.pfx</code> file, and enter its password.</li>
+        <li>Restart Melon when it asks, and forward that port on your router.</li>
       </ol>
       <p>
         Certificates expire, and you have to renew this one yourself. Melon
         warns you on startup and on the Networking page when it has expired.
-        <strong>Disable HTTPS</strong> on the same page goes back to plain HTTP.
-      </p>
-      <p>
-        Just want other devices on your home network to connect, no HTTPS? Change
-        the listening URL in Networking to <code>http://*:14524</code>. Don't
-        forward that to the internet.
+        <strong>Use automatic networking</strong> on the same page goes back to
+        the normal setup.
       </p>
       <p>See <a href="/Guides/Configure.html">Configure</a> for every other setting.</p>
 

@@ -26,6 +26,13 @@ internal static class SecurityEventText
         SecurityEventKinds.PasswordReset => "Password reset",
         SecurityEventKinds.InviteCreated => "Invite created",
         SecurityEventKinds.InviteRevoked => "Invite revoked",
+        SecurityEventKinds.RemoteAccessEnabled => "Remote Access turned on",
+        SecurityEventKinds.RemoteAccessDisabled => "Remote Access turned off",
+        SecurityEventKinds.RemoteClientSeen => "Connection from outside your network",
+        SecurityEventKinds.OutsideRequestRefused => "Outside connection refused",
+        SecurityEventKinds.AddressBlocked => "Address blocked",
+        SecurityEventKinds.AddressUnblocked => "Address unblocked",
+        SecurityEventKinds.BlockedRequest => "Blocked address tried again",
         _ => kind,
     };
 

@@ -75,7 +75,9 @@ namespace MelonInstaller.Classes
                 ("Installer", _ => Publish("MelonInstaller", Path.Combine(stage, "Installer"), log)),
             };
             if (OperatingSystem.IsWindows())
-                steps.Add(("Controller", _ => Publish("MelonGUI", Path.Combine(stage, "Controller"), log, "-p:Platform=x64")));
+                // A folder, not one file: WinUI can't start from a single-file bundle (the Windows App SDK's XAML DLLs
+                // have to sit next to the exe), and it crashes on launch.
+                steps.Add(("Controller", _ => Publish("MelonGUI", Path.Combine(stage, "Controller"), log, singleFile: false, "-p:Platform=x64")));
             steps.Add(("Zip", progress => Zip(stage, progress)));
 
             var total = Stopwatch.StartNew();
@@ -178,7 +180,7 @@ namespace MelonInstaller.Classes
         /// and is bundled into a single exe. Native libraries (SkiaSharp, LAME, WinUI) can't be bundled, so they sit
         /// next to the exe, along with anything a project marks ExcludeFromSingleFile (see MelonWebApi.csproj).
         /// </summary>
-        private static void Publish(string project, string output, string log, params string[] extra)
+        private static void Publish(string project, string output, string log, bool singleFile = true, params string[] extra)
         {
             var start = new ProcessStartInfo("dotnet")
             {
@@ -190,7 +192,7 @@ namespace MelonInstaller.Classes
             [
                 "publish", Path.Combine(codePath, project, $"{project}.csproj"),
                 "-c", "Release", "-r", RuntimeIdentifier, "-o", output,
-                "--self-contained", "-p:PublishSingleFile=true",
+                "--self-contained", $"-p:PublishSingleFile={(singleFile ? "true" : "false")}",
                 "-p:DebugType=none",                 // no .pdb files in the release
                 "-p:SatelliteResourceLanguages=en",  // skip translated error messages from libraries; Melon's own strings are built in
                 "-nologo", "-v", "minimal", "-tl:off",

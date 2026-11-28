@@ -57,10 +57,10 @@ public sealed partial class MainWindow
     }
     private static string Choice(ComboBox control) => (string)((ComboBoxItem)control.SelectedItem).Tag;
 
-    private async Task<bool> Dialog(string title, UIElement content, string accept, bool destructive = false)
+    private async Task<bool> Dialog(string title, UIElement content, string accept, bool destructive = false, string cancel = "Cancel")
     {
         var dialog = new ContentDialog { XamlRoot = Root.XamlRoot, RequestedTheme = Root.ActualTheme, Title = T(title),
-            Content = content, PrimaryButtonText = T(accept), CloseButtonText = T("Cancel"),
+            Content = content, PrimaryButtonText = T(accept), CloseButtonText = T(cancel),
             DefaultButton = destructive ? ContentDialogButton.Close : ContentDialogButton.Primary };
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }

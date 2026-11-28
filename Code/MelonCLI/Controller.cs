@@ -134,8 +134,9 @@ internal sealed partial class Controller
         UpdateHeader();
         bool recovery = status?.DatabaseConnected == true && status.PendingConversions.Length > 0;
         bool setup = status != null && !deferSetup && (runSetup || status.SetupRequired);
-        var screen = new Screen(T(recovery ? "Database recovery" : setup ? "Set up Melon" : section)) { ActiveSection = T(section) };
-        if (!recovery && !setup)
+        bool intro = networkIntro && !recovery && !setup && status != null;
+        var screen = new Screen(T(recovery ? "Database recovery" : setup ? "Set up Melon" : intro ? NetworkText.IntroTitle : section)) { ActiveSection = T(section) };
+        if (!recovery && !setup && !intro)
             foreach (var name in Sections) screen.Sections.Add(Local(T(name), () => section = name));
         if (status == null)
         {
@@ -158,13 +159,14 @@ internal sealed partial class Controller
             screen.Items.Add(Action("Set up Melon", Setup));
             screen.Items.Add(Local(T("Database settings"), ToDatabase));
         }
+        else if (intro) await NetworkIntro(screen);
         else
         {
             switch (section)
             {
                 case "Library": await Library(screen); break;
                 case "Database": await DatabasePage(screen); break;
-                case "Networking": Networking(screen); break;
+                case "Networking": await Networking(screen); break;
                 case "Users": await Users(screen); break;
                 case "Stats": await Stats(screen); break;
                 case "Plugins": await Plugins(screen); break;

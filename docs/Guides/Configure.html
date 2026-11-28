@@ -51,12 +51,24 @@
       <h2 id="networking">Networking</h2>
       <ul>
         <li>
-          <strong>Listening URL:</strong> the address and port Melon listens on.
-          It's <code>http://localhost:14524</code> by default, so only the same
-          computer can connect. <code>*</code> means any address, like
-          <code>http://*:14524</code>.
+          <strong>Connection:</strong> automatic by default. Melon listens on
+          <code>14524</code> (HTTP) and <code>14525</code> (HTTPS with its own
+          certificate). <strong>Change ports</strong> if something else uses them.
         </li>
-        <li><strong>HTTPS:</strong> use your own certificate. The <a href="/Guides/Installation.html#connecting">Installation guide</a> covers this, and the easier way with Caddy.</li>
+        <li><strong>Windows Firewall:</strong> lets other devices reach Melon. Windows asks for admin permission.</li>
+        <li>
+          <strong>Local Network Broadcast:</strong> how devices on your network find
+          Melon. You can turn it off or rename it. The name is what apps show, and it's
+          how you tell two Melon servers apart. The service type is always <code>_melon._tcp</code>.
+        </li>
+        <li><strong>Remote Access:</strong> listening away from home. It has its own guide: <a href="/Guides/RemoteAccess.html">Remote Access</a>.</li>
+        <li><strong>Addresses:</strong> every address Melon can be reached at right now. QR codes carry these.</li>
+        <li><strong>Security:</strong> who's connected from outside, block suggestions, and blocked addresses.</li>
+        <li>
+          <strong>Custom setup:</strong> your own listening URL and certificate, under
+          Remote Access → Advanced setup. The <a href="/Guides/Installation.html#manual-certificate">Installation guide</a>
+          covers it, and Caddy too.
+        </li>
       </ul>
 
       <h2 id="users">Users</h2>

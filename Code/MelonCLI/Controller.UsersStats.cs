@@ -118,12 +118,14 @@ internal sealed partial class Controller
     private async Task Code(AccessCode grant, string? username)
     {
         var title = username == null ? T("Invite") : T("Password reset") + " · " + username;
+        string? reach = null;
+        if (username == null) try { reach = NetworkText.InviteReach(await Read<NetworkOverview>(nameof(Admin.GetNetwork))); } catch (Exception ex) when (ex is not OperationCanceledException) { }
         string address = T("your Melon server") + " · /auth/reset-password";
         if (Uri.TryCreate(settings.ListeningUrl, UriKind.Absolute, out var uri) && !uri.IsLoopback &&
             uri.HostNameType != UriHostNameType.Unknown && uri.Host is not ("0.0.0.0" or "[::]"))
             address = new Uri(uri, "/auth/reset-password").AbsoluteUri;
         var message = username == null ? grant.Code : $"{username}\n{grant.Code}\n{T("Enter the code at")} {address}";
-        var qr = username == null ? QrCode.EncodeText(grant.Code, QrCode.Ecc.Medium) : null;
+        var qr = username == null ? QrCode.EncodeText(grant.Link ?? grant.Code, QrCode.Ecc.Medium) : null;
         Screen View()
         {
             var page = new Screen(title);
@@ -133,9 +135,9 @@ internal sealed partial class Controller
                 return page;
             }
             page.Body.Add(new BigCode(grant.Code, T("Expires") + " " + Remaining(grant), Urgency(grant)));
-            if (qr != null) { page.Body.Add(new QrBlock(qr)); page.Body.Add(new Para(T("Scan the QR code or share the code to create an account."), Tone.Muted)); }
+            if (qr != null) { page.Body.Add(new QrBlock(qr)); page.Body.Add(new Para(T("Scan the QR code or share the code to create an account."), Tone.Muted)); if (reach != null) page.Body.Add(new Para(T(reach), Tone.Muted)); }
             else page.Body.Add(new Panel(T("Password reset"), new KeyValues([(T("User"), username!, Tone.Normal), (T("Enter the code at"), address, Tone.Normal)])));
-            var share = username == null ? grant.Code : message + "\n" + T("Expires") + " " + grant.ExpiresUtc.ToLocalTime().ToString("g");
+            var share = username == null ? grant.Code + (grant.Link != null ? "\n" + grant.Link : "") : message + "\n" + T("Expires") + " " + grant.ExpiresUtc.ToLocalTime().ToString("g");
             page.Items.Add(Action("Copy", async () => { await Platform.Copy(share, token); Say(T("Copied")); }));
             page.Items.Add(Action("Compose email", () => Platform.Launch("mailto:?subject=" + Uri.EscapeDataString("Melon · " + title) + "&body=" + Uri.EscapeDataString(share))));
             if (username == null) page.Items.Add(Action("Invalidate", async () => { await Write(nameof(Admin.RevokeInvite), new { code = grant.Code }); Say(T("Invite revoked.")); }, Tone.Danger));
